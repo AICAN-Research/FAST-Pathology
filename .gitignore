@@ -1,0 +1,7 @@
+.idea
+cmake-build*
+*.tiff
+*.tif
+*.svs
+*.vsi
+*.pb
