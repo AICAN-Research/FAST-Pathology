@@ -5,3 +5,7 @@ cmake-build*
 *.svs
 *.vsi
 *.pb
+WSI/
+Models/
+Icons/
+fastpath.png

@@ -10,6 +10,5 @@ include(${FAST_USE_FILE})
 add_executable(fastPathology
     main.cpp
     MainWindow.cpp
-    MainWindow.hpp
-        TissueSegmentationOtsu/TissueSegmentationOtsu.cpp)
+    MainWindow.hpp)
 target_link_libraries(fastPathology ${FAST_LIBRARIES})
