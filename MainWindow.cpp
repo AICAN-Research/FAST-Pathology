@@ -801,7 +801,6 @@ MainWindow::MainWindow() {
 
 
 
-    renderer = ImagePyramidRenderer::New();
     //renderer->setSynchronizedRendering(true);
 
     segRenderer = SegmentationRenderer::New(); // <- fails here...
@@ -837,12 +836,7 @@ MainWindow::MainWindow() {
     //tumorRenderer->setChannelHidden(0, true);
 
     //view->setAutoUpdateCamera(true);
-    view->addRenderer(renderer);
-    view->addRenderer(segRenderer);
-    view->addRenderer(heatmapRenderer); // <- cannot add renderer here(?). I think it is because when adding the renderer, it automatically starts running, and there is no input defined...
-    view->addRenderer(tumorRenderer);
-    view->addRenderer(bachRenderer);
-    view->addRenderer(segTumorRenderer);
+
 
     view->setAutoUpdateCamera(true);
 
@@ -887,16 +881,19 @@ void MainWindow::selectFile() {
         return;
     filename = fileName.toStdString();
 
-    // if new file is chosen, clear all cache of previous images
-    renderer->clearPyramid();
-
-    tumorRenderer->clearHeatmap();
+    //tumorRenderer->clearHeatmap();
 
     // Import image from file using the ImageFileImporter
     auto importer = WholeSlideImageImporter::New();
     importer->setFilename(fileName.toStdString());
     m_image = importer->updateAndGetOutputData<ImagePyramid>();
+
+    renderer = ImagePyramidRenderer::New();
     renderer->setInputData(m_image);
+
+    removeAllRenderers();
+    insertRenderer("WSI", renderer);
+    getView(0)->reinitialize(); // Must call this after removing all renderers
 }
 
 bool MainWindow::segmentTissue() {
@@ -909,6 +906,8 @@ bool MainWindow::segmentTissue() {
     segRenderer->setInputData(m_tissue);
     segRenderer->setOpacity(0.4); // <- necessary for the quick-fix temporary solution
 
+    insertRenderer("tissue", segRenderer);
+
     tissue_flag = true;
     showTissueMask();
 
@@ -916,19 +915,18 @@ bool MainWindow::segmentTissue() {
 }
 
 bool MainWindow::predictGrade() {
-
     int size = 512;
 
-    if (m_tumorMap)
-       tumorRenderer->clearHeatmap();
+    //if (m_tumorMap)
+       //tumorRenderer->clearHeatmap();
 
     // - if 512x512, 10x model is chosen
     auto generator = PatchGenerator::New();
     generator->setPatchSize(size, size);
     generator->setPatchLevel(2);
     generator->setInputData(0, m_image);
-    if (m_tissue) {
-        generator->setInputData(1, m_tissue);
+    if (m_tumorMap) {
+        generator->setInputData(1, m_tumorMap);
         tissue_flag = false;  // <- by setting this to false, and running showTissueMask(), tissue mask is not being visualized at the start of running inference
         showTissueMask();
     }
@@ -957,26 +955,26 @@ bool MainWindow::predictGrade() {
     stitcher->setInputConnection(network->getOutputPort());
 
     auto port = stitcher->getOutputPort();
-    stitcher->update();
-    m_gradeMap = port->getNextFrame<Tensor>();
+    //stitcher->update();
+    //m_gradeMap = port->getNextFrame<Tensor>();
 
     //m_tumorMap = TensorToSegmentation()
 
     heatmapRenderer->setInputConnection(port);
+    insertRenderer("grade", heatmapRenderer);
 
     return true;
 }
 
 
 bool MainWindow::predictTumor() {
-
     int size = 299;
     int res = 20;
 
     // - if 256x256, 10x model is chosen
     auto generator = PatchGenerator::New();
     generator->setPatchSize(size, size);
-    generator->setPatchLevel(0);
+    generator->setPatchLevel(2);
     generator->setInputData(0, m_image);
     if (m_tissue) {
         generator->setInputData(1, m_tissue);
@@ -1023,6 +1021,8 @@ bool MainWindow::predictTumor() {
     segTumorRenderer->setInputData(m_tumorMap);
     segTumorRenderer->setOpacity(0.8);
 
+    insertRenderer("tumor", tumorRenderer);
+
     return true;
 }
 
@@ -1031,7 +1031,7 @@ bool MainWindow::predictBACH() {
 
     auto generator = PatchGenerator::New();
     generator->setPatchSize(512, 512);
-    generator->setPatchLevel(3);
+    generator->setPatchLevel(4);
     generator->setInputData(0, m_image);
     generator->setInputData(1, m_tissue);
 
@@ -1162,9 +1162,10 @@ bool MainWindow::opacityTumor(int value) {
 }
 
 bool MainWindow::showImage() {
-    if (!renderer){
+    if(!hasRenderer("WSI")){
         return false;
     }else{
+        auto renderer = getRenderer("WSI");
         renderer->setDisabled(!renderer->isDisabled());
         return true;
     }
@@ -1200,7 +1201,7 @@ bool MainWindow::hideBackgroundClass() {
 }
 
 bool MainWindow::fixImage() {
-    if (!renderer){
+    if (!hasRenderer("WSI")){
         return false;
     }else{
         //stopComputationThread();
@@ -1208,6 +1209,38 @@ bool MainWindow::fixImage() {
         //startComputationThread();
         return false;
     }
+}
+
+void MainWindow::removeRenderer(std::string name) {
+    if(m_rendererList.count(name) == 0)
+        return;
+    auto renderer = m_rendererList[name];
+    getView(0)->removeRenderer(renderer);
+}
+
+void MainWindow::insertRenderer(std::string name, SharedPointer<Renderer> renderer) {
+    std::cout << "calling insert renderer" << std::endl;
+    if(!hasRenderer(name)) {
+        // Doesn't exist
+        getView(0)->addRenderer(renderer);
+    }
+    m_rendererList[name] = renderer;
+    std::cout << "finished insert renderer" << std::endl;
+}
+
+void MainWindow::removeAllRenderers() {
+    m_rendererList.clear();
+    getView(0)->removeAllRenderers();
+}
+
+bool MainWindow::hasRenderer(std::string name) {
+    return m_rendererList.count(name) > 0;
+}
+
+SharedPointer<Renderer> MainWindow::getRenderer(std::string name) {
+    if(!hasRenderer(name))
+        throw Exception("Renderer with name " + name + " does not exist");
+    return m_rendererList[name];
 }
 
 /*

@@ -63,13 +63,31 @@ class MainWindow : public Window {
         bool tissue_flag = false;
         std::string cwd;
 
+        /**
+         * Removes a named renderer from the view
+         * @param name
+         */
+        void removeRenderer(std::string name);
+        /**
+         * Insert a renderer into the view with a given name.
+         * If a renderer with that name already exist, replace it.
+         * @param name
+         */
+        void insertRenderer(std::string name, SharedPointer<Renderer> renderer);
+        /**
+         * Remove all current renderers
+         */
+        void removeAllRenderers();
+        bool hasRenderer(std::string name);
+        SharedPointer<Renderer> getRenderer(std::string name);
     private:
+        std::map<std::string, SharedPointer<Renderer>> m_rendererList;
         MainWindow();
+        SharedPointer<ImagePyramidRenderer> renderer;
         SharedPointer<HeatmapRenderer> bachRenderer;
         SharedPointer<HeatmapRenderer> heatmapRenderer;
         SharedPointer<HeatmapRenderer> tumorRenderer;
         SharedPointer<SegmentationRenderer> segRenderer;
-        SharedPointer<ImagePyramidRenderer> renderer;
         SharedPointer<TissueSegmentation> tissueSegmentation;
         SharedPointer<WholeSlideImageImporter> importer;
         SharedPointer<ImagePyramid> m_image;
