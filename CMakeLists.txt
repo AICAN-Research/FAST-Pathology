@@ -11,4 +11,4 @@ add_executable(fastPathology
     main.cpp
     MainWindow.cpp
     MainWindow.hpp)
-target_link_libraries(fastPathology ${FAST_LIBRARIES})
+target_link_libraries(fastPathology ${FAST_LIBRARIES} openslide) # nlohmann_json::nlohmann_json) # json)
