@@ -632,6 +632,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     } else if (someName == "tissue") {
         biggerTextBoxWidget_imageName->setDisabled(true);
     }
+    
 
     dynamicViewLayout = new QVBoxLayout;
     dynamicViewLayout->setAlignment(Qt::AlignTop);
