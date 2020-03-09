@@ -8,7 +8,6 @@
 #include <QObject>
 
 //#include "FAST/ProcessObject.hpp"
-#include <openslide/openslide.h>
 
 QT_BEGIN_NAMESPACE
 class QAction;

@@ -25,10 +25,8 @@
 #include<QPainter>
 #include<QFontMetrics>
 #include <iostream>
-#include<unistd.h>
 #include <algorithm>
 #include <vector>
-#include <openslide/openslide.h>
 #include <stdio.h>      /* printf */
 #include <math.h>       /* pow */
 #include <istream>
@@ -43,6 +41,7 @@
 #include<QLayoutItem>
 #include <QObject>
 #include <future> // wait for callback is finished
+#include <FAST/Utility.hpp>
 
 
 class openslide_get_property_names;
@@ -62,13 +61,10 @@ MainWindow::MainWindow() {
     // other stuff
     create_tmp_folder_file();
 
-    // check if Models folder exist, if not, create one -> platform assumes that this folder exists and contains all relevant models
+    // Create models folder platform assumes that this folder exists and contains all relevant models
     std::string dir_str;
     dir_str = cwd + "Models";
-    const char * paths = dir_str.c_str();
-    if (dirExists(paths) != 1) {
-        int aa = mkdir(paths, 0777);
-    }
+    createDirectories(dir_str);
 
     // changing color to the Qt background
     //mWidget->setStyleSheet("font-size: 16px; background: gray; color: white;");
@@ -589,7 +585,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     //currComboBox->clear();
     //currComboBox->setEditable(false);
 
-    if ((someName != "WSI") and (someName != "tissue") and (someName != "tumorSeg")) {
+    if ((someName != "WSI") && (someName != "tissue") && (someName != "tumorSeg")) {
         // get metadata of current model
         std::map<std::string, std::string> metadata = getModelMetadata(modelName);
         std::cout << "\n" << metadata["class_names"] << "\n classes \n";
@@ -630,7 +626,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
         opacitySlider->setDisabled(true);
         colorSetWidget->setDisabled(true);
         biggerTextBoxWidget_imageName->setDisabled(true);
-    } else if ((someName == "tissue") or (someName == "tumorSeg")) {
+    } else if ((someName == "tissue") || (someName == "tumorSeg")) {
         biggerTextBoxWidget_imageName->setDisabled(true);
     }
 
@@ -912,10 +908,13 @@ void MainWindow::create_tmp_folder_file() {
     dir_str = cwd + "tmp";
     const char * paths = dir_str.c_str();
     auto a = dirExists(paths);
+    /*
+    // TODO FIX
     if (a == 1) {
         int bb = rmdir(paths);
     }
     int aa = mkdir(paths, 0777);
+    */
 
     // create temporary file for writing and parsing, showing what has been done and what is available
     // for the View widget
@@ -933,11 +932,13 @@ void MainWindow::get_cwd() {
     char *buf;
     char *ptr;
 
+    /*
+    // TODO FIX
     size = pathconf(".", _PC_PATH_MAX);
 
     if ((buf = (char *) malloc((size_t) size)) != NULL)
         ptr = getcwd(buf, (size_t) size);
-
+        */
     cwd = ptr;
     std::string delimiter = "cmake-build-release";
     std::string delimiter2 = "cmake-build-debug";
@@ -989,7 +990,7 @@ void MainWindow::selectFile() {
 
     auto fileName = QFileDialog::getOpenFileName(
             mWidget,
-            "Open File", nullptr, "WSI Files (*.tiff *.tif *.svs, *.ndpi)"
+            "Open File", nullptr, "WSI Files (*.tiff *.tif *.svs *.ndpi)"
             );
 
     if(fileName == "")
@@ -1103,27 +1104,24 @@ void MainWindow::addModels() {
 
 
 std::string MainWindow::getWsiFormat() {
-    openslide_t* osr = openslide_open(filename.c_str());
-    //const char tmp = openslide_detect_vendor(osr); // <- didn't work...
-    return openslide_get_property_value(osr, "openslide.vendor");
+  
+    return m_image->getMetadata("openslide.vendor");
 }
 
 
 float MainWindow::getMagnificationLevel() {
     // read relevant metadata and store in list
-    std::cout << filename.c_str() << "\n hallo3";
-    openslide_t* osr = openslide_open(filename.c_str());
 
     cout << "\n hallo" << wsiFormat;
     float magnification_lvl = 0.0f;
     if ((wsiFormat == "generic-tiff")) {
         cout << "\n hallo2:";
-        int level_count = openslide_get_level_count(osr);
+        int level_count = m_image->getNrOfLevels();
         std::vector<float> downsample_for_each_level;
         for (int i = 0; i < level_count; i++) {
-            downsample_for_each_level.push_back(openslide_get_level_downsample(osr, i));
+            //downsample_for_each_level.push_back(openslide_get_level_downsample(osr, i)); // TODO FIX
         }
-        std::cout << "\n" << downsample_for_each_level[1] << "\n\n hallo";
+        //std::cout << "\n" << downsample_for_each_level[1] << "\n\n hallo";
 
         // assuming each 400X resolution correspond to 50000 cm, and thus 200x => 100000 cm ... (for .tiff format)
         // can predict which WSI resolution image is captured with, as some models is trained on 200x images
@@ -1133,7 +1131,7 @@ float MainWindow::getMagnificationLevel() {
             templateResVector.push_back(resFractionValue * ((float) i + 1));
         }
 
-        auto resolution = atof(openslide_get_property_value(osr, "tiff.XResolution"));
+        auto resolution = std::stof(m_image->getMetadata("tiff.XResolution"));
         std::cout << resolution << "hallais";
 
         // find closest value => get magnification level
@@ -1146,21 +1144,20 @@ float MainWindow::getMagnificationLevel() {
 
         std::cout << magnification_lvl << "halloen";
     } else if (wsiFormat == "aperio") {
-        magnification_lvl = atof(openslide_get_property_value(osr, "aperio.AppMag"));
+        magnification_lvl = std::stof(m_image->getMetadata("aperio.AppMag"));
     } else {  //"TODO: Make this more general, test different image formats to see how the magn_lvl metadata vary"
-        magnification_lvl = atof(openslide_get_property_value(osr, "aperio.AppMag"));
+        magnification_lvl = std::stof(m_image->getMetadata("aperio.AppMag"));
     }
     return magnification_lvl;
 }
 
 
 std::vector<float> MainWindow::getDownsamplingLevels() {
-    openslide_t* osr = openslide_open(filename.c_str());
-    int level_count = openslide_get_level_count(osr);
+    int level_count = m_image->getNrOfLevels();
 
     std::vector<float> downsample_for_each_level;
     for (int i=0; i<level_count; i++) {
-        downsample_for_each_level.push_back(openslide_get_level_downsample(osr, i));
+        //downsample_for_each_level.push_back(openslide_get_level_downsample(osr, i)); // TODO FIX
     }
     return downsample_for_each_level;
 }
@@ -1697,7 +1694,7 @@ bool MainWindow::opacityRenderer(int value, const std::string& someName) {
     if (!hasRenderer(someName)) {
         return false;
     }else{
-        if ((someName == "tissue") and (someName == "tumorSeg")) { // TODO: Make this more generic -> should recognize which renderer type automatically
+        if ((someName == "tissue") && (someName == "tumorSeg")) { // TODO: Make this more generic -> should recognize which renderer type automatically
             auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(getRenderer(someName));
             someRenderer->setOpacity((float) value / 10.0f);
             someRenderer->setModified(true);
@@ -1712,7 +1709,7 @@ bool MainWindow::opacityRenderer(int value, const std::string& someName) {
 
 
 bool MainWindow::hideChannel(const std::string& someName) {
-    if ((someName == "WSI") or (someName == "tissue")){
+    if ((someName == "WSI") || (someName == "tissue")){
         return false;
     }
     if (!hasRenderer(someName)) {
