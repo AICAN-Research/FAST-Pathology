@@ -89,7 +89,6 @@ class MainWindow : public Window {
         float magn_lvl;
         float getDownsamplingAtLevel();
 
-        int dirExists(const char *path);
         int mkdir(const char *path);
         int rmdir(const char *path);
 

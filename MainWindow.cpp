@@ -425,7 +425,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
         opacitySlider->setDisabled(true);
         colorSetWidget->setDisabled(true);
         biggerTextBoxWidget_imageName->setDisabled(true);
-    } else if ((someName == "tissue") II (someName == "tumorSeg")) {
+    } else if ((someName == "tissue") || (someName == "tumorSeg")) {
         biggerTextBoxWidget_imageName->setDisabled(true);
     }
 
@@ -692,7 +692,7 @@ void MainWindow::create_tmp_folder_file() {
     std::string dir_str;
     dir_str = cwd + "tmp";
     const char * paths = dir_str.c_str();
-    auto a = dirExists(paths);
+    auto a = QDir(paths).exists();
     if (a == 1) {
         int bb = rmdir(paths);
     }
@@ -738,12 +738,6 @@ void MainWindow::get_cwd() {
     // If found then erase it from string
         cwd.erase(pos2, delimiter2.length());
     }
-}
-
-
-int MainWindow::dirExists(const char *path)
-{
-    return QDir(path).exists();
 }
 
 int MainWindow::mkdir(const char *path)
