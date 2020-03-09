@@ -42,7 +42,7 @@ namespace fast {
     class Image;
     class Tensor;
     class View;
-    class segTumorRenderer;
+    //class segTumorRenderer;
 
 class MainWindow : public Window {
     FAST_OBJECT(MainWindow);
@@ -181,7 +181,7 @@ class MainWindow : public Window {
         //QWidget *viewWidget;
 
         //SharedPointer<View> view;
-        SharedPointer<SegmentationRenderer> segTumorRenderer;
+        //SharedPointer<SegmentationRenderer> segTumorRenderer;
 
         QAction *newAct{};
         //QWidget *topFiller;
