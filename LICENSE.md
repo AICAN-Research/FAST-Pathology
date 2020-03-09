@@ -1,6 +1,6 @@
 BSD 2-Clause License
 
-Copyright (c) 2020, SINTEF Digital, Health Research
+Copyright (c) 2020, SINTEF Digital, Health Research and Norwegian University of Science and Technology (NTNU)
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
