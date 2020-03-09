@@ -8,7 +8,6 @@
 #include <QObject>
 
 //#include "FAST/ProcessObject.hpp"
-#include <openslide/openslide.h>
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -26,9 +25,6 @@ class QStackedWidget;
 class QComboBox;
 class QStackedLayout;
 QT_END_NAMESPACE
-
-// Forward declare
-typedef struct _openslide openslide_t;
 
 namespace fast {
 
@@ -92,7 +88,10 @@ class MainWindow : public Window {
         float getMagnificationLevel();
         float magn_lvl;
         float getDownsamplingAtLevel();
+
         int dirExists(const char *path);
+        int mkdir(const char *path);
+        int rmdir(const char *path);
 
         uint channel_value;
 
@@ -104,7 +103,7 @@ class MainWindow : public Window {
         std::vector<float> getDownsamplingLevels();
         std::vector<std::string> split (std::string s, std::string delimiter);
 
-        std::map<std::string, std::string> metadata; // make metadata information a global variable
+        std::unordered_map<std::string, std::string> metadata; // make metadata information a global variable
         QList<QString> currentClassesInUse;
 
         QWidget *processWidget;
@@ -155,14 +154,7 @@ class MainWindow : public Window {
     private:
         std::map<std::string, SharedPointer<Renderer>> m_rendererList;
         MainWindow();
-        /*
-        //SharedPointer<ImagePyramidRenderer> renderer;
-        SharedPointer<HeatmapRenderer> bachRenderer;
-        SharedPointer<HeatmapRenderer> heatmapRenderer;
-        SharedPointer<HeatmapRenderer> tumorRenderer;
-        */
 
-        //SharedPointer<SegmentationRenderer> segRenderer;
         SharedPointer<TissueSegmentation> tissueSegmentation;
         SharedPointer<WholeSlideImageImporter> importer;
         SharedPointer<ImagePyramid> m_image;
@@ -171,27 +163,12 @@ class MainWindow : public Window {
         SharedPointer<Tensor> m_tumorMap_tensor;
         SharedPointer<Image> m_tumorMap;
         SharedPointer<Tensor> m_bachMap;
-        //SharedPointer<QWidget> processWidget;
-        //SharedPointer<View> view;
-        //SharedPointer<Window> view;
-        //SharedPointer<Window> mWidget;
         std::string filename;
-        //openslide_t* files;
-        //QWidget *processWidget;
-        //QWidget *viewWidget;
-
-        //SharedPointer<View> view;
-        //SharedPointer<SegmentationRenderer> segTumorRenderer;
 
         QAction *newAct{};
         //QWidget *topFiller;
         //QMenu *fileMenus{};
         QAction *exitAction{};
-
-        //void createMenu();
-        //void createHorizontalGroupBox();
-        //void createGridGroupBox();
-        //void createFormGroupBox();
 
         enum { NumGridRows = 3, NumButtons = 4 };
 

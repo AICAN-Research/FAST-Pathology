@@ -5,7 +5,6 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QSlider>
-#include <QMainWindow>
 #include <FAST/Data/ImagePyramid.hpp>
 #include <FAST/Data/Image.hpp>
 #include <FAST/Algorithms/TissueSegmentation/TissueSegmentation.hpp>
@@ -17,35 +16,26 @@
 #include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
 #include <FAST/Algorithms/NeuralNetwork/TensorToSegmentation.hpp>
 #include <string>
-#include<QtWidgets>
-#include<QWidget>
-#include<QFont>
-#include<QBoxLayout>
-#include<QToolBar>
-#include<QPainter>
-#include<QFontMetrics>
+#include <QtWidgets>
+#include <QWidget>
+#include <QFont>
+#include <QBoxLayout>
+#include <QToolBar>
+#include <QPainter>
 #include <iostream>
-#include<unistd.h>
 #include <algorithm>
 #include <vector>
-#include <openslide/openslide.h>
 #include <stdio.h>      /* printf */
 #include <math.h>       /* pow */
 #include <istream>
 #include <fstream>
-#include <sstream>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <QColorDialog>
 #include <QDir>
-#include<QLayoutItem>
+#include <QLayoutItem>
 #include <QObject>
 #include <future> // wait for callback is finished
-
-
-class openslide_get_property_names;
+#include <FAST/Utility.hpp>
 
 using namespace std;
 
@@ -62,13 +52,10 @@ MainWindow::MainWindow() {
     // other stuff
     create_tmp_folder_file();
 
-    // check if Models folder exist, if not, create one -> platform assumes that this folder exists and contains all relevant models
+    // Create models folder platform assumes that this folder exists and contains all relevant models
     std::string dir_str;
     dir_str = cwd + "Models";
-    const char * paths = dir_str.c_str();
-    if (dirExists(paths) != 1) {
-        int aa = mkdir(paths, 0777);
-    }
+    createDirectories(dir_str);
 
     // changing color to the Qt background
     //mWidget->setStyleSheet("font-size: 16px; background: gray; color: white;");
@@ -294,138 +281,12 @@ void MainWindow::createFileWidget() {
 
 void MainWindow::createViewWidget() {
 
-    /*
-    auto showHeatmapButton = new QPushButton(mWidget);
-    showHeatmapButton->setText("Toggle grade map");
-    //showHeatmapButton->setFixedWidth(200);
-    showHeatmapButton->setFixedHeight(50);
-    showHeatmapButton->setCheckable(true);
-    showHeatmapButton->setChecked(true);
-    //showHeatmapButton->setChecked(true);
-    QObject::connect(showHeatmapButton, &QPushButton::clicked, std::bind(&MainWindow::showHeatmap, this));
-
-    auto showTissueMaskButton = new QPushButton(mWidget);
-    showTissueMaskButton->setText("Toggle tissue mask");
-    //showTissueMaskButton->setFixedWidth(200);
-    showTissueMaskButton->setFixedHeight(50);
-    showTissueMaskButton->setCheckable(true);
-    showTissueMaskButton->setChecked(true);
-    QObject::connect(showTissueMaskButton, &QPushButton::clicked, std::bind(&MainWindow::toggleTissueMask, this));
-
-    auto showBachMaskButton = new QPushButton(mWidget);
-    showBachMaskButton->setText("Toggle bach map");
-    //showBachMaskButton->setFixedWidth(200);
-    showBachMaskButton->setFixedHeight(50);
-    showBachMaskButton->setCheckable(true);
-    showBachMaskButton->setChecked(true);
-    QObject::connect(showBachMaskButton, &QPushButton::clicked, std::bind(&MainWindow::showBachMap, this));
-
-    auto showImageButton = new QPushButton(mWidget);
-    showImageButton->setText("Toggle WSI");
-    //showImageButton->setFixedWidth(200);
-    showImageButton->setFixedHeight(50);
-    showImageButton->setCheckable(true);
-    showImageButton->setChecked(true);
-    QObject::connect(showImageButton, &QPushButton::clicked, std::bind(&MainWindow::showImage, this));
-
-    auto showTumorButton = new QPushButton(mWidget);
-    showTumorButton->setText("Toggle tumor map");
-    //showTumorButton->setFixedWidth(200);
-    showTumorButton->setFixedHeight(50);
-    showTumorButton->setCheckable(true);
-    showTumorButton->setChecked(true);
-    QObject::connect(showTumorButton, &QPushButton::clicked, std::bind(&MainWindow::showTumorMask, this));
-
-    auto hideBackgroundButton = new QPushButton(mWidget);
-    hideBackgroundButton->setText("Toggle background class");
-    //hideBackgroundButton->setFixedWidth(200);
-    hideBackgroundButton->setFixedHeight(50);
-    hideBackgroundButton->setCheckable(true);
-    hideBackgroundButton->setChecked(true);
-    QObject::connect(hideBackgroundButton, &QPushButton::clicked, std::bind(&MainWindow::hideBackgroundClass, this));
-
-    auto opacityTissueSlider = new QSlider(Qt::Horizontal, mWidget);
-    opacityTissueSlider->setFixedWidth(150);
-    opacityTissueSlider->setMinimum(0);
-    opacityTissueSlider->setMaximum(10);
-    //opacityTissueSlider->setText("Tissue");
-    opacityTissueSlider->setValue(4);
-    opacityTissueSlider->setTickInterval(1);
-    QObject::connect(opacityTissueSlider, &QSlider::valueChanged, std::bind(&MainWindow::opacityTissue, this, std::placeholders::_1));
-
-    auto opacityHeatmapSlider = new QSlider(Qt::Horizontal, mWidget);
-    opacityHeatmapSlider->setFixedWidth(150);
-    opacityHeatmapSlider->setMaximum(0);
-    opacityHeatmapSlider->setMaximum(10);
-    opacityHeatmapSlider->setValue(6);
-    opacityHeatmapSlider->setTickInterval(1);
-    QObject::connect(opacityHeatmapSlider, &QSlider::valueChanged, std::bind(&MainWindow::opacityHeatmap, this, std::placeholders::_1));
-
-    auto opacityTumorSlider = new QSlider(Qt::Horizontal, mWidget);
-    opacityTumorSlider->setFixedWidth(150);
-    opacityTumorSlider->setMaximum(0);
-    opacityTumorSlider->setMaximum(10);
-    opacityTumorSlider->setValue(6);
-    opacityTumorSlider->setTickInterval(1);
-    QObject::connect(opacityTumorSlider, &QSlider::valueChanged, std::bind(&MainWindow::opacityTumor, this, std::placeholders::_1));
-
-    auto label_tumor = new QLabel();
-    label_tumor->setText("Tumor: ");
-    label_tumor->setFixedWidth(50);
-    auto smallTextBox_tumor = new QHBoxLayout;
-    smallTextBox_tumor->addWidget(label_tumor);
-    smallTextBox_tumor->addWidget(opacityTumorSlider);
-    auto smallTextBoxWidget_tumor = new QWidget;
-    smallTextBoxWidget_tumor->setFixedHeight(50);
-    smallTextBoxWidget_tumor->setLayout(smallTextBox_tumor);
-
-    auto label_tissue = new QLabel();
-    label_tissue->setText("Tissue: ");
-    label_tissue->setFixedWidth(50);
-    auto smallTextBox_tissue = new QHBoxLayout;
-    smallTextBox_tissue->addWidget(label_tissue);
-    smallTextBox_tissue->addWidget(opacityTissueSlider);
-    auto smallTextBoxWidget_tissue = new QWidget;
-    smallTextBoxWidget_tissue->setFixedHeight(50);
-    smallTextBoxWidget_tissue->setLayout(smallTextBox_tissue);
-
-    auto label_grade = new QLabel();
-    label_grade->setText("Grade: ");
-    label_grade->setFixedWidth(50);
-    auto smallTextBox_grade = new QHBoxLayout;
-    smallTextBox_grade->addWidget(label_grade);
-    smallTextBox_grade->addWidget(opacityHeatmapSlider);
-    auto smallTextBoxWidget_grade = new QWidget;
-    smallTextBoxWidget_grade->setFixedHeight(50);
-    smallTextBoxWidget_grade->setLayout(smallTextBox_grade);
-    */
-
-
-    /*
-    // make QColorDialog for manually setting color to different classes
-    auto colorSetWidget = new QColorDialog;
-    colorSetWidget->setOption(QColorDialog::DontUseNativeDialog, true);
-     */
-
-    //viewLayout = new QVBoxLayout;
-    //viewLayout->setAlignment(Qt::AlignTop);
-
-    //viewWidget = new QWidget;
-    //viewWidget->setLayout(viewLayout);
-    //viewWidget->setFixedWidth(200);
-
-
-    //// :)
     viewLayout = new QVBoxLayout;
     viewLayout->setAlignment(Qt::AlignTop);
 
     viewWidget = new QWidget;
     viewWidget->setLayout(viewLayout);
     //viewWidget->setFixedWidth(200);
-
-    // create dynamic widget
-    //createDynamicViewWidget(std::vector<bool>{true, true, true});
-
 
     // ComboBox in view section to set which image object to change
     // /*
@@ -438,27 +299,13 @@ void MainWindow::createViewWidget() {
 
     auto wsiPageWidget = new QWidget;
 
-
     stackedLayout = new QStackedLayout;
-    //stackedLayout->addWidget(curr1PageWidget);
-    //stackedLayout->addWidget(curr1PageWidget);
-    //stackedLayout->addWidget(dynamicViewWidget);
-    //stackedLayout->addWidget(dynamicViewWidget);
-    //stackedLayout->addWidget(dynamicViewWidget);
 
     auto stackedWidget = new QWidget;
     stackedWidget->setLayout(stackedLayout);
 
-    //auto comboBoxLayout = new QVBoxLayout;
-    //comboBoxLayout->addLayout(stackedLayout); //addLayout(stackedLayout);
-
     pageComboBox = new QComboBox;
     pageComboBox->setFixedWidth(150);
-    //pageComboBox->addItem(tr("WSI"));
-    //pageComboBox->addItem(tr("Tissue"));
-    //pageComboBox->addItem(tr("Tumor"));
-    //pageComboBox->addItem(tr("Grade"));
-    //pageComboBox->addItem(tr("BACH"));
     connect(pageComboBox, SIGNAL(activated(int)), stackedLayout, SLOT(setCurrentIndex(int)));
 
     auto imageNameTexts = new QLabel();
@@ -474,35 +321,7 @@ void MainWindow::createViewWidget() {
     viewLayout->insertWidget(0, smallTextBoxWidget_imageName);
     viewLayout->setAlignment(Qt::AlignTop);
 
-    // add stuff to QComboBox
-    //createDynamicViewWidget("WSI");
-    //createDynamicViewWidget("tissue");
-    //createDynamicViewWidget("tumor");
-    //createDynamicViewWidget("tumor");
-
-    //viewLayout->insertWidget(1, showImageButton);
-    viewLayout->insertWidget(1, stackedWidget); //stackedWidget);//dynamicViewWidget);
-
-    //viewLayout->addWidget(fixImageButton);
-
-
-    // */
-
-    /*
-    auto fixTumorSegButton = new QPushButton(mWidget);
-    fixTumorSegButton->setText("Fix tumor segment");
-    fixTumorSegButton->setFixedWidth(200);
-    fixTumorSegButton->setFixedHeight(50);
-    QObject::connect(fixTumorSegButton, &QPushButton::clicked, std::bind(&MainWindow::fixTumorSegment, this));
-    */
-
-    /*
-    auto saveTumorPredButton = new QPushButton(mWidget);
-    saveTumorPredButton->setText("Save tumor pred");
-    saveTumorPredButton->setFixedWidth(200);
-    saveTumorPredButton->setFixedHeight(50);
-    QObject::connect(saveTumorPredButton, &QPushButton::clicked, std::bind(&MainWindow::saveTumorPred, this));
-    */
+    viewLayout->insertWidget(1, stackedWidget);
 
 }
 
@@ -561,35 +380,11 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     toggleShowButton->setChecked(true);
     //showHeatmapButton->setChecked(true);
     QObject::connect(toggleShowButton, &QPushButton::clicked, std::bind(&MainWindow::hideChannel, this, someName));
-    //imageButton->setDisabled(visible[0]);
 
-    //    connect(pageComboBox, SIGNAL(activated(int)), stackedLayout, SLOT(setCurrentIndex(int)));
-
-    /*
-    auto pageWidget1 = new QLabel();
-    pageWidget1->setText("background");
-    auto pageWidget2 = new QLabel();
-    pageWidget2->setText("tumor");
-     */
-
-    //auto currStackedLayout = new QStackedLayout;
-    //currStackedLayout->insertWidget(0, pageWidget1);
-    //currStackedLayout->insertWidget(1, pageWidget2);
-    //currStackedLayout->insertWidget(0, )
-    //currStackedLayout->insertWidget(0, );
-
-    //std::cout << "\n hallo her er vi" << someClasses << "\n sup";
-    //QList myList = QList::fromVector(QVector::fromStdVector(someVector));
-
-    //QStringList someClasses = {"Background", "Tumor"};
 
     auto currComboBox = new QComboBox;
-    //currComboBox->setFixedWidth(150);
-    //currComboBox->deleteLater();
-    //currComboBox->clear();
-    //currComboBox->setEditable(false);
 
-    if ((someName != "WSI") and (someName != "tissue") and (someName != "tumorSeg")) {
+    if ((someName != "WSI") && (someName != "tissue") && (someName != "tumorSeg")) {
         // get metadata of current model
         std::map<std::string, std::string> metadata = getModelMetadata(modelName);
         std::cout << "\n" << metadata["class_names"] << "\n classes \n";
@@ -630,7 +425,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
         opacitySlider->setDisabled(true);
         colorSetWidget->setDisabled(true);
         biggerTextBoxWidget_imageName->setDisabled(true);
-    } else if ((someName == "tissue") or (someName == "tumorSeg")) {
+    } else if ((someName == "tissue") II (someName == "tumorSeg")) {
         biggerTextBoxWidget_imageName->setDisabled(true);
     }
 
@@ -653,20 +448,6 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     pageComboBox->addItem(tr(tmpSomeName.c_str()));
     stackedLayout->addWidget(dynamicViewWidget);
 
-    /*
-    dynamicViewLayout->insertWidget(0, showImageButton);
-    dynamicViewLayout->insertWidget(1, showTissueMaskButton);
-    dynamicViewLayout->insertWidget(2, showTumorButton);
-    dynamicViewLayout->insertWidget(3, showHeatmapButton);
-    dynamicViewLayout->insertWidget(4, showBachMaskButton);
-    dynamicViewLayout->insertWidget(5, smallTextBoxWidget_tissue);
-    dynamicViewLayout->insertWidget(6, smallTextBoxWidget_tumor);
-    dynamicViewLayout->insertWidget(7, smallTextBoxWidget_grade);
-    dynamicViewLayout->insertWidget(8, colorSetWidget);
-    dynamicViewLayout->insertWidget(9, hideBackgroundButton);
-     */
-
-    std::cout << "\n vi kom lengre 2 \n";
 }
 
 
@@ -915,7 +696,7 @@ void MainWindow::create_tmp_folder_file() {
     if (a == 1) {
         int bb = rmdir(paths);
     }
-    int aa = mkdir(paths, 0777);
+    int aa = mkdir(paths);  //mkdir(paths, 0777);
 
     // create temporary file for writing and parsing, showing what has been done and what is available
     // for the View widget
@@ -933,6 +714,7 @@ void MainWindow::get_cwd() {
     char *buf;
     char *ptr;
 
+    // TODO FIX
     size = pathconf(".", _PC_PATH_MAX);
 
     if ((buf = (char *) malloc((size_t) size)) != NULL)
@@ -961,16 +743,18 @@ void MainWindow::get_cwd() {
 
 int MainWindow::dirExists(const char *path)
 {
-    struct stat info;
-
-    if(stat( path, &info ) != 0)
-        return 0;
-    else if(info.st_mode & S_IFDIR)
-        return 1;
-    else
-        return 0;
+    return QDir(path).exists();
 }
 
+int MainWindow::mkdir(const char *path)
+{
+    return QDir().mkdir(path);
+}
+
+int MainWindow::rmdir(const char *path)
+{
+    return QDir(path).removeRecursively();
+}
 
 void MainWindow::drawHist() {
     int aa = 2;
@@ -989,7 +773,7 @@ void MainWindow::selectFile() {
 
     auto fileName = QFileDialog::getOpenFileName(
             mWidget,
-            "Open File", nullptr, "WSI Files (*.tiff *.tif *.svs, *.ndpi)"
+            "Open File", nullptr, "WSI Files (*.tiff *.tif *.svs *.ndpi)"
             );
 
     if(fileName == "")
@@ -1004,7 +788,9 @@ void MainWindow::selectFile() {
     auto importer = WholeSlideImageImporter::New();
     importer->setFilename(fileName.toStdString());
     m_image = importer->updateAndGetOutputData<ImagePyramid>();
-    //renderer->setInputData(m_image);
+
+    // get metadata
+    metadata = m_image->getMetadata();
 
     auto renderer = ImagePyramidRenderer::New();
     renderer->setInputData(m_image);
@@ -1014,8 +800,8 @@ void MainWindow::selectFile() {
     insertRenderer("WSI", renderer);
     getView(0)->reinitialize(); // Must call this after removing all renderers
 
-    wsiFormat = getWsiFormat();
-    std::cout << "\n" << wsiFormat << "\nsjokolade";
+    // get WSI format
+    wsiFormat = metadata["openslide.vendor"];
 
     // get magnification level of current WSI
     magn_lvl = getMagnificationLevel();
@@ -1102,28 +888,13 @@ void MainWindow::addModels() {
 }
 
 
-std::string MainWindow::getWsiFormat() {
-    openslide_t* osr = openslide_open(filename.c_str());
-    //const char tmp = openslide_detect_vendor(osr); // <- didn't work...
-    return openslide_get_property_value(osr, "openslide.vendor");
-}
-
-
 float MainWindow::getMagnificationLevel() {
-    // read relevant metadata and store in list
-    std::cout << filename.c_str() << "\n hallo3";
-    openslide_t* osr = openslide_open(filename.c_str());
 
-    cout << "\n hallo" << wsiFormat;
     float magnification_lvl = 0.0f;
+
     if ((wsiFormat == "generic-tiff")) {
-        cout << "\n hallo2:";
-        int level_count = openslide_get_level_count(osr);
-        std::vector<float> downsample_for_each_level;
-        for (int i = 0; i < level_count; i++) {
-            downsample_for_each_level.push_back(openslide_get_level_downsample(osr, i));
-        }
-        std::cout << "\n" << downsample_for_each_level[1] << "\n\n hallo";
+
+        int level_count = m_image->getNrOfLevels(); //(int)stof(metadata["openslide.level-count"]);
 
         // assuming each 400X resolution correspond to 50000 cm, and thus 200x => 100000 cm ... (for .tiff format)
         // can predict which WSI resolution image is captured with, as some models is trained on 200x images
@@ -1133,8 +904,7 @@ float MainWindow::getMagnificationLevel() {
             templateResVector.push_back(resFractionValue * ((float) i + 1));
         }
 
-        auto resolution = atof(openslide_get_property_value(osr, "tiff.XResolution"));
-        std::cout << resolution << "hallais";
+        auto resolution = std::stof(m_image->getMetadata("tiff.XResolution")); //(int)stof(metadata["tiff.XResolution"]);
 
         // find closest value => get magnification level
         auto i = min_element(begin(templateResVector), end(templateResVector), [=](int x, int y) {
@@ -1144,30 +914,13 @@ float MainWindow::getMagnificationLevel() {
 
         magnification_lvl = 40.0f / pow(2.0f, location);
 
-        std::cout << magnification_lvl << "halloen";
     } else if (wsiFormat == "aperio") {
-        magnification_lvl = atof(openslide_get_property_value(osr, "aperio.AppMag"));
+        magnification_lvl = std::stof(metadata["aperio.AppMag"]); //atof(openslide_get_property_value(osr, "aperio.AppMag"));
     } else {  //"TODO: Make this more general, test different image formats to see how the magn_lvl metadata vary"
-        magnification_lvl = atof(openslide_get_property_value(osr, "aperio.AppMag"));
+        std::cout << "\n aperio test" << metadata["aperio.AppMag"] << "\n apps";
+        magnification_lvl = std::stof(metadata["aperio.AppMag"]);
     }
     return magnification_lvl;
-}
-
-
-std::vector<float> MainWindow::getDownsamplingLevels() {
-    openslide_t* osr = openslide_open(filename.c_str());
-    int level_count = openslide_get_level_count(osr);
-
-    std::vector<float> downsample_for_each_level;
-    for (int i=0; i<level_count; i++) {
-        downsample_for_each_level.push_back(openslide_get_level_downsample(osr, i));
-    }
-    return downsample_for_each_level;
-}
-
-
-float MainWindow::getDownsamplingAtLevel(int value) {
-    return getDownsamplingLevels()[value];
 }
 
 
@@ -1207,16 +960,16 @@ bool MainWindow::patchClassifier(std::string modelName) {
     std::cout << "\n vi kom lengre 2.5 \n";
 
     // read model metadata (txtfile)
-    std::map<std::string, std::string> metadata = getModelMetadata(modelName);
+    std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
 
-    if (!hasRenderer(metadata["name"])) { // only run analysis if it has not been ran previously on current WSI
+    if (!hasRenderer(modelMetadata["name"])) { // only run analysis if it has not been ran previously on current WSI
 
         //auto tmpRenderer = getRenderer(metadata["name"]);
 
         std::cout << "\n vi kom lengre 3 \n";
 
         // based on predicted magnification level of WSI, set magnificiation level for optimal input to model based on predicted resolution of WSI
-        int patch_lvl_model = (int) (std::log(magn_lvl / (float)std::stoi(metadata["magnification_level"])) / std::log(std::round(getDownsamplingAtLevel(1))));
+        int patch_lvl_model = (int) (std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) / std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
 
         std::cout << "\n vi kom lengre 4 \n";
 
@@ -1227,7 +980,7 @@ bool MainWindow::patchClassifier(std::string modelName) {
         std::cout << "\n vi kom lengre 5 \n";
 
         auto generator = PatchGenerator::New();
-        generator->setPatchSize(std::stoi(metadata["input_img_size_y"]), std::stoi(metadata["input_img_size_x"]));
+        generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
         generator->setPatchLevel(patch_lvl_model);
         generator->setInputData(0, m_image);
         generator->setInputData(1, m_tissue);
@@ -1235,7 +988,7 @@ bool MainWindow::patchClassifier(std::string modelName) {
         std::cout << "\n vi kom lengre 6 \n";
 
         /*
-        if (metadata["name"] == "tumor"){
+        if (modelMetadata["name"] == "tumor"){
             generator->setInputData(1, m_tissue);
         }else{
             if (m_tumorMap)
@@ -1248,14 +1001,14 @@ bool MainWindow::patchClassifier(std::string modelName) {
 
         auto batchgen = ImageToBatchGenerator::New();
         batchgen->setInputConnection(generator->getOutputPort());
-        batchgen->setMaxBatchSize(std::stoi(metadata["batch_process"])); // set 256 for testing stuff (tumor -> annotation, then grade from tumor segment)
+        batchgen->setMaxBatchSize(std::stoi(modelMetadata["batch_process"])); // set 256 for testing stuff (tumor -> annotation, then grade from tumor segment)
 
         auto network = NeuralNetwork::New();
-        network->setInputNode(0, metadata["input_node"], NodeType::IMAGE, TensorShape({std::stoi(metadata["batch_size"]), std::stoi(metadata["input_img_size_y"]), std::stoi(metadata["input_img_size_x"]), std::stoi(metadata["nb_channels"])})); //{1, size, size, 3}
-        network->setOutputNode(0, metadata["output_node"], NodeType::IMAGE, TensorShape({std::stoi(metadata["batch_size"]), std::stoi(metadata["input_img_size_y"]), std::stoi(metadata["input_img_size_y"]), std::stoi(metadata["nb_channels"])})); //{1, size, size, 2}
+        network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape({std::stoi(modelMetadata["batch_size"]), std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]), std::stoi(modelMetadata["nb_channels"])})); //{1, size, size, 3}
+        network->setOutputNode(0, modelMetadata["output_node"], NodeType::IMAGE, TensorShape({std::stoi(modelMetadata["batch_size"]), std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["nb_channels"])})); //{1, size, size, 2}
         network->load(cwd + "Models/" + modelName + ".pb");
         network->setInputConnection(batchgen->getOutputPort());
-        vector scale_factor = split(metadata["scale_factor"], "/"); // get scale factor from metadata
+        vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
         network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
         //network->setInferenceEngine("TensorFlowCPU");
 
@@ -1269,21 +1022,21 @@ bool MainWindow::patchClassifier(std::string modelName) {
 
         // define renderer from metadata
         auto heatmapRenderer = HeatmapRenderer::New();
-        vector<string> colors = split(metadata["class_colors"], ";");
-        for (int i = 0; i < std::stoi(metadata["nb_classes"]); i++) {
+        vector<string> colors = split(modelMetadata["class_colors"], ";");
+        for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
             vector<string> rgb = split(colors[i], ",");
             heatmapRenderer->setChannelColor(i, Color((float)std::stoi(rgb[0]) / 255.0f, (float)std::stoi(rgb[1]) / 255.0f, (float)std::stoi(rgb[2]) / 255.0f));
         }
-        heatmapRenderer->setInterpolation(std::stoi(metadata["interpolation"].c_str()));
+        heatmapRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
         heatmapRenderer->setInputConnection(port);
         //heatmapRenderer->update();
 
-        insertRenderer(metadata["name"], heatmapRenderer);
+        insertRenderer(modelMetadata["name"], heatmapRenderer);
 
         std::cout << "\n vi kom lengre 7 \n";
 
         // now make it possible to edit prediction in the View Widget
-        createDynamicViewWidget(metadata["name"], modelName);
+        createDynamicViewWidget(modelMetadata["name"], modelName);
 
         std::cout << "\n vi kom lengre 8 \n";
 
@@ -1292,7 +1045,7 @@ bool MainWindow::patchClassifier(std::string modelName) {
         // test
         //usleep(5);
         std::cout << "\n vi kom lengre 11 \n";
-        if (metadata["name"] == "tumor") {
+        if (modelMetadata["name"] == "tumor") {
             std::cout << "\n vi kom lengre 9 \n";
             stitcher->update();
             std::cout << "\n vi kom lengre 10 \n";
@@ -1328,221 +1081,6 @@ bool MainWindow::patchClassifier(std::string modelName) {
             createDynamicViewWidget("tumorSeg", modelName);
         }
     }
-}
-
-
-bool MainWindow::predictGrade() {
-
-    // define renderer
-    auto heatmapRenderer = HeatmapRenderer::New();
-    heatmapRenderer->setChannelColor(0, Color::Blue());
-    heatmapRenderer->setInterpolation(false);
-    heatmapRenderer->setChannelColor(1, Color(50.0f/255.0f, 205.0f/255.0f, 50.0f/255.0f));
-    heatmapRenderer->setChannelColor(2, Color(139.0f/255.0f, 0.0f, 0.0f));
-
-    // model chosen
-    std::string modelName = "bc_grade_model_3_grades_10x_512";
-
-    // read model metadata (txtfile)
-    std::map<std::string, std::string> metadata = getModelMetadata(modelName);
-
-    // based on predicted magnification level of WSI, set magnificiation level for optimal input to model based on predicted resolution of WSI
-    int patch_lvl_model = (int) (std::log(magn_lvl / (float)std::stoi(metadata["magnification_level"])) / std::log(std::round(getDownsamplingAtLevel(1))));
-
-    // segment tissue
-    segmentTissue();
-
-    auto generator = PatchGenerator::New();
-    generator->setPatchSize(std::stoi(metadata["input_img_size_y"]), std::stoi(metadata["input_img_size_x"]));
-    generator->setPatchLevel(patch_lvl_model);
-    generator->setInputData(0, m_image);
-    generator->setInputData(1, m_tissue);
-    hideTissueMask(true);
-
-    auto batchgen = ImageToBatchGenerator::New();
-    batchgen->setInputConnection(generator->getOutputPort());
-    batchgen->setMaxBatchSize(std::stoi(metadata["batch_process"]));
-
-    auto network = NeuralNetwork::New();
-    network->setInputNode(0, metadata["input_node"], NodeType::IMAGE, TensorShape({std::stoi(metadata["batch_size"]), std::stoi(metadata["input_img_size_y"]), std::stoi(metadata["input_img_size_x"]), std::stoi(metadata["nb_channels"])})); //{1, size, size, 3}
-    network->setOutputNode(0, metadata["output_node"], NodeType::IMAGE, TensorShape({std::stoi(metadata["batch_size"]), std::stoi(metadata["input_img_size_y"]), std::stoi(metadata["input_img_size_y"]), std::stoi(metadata["nb_channels"])})); //{1, size, size, 2}
-    network->load(cwd + "Models/" + modelName + ".pb");
-    network->setInputConnection(batchgen->getOutputPort());
-    vector scale_factor = split(metadata["scale_factor"], "/"); // get scale factor from metadata
-    network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
-    //network->setInferenceEngine("TensorFlowCPU");
-
-    auto stitcher = PatchStitcher::New();
-    stitcher->setInputConnection(network->getOutputPort());
-
-    auto port = stitcher->getOutputPort();
-    //stitcher->update();
-    //m_gradeMap = port->getNextFrame<Tensor>();
-
-    /*
-    heatmapRenderer = HeatmapRenderer::New();  // TODO: Fix *Cannot make QOpenGLContext current in a different thread*
-     */
-    vector<string> colors = split(metadata["class_colors"], ";");
-    for (int i = 0; i < std::stoi(metadata["nb_classes"]); i++) {
-        vector<string> rgb = split(colors[i], ",");
-        heatmapRenderer->setChannelColor(i, Color((float)std::stoi(rgb[0]) / 255.0f, (float)std::stoi(rgb[1]) / 255.0f, (float)std::stoi(rgb[2]) / 255.0f));
-    }
-    heatmapRenderer->setInterpolation(std::stoi(metadata["interpolation"].c_str()));
-    heatmapRenderer->setInputConnection(port);
-    insertRenderer("grade", heatmapRenderer);
-
-    //auto view = mWidget->getViews()[0];
-    //view->addRenderer(heatmapRenderer);
-
-    return true;
-}
-
-
-bool MainWindow::predictTumor() {
-
-    // define renderer
-    auto tumorRenderer = HeatmapRenderer::New();
-    tumorRenderer->setChannelColor(0, Color::Blue());
-    tumorRenderer->setInterpolation(false);
-    //heatmapRenderer->setChannelColor(1, Color(50.0f/255.0f, 205.0f/255.0f, 50.0f/255.0f));
-    tumorRenderer->setChannelColor(1, Color(139.0f/255.0f, 0.0f, 0.0f));
-
-    // model chosen
-    std::string modelName = "tumor_classify_model_20x_299";
-
-    // read model metadata (txtfile)
-    std::map<std::string, std::string> metadata = getModelMetadata(modelName);
-
-    // based on predicted magnification level of WSI, set magnificiation level for optimal input to model based on predicted resolution of WSI
-    int patch_lvl_model = (int) (std::log(magn_lvl / (float)std::stoi(metadata["magnification_level"])) / std::log(std::round(getDownsamplingAtLevel(1))));
-
-    // segment tissue
-    segmentTissue();
-
-    auto generator = PatchGenerator::New();
-    generator->setPatchSize(std::stoi(metadata["input_img_size_y"]), std::stoi(metadata["input_img_size_x"]));
-    generator->setPatchLevel(patch_lvl_model);
-    generator->setInputData(0, m_image);
-    generator->setInputData(1, m_tissue);
-    hideTissueMask(true);
-
-    auto batchgen = ImageToBatchGenerator::New();
-    batchgen->setInputConnection(generator->getOutputPort());
-    batchgen->setMaxBatchSize(std::stoi(metadata["batch_process"]));
-
-    auto network = NeuralNetwork::New();
-    network->setInputNode(0, metadata["input_node"], NodeType::IMAGE, TensorShape({std::stoi(metadata["batch_size"]), std::stoi(metadata["input_img_size_y"]), std::stoi(metadata["input_img_size_x"]), std::stoi(metadata["nb_channels"])})); //{1, size, size, 3}
-    network->setOutputNode(0, metadata["output_node"], NodeType::IMAGE, TensorShape({std::stoi(metadata["batch_size"]), std::stoi(metadata["input_img_size_y"]), std::stoi(metadata["input_img_size_y"]), std::stoi(metadata["nb_channels"])})); //{1, size, size, 2}
-    network->load(cwd + "Models/" + modelName + ".pb");
-    network->setInputConnection(batchgen->getOutputPort());
-    vector scale_factor = split(metadata["scale_factor"], "/"); // get scale factor from metadata
-    network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
-    //network->setInferenceEngine("TensorFlowCPU");
-
-    auto stitcher = PatchStitcher::New();
-    stitcher->setInputConnection(network->getOutputPort());
-
-    auto port = stitcher->getOutputPort();
-    stitcher->update();
-    m_tumorMap_tensor = port->getNextFrame<Tensor>();
-
-    /*
-    heatmapRenderer = HeatmapRenderer::New();  // TODO: Fix *Cannot make QOpenGLContext current in a different thread*
-     */
-    vector<string> colors = split(metadata["class_colors"], ";");
-    for (int i = 0; i < std::stoi(metadata["nb_classes"]); i++) {
-        vector<string> rgb = split(colors[i], ",");
-        tumorRenderer->setChannelColor(i, Color((float)std::stoi(rgb[0]) / 255.0f, (float)std::stoi(rgb[1]) / 255.0f, (float)std::stoi(rgb[2]) / 255.0f));
-    }
-    tumorRenderer->setInterpolation(std::stoi(metadata["interpolation"].c_str()));
-    tumorRenderer->setInputConnection(port);
-
-    auto tmp = TensorToSegmentation::New();
-    tmp->setInputData(m_tumorMap_tensor);
-
-    m_tumorMap = tmp->updateAndGetOutputData<Image>();
-
-    auto segTumorRenderer = SegmentationRenderer::New();
-    segTumorRenderer->setOpacity(0.4);
-    segTumorRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0/255.0f, 0.0f, 0.0f));
-    segTumorRenderer->setColor(Segmentation::LABEL_BACKGROUND, Color(0.0f, 255.0f/255.0f, 0.0f));
-    segTumorRenderer->setInputData(m_tumorMap);
-
-    insertRenderer("tumor", tumorRenderer);
-    insertRenderer("tumorSeg", segTumorRenderer);
-
-    //auto view = mWidget->getViews()[0]; // TODO: Apparently, adding renderer here isn't sufficient for tumorRenderer(?). Also affects heatmapRenderer for whatever reason?
-    //view->addRenderer(tumorRenderer);
-
-    return true;
-}
-
-
-bool MainWindow::predictBACH() {
-
-    // define renderer
-    auto bachRenderer = HeatmapRenderer::New();
-    bachRenderer->setChannelColor(0, Color::Blue());
-    bachRenderer->setInterpolation(false);
-    //heatmapRenderer->setChannelColor(1, Color(50.0f/255.0f, 205.0f/255.0f, 50.0f/255.0f));
-    bachRenderer->setChannelColor(1, Color::Green());
-    bachRenderer->setChannelColor(2, Color::Red());
-    bachRenderer->setChannelColor(3, Color::Yellow());
-
-    // model chosen
-    std::string modelName = "inception_v3_bach_model";
-
-    // read model metadata (txtfile)
-    std::map<std::string, std::string> metadata = getModelMetadata(modelName);
-
-    // based on predicted magnification level of WSI, set magnificiation level for optimal input to model based on predicted resolution of WSI
-    int patch_lvl_model = (int) (std::log(magn_lvl / (float)std::stoi(metadata["magnification_level"])) / std::log(std::round(getDownsamplingAtLevel(1))));
-
-    // segment tissue
-    segmentTissue();
-
-    auto generator = PatchGenerator::New();
-    generator->setPatchSize(std::stoi(metadata["input_img_size_y"]), std::stoi(metadata["input_img_size_x"]));
-    generator->setPatchLevel(patch_lvl_model);
-    generator->setInputData(0, m_image);
-    generator->setInputData(1, m_tissue);
-    hideTissueMask(true);
-
-    auto batchgen = ImageToBatchGenerator::New();
-    batchgen->setInputConnection(generator->getOutputPort());
-    batchgen->setMaxBatchSize(std::stoi(metadata["batch_process"]));
-
-    auto network = NeuralNetwork::New();
-    network->setInputNode(0, metadata["input_node"], NodeType::IMAGE, TensorShape({std::stoi(metadata["batch_size"]), std::stoi(metadata["input_img_size_y"]), std::stoi(metadata["input_img_size_x"]), std::stoi(metadata["nb_channels"])})); //{1, size, size, 3}
-    network->setOutputNode(0, metadata["output_node"], NodeType::IMAGE, TensorShape({std::stoi(metadata["batch_size"]), std::stoi(metadata["input_img_size_y"]), std::stoi(metadata["input_img_size_y"]), std::stoi(metadata["nb_classes"])})); //{1, size, size, 2}
-    network->load(cwd + "Models/" + modelName + ".pb");
-    network->setInputConnection(batchgen->getOutputPort());
-    vector scale_factor = split(metadata["scale_factor"], "/"); // get scale factor from metadata
-    network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
-    //network->setInferenceEngine("TensorFlowCPU");
-
-    /*
-    heatmapRenderer = HeatmapRenderer::New();  // TODO: Fix *Cannot make QOpenGLContext current in a different thread*
-     */
-    vector<string> colors = split(metadata["class_colors"], ";");
-    for (int i = 0; i < std::stoi(metadata["nb_classes"]); i++) {
-        vector<string> rgb = split(colors[i], ",");
-        bachRenderer->setChannelColor(i, Color((float)std::stoi(rgb[0]) / 255.0f, (float)std::stoi(rgb[1]) / 255.0f, (float)std::stoi(rgb[2]) / 255.0f));
-    }
-    bachRenderer->setInterpolation(std::stoi(metadata["interpolation"].c_str()));
-
-    auto stitcher = PatchStitcher::New();
-    stitcher->setInputConnection(network->getOutputPort());
-    m_bachMap = stitcher->updateAndGetOutputData<Tensor>();
-    bachRenderer->setInputConnection(stitcher->getOutputPort());
-
-    //auto view = mWidget->getViews()[0]; // TODO: Apparently, adding renderer here isn't sufficient for tumorRenderer(?). Also affects heatmapRenderer for whatever reason?
-    //view->addRenderer(tumorRenderer);
-
-    insertRenderer("bach", bachRenderer);
-
-    return true;
-
 }
 
 
@@ -1697,7 +1235,7 @@ bool MainWindow::opacityRenderer(int value, const std::string& someName) {
     if (!hasRenderer(someName)) {
         return false;
     }else{
-        if ((someName == "tissue") and (someName == "tumorSeg")) { // TODO: Make this more generic -> should recognize which renderer type automatically
+        if ((someName == "tissue") && (someName == "tumorSeg")) { // TODO: Make this more generic -> should recognize which renderer type automatically
             auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(getRenderer(someName));
             someRenderer->setOpacity((float) value / 10.0f);
             someRenderer->setModified(true);
@@ -1712,7 +1250,7 @@ bool MainWindow::opacityRenderer(int value, const std::string& someName) {
 
 
 bool MainWindow::hideChannel(const std::string& someName) {
-    if ((someName == "WSI") or (someName == "tissue")){
+    if ((someName == "WSI") || (someName == "tissue")){
         return false;
     }
     if (!hasRenderer(someName)) {
