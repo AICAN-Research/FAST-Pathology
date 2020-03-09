@@ -65,9 +65,21 @@ install(
     RENAME fast_configuration.txt
 )
 
+set(CPACK_PACKAGE_NAME "Fast Pathology")
+set(CPACK_PACKAGE_VENDOR "SINTEF and NTNU")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "FAST pathology is an open-source platform for artificial intelligence-based digital pathology created by SINTEF Medical Technology and the Norwegian University of Science and Technology (NTNU).")
+set(CPACK_PACKAGE_VERSION_MAJOR "0")
+set(CPACK_PACKAGE_VERSION_MINOR "1")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
+
+set(CPACK_PACKAGE_EXECUTABLES fastPathology "FastPathology")
+
 if(WIN32 AND NOT UNIX)
     ## Windows
     # Create windows installer
+    set(CPACK_GENERATOR NSIS)
+
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "FastPathology")
 else()
     ## UNIX
     # Create debian package
