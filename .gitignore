@@ -12,5 +12,5 @@ fastpath.png
 tmp/
 Models/
 Models_old/
-CmakeFiles/
+CMakeFiles/
 fastPathology_stuff_290420/

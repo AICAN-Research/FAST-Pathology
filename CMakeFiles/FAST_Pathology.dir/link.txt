@@ -1,1 +1,0 @@
-/usr/bin/c++  -O3 -DNDEBUG   CMakeFiles/FAST_Pathology.dir/main.cpp.o CMakeFiles/FAST_Pathology.dir/MainWindow.cpp.o  -o FAST_Pathology 

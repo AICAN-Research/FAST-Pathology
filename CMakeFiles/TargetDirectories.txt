@@ -1,3 +1,0 @@
-/home/andrep/workspace/FAST-Pathology/CMakeFiles/rebuild_cache.dir
-/home/andrep/workspace/FAST-Pathology/CMakeFiles/FAST_Pathology.dir
-/home/andrep/workspace/FAST-Pathology/CMakeFiles/edit_cache.dir
