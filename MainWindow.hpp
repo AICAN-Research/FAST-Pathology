@@ -61,6 +61,7 @@ class MainWindow : public Window {
         bool opacityRenderer(int value, const std::string& someName);
         bool toggleRenderer(std::string name);
         bool patchClassifier(std::string modelName);
+        bool imageSegmenter(std::string modelName);
         bool showHeatmap();
         bool hideTissueMask(bool flag);
         bool toggleTissueMask();
@@ -71,9 +72,9 @@ class MainWindow : public Window {
         bool calcTissueHist();
         bool showImage();
         bool segmentTissue();
-        bool predictGrade();
-        bool predictTumor();
-        bool predictBACH();
+        //bool predictGrade();
+        //bool predictTumor();
+        //bool predictBACH();
         bool showTumorMask();
         bool hideBackgroundClass(std::string someName);
         bool fixImage();

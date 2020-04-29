@@ -1,0 +1,3 @@
+ToolSet: 1.0 (local)Options: 
+
+Options:-DFAST_DIR=/home/andrep/fast/cmake

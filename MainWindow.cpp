@@ -886,7 +886,7 @@ float MainWindow::getMagnificationLevel() {
 
     float magnification_lvl = 0.0f;
 
-    if ((wsiFormat == "generic-tiff")) {
+    if ((wsiFormat == "generic-tiff") or (wsiFormat == "philips")) {
 
         int level_count = m_image->getNrOfLevels(); //(int)stof(metadata["openslide.level-count"]);
 
@@ -898,7 +898,15 @@ float MainWindow::getMagnificationLevel() {
             templateResVector.push_back(resFractionValue * ((float) i + 1));
         }
 
-        auto resolution = std::stof(m_image->getMetadata("tiff.XResolution")); //(int)stof(metadata["tiff.XResolution"]);
+        auto resolution = 1;  // needed to initialize outside of if statement -> set some silly dummy value
+        //auto resolution = std::stof(m_image->getMetadata("tiff.XResolution")); //(int)stof(metadata["tiff.XResolution"]);
+
+        std::cout << "\ntesting" << wsiFormat << "\n\n";
+        if (wsiFormat == "generic-tiff") {
+            resolution = std::stof(m_image->getMetadata("tiff.XResolution")); //(int)stof(metadata["tiff.XResolution"]);
+        } else if (wsiFormat == "phillips") {
+            resolution = std::stof(metadata["mpp-x"]);
+        }
 
         // find closest value => get magnification level
         auto i = min_element(begin(templateResVector), end(templateResVector), [=](int x, int y) {
@@ -948,6 +956,19 @@ bool MainWindow::segmentTissue() {
         return true;
     }
 }
+
+
+bool MainWindow::imageSegmenter(std::string modelName) {
+    // read model metadata (txtfile)
+    std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
+
+    if (!hasRenderer(modelMetadata["name"])) { // only run analysis if it has not been ran previously on current WSI
+        1;
+    }
+
+    return true;
+}
+
 
 bool MainWindow::patchClassifier(std::string modelName) {
 
