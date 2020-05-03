@@ -24,11 +24,16 @@ class QVBoxLayout;
 class QStackedWidget;
 class QComboBox;
 class QStackedLayout;
+class QSplitter;
+class QPlainTextEdit;
+class QStatusbar;
+class QString;
 QT_END_NAMESPACE
 
 namespace fast {
 
     class SegmentationRenderer;
+    class SegmentationPyramidRenderer;
     //class ImagePyramidRenderer;
     //class HeatmapRenderer;
     class TissueSegmentation;
@@ -45,9 +50,8 @@ class MainWindow : public Window {
     Q_OBJECT
     public:
         void drawHist();
-        void selectFile();
-        void addModels();
         void createActions();
+        void createMenubar();
         void createMainMenuWidget();
         void createFileWidget();
         void createProcessWidget();
@@ -72,9 +76,35 @@ class MainWindow : public Window {
         bool calcTissueHist();
         bool showImage();
         bool segmentTissue();
-        //bool predictGrade();
-        //bool predictTumor();
-        //bool predictBACH();
+
+        static void helpUrl();
+        static void reportIssueUrl();
+
+        void selectFile();
+        void addModels();
+        void addPipelines();
+        void createProject();
+        void createPipeline();
+        void pipelineEditor();
+
+        // script editor related functions
+        QDialog *scriptEditorWidget;
+        //QWidget *scriptEditorWidget;
+        QVBoxLayout *scriptLayout;
+        QPlainTextEdit *scriptEditor;
+        void createActionsScript();
+        void openScript();
+        void loadFileScript(const QString &fileName);
+        void setCurrentFileScript(const QString &fileName);
+        void newFileScript();
+        void createStatusBarScript();
+        bool saveAsScript();
+        bool saveScript();
+        bool maybeSaveScript();
+        bool saveFileScript(const QString &fileName);
+        QString currScript;
+        QStatusBar *statusBar;
+
         bool showTumorMask();
         bool hideBackgroundClass(std::string someName);
         bool fixImage();
@@ -106,12 +136,14 @@ class MainWindow : public Window {
         std::unordered_map<std::string, std::string> metadata; // make metadata information a global variable
         QList<QString> currentClassesInUse;
 
+        QWidget *mainWidget;
         QWidget *processWidget;
         QWidget *exportWidget;
         QWidget *statsWidget;
         QWidget *viewWidget;
         QWidget *fileWidget;
         QWidget *menuWidget;
+        QVBoxLayout *superLayout;
         QHBoxLayout *mainLayout;
         QVBoxLayout *processLayout;
         QStackedWidget *stackedWidget;
@@ -124,6 +156,7 @@ class MainWindow : public Window {
         QWidget *dynamicViewWidget;
         QComboBox *pageComboBox;
         QStackedLayout *stackedLayout;
+        //QSplitter *mainSplitter;
 
         /**
          * Removes a named renderer from the view
@@ -164,11 +197,13 @@ class MainWindow : public Window {
         SharedPointer<Image> m_tumorMap;
         SharedPointer<Tensor> m_bachMap;
         std::string filename;
+        QString projectFolderName;
 
-        QAction *newAct{};
+        /*
+        //QAction *newAct{};
         //QWidget *topFiller;
         //QMenu *fileMenus{};
-        QAction *exitAction{};
+        //QAction *exitAction{};
 
         enum { NumGridRows = 3, NumButtons = 4 };
 
@@ -182,6 +217,7 @@ class MainWindow : public Window {
         QLineEdit *lineEdits[NumGridRows]{};
         QPushButton *buttons[NumButtons]{};
         //QDialogButtonBox *buttonBox;
+         */
 
     private slots:
         void updateChannelValue (int index);

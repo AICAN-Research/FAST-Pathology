@@ -22,6 +22,7 @@ Attribute output-names "conv2d_26/truediv"
 Attribute scale-factor 0.003921568627451
 #Attribute inference-engine TensorFlowCPU
 Attribute inference-engine TensorFlowCUDA
+#Attribute inference-engine TensorRT
 #Attribute gpu 0
 #Attribute 
 #Attribute inference-engine OpenVINO

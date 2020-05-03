@@ -11,9 +11,11 @@
 #include <FAST/Algorithms/ImagePatch/PatchGenerator.hpp>
 #include <FAST/Algorithms/ImagePatch/PatchStitcher.hpp>
 #include <FAST/Algorithms/NeuralNetwork/NeuralNetwork.hpp>
+#include <FAST/Algorithms/NeuralNetwork/SegmentationNetwork.hpp>
 #include <FAST/Visualization/HeatmapRenderer/HeatmapRenderer.hpp>
 #include <FAST/Algorithms/ImagePatch/ImageToBatchGenerator.hpp>
 #include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
+#include <FAST/Visualization/SegmentationPyramidRenderer/SegmentationPyramidRenderer.hpp>
 #include <FAST/Algorithms/NeuralNetwork/TensorToSegmentation.hpp>
 #include <string>
 #include <QtWidgets>
@@ -36,13 +38,16 @@
 #include <QObject>
 #include <future> // wait for callback is finished
 #include <FAST/Utility.hpp>
+#include <QUrl>
+#include <QScreen>
+#include <QMessageBox>
 
 using namespace std;
 
 namespace fast {
 
 MainWindow::MainWindow() {
-    setTitle("FastPathology");
+    setTitle("fastPathology");
     enableMaximized(); // <- function from Window.cpp
 
     // get current working directory
@@ -60,29 +65,112 @@ MainWindow::MainWindow() {
     // changing color to the Qt background
     //mWidget->setStyleSheet("font-size: 16px; background: gray; color: white;");
     //mWidget->setStyleSheet("font-size: 16px; background: rgb(75, 74, 103); color: black;");
-    mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;");
+    mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;"); // Current favourite
     //mWidget->setStyleSheet("font-size: 16px; background: rgb(181, 211, 231); color: black;");
     //mWidget->setStyleSheet("font-size: 16px; background: (255, 125, 50); color: black;");
+    mWidget->setStyleSheet("font-size: 16px");
 
     float OpenGL_background_color = 0.0f; //200.0f / 255.0f;
 
     // opacityTumorSlider->setStyleSheet("font-size: 16px"); // <- to set style sheet for a specific button/slider
     //mainestLayout->addLayout(topHorizontalLayout);
 
+    superLayout = new QVBoxLayout();
+    mWidget->setLayout(superLayout);
+
+    // make overall Widget
+    mainWidget = new QWidget();
+    superLayout->insertWidget(1, mainWidget); //addWidget(mainWidget);
+
     // Create vertical GUI layout:
     mainLayout = new QHBoxLayout;
-    mWidget->setLayout(mainLayout);
+    //mWidget->setLayout(mainLayout);
+    mainWidget->setLayout(mainLayout);
 
     createMainMenuWidget();
 
     auto view = createView();
     //view = mWidget->addView();
+    //view->setLayout(mainLayout);
 
     //mainLayout->addLayout(menuLayout);
-    mainLayout->insertWidget(1, view);
+    //mainLayout->insertWidget(1, view);
     view->set2DMode();
     view->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
     view->setAutoUpdateCamera(true);
+    //view->setLayout(mainLayout);
+
+    // create QSplitter for adjustable windows
+    auto mainSplitter = new QSplitter(Qt::Horizontal);
+    mainSplitter->addWidget(menuWidget);
+    mainSplitter->addWidget(view);
+    mainSplitter->setStretchFactor(1, 1);
+
+    mainLayout->addWidget(mainSplitter);
+
+    // create Menubar
+    createMenubar();
+}
+
+
+void MainWindow::reportIssueUrl() {
+    QDesktopServices::openUrl(QUrl("https://github.com/SINTEFMedtek/FAST-Pathology/issues", QUrl::TolerantMode));
+}
+
+
+void MainWindow::helpUrl() {
+    QDesktopServices::openUrl(QUrl("https://github.com/SINTEFMedtek/FAST-Pathology", QUrl::TolerantMode));
+}
+
+
+void MainWindow::createMenubar() {
+
+    // need to create a new QHBoxLayout for the menubar
+    auto topFiller = new QMenuBar();
+    topFiller->setMaximumHeight(30);
+
+    //auto fileMenu = new QMenu();
+    auto fileMenu = topFiller->addMenu(tr("&File"));
+    //fileMenu->setFixedHeight(100);
+    //fileMenu->setFixedWidth(100);
+    QAction *createProjectAction;
+    fileMenu->addAction("Create Project", this,  &MainWindow::createProject);
+    fileMenu->addAction("Import WSI", this, &MainWindow::selectFile);
+    fileMenu->addAction("Import Models", this, &MainWindow::addModels);
+    fileMenu->addAction("Import Pipelines", this, &MainWindow::addPipelines);
+    fileMenu->addSeparator();
+    fileMenu->addAction("Quit", QApplication::quit);
+
+    auto editMenu = topFiller->addMenu(tr("&Edit"));
+    editMenu->addAction("Select Mode");  // TODO: Add function that changes GUI for research/clinical use
+    editMenu->addAction("Info");
+
+    auto pipelineMenu = topFiller->addMenu(tr("&Pipelines"));
+    pipelineMenu->addAction("Import pipelines", this, &MainWindow::addPipelines);
+    pipelineMenu->addAction("Run Pipeline");
+    pipelineMenu->addAction("Pipeline Editor", this, &MainWindow::pipelineEditor);
+
+    //auto deployMenu = new QMenu();
+    auto deployMenu = topFiller->addMenu(tr("&Deploy"));
+    //deployMenu->addMenu(tr("&Deploy"));
+    //deployMenu->setFixedHeight(100);
+    //deployMenu->setFixedWidth(100);
+    deployMenu->addAction("Run Pipeline");
+    deployMenu->addAction("Segment Tissue");
+    deployMenu->addAction("Predict Tumor");
+    deployMenu->addAction("Classify Grade");
+    deployMenu->addSeparator();
+
+    auto helpMenu = topFiller->addMenu(tr("&Help"));
+    helpMenu->addAction("Contact support", helpUrl);
+    helpMenu->addAction("Report issue", reportIssueUrl);
+    helpMenu->addAction("Check for updates");  // TODO: Add function that checks if the current binary in usage is the most recent one
+    helpMenu->addAction("About FastPathology");
+
+    //topFiller->addMenu(fileMenu);
+    //topFiller->addMenu(deployMenu);
+
+    superLayout->insertWidget(0, topFiller);
 }
 
 
@@ -97,10 +185,11 @@ void MainWindow::createMainMenuWidget() {
     createMenuWidget();
 
     // add widgets to meny layout
-    mainLayout->insertWidget(0, menuWidget);
+    //mainLayout->insertWidget(0, menuWidget);
 }
 
 
+// TODO: Don't remember if this actually worked, or if I ended up using it
 void clearLayout(QLayout *layout) {
     QLayoutItem *item;
     while((item = layout->takeAt(0))) {
@@ -135,6 +224,8 @@ void MainWindow::createMenuWidget() {
 
     auto tb = new QToolBar();
     tb->setIconSize(QSize(im_size, im_size));
+    tb->setFont(QFont("Times", 8)); //QFont::Bold));
+    tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);  // adds text under icons
 
 
     //auto toolBar = new QToolBar;
@@ -144,10 +235,24 @@ void MainWindow::createMenuWidget() {
     QPixmap resultPix(QString::fromStdString(cwd + "/Icons/Simpleicons_Business_bars-chart-up.svg.png"));
     QPixmap savePix(QString::fromStdString(cwd + "/Icons/save-time-icon-1.png"));
 
+    //viewPix->
+
+    QLabel myLabel;
+
+    /*
+    // icons
+    QImage image(QString::fromStdString(cwd + "/Icons/import-data-icon-19.png"));
+    QPainter p(&image);
+    p.setPen(QPen(Qt::red));
+    p.setFont(QFont("Times", 12, QFont::Bold));
+    p.drawText(image.rect(), Qt::AlignCenter, "Text");
+    myLabel.setPixmap(QPixmap::fromImage(image));
+     */
+
     QPainter painter(&savePix);
     QFont font = painter.font();
-    font.setPixelSize(100);
-    font.setBold(true);
+    font.setPixelSize(4);
+    //font.setBold(true);
     font.setFamily("Arial");
     painter.setFont(font);
     painter.setPen(*(new QColor(Qt::black)));
@@ -171,7 +276,11 @@ void MainWindow::createMenuWidget() {
 
     tb->addSeparator();
 
-    QAction *process_action = tb->addAction(QIcon(processPix),"Process");
+    //QIcon icon = style()->standardIcon(QStyle::SP_DialogOkButton);
+    //QPixmap pixmap = icon.pixmap(QSize(64, 64));
+
+    QAction *process_action = tb->addAction(QIcon(processPix),tr("Process"));
+    //QAction *process_action = tb->addAction(QIcon(myLabel), "Process");
     mapper->setMapping(process_action, 1);
     mapper->connect(process_action, SIGNAL(triggered(bool)), SLOT(map()));
 
@@ -179,7 +288,7 @@ void MainWindow::createMenuWidget() {
     mapper->setMapping(view_action, 2);
     mapper->connect(view_action, SIGNAL(triggered(bool)), SLOT(map()));
 
-    QAction *result_action = tb->addAction(QIcon(resultPix), "Statistics");
+    QAction *result_action = tb->addAction(QIcon(resultPix), "Stats"); //"Statistics");
     mapper->setMapping(result_action, 3);
     mapper->connect(result_action, SIGNAL(triggered(bool)), SLOT(map()));
 
@@ -225,7 +334,10 @@ void MainWindow::createMenuWidget() {
     dockLayout->insertWidget(1, stackedWidget);
 
     menuWidget = new QWidget;
-    menuWidget->setFixedWidth(300); //300);
+    //menuWidget->setFixedWidth(300); //300);  // TODO: This was a good width for my screen, but need it to be adjustable (!)
+    //menuWidget->set
+    menuWidget->setMaximumWidth(700);
+    menuWidget->setMinimumWidth(360);
     //tmpWidget->setStyleSheet("border:1px solid rgb(0, 255, 0); ");
     menuWidget->setLayout(dockLayout);
 }
@@ -239,21 +351,27 @@ void MainWindow::createFileWidget() {
     fileWidget->setLayout(fileLayout);
     //fileWidget->setFixedWidth(200);
 
-    auto selectFileButton = new QPushButton(mWidget);
+    auto createProjectButton = new QPushButton(fileWidget);
+    createProjectButton->setText("Create Project");
+    createProjectButton->setFixedHeight(50);
+    createProjectButton->setStyleSheet("color: white; background-color: blue");
+    QObject::connect(createProjectButton, &QPushButton::clicked, std::bind(&MainWindow::createProject, this));
+
+    auto selectFileButton = new QPushButton(fileWidget);
     selectFileButton->setText("Select WSI");
     //selectFileButton->setFixedWidth(200);
     selectFileButton->setFixedHeight(50);
     selectFileButton->setStyleSheet("color: white; background-color: blue");
     QObject::connect(selectFileButton, &QPushButton::clicked, std::bind(&MainWindow::selectFile, this));
 
-    auto addModelButton = new QPushButton(mWidget);
+    auto addModelButton = new QPushButton(fileWidget);
     addModelButton->setText("Import model");
     //selectFileButton->setFixedWidth(200);
     addModelButton->setFixedHeight(50);
     addModelButton->setStyleSheet("color: white; background-color: blue");
     QObject::connect(addModelButton, &QPushButton::clicked, std::bind(&MainWindow::addModels, this));
 
-    auto quitButton = new QPushButton(mWidget);
+    auto quitButton = new QPushButton(fileWidget);
     quitButton->setText("Quit");
     //quitButton->setFixedWidth(200);
     quitButton->setFixedHeight(50);
@@ -271,11 +389,12 @@ void MainWindow::createFileWidget() {
     bigEditor->setPlainText(tr("This widget takes up all the remaining space "
                                "in the top-level layout."));
 
-    fileLayout->insertWidget(0, selectFileButton); //, Qt::AlignTop);
-    fileLayout->insertWidget(1, addModelButton);
-    fileLayout->insertWidget(2, smallTextWindow);
-    fileLayout->insertWidget(3, bigEditor);
-    fileLayout->insertWidget(4, quitButton, Qt::AlignTop);
+    fileLayout->addWidget(createProjectButton);
+    fileLayout->addWidget(selectFileButton); //, Qt::AlignTop);
+    fileLayout->addWidget(addModelButton);
+    fileLayout->addWidget(smallTextWindow);
+    fileLayout->addWidget(bigEditor);
+    fileLayout->addWidget(quitButton, Qt::AlignTop);
 }
 
 
@@ -330,7 +449,9 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 
     //std::string someName = "tumor";
 
-    auto imageButton = new QPushButton(mWidget);
+    dynamicViewWidget = new QWidget;
+
+    auto imageButton = new QPushButton(dynamicViewWidget);
     imageButton->setText("Toggle image");
     //showHeatmapButton->setFixedWidth(200);
     imageButton->setFixedHeight(50);
@@ -341,7 +462,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     //imageButton->setDisabled(visible[0]);
 
     // for WSI this should be grayed out, shouldn't be able to change it
-    auto opacitySlider = new QSlider(Qt::Horizontal, mWidget);
+    auto opacitySlider = new QSlider(Qt::Horizontal, dynamicViewWidget);
     opacitySlider->setFixedWidth(150);
     opacitySlider->setMinimum(0);
     opacitySlider->setMaximum(10);
@@ -371,7 +492,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     // to be able to set which classes to show/hide
     channel_value = 0;
 
-    auto toggleShowButton = new QPushButton(mWidget);
+    auto toggleShowButton = new QPushButton(dynamicViewWidget);
     toggleShowButton->setText("Toggle class");
     //showHeatmapButton->setFixedWidth(200);
     toggleShowButton->setFixedHeight(50);
@@ -435,7 +556,6 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     dynamicViewLayout = new QVBoxLayout;
     dynamicViewLayout->setAlignment(Qt::AlignTop);
 
-    dynamicViewWidget = new QWidget;
     dynamicViewWidget->setLayout(dynamicViewLayout);
 
     dynamicViewLayout->insertWidget(0, imageButton);
@@ -449,6 +569,359 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     stackedLayout->addWidget(dynamicViewWidget);
 
 }
+
+
+void MainWindow::pipelineEditor() {
+
+    // get screen geometry (resolution/size)
+    //QRect screenGeometry = QApplication::desktop()->screenGeometry();
+    //QGuiApplication::screens();
+    1;
+    std::cout << "\n\n hallo";
+
+    auto scriptEditorWidgetBackground = new QWidget(mWidget);
+    auto backgroundLayout = new QVBoxLayout;
+
+    scriptEditorWidget = new QDialog(mWidget);
+    scriptEditorWidget->setWindowTitle("Script Editor");
+    //scriptEditorWidget = new QWidget(mWidget);
+    //scriptEditorWidget->setSizeGripEnabled(true);
+
+    //QRect scr = QApplication::desktop()->screenGeometry();
+    //move(scr.center() - rect().center() );
+
+    backgroundLayout->addWidget(scriptEditorWidget);
+
+    //scriptEditorWidget->setCentralWidget;
+    //scriptEditorWidget->setWindowFlags(Qt::AlignHCenter);
+    //scriptEditorWidget->setWindowFlags(Qt::Popup);
+    //scriptEditorWidget->setBaseSize(500, 500);
+    scriptEditorWidget->setMinimumWidth(800);
+    scriptEditorWidget->setMinimumHeight(1000);  // TODO: Better to use baseSize, but not working?
+    //QLayout *scriptLayout;
+
+    scriptLayout = new QVBoxLayout; // mWidget);
+    scriptEditorWidget->setLayout(scriptLayout);
+
+    scriptEditor = new QPlainTextEdit;
+    scriptLayout->insertWidget(1, scriptEditor);
+
+    /*
+    scriptLayout->setGeometry(QStyle::alignedRect(
+            Qt::LeftToRight,
+            Qt::AlignCenter,
+            mWidget->size(),
+            mWidget->QGuiApplication::primaryScreen()));
+            //qApp->desktop()->availableGeometry()));
+    */
+
+
+    //QRect rec = QApplication::desktop()->screenGeometry();
+
+
+    //QScreen *screen = QGuiApplication::primaryScreen();
+    //QRect  screenGeometry = screen->geometry();
+
+    //scriptEditorWidget->move(300, 300);
+    /*
+    scriptEditorWidget->move(mWidget->window()->frameGeometry().topLeft() +
+                             mWidget->window()->rect().center() -
+                             screenGeometry.center());
+    */
+
+    // center QDialog when opened
+    QRect rect = scriptEditorWidget->geometry();
+    QRect parentRect = mWidget->geometry();
+    rect.moveTo(mWidget->mapToGlobal(QPoint(parentRect.x() + parentRect.width() - rect.width(), parentRect.y())));
+
+    /*
+    scriptEditorWidget->adjustSize();
+    scriptEditorWidget->move(mWidget->window()->frameGeometry().topLeft() +
+                             mWidget->window()->rect().center() -
+                             screenGeometry.center());
+    */
+
+    /*
+    QPoint dialogCenter = scriptEditorWidget->mapToGlobal(scriptEditorWidget->rect().center());
+    QPoint parentWindowCenter = mWidget->window()->mapToGlobal(
+            mWidget->window()->rect().center());
+    move(parentWindowCenter - dialogCenter);
+     */
+
+    //scriptEditorWidget->move(QGuiApplication::screens()[0]->rect().center() - scriptEditorWidget->rect().center())
+
+    // resizable window using QSplitter
+    /*
+    auto mainSplitter = new QSplitter(Qt::);
+    mainSplitter->addWidget(menuWidget);
+    mainSplitter->addWidget(view);
+    mainSplitter->setStretchFactor(1, 1);
+
+    mainLayout->addWidget(mainSplitter);
+     */
+
+    createActionsScript();
+
+    // finally, show window
+    //scriptEditorWidgetBackground->show();
+    scriptEditorWidget->show();
+    //scriptEditorWidget->close();
+}
+
+
+void MainWindow::createActionsScript() {
+
+    auto menuBar = new QMenuBar(scriptEditorWidget); //scriptEditorWidget);
+    //menuBar->setMinimumHeight(200);
+
+    auto toolBar = new QToolBar();
+
+    //QMenu *fileMenu = menuBar->addMenu(tr("&File"));
+    //auto fileMenu = menuBar->addMenu(tr("&File"));
+    //fileMenu->addAction("Create Project", this, &MainWindow::createProject);
+
+
+    //scriptEditorWidget->layout()->setMenuBar(menuBar);
+    //scriptLayout->setMenuBar(menuBar);
+    //scriptEditorWidget->layout()->setMenuBar(menuBar);
+    scriptLayout->setMenuBar(menuBar);
+
+    //auto
+    //topFiller->setMaximumHeight(30);
+
+    //auto fileMenu = new QMenu();
+    //auto fileMenu = topFiller->addMenu(tr("&File"));
+
+    auto fileMenu = menuBar->addMenu(tr("&File"));
+    auto fileToolBar = new QToolBar;
+
+    const QIcon newIcon = QIcon::fromTheme("document-new", QIcon(":/images/new.png"));
+    auto newAct = new QAction(newIcon, tr("&New"), this);
+    newAct->setShortcuts(QKeySequence::New);
+    newAct->setStatusTip(tr("Create a new file"));
+    connect(newAct, &QAction::triggered, this, &MainWindow::newFileScript);
+    fileMenu->addAction(newAct);
+
+    const QIcon openIcon = QIcon::fromTheme("document-open", QIcon(":/images/open.png"));
+    auto openAct = new QAction(openIcon, tr("&Open..."), this);
+    openAct->setShortcuts(QKeySequence::Open);
+    openAct->setStatusTip(tr("Open an existing file"));
+    connect(openAct, &QAction::triggered, this, &MainWindow::openScript);
+    fileMenu->addAction(openAct);
+    fileToolBar->addAction(openAct);
+
+    const QIcon saveIcon = QIcon::fromTheme("document-save", QIcon(":/images/save.png"));
+    auto saveAct = new QAction(saveIcon, tr("&Save"), this);
+    saveAct->setShortcuts(QKeySequence::Save);
+    saveAct->setStatusTip(tr("Save the document to disk"));
+    connect(saveAct, &QAction::triggered, this, &MainWindow::saveScript);
+    fileMenu->addAction(saveAct);
+    fileToolBar->addAction(saveAct);
+
+    const QIcon saveAsIcon = QIcon::fromTheme("document-save-as");
+    QAction *saveAsAct = fileMenu->addAction(saveAsIcon, tr("Save &As..."), this, &MainWindow::saveAsScript);
+    saveAsAct->setShortcuts(QKeySequence::SaveAs);
+    saveAsAct->setStatusTip(tr("Save the document under a new name"));
+
+    fileMenu->addSeparator();
+
+    QMenu *editMenu = menuBar->addMenu(tr("&Edit"));
+    //QToolBar *editToolBar = addToolBar(tr("Edit"));
+    auto editToolBar = new QToolBar(tr("Edit"));
+
+#ifndef QT_NO_CLIPBOARD
+    const QIcon cutIcon = QIcon::fromTheme("edit-cut", QIcon(":/images/cut.png"));
+    auto cutAct = new QAction(cutIcon, tr("Cu&t"), this);
+
+    cutAct->setShortcuts(QKeySequence::Cut);
+    cutAct->setStatusTip(tr("Cut the current selection's contents to the "
+                            "clipboard"));
+    connect(cutAct, &QAction::triggered, scriptEditor, &QPlainTextEdit::cut);
+    editMenu->addAction(cutAct);
+    editToolBar->addAction(cutAct);
+
+    const QIcon copyIcon = QIcon::fromTheme("edit-copy", QIcon(":/images/copy.png"));
+    auto copyAct = new QAction(copyIcon, tr("&Copy"), this);
+    copyAct->setShortcuts(QKeySequence::Copy);
+    copyAct->setStatusTip(tr("Copy the current selection's contents to the "
+                             "clipboard"));
+    connect(copyAct, &QAction::triggered, scriptEditor, &QPlainTextEdit::copy);
+    editMenu->addAction(copyAct);
+    editToolBar->addAction(copyAct);
+
+    const QIcon pasteIcon = QIcon::fromTheme("edit-paste", QIcon(":/images/paste.png"));
+    auto pasteAct = new QAction(pasteIcon, tr("&Paste"), this);
+    pasteAct->setShortcuts(QKeySequence::Paste);
+    pasteAct->setStatusTip(tr("Paste the clipboard's contents into the current "
+                              "selection"));
+    connect(pasteAct, &QAction::triggered, scriptEditor, &QPlainTextEdit::paste);
+    editMenu->addAction(pasteAct);
+    editToolBar->addAction(pasteAct);
+
+    menuBar->addSeparator();
+
+#endif // !QT_NO_CLIPBOARD
+
+#ifndef QT_NO_CLIPBOARD
+    cutAct->setEnabled(false);
+    copyAct->setEnabled(false);
+    connect(scriptEditor, &QPlainTextEdit::copyAvailable, cutAct, &QAction::setEnabled);
+    connect(scriptEditor, &QPlainTextEdit::copyAvailable, copyAct, &QAction::setEnabled);
+#endif // !QT_NO_CLIPBOARD
+
+    /*
+    auto fileMenu = menuBar->addMenu(tr("&File"));
+    //fileMenu->addAction("&New", this,  &MainWindow::newFileScript);
+    auto newAct = new QAction(tr("&New"), this);
+    newAct->setShortcuts(QKeySequence::New);
+    newAct->setStatusTip(tr("Create a new file"));
+    connect(newAct, &QAction::triggered, this, &MainWindow::newFileScript);
+
+    //fileMenu->addSeparator();
+    fileMenu->addAction("Quit", QApplication::quit);
+
+    scriptLayout->insertWidget(0, menuBar);
+     */
+
+    //scriptLayout->insertWidget(0, menuBar);
+}
+
+
+bool MainWindow::saveScript() {
+    std::cout << "\nSaving...: " << currScript.toStdString() << "\n";
+    if (currScript.isEmpty()) {
+        return saveAsScript();
+    } else {
+        std::cout << "\nWe are saving, not save as...\n";
+        return saveFileScript(currScript);
+    }
+}
+
+
+bool MainWindow::saveAsScript() {
+    QFileDialog dialog(scriptEditorWidget);
+    //dialog.DontUseNativeDialog;
+    dialog.setOption(QFileDialog::DontUseNativeDialog);
+    dialog.setWindowModality(Qt::WindowModal);
+    dialog.setAcceptMode(QFileDialog::AcceptSave);
+    if (dialog.exec() != QDialog::Accepted)
+        return false;
+    return saveFileScript(dialog.selectedFiles().first());
+}
+
+
+void MainWindow::createStatusBarScript() {
+    //auto statusBar = new QStatusBar;
+    statusBar->showMessage(tr("Ready"));
+}
+
+
+bool MainWindow::saveFileScript(const QString &fileName) {
+    QString errorMessage;
+
+    QGuiApplication::setOverrideCursor(Qt::WaitCursor);
+    QSaveFile file(fileName);
+    if (file.open(QFile::WriteOnly | QFile::Text)) {
+        QTextStream out(&file);
+        out << scriptEditor->toPlainText();
+        if (!file.commit()) {
+            errorMessage = tr("Cannot write file %1:\n%2.")
+                    .arg(QDir::toNativeSeparators(fileName), file.errorString());
+        }
+    } else {
+        errorMessage = tr("Cannot open file %1 for writing:\n%2.")
+                .arg(QDir::toNativeSeparators(fileName), file.errorString());
+    }
+    QGuiApplication::restoreOverrideCursor();
+
+    if (!errorMessage.isEmpty()) {
+        QMessageBox::warning(scriptEditorWidget, tr("Application"), errorMessage);
+        return false;
+    }
+
+    setCurrentFileScript(fileName);
+    //statusBar->showMessage(tr("File saved"), 2000);
+    return true;
+}
+
+
+bool MainWindow::maybeSaveScript() {
+    if (!scriptEditor->document()->isModified())
+        return true;
+    const QMessageBox::StandardButton ret = QMessageBox::warning(scriptEditorWidget, tr("Application"),
+                                   tr("The document has been modified.\n"
+                                      "Do you want to save your changes?"),
+                                   QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+    switch (ret) {
+        case QMessageBox::Save:
+            return saveScript();
+        case QMessageBox::Cancel:
+            return false;
+        default:
+            break;
+    }
+    return true;
+}
+
+
+void MainWindow::newFileScript() {
+    if (maybeSaveScript()) {
+        scriptEditor->clear();
+        setCurrentFileScript(QString());
+    }
+}
+
+
+void MainWindow::openScript() {
+    if (maybeSaveScript()) {
+        auto fileName = QFileDialog::getOpenFileName(
+                mWidget,
+                tr("Open File"), nullptr, tr("WSI Files (*.fpl)"),
+                nullptr, QFileDialog::DontUseNativeDialog
+        );
+        if (!fileName.isEmpty())
+            loadFileScript(fileName);
+    }
+}
+
+
+void MainWindow::loadFileScript(const QString &fileName) {
+    QFile file(fileName);
+    if (!file.open(QFile::ReadOnly | QFile::Text)) { // handle read only files
+        QMessageBox::warning(scriptEditorWidget, tr("Application"),
+                             tr("Cannot read file %1:\n%2.")
+                                     .arg(QDir::toNativeSeparators(fileName), file.errorString()));
+        return;
+    }
+
+    QTextStream in(&file);
+#ifndef QT_NO_CURSOR
+    QGuiApplication::setOverrideCursor(Qt::WaitCursor);
+#endif
+    scriptEditor->setPlainText(in.readAll());
+#ifndef QT_NO_CURSOR
+    QGuiApplication::restoreOverrideCursor();
+#endif
+
+    setCurrentFileScript(fileName);
+    //statusBar->showMessage(tr("File loaded"), 2000); // FIXME: Something crashed here...
+}
+
+
+void MainWindow::setCurrentFileScript(const QString &fileName) {
+
+    currScript = fileName;
+    scriptEditor->document()->setModified(false);
+    //setWindowModified(false);
+    scriptEditor->setWindowModified(false);
+
+    QString shownName = currScript;
+    if (currScript.isEmpty())
+        shownName = "untitled.txt";
+    scriptEditor->setWindowFilePath(shownName);
+    //setWindowFilePath(shownName);
+}
+
 
 
 void MainWindow::updateChannelValue(int index) {
@@ -465,7 +938,7 @@ void MainWindow::createStatsWidget() {
     statsWidget->setLayout(statsLayout);
 
     // make button that prints distribution of pixels of each class -> for histogram
-    auto calcTissueHistButton = new QPushButton(mWidget);
+    auto calcTissueHistButton = new QPushButton(statsWidget);
     calcTissueHistButton->setText("Calculate tissue histogram");
     calcTissueHistButton->setFixedHeight(50);
     QObject::connect(calcTissueHistButton, &QPushButton::clicked, std::bind(&MainWindow::calcTissueHist, this));
@@ -591,7 +1064,7 @@ void MainWindow::createExportWidget() {
     exportWidget->setLayout(exportLayout);
 
     // make button that prints distribution of pixels of each class -> for histogram
-    auto exportSegmentationButton = new QPushButton(mWidget);
+    auto exportSegmentationButton = new QPushButton(exportWidget);
     exportSegmentationButton->setText("Export segmentation");
     exportSegmentationButton->setFixedHeight(50);
     QObject::connect(exportSegmentationButton, &QPushButton::clicked, std::bind(&MainWindow::exportSeg, this));
@@ -614,7 +1087,7 @@ void MainWindow::createProcessWidget() {
     processWidget->setLayout(processLayout);
     //processWidget->setFixedWidth(200);
 
-    auto segTissueButton = new QPushButton(mWidget);
+    auto segTissueButton = new QPushButton(exportWidget);
     segTissueButton->setText("Segment Tissue");
     //segTissueButton->setFixedWidth(200);
     segTissueButton->setFixedHeight(50);
@@ -638,7 +1111,7 @@ void MainWindow::createProcessWidget() {
         // get metadata of current model
         std::map<std::string, std::string> metadata = getModelMetadata(modelName);
 
-        auto someButton = new QPushButton(mWidget);
+        auto someButton = new QPushButton(exportWidget);
         someButton->setText(QString::fromStdString(metadata["task"]));
         //predGradeButton->setFixedWidth(200);
         someButton->setFixedHeight(50);
@@ -755,19 +1228,22 @@ void MainWindow::drawHist() {
 }
 
 
+/*
 void MainWindow::createActions() {
     newAct = new QAction(tr("&New"), this);
     newAct->setShortcuts(QKeySequence::New);
     newAct->setStatusTip(tr("Create a new file"));
     connect(newAct, &QAction::triggered, this, &MainWindow::selectFile);
 }
+ */
 
 
 void MainWindow::selectFile() {
 
     auto fileName = QFileDialog::getOpenFileName(
             mWidget,
-            "Open File", nullptr, "WSI Files (*.tiff *.tif *.svs *.ndpi)"
+            tr("Open File"), nullptr, tr("WSI Files (*.tiff *.tif *.svs *.ndpi)"),
+            nullptr, QFileDialog::DontUseNativeDialog
             );
 
     if(fileName == "")
@@ -802,83 +1278,156 @@ void MainWindow::selectFile() {
 
     // now make it possible to edit image in the View Widget
     createDynamicViewWidget("WSI", modelName);
+}
 
+
+// TODO: Make temporary directories using Qt's QTemporaryDir() instead of current solution
+
+void MainWindow::createProject() {
+    // start by selecting where to create folder and give project name
+    // should also handle if folder name already exist, prompt warning and option to change name
+    QFileDialog dialog(mWidget);
+    dialog.setFileMode(QFileDialog::AnyFile);
+
+    projectFolderName = dialog.getExistingDirectory(
+            mWidget, tr("Set Project Directory"),
+            QCoreApplication::applicationDirPath(), QFileDialog::DontUseNativeDialog);
+
+    std::cout << "\nProject dir:\n" << projectFolderName.toStdString() << "\n";
+
+    // check if selected folder is empty, if not, prompt warning and ask to select a new folder
+
+
+    // create file for saving which WSIs exist in folder
+    QString projectFileName = "/project.txt";
+    QFile file(projectFolderName + projectFileName);
+    if (file.open(QIODevice::ReadWrite)) {
+        QTextStream stream(&file);
+        stream << "something" << endl;
+    }
+
+    // now create folders for saving results and such (prompt warning if name already exists)
+    QDir().mkdir(projectFolderName + QString::fromStdString("/results"));
+    QDir().mkdir(projectFolderName + QString::fromStdString("/pipelines"));
+}
+
+
+void MainWindow::addPipelines() {
+
+    QStringList ls = QFileDialog::getOpenFileNames(
+            mWidget,
+            tr("Select Pipeline"), nullptr,
+            tr("Pipeline Files (*.fpl)"),
+            nullptr, QFileDialog::DontUseNativeDialog
+    );
+
+    // now iterate over all selected files and add selected files and corresponding ones to Pipelines/
+    for (QString& fileName : ls) {
+
+        if (fileName == "")
+            continue;
+
+        std::cout << "\n testing... " << fileName.toStdString();
+
+        std::string someFile = split(fileName.toStdString(), "/").back();
+        std::string oldLocation = split(fileName.toStdString(), someFile)[0];
+        std::string newLocation = cwd + "Pipelines/";
+        std::string newPath = cwd + "Pipelines/" + someFile;
+        std::cout << "\n testing2... " << newPath;
+        if (fileExists(newPath)) {
+            std::cout << "\n" << fileName.toStdString() << "\n: File with the same name already exists in folder, didn't transfer... \n";
+            continue;
+        } else {
+            if (fileExists(fileName.toStdString())) {
+                QFile::copy(fileName, QString::fromStdString(newPath));
+            }
+        }
+    }
+}
+
+
+void MainWindow::createPipeline() {
+    1;
 }
 
 
 void MainWindow::addModels() {
 
-    auto fileName = QFileDialog::getOpenFileName(
+    //QString fileName = QFileDialog::getOpenFileName(
+    QStringList ls = QFileDialog::getOpenFileNames(
             mWidget,
-            "Select Model", nullptr, "Model Files (*.pb *.txt)"
-    );
+            tr("Select Model"), nullptr,
+            tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff)"),
+            nullptr, QFileDialog::DontUseNativeDialog
+    ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
 
-    if(fileName == "")
-        return;
+    // now iterate over all selected files and add selected files and corresponding ones to Models/
+    for (QString& fileName : ls) {
 
-    //qDebug().nospace() << "abc" << qPrintable(fileName) << "\ndef";
-    std::string someFile = split(fileName.toStdString(), "/").back(); // TODO: Need to make this only split on last "/"
-    std::string oldLocation = split(fileName.toStdString(), someFile)[0];
-
-    std::string newLocation = cwd + "Models/";
-
-    std::vector<string> names = split(someFile, ".");
-    string fileNameNoFormat = names[0];
-    string formatName = names[1];
-
-    // copy selected file to Models folder
-    // check if file already exists in new folder, if yes, print warning, and stop
-    string newPath = cwd + "Models/" + someFile;
-    if (fileExists(newPath)) {
-        std::cout << "\n file with same name already exists in folder, didn't transfer... \n";
-        return;
-    }
-    QFile::copy(fileName, QString::fromStdString(newPath));
-
-    // check which corresponding model files that exist, except from the one that is chosen
-    std::vector<string> allowedFileFormats{"txt", "pb", ""};
-
-    if (formatName == "txt") {
-        string oldPath = oldLocation + fileNameNoFormat + ".pb";
-        if (fileExists(oldPath)) {
-            QFile::copy(QString::fromStdString(oldPath), QString::fromStdString(cwd + "Models/" + fileNameNoFormat + ".pb"));
-        } else {
-            std::cout << "\n corresponding .pb file doesn't exist! \n";
+        if (fileName == "")
             return;
+
+        std::cout << "\norig filename: " << fileName.toStdString();
+
+        //qDebug().nospace() << "abc" << qPrintable(fileName) << "\ndef";
+        std::string someFile = split(fileName.toStdString(),
+                                     "/").back(); // TODO: Need to make this only split on last "/"
+        std::cout << "\nPath: " << someFile;
+        std::string oldLocation = split(fileName.toStdString(), someFile)[0];
+
+        std::string newLocation = cwd + "Models/";
+
+        std::cout << "Old cwd: \n" << cwd;
+
+        std::vector<string> names = split(someFile, ".");
+        string fileNameNoFormat = names[0];
+        string formatName = names[1];
+
+        // copy selected file to Models folder
+        // check if file already exists in new folder, if yes, print warning, and stop
+        string newPath = cwd + "Models/" + someFile;
+        if (fileExists(newPath)) {
+            std::cout << "\n file with same name already exists in folder, didn't transfer... \n";
+            continue;
         }
-    } else {
-        string oldPath = oldLocation + fileNameNoFormat + ".txt";
-        if (fileExists(oldPath)) {
-            QFile::copy(QString::fromStdString(oldPath), QString::fromStdString(cwd + "Models/" + fileNameNoFormat + ".txt"));
-        } else {
-            std::cout << "\n corresponding .txt file doesn't exist! \n";
-            return;
-        }
+        //QFile::copy(fileName, QString::fromStdString(newPath));
+
+        // check which corresponding model files that exist, except from the one that is chosen
+        std::vector<std::string> allowedFileFormats{"txt", "pb", "h5", "mapping", "xml", "bin", "uff"};
+
+        std::cout << "\n Copy test \n";
+        foreach(std::string currExtension, allowedFileFormats) {
+            std::string oldPath = oldLocation + fileNameNoFormat + "." + currExtension;
+            std::cout << currExtension << "\n\n" << oldPath << "\n\n";
+            if (fileExists(oldPath)) {
+                QFile::copy(QString::fromStdString(oldPath),QString::fromStdString(cwd + "Models/" + fileNameNoFormat + "." + currExtension));
+            }
+            }
+
+        // when models are added, ProcessWidget should be updated by adding the new widget to ProcessWidget layout
+        // current model
+        modelName = fileNameNoFormat;
+
+        // get metadata of current model
+        std::map<std::string, std::string> metadata = getModelMetadata(modelName);
+
+        auto someButton = new QPushButton(mWidget);
+        someButton->setText(QString::fromStdString(metadata["task"]));
+        //predGradeButton->setFixedWidth(200);
+        someButton->setFixedHeight(50);
+        QObject::connect(someButton, &QPushButton::clicked,
+                         std::bind(&MainWindow::patchClassifier, this, modelName));
+        someButton->show();
+
+        processLayout->insertWidget(processLayout->count(), someButton);
+
+        //createMainMenuWidget();
+        //if (processLayout){
+        //    clearLayout(processLayout);
+        //}
+        //createProcessWidget();
+        //mainLayout->removeWidget(menuWidget); // this doesnt work...
     }
-
-    // when models are added, ProcessWidget should be updated by adding the new widget to ProcessWidget layout
-    // current model
-    modelName = fileNameNoFormat;
-
-    // get metadata of current model
-    std::map<std::string, std::string> metadata = getModelMetadata(modelName);
-
-    auto someButton = new QPushButton(mWidget);
-    someButton->setText(QString::fromStdString(metadata["task"]));
-    //predGradeButton->setFixedWidth(200);
-    someButton->setFixedHeight(50);
-    QObject::connect(someButton, &QPushButton::clicked, std::bind(&MainWindow::patchClassifier, this, modelName));
-    someButton->show();
-
-    processLayout->insertWidget(processLayout->count(), someButton);
-
-    //createMainMenuWidget();
-    //if (processLayout){
-    //    clearLayout(processLayout);
-    //}
-    //createProcessWidget();
-    //mainLayout->removeWidget(menuWidget); // this doesnt work...
-
 }
 
 
@@ -970,9 +1519,8 @@ bool MainWindow::imageSegmenter(std::string modelName) {
 }
 
 
+// TODO: Integrate SegmentationClassifier inside this or make functions for each task?
 bool MainWindow::patchClassifier(std::string modelName) {
-
-    std::cout << "\n vi kom lengre 2.5 \n";
 
     // read model metadata (txtfile)
     std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
@@ -981,18 +1529,12 @@ bool MainWindow::patchClassifier(std::string modelName) {
 
         //auto tmpRenderer = getRenderer(metadata["name"]);
 
-        std::cout << "\n vi kom lengre 3 \n";
-
         // based on predicted magnification level of WSI, set magnificiation level for optimal input to model based on predicted resolution of WSI
         int patch_lvl_model = (int) (std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) / std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
-
-        std::cout << "\n vi kom lengre 4 \n";
 
         // segment tissue
         segmentTissue(); // TODO: Something weird happens when I run this again
         hideTissueMask(true);
-
-        std::cout << "\n vi kom lengre 5 \n";
 
         auto generator = PatchGenerator::New();
         generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
@@ -1000,100 +1542,175 @@ bool MainWindow::patchClassifier(std::string modelName) {
         generator->setInputData(0, m_image);
         generator->setInputData(1, m_tissue);
 
-        std::cout << "\n vi kom lengre 6 \n";
+        //auto batchgen = ImageToBatchGenerator::New();  // TODO: Can't use this with TensorRT (!)
+        //batchgen->setInputConnection(generator->getOutputPort());
+        //batchgen->setMaxBatchSize(std::stoi(modelMetadata["batch_process"])); // set 256 for testing stuff (tumor -> annotation, then grade from tumor segment)
 
-        /*
-        if (modelMetadata["name"] == "tumor"){
-            generator->setInputData(1, m_tissue);
-        }else{
-            if (m_tumorMap)
-                generator->setInputData(1, m_tumorMap);
-            else
-                generator->setInputData(1, m_tissue);
+        // get available IEs as a list
+        std::list<std::string> IEsList;
+        QStringList tmpPaths = QDir(QString::fromStdString(Config::getLibraryPath())).entryList(QStringList(), QDir::Files);
+        foreach(QString filePath, tmpPaths) {
+            if (filePath.toStdString().find("libInferenceEngine") != std::string::npos) {
+                IEsList.push_back(split(split(filePath.toStdString(), "libInferenceEngine").back(), ".so")[0]);
+            }
         }
-         */
-        //hideTissueMask(true);
 
-        auto batchgen = ImageToBatchGenerator::New();
-        batchgen->setInputConnection(generator->getOutputPort());
-        batchgen->setMaxBatchSize(std::stoi(modelMetadata["batch_process"])); // set 256 for testing stuff (tumor -> annotation, then grade from tumor segment)
+        // check which model formats exists, before choosing inference engine
+        QDir directory(QString::fromStdString(cwd + "Models/"));
+        QStringList models = directory.entryList(QStringList(), QDir::Files);
 
+        std::list<std::string> acceptedModels;
+        foreach(QString currentModel, models) {
+            if (currentModel.toStdString().find(modelName) != std::string::npos) {
+                acceptedModels.push_back("." + split(currentModel.toStdString(), modelName + ".").back());
+            }
+        }
+
+        // init network
         auto network = NeuralNetwork::New();
-        network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape({std::stoi(modelMetadata["batch_size"]), std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]), std::stoi(modelMetadata["nb_channels"])})); //{1, size, size, 3}
-        network->setOutputNode(0, modelMetadata["output_node"], NodeType::IMAGE, TensorShape({std::stoi(modelMetadata["batch_size"]), std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["nb_channels"])})); //{1, size, size, 2}
-        network->load(cwd + "Models/" + modelName + ".pb");
-        network->setInputConnection(batchgen->getOutputPort());
-        vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
-        network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
-        //network->setInferenceEngine("TensorFlowCPU");
-
-        auto stitcher = PatchStitcher::New();
-        stitcher->setInputConnection(network->getOutputPort());
-
-        auto port = stitcher->getOutputPort();
-        //port->getNextFrame();
-        //stitcher->update();
-        //port->getNextFrame<Tensor>();
-
-        // define renderer from metadata
-        auto heatmapRenderer = HeatmapRenderer::New();
-        vector<string> colors = split(modelMetadata["class_colors"], ";");
-        for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
-            vector<string> rgb = split(colors[i], ",");
-            heatmapRenderer->setChannelColor(i, Color((float)std::stoi(rgb[0]) / 255.0f, (float)std::stoi(rgb[1]) / 255.0f, (float)std::stoi(rgb[2]) / 255.0f));
+        if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
+            network = SegmentationNetwork::New();
+        } else if ((modelMetadata["problem"] == "classification") && (modelMetadata["resolution"] == "high")) {
+            network = NeuralNetwork::New();
+        } else {
+            std::cout << "\nSomething is wrong in the .txt-file... Please check that it is written correctly.\n";
         }
-        heatmapRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
-        heatmapRenderer->setInputConnection(port);
-        //heatmapRenderer->update();
+        //network->setInferenceEngine("TensorRT"); //"TensorRT");
 
-        insertRenderer(modelMetadata["name"], heatmapRenderer);
+        // /*
+        // Now select best available IE based on which extensions exist for chosen model
+        // TODO: Current optimization profile is: 0. Please ensure there are no enqueued operations pending in this context prior to switching profiles
+        bool checkFlag = true;
+        if (std::find(acceptedModels.begin(), acceptedModels.end(), ".uff") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "TensorRT") != IEsList.end()) {
+            network->setInferenceEngine("TensorRT");
+        } else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "TensorFlowCUDA") != IEsList.end()) {
+            network->setInferenceEngine("TensorFlowCUDA");
+            if (std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end()) {
+                network->setInferenceEngine("OpenVINO");
+            }
+        } else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end()) {
+            network->setInferenceEngine("OpenVINO");
+        } else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "TensorFlowCPU") != IEsList.end()) {
+            network->setInferenceEngine("TensorFlowCPU");
+        } else {
+            std::cout << "\nModel does not exist in Models/ folder. Please add it using AddModels(). "
+                         "It might also be that the model exists, but the Inference Engine does not. "
+                         "Available IEs are: ";
+            foreach(std::string elem, IEsList) {
+                std::cout << elem << ", ";
+            }
+            std::cout << "\n";
+            checkFlag = false;
+        }
+        // */
 
-        std::cout << "\n vi kom lengre 7 \n";
+        if (checkFlag) {
+            std::cout << "\nModel was found.";
 
-        // now make it possible to edit prediction in the View Widget
-        createDynamicViewWidget(modelMetadata["name"], modelName);
+            // TODO: Need to handle if model is in Models/, but inference engine is not available
+            Config::getLibraryPath();
 
-        std::cout << "\n vi kom lengre 8 \n";
+            const auto engine = network->getInferenceEngine()->getName();
+            // IEs like TF and TensorRT need to be handled differently than IEs like OpenVINO
+            if (engine.substr(0, 10) == "TensorFlow") {
+                // apparently this is needed if model has unspecified input size
+                network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
+                        {1, std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]),
+                         std::stoi(modelMetadata["nb_channels"])})); //{1, size, size, 3}
+                // TensorFlow needs to know what the output node is called
+                if (modelMetadata["problem"] == "classification") {
+                    network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
+                                           TensorShape({1, std::stoi(modelMetadata["nb_classes"])}));
+                } else if (modelMetadata["problem"] == "segmentation") {
+                    network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
+                                           TensorShape({1, std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]),
+                                                        std::stoi(modelMetadata["nb_classes"])}));
+                }
+            } else if (engine == "TensorRT") {
+                // TensorRT needs to know everything about the input and output nodes
+                network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
+                        {1, std::stoi(modelMetadata["nb_channels"]), std::stoi(modelMetadata["input_img_size_y"]),
+                         std::stoi(modelMetadata["input_img_size_y"])})); //{1, size, size, 3}
+                network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
+                                       TensorShape({1, std::stoi(modelMetadata["nb_classes"])}));
+            }
+            network->load(cwd + "Models/" + modelName + "." +
+                          network->getInferenceEngine()->getDefaultFileExtension()); //".uff");
+            network->setInputConnection(generator->getOutputPort());
+            vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
+            network->setScaleFactor(
+                    (float) std::stoi(scale_factor[0]) / (float) std::stoi(scale_factor[1]));   // 1.0f/255.0f
 
-        //std::future<void> fut = std::async(stitcher, network->getOutputPort());
+            auto stitcher = PatchStitcher::New();
+            stitcher->setInputConnection(network->getOutputPort());
 
-        // test
-        //usleep(5);
-        std::cout << "\n vi kom lengre 11 \n";
-        if (modelMetadata["name"] == "tumor") {
-            std::cout << "\n vi kom lengre 9 \n";
-            stitcher->update();
-            std::cout << "\n vi kom lengre 10 \n";
-            m_tumorMap_tensor = port->getNextFrame<Tensor>();
-            std::cout << "\n vi kom lengre 11 \n";
+            auto port = stitcher->getOutputPort();
+            //port->getNextFrame();
+            //stitcher->update();
+            //port->getNextFrame<Tensor>();
 
-            auto tmp = TensorToSegmentation::New();
-            std::cout << "\n vi kom lengre 12 \n";
-            tmp->setInputData(m_tumorMap_tensor);
-            std::cout << "\n vi kom lengre 13 \n";
 
-            m_tumorMap = tmp->updateAndGetOutputData<Image>();
-            std::cout << "\n vi kom lengre 14 \n";
+            // define renderer from metadata
+            //auto someRenderer = HeatmapRenderer::New();
+            if ((modelMetadata["problem"] == "classification") && (modelMetadata["resolution"] == "high")) {
+                auto someRenderer = HeatmapRenderer::New();
+                someRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
+                someRenderer->setInputConnection(port);
+                //heatmapRenderer->update();
+                vector<string> colors = split(modelMetadata["class_colors"], ";");
+                for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
+                    vector<string> rgb = split(colors[i], ",");
+                    someRenderer->setChannelColor(i, Color((float) std::stoi(rgb[0]) / 255.0f,
+                                                           (float) std::stoi(rgb[1]) / 255.0f,
+                                                           (float) std::stoi(rgb[2]) / 255.0f));
+                }
 
-            // wait for process is finished, then same prediction as map
-            /*
-            std::promise<void> promise;
-            std::future<void> future = promise.get_future();//std::future<int> out = std::async(heatmapRenderer); //ThreadPool.RegisterWaitForSingleObject();
-            request();
-            future.get();
-             */
+                insertRenderer(modelMetadata["name"], someRenderer);
 
-            auto segTumorRenderer = SegmentationRenderer::New();
-            segTumorRenderer->setOpacity(0.4);
-            segTumorRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0 / 255.0f, 0.0f, 0.0f));
-            segTumorRenderer->setColor(Segmentation::LABEL_BACKGROUND, Color(0.0f, 255.0f / 255.0f, 0.0f));
-            segTumorRenderer->setInputData(m_tumorMap);
-            //segTumorRenderer->setInterpolation(false);
-            segTumorRenderer->update();
+            } else if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
+                auto someRenderer = SegmentationPyramidRenderer::New();
+                someRenderer->setInputConnection(port);
 
-            insertRenderer("tumorSeg", segTumorRenderer);
+                insertRenderer(modelMetadata["name"], someRenderer);
+            }
 
-            createDynamicViewWidget("tumorSeg", modelName);
+            // now make it possible to edit prediction in the View Widget
+            createDynamicViewWidget(modelMetadata["name"], modelName);
+
+            //std::future<void> fut = std::async(stitcher, network->getOutputPort());
+
+            // test
+            //usleep(5);
+            if (modelMetadata["name"] == "tumor") {
+                stitcher->update();
+                m_tumorMap_tensor = port->getNextFrame<Tensor>();
+
+                auto tmp = TensorToSegmentation::New();
+                tmp->setInputData(m_tumorMap_tensor);
+
+                m_tumorMap = tmp->updateAndGetOutputData<Image>();
+
+                // wait for process is finished, then same prediction as map
+                /*
+                std::promise<void> promise;
+                std::future<void> future = promise.get_future();//std::future<int> out = std::async(heatmapRenderer); //ThreadPool.RegisterWaitForSingleObject();
+                request();
+                future.get();
+                 */
+
+                auto segTumorRenderer = SegmentationRenderer::New();
+                segTumorRenderer->setOpacity(0.4);
+                segTumorRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0 / 255.0f, 0.0f, 0.0f));
+                segTumorRenderer->setColor(Segmentation::LABEL_BACKGROUND, Color(0.0f, 255.0f / 255.0f, 0.0f));
+                segTumorRenderer->setInputData(m_tumorMap);
+                //segTumorRenderer->setInterpolation(false);
+                segTumorRenderer->update();
+
+                insertRenderer("tumorSeg", segTumorRenderer);
+
+                createDynamicViewWidget("tumorSeg", modelName);
+            }
+
         }
     }
 }
@@ -1114,6 +1731,7 @@ std::map<std::string, std::string> MainWindow::getModelMetadata(std::string mode
     }
     return metadata;
 }
+
 
 // for string delimiter
 vector<string> MainWindow::split (string s, string delimiter) {
