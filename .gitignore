@@ -11,6 +11,7 @@ cmake-build*
 *.mapping
 *.bin
 WSI/
+WSI*
 Models/
 Models*
 Icons/

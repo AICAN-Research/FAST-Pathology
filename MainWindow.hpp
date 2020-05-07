@@ -28,6 +28,8 @@ class QSplitter;
 class QPlainTextEdit;
 class QStatusbar;
 class QString;
+class QScrollArea;
+class QListWidget;
 QT_END_NAMESPACE
 
 namespace fast {
@@ -60,6 +62,7 @@ class MainWindow : public Window {
         void createStatsWidget();
         void createMenuWidget();
         void createDynamicViewWidget(const std::string& someName, std::string modelName);
+        void createWSIScrollAreaWidget();
 
         bool hideChannel(const std::string &someName); //, uint channel_value);
         bool opacityRenderer(int value, const std::string& someName);
@@ -84,8 +87,12 @@ class MainWindow : public Window {
         void addModels();
         void addPipelines();
         void createProject();
+        void openProject();
+        void saveProject();
         void createPipeline();
         void pipelineEditor();
+        void selectFileInProject(int pos);  // int pos);
+        int curr_pos;
 
         // script editor related functions
         QDialog *scriptEditorWidget;
@@ -157,6 +164,13 @@ class MainWindow : public Window {
         QComboBox *pageComboBox;
         QStackedLayout *stackedLayout;
         //QSplitter *mainSplitter;
+
+        QScrollArea *scrollArea;
+        QWidget *scrollWidget;
+        QVBoxLayout *scrollLayout;
+        QListWidget *scrollList;
+
+        std::vector<std::string> wsiList;
 
         /**
          * Removes a named renderer from the view

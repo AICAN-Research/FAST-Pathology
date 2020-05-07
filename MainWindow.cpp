@@ -41,6 +41,10 @@
 #include <QUrl>
 #include <QScreen>
 #include <QMessageBox>
+#include <FAST/Exporters/ImageExporter.hpp>
+#include <FAST/Exporters/ImageFileExporter.hpp>
+#include <FAST/Algorithms/ScaleImage/ScaleImage.hpp>
+//#include "ExtractThumbnail.hpp"
 
 using namespace std;
 
@@ -55,7 +59,10 @@ MainWindow::MainWindow() {
 
     // create temporary tmp folder to store stuff, and create temporary file to keep history for visualization and
     // other stuff
-    create_tmp_folder_file();
+    //create_tmp_folder_file();
+    QTemporaryDir tmpDir;
+    std::string tmpPath = tmpDir.path().toStdString();
+    std::cout << "\n temporary path: " << tmpDir.path().toStdString() << "\n";
 
     // Create models folder platform assumes that this folder exists and contains all relevant models
     std::string dir_str;
@@ -149,6 +156,11 @@ void MainWindow::createMenubar() {
     pipelineMenu->addAction("Import pipelines", this, &MainWindow::addPipelines);
     pipelineMenu->addAction("Run Pipeline");
     pipelineMenu->addAction("Pipeline Editor", this, &MainWindow::pipelineEditor);
+
+    auto projectMenu = topFiller->addMenu(tr("&Projects"));
+    projectMenu->addAction("Create Project", this, &MainWindow::createProject);
+    projectMenu->addAction("Open Project", this, &MainWindow::openProject);
+    projectMenu->addAction("Save Project", this, &MainWindow::saveProject);
 
     //auto deployMenu = new QMenu();
     auto deployMenu = topFiller->addMenu(tr("&Deploy"));
@@ -343,9 +355,66 @@ void MainWindow::createMenuWidget() {
 }
 
 
+void MainWindow::createWSIScrollAreaWidget() {
+    //auto scrollAreaDialog = new QDialog();
+    //scrollAreaDialog->setGeometry(100, 100, 260, 260);
+
+    // TODO: Need to substitute this with QListWidget or similar as it's quite slow and memory expensive for
+    //        larger number of elements
+    scrollArea = new QScrollArea();  //scrollAreaDialog);
+    scrollArea->setAlignment(Qt::AlignTop);
+    //scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setGeometry(10, 10, 200, 200);
+
+    scrollList = new QListWidget();
+    scrollList->setItemAlignment(Qt::AlignTop);
+    scrollList->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    scrollList->setResizeMode(QListView::Adjust);  // resizable adaptively
+    scrollList->setGeometry(10, 10, 200, 200);
+    //QObject::connect(scrollList, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, 1));
+    //QObject::connect(scrollList, &QListWidget::itemPressed, std::bind(&MainWindow::selectFileInProject, this, 1));  // this, SLOT(onListMailItemClicked(QListWidgetItem*)));
+    //QObject::connect(scrollList,itemClicked(QListWidgetItem*), std::bind(&MainWindow::selectFileInProject, this, 1));
+    //connect(ui->listMail, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(onListMailItemClicked(QListWidgetItem*)));
+    // QListWidget::itemPressed(QListWidgetItem *item)
+    //QObject::connect(scrollList, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(&MainWindow::selectFileInProject));
+
+    scrollArea->setWidget(scrollList);
+
+    scrollWidget = new QWidget();
+    //scrollArea->setWidget(scrollWidget);
+
+    scrollLayout = new QVBoxLayout();
+    scrollWidget->setLayout(scrollLayout);
+
+    //connect(scrollList, SIGNAL(activated(int)), scrollLayout, SLOT(setCurrentIndex(int)));
+
+    /*
+    for (int i = 0; i < 4; i++)
+    {
+        auto button = new QPushButton(); //QString( "%1" ).arg( i ) );
+        //QPixmap pixmap("/home/andrep/workspace/FAST-Pathology/ImageExporterTest.png"); //"/home/andrep/Pictures/medium.png");
+        QPixmap pixmap("/home/andrep/Pictures/medium.png");
+        QIcon ButtonIcon(pixmap);
+        button->setIcon(ButtonIcon);
+        //button->setIconSize(pixmap.rect().size());
+        button->setIconSize(QSize(200, 200));
+        //button->setFixedSize(100, 100);
+        scrollLayout->addWidget(button);
+    }
+     */
+
+    //fileLayout->insertWidget(2, scrollArea);  //widget);
+    fileLayout->addWidget(scrollArea);
+
+    //scrollAreaDialog->show();
+}
+
+
 void MainWindow::createFileWidget() {
 
     fileLayout = new QVBoxLayout;
+    fileLayout->setAlignment(Qt::AlignTop);
 
     fileWidget = new QWidget;
     fileWidget->setLayout(fileLayout);
@@ -357,6 +426,12 @@ void MainWindow::createFileWidget() {
     createProjectButton->setStyleSheet("color: white; background-color: blue");
     QObject::connect(createProjectButton, &QPushButton::clicked, std::bind(&MainWindow::createProject, this));
 
+    auto openProjectButton = new QPushButton(fileWidget);
+    openProjectButton->setText("Open Project");
+    openProjectButton->setFixedHeight(50);
+    openProjectButton->setStyleSheet("color: white; background-color: blue");
+    QObject::connect(openProjectButton, &QPushButton::clicked, std::bind(&MainWindow::openProject, this));
+
     auto selectFileButton = new QPushButton(fileWidget);
     selectFileButton->setText("Select WSI");
     //selectFileButton->setFixedWidth(200);
@@ -364,6 +439,7 @@ void MainWindow::createFileWidget() {
     selectFileButton->setStyleSheet("color: white; background-color: blue");
     QObject::connect(selectFileButton, &QPushButton::clicked, std::bind(&MainWindow::selectFile, this));
 
+    /*
     auto addModelButton = new QPushButton(fileWidget);
     addModelButton->setText("Import model");
     //selectFileButton->setFixedWidth(200);
@@ -388,13 +464,20 @@ void MainWindow::createFileWidget() {
     auto bigEditor = new QTextEdit;
     bigEditor->setPlainText(tr("This widget takes up all the remaining space "
                                "in the top-level layout."));
+    */
 
     fileLayout->addWidget(createProjectButton);
+    fileLayout->addWidget(openProjectButton);
     fileLayout->addWidget(selectFileButton); //, Qt::AlignTop);
+    /*
     fileLayout->addWidget(addModelButton);
     fileLayout->addWidget(smallTextWindow);
     fileLayout->addWidget(bigEditor);
     fileLayout->addWidget(quitButton, Qt::AlignTop);
+     */
+
+    createWSIScrollAreaWidget();
+
 }
 
 
@@ -1240,23 +1323,204 @@ void MainWindow::createActions() {
 
 void MainWindow::selectFile() {
 
-    auto fileName = QFileDialog::getOpenFileName(
+    // check if view object list is empty, if not, prompt to save results or not, if not clear
+    if (pageComboBox->count() > 1) {
+        // prompt
+        QMessageBox mBox;
+        mBox.setIcon(QMessageBox::Warning);
+        mBox.setText("There are unsaved results.");
+        mBox.setInformativeText("Do you wish to save them?");
+        mBox.setDefaultButton(QMessageBox::Save);
+        mBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+        int ret = mBox.exec();
+
+        switch (ret) {
+            case QMessageBox::Save:
+                std::cout << "\n Saved! \n";
+                // Save was clicked
+                break;
+            case QMessageBox::Discard:
+                // Don't Save was clicked
+                std::cout << "\n Discarded! \n";
+                break;
+            case QMessageBox::Cancel:
+                // Cancel was clicked
+                std::cout << "\n Cancelled! \n";
+                break;
+            default:
+                // should never be reached
+                break;
+        }
+    }
+    if (pageComboBox->count() != 0) { // if not empty, clear
+        pageComboBox->clear(); // clear
+    }
+
+    auto fileNames = QFileDialog::getOpenFileNames(
             mWidget,
-            tr("Open File"), nullptr, tr("WSI Files (*.tiff *.tif *.svs *.ndpi)"),
+            tr("Select File(s)"), nullptr, tr("WSI Files (*.tiff *.tif *.svs *.ndpi)"),
             nullptr, QFileDialog::DontUseNativeDialog
             );
 
-    if(fileName == "")
-        return;
-    filename = fileName.toStdString();
+    int counter = 0;
+    for (QString& fileName : fileNames) {
 
-    // if new file is chosen, clear all cache of previous images
-    //renderer->clearPyramid();
-    //tumorRenderer->clearHeatmap();
+        if (fileName == "")
+            return;
+        filename = fileName.toStdString();
+
+        wsiList.push_back(filename);
+
+        // if new file is chosen, clear all cache of previous images
+        //renderer->clearPyramid();
+        //tumorRenderer->clearHeatmap();
+
+        // Import image from file using the ImageFileImporter
+        auto importer = WholeSlideImageImporter::New();
+        importer->setFilename(fileName.toStdString());
+        m_image = importer->updateAndGetOutputData<ImagePyramid>();
+
+        // for reading of multiple WSIs, only render last one
+        if (counter == fileNames.count()-1) {
+
+            // get metadata
+            metadata = m_image->getMetadata();
+
+            auto renderer = ImagePyramidRenderer::New();
+            renderer->setInputData(m_image);
+
+            // TODO: Something here results in me not being able to run analysis on new images (after the first)
+            removeAllRenderers();
+            insertRenderer("WSI", renderer);
+            getView(0)->reinitialize(); // Must call this after removing all renderers
+
+            // get WSI format
+            wsiFormat = metadata["openslide.vendor"];
+
+            // get magnification level of current WSI
+            magn_lvl = getMagnificationLevel();
+
+            // now make it possible to edit image in the View Widget
+            createDynamicViewWidget("WSI", modelName);
+        }
+        counter ++;
+
+        auto access = m_image->getAccess(ACCESS_READ);
+        auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
+
+        // try to convert to FAST Image -> QImage
+        QImage image(input->getWidth(), input->getHeight(), QImage::Format_RGB32);
+
+        // TODO have to do some type conversion here, assuming float for now
+        unsigned char *pixelData = image.bits();
+
+        ImageAccess::pointer new_access = input->getImageAccess(ACCESS_READ);
+        void *inputData = new_access->get();
+        uint nrOfComponents = input->getNrOfChannels();
+
+        for (uint x = 0; x < input->getWidth(); x++) {
+            for (uint y = 0; y < input->getHeight(); y++) {
+                uint i = x + y * input->getWidth();
+                for (uint c = 0; c < input->getNrOfChannels(); c++) {
+                    float data;
+                    data = ((uchar *) inputData)[i * nrOfComponents + c]; // assumes TYPE_UINT8
+                    pixelData[i * 4 + c] = (unsigned char) data;
+                    pixelData[i * 4 + 3] = 255; // Alpha
+                }
+            }
+        }
+
+        /*
+        auto intensityScaler = ScaleImage::New();
+        intensityScaler->setInputData(input); //m_tissue);  // expects Image data type
+        intensityScaler->setLowestValue(0.0f);
+        intensityScaler->setHighestValue(1.0f);
+        //intensityScaler->update();
+         */
+
+        // attempt to save tissue mask to disk as .png
+        /*
+        ImageExporter::pointer exporter = ImageExporter::New();
+        exporter->setFilename("/home/andrep/workspace/FAST-Pathology/ImageExporterTest.png");
+        exporter->setInputData(input); //intensityScaler->updateAndGetOutputData<Image>());
+        exporter->update();
+         */
+
+        //QPixmap pixmap(exporter);
+
+        // /*
+        auto button = new QPushButton();
+        //QPixmap pixmap("/home/andrep/workspace/FAST-Pathology/ImageExporterTest.png");
+        auto m_NewPixMap = QPixmap::fromImage(image);
+        QIcon ButtonIcon(m_NewPixMap); //pixmap);
+        button->setIcon(ButtonIcon);
+        //button->setIconSize(QSize(200, 200));
+        int height_val = 150;
+        button->setIconSize(QSize(height_val, (int) std::round((float) image.width() * (float) height_val / (float) image.height())));
+        //QObject::connect(button, &QPushButton::clicked,std::bind(&MainWindow::patchClassifier, this, modelName));
+        //scrollLayout->addWidget(button);
+        //scrollList->addItem()
+        //fileLayout->insertWidget(2, scrollArea);  //widget);
+        // */
+        //QObject::connect(button, &QListWidget::itemClicked, std::bind(&MainWindow::selectFileInProject, this));
+
+        //QObject::connect(scrollList, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, 1));
+        //QObject::connect(scrollList, &QListWidget::itemPressed, std::bind(&MainWindow::selectFileInProject, this, 1));  // this, SLOT(onListMailItemClicked(QListWidgetItem*)));
+        //QObject::connect(scrollList,itemClicked(QListWidgetItem*), std::bind(&MainWindow::selectFileInProject, this, 1));
+        //connect(ui->listMail, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(onListMailItemClicked(QListWidgetItem*)));
+        // QListWidget::itemPressed(QListWidgetItem *item)
+        //QObject::connect(scrollList, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(&MainWindow::selectFileInProject));
+
+        auto listItem = new QListWidgetItem;
+        listItem->setSizeHint(
+                QSize((int) std::round((float) image.width() * (float) height_val / (float) image.height()),
+                      height_val));
+        QObject::connect(button, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, curr_pos));
+        scrollList->addItem(listItem);
+        scrollList->setItemWidget(listItem, button);
+
+        curr_pos++;
+
+        auto mBox = new QMessageBox(mWidget);
+        std::string path = "Finished reading: " + split(fileName.toStdString(), "/").back();
+        mBox->setText(path.c_str());
+        mBox->setIcon(QMessageBox::Information);
+        mBox->setModal(false);
+        //mBox->show(); // TODO: Don't ask why I do multiple show()s here. I just do, and it works. Seems like I don't need it (anymore?)
+        QRect screenrect = mWidget->screen()[0].geometry();
+        mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
+        mBox->show();
+        QTimer::singleShot(3000, mBox, SLOT(accept()));
+    }
+}
+
+
+void MainWindow::selectFileInProject(int pos) {
+
+    std::cout << "\n\n\n" << "hallo" << "\n wsi selection worked!\n";
+
+    // if you select a WSI and it's already open, do nothing
+    if (filename == wsiList[pos]) {
+        auto mBox = new QMessageBox(mWidget);
+        mBox->setText("WSI is already open.");
+        mBox->setIcon(QMessageBox::Information);
+        mBox->setModal(false);
+        mBox->show();
+        QRect screenrect = mWidget->screen()[0].geometry();
+        mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
+        mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
+        QTimer::singleShot(3000, mBox, SLOT(accept()));
+        return;
+    }
+
+    // if there are any results created, prompt if you want to save results
+
+    // add WSI to project list
+    filename = wsiList[pos];
 
     // Import image from file using the ImageFileImporter
     auto importer = WholeSlideImageImporter::New();
-    importer->setFilename(fileName.toStdString());
+    importer->setFilename(filename);
     m_image = importer->updateAndGetOutputData<ImagePyramid>();
 
     // get metadata
@@ -1284,6 +1548,7 @@ void MainWindow::selectFile() {
 // TODO: Make temporary directories using Qt's QTemporaryDir() instead of current solution
 
 void MainWindow::createProject() {
+
     // start by selecting where to create folder and give project name
     // should also handle if folder name already exist, prompt warning and option to change name
     QFileDialog dialog(mWidget);
@@ -1295,20 +1560,250 @@ void MainWindow::createProject() {
 
     std::cout << "\nProject dir:\n" << projectFolderName.toStdString() << "\n";
 
-    // check if selected folder is empty, if not, prompt warning and ask to select a new folder
-
-
     // create file for saving which WSIs exist in folder
     QString projectFileName = "/project.txt";
     QFile file(projectFolderName + projectFileName);
     if (file.open(QIODevice::ReadWrite)) {
         QTextStream stream(&file);
-        stream << "something" << endl;
+        //stream << "something" << endl;
     }
 
     // now create folders for saving results and such (prompt warning if name already exists)
     QDir().mkdir(projectFolderName + QString::fromStdString("/results"));
     QDir().mkdir(projectFolderName + QString::fromStdString("/pipelines"));
+    QDir().mkdir(projectFolderName + QString::fromStdString("/thumbnails"));
+
+    // check if any WSIs have been selected previously, and ask if you want to make a project and add these,
+    // or make a new fresh one -> if no, need to clear all WSIs in the QListWidget
+    if (pageComboBox->count() > 0) {
+        // prompt
+        QMessageBox mBox;
+        mBox.setIcon(QMessageBox::Warning);
+        mBox.setText("There are already WSIs that has been used.");
+        mBox.setInformativeText("Do you wish to add them to the project?");
+        mBox.setDefaultButton(QMessageBox::Yes);
+        mBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        int ret = mBox.exec();
+
+        switch (ret) {
+            case QMessageBox::Yes:
+                std::cout << "\n Saved! \n";
+                saveProject();
+                break;
+            case QMessageBox::No:
+                std::cout << "\n Removing WSIs from QListWidget! \n";
+                scrollList->clear();
+                break;
+            default:
+                break;
+        }
+    }
+}
+
+
+void MainWindow::openProject() {
+
+    // clear wsiList if new project is made right after another one has been in use
+    wsiList.clear();
+
+    // select project file
+    QFileDialog dialog(mWidget);
+    dialog.setFileMode(QFileDialog::ExistingFile);
+    QString projectPath = dialog.getOpenFileName(
+            mWidget,
+            tr("Select Project File"), nullptr,
+            tr("Project (*project.txt)"),
+            nullptr, QFileDialog::DontUseNativeDialog
+    );
+
+    std::cout << "\n " << projectPath.toStdString() << "\n";
+
+    projectFolderName = split(projectPath.toStdString(), "project.txt")[0].c_str();
+
+    std::cout << "\n " << projectFolderName.toStdString() << "\n";
+
+    // check if all relevant files and folders are in selected folder directory
+    // qDebug << "hallo";
+    // if any of the folders does not exists, create them
+    if (!QDir(projectFolderName + "/pipelines").exists()) {
+        QDir().mkdir(projectFolderName + "/pipelines");
+    }
+    if (!QDir(projectFolderName + "/results").exists()) {
+        QDir().mkdir(projectFolderName + "/results");
+    }
+    if (!QDir(projectFolderName + "/thumbnails").exists()) {
+        QDir().mkdir(projectFolderName + "/thumbnails");
+    }
+
+    // now, parse project.txt-file and add if there are any WSIs in the project
+    // create file for saving which WSIs exist in folder
+    QList<QString> fileNames;
+    QString projectFileName = "project.txt";
+    QFile file(projectFolderName + projectFileName);
+    if (file.open(QIODevice::ReadOnly)) {
+        QTextStream in(&file);
+        while (!in.atEnd()) {
+            QString line = in.readLine();
+            fileNames.push_back(line);
+        }
+    }
+
+    if (fileNames.empty()) {
+        // prompt if no valid WSI was found in project-file
+        auto mBox = new QMessageBox(mWidget);
+        mBox->setText("There was found no valid WSIs in the project-file.");
+        mBox->setIcon(QMessageBox::Information);
+        mBox->setModal(false);
+        QRect screenrect = mWidget->screen()[0].geometry();
+        mBox->move(mWidget->width() - mBox->width() / 2, -mWidget->width() / 2 - mBox->width() / 2);
+        mBox->show();
+        QTimer::singleShot(3000, mBox, SLOT(accept()));
+    }
+
+    int counter = 0;
+    for (QString &fileName : fileNames) {
+
+        if (fileName == "")
+            return;
+        filename = fileName.toStdString();
+        wsiList.push_back(filename);
+
+        // Import image from file using the ImageFileImporter
+        auto importer = WholeSlideImageImporter::New();
+        importer->setFilename(fileName.toStdString());
+        m_image = importer->updateAndGetOutputData<ImagePyramid>();
+
+        // for reading of multiple WSIs, only render last one
+        if (counter == fileNames.count() - 1) {
+
+            // get metadata
+            metadata = m_image->getMetadata();
+
+            auto renderer = ImagePyramidRenderer::New();
+            renderer->setInputData(m_image);
+
+            // TODO: Something here results in me not being able to run analysis on new images (after the first)
+            removeAllRenderers();
+            insertRenderer("WSI", renderer);
+            getView(0)->reinitialize(); // Must call this after removing all renderers
+
+            // get WSI format
+            wsiFormat = metadata["openslide.vendor"];
+
+            // get magnification level of current WSI
+            magn_lvl = getMagnificationLevel();
+
+            // now make it possible to edit image in the View Widget
+            createDynamicViewWidget("WSI", modelName);
+        }
+        counter++;
+
+        auto access = m_image->getAccess(ACCESS_READ);
+        auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
+
+        // try to convert to FAST Image -> QImage
+        QImage image(input->getWidth(), input->getHeight(), QImage::Format_RGB32);
+
+        // TODO have to do some type conversion here, assuming float for now
+        unsigned char *pixelData = image.bits();
+
+        ImageAccess::pointer new_access = input->getImageAccess(ACCESS_READ);
+        void *inputData = new_access->get();
+        uint nrOfComponents = input->getNrOfChannels();
+
+        for (uint x = 0; x < input->getWidth(); x++) {
+            for (uint y = 0; y < input->getHeight(); y++) {
+                uint i = x + y * input->getWidth();
+                for (uint c = 0; c < input->getNrOfChannels(); c++) {
+                    float data;
+                    data = ((uchar *) inputData)[i * nrOfComponents + c]; // assumes TYPE_UINT8
+                    pixelData[i * 4 + c] = (unsigned char) data;
+                    pixelData[i * 4 + 3] = 255; // Alpha
+                }
+            }
+        }
+
+        /*
+        auto intensityScaler = ScaleImage::New();
+        intensityScaler->setInputData(input); //m_tissue);  // expects Image data type
+        intensityScaler->setLowestValue(0.0f);
+        intensityScaler->setHighestValue(1.0f);
+        //intensityScaler->update();
+         */
+
+        // attempt to save tissue mask to disk as .png
+        /*
+        ImageExporter::pointer exporter = ImageExporter::New();
+        exporter->setFilename("/home/andrep/workspace/FAST-Pathology/ImageExporterTest.png");
+        exporter->setInputData(input); //intensityScaler->updateAndGetOutputData<Image>());
+        exporter->update();
+         */
+
+        //QPixmap pixmap(exporter);
+
+        // /*
+        auto button = new QPushButton();
+        //QPixmap pixmap("/home/andrep/workspace/FAST-Pathology/ImageExporterTest.png");
+        auto m_NewPixMap = QPixmap::fromImage(image);
+        QIcon ButtonIcon(m_NewPixMap); //pixmap);
+        button->setIcon(ButtonIcon);
+        //button->setIconSize(QSize(200, 200));
+        int height_val = 150;
+        button->setIconSize(QSize(height_val, (int) std::round(
+                (float) image.width() * (float) height_val / (float) image.height())));
+        //QObject::connect(button, &QPushButton::clicked,std::bind(&MainWindow::patchClassifier, this, modelName));
+        //scrollLayout->addWidget(button);
+        //scrollList->addItem()
+        //fileLayout->insertWidget(2, scrollArea);  //widget);
+        // */
+        //QObject::connect(button, &QListWidget::itemClicked, std::bind(&MainWindow::selectFileInProject, this));
+
+        //QObject::connect(scrollList, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, 1));
+        //QObject::connect(scrollList, &QListWidget::itemPressed, std::bind(&MainWindow::selectFileInProject, this, 1));  // this, SLOT(onListMailItemClicked(QListWidgetItem*)));
+        //QObject::connect(scrollList,itemClicked(QListWidgetItem*), std::bind(&MainWindow::selectFileInProject, this, 1));
+        //connect(ui->listMail, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(onListMailItemClicked(QListWidgetItem*)));
+        // QListWidget::itemPressed(QListWidgetItem *item)
+        //QObject::connect(scrollList, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(&MainWindow::selectFileInProject));
+
+        auto listItem = new QListWidgetItem;
+        listItem->setSizeHint(
+                QSize((int) std::round((float) image.width() * (float) height_val / (float) image.height()),
+                      height_val));
+        QObject::connect(button, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, curr_pos));
+        scrollList->addItem(listItem);
+        scrollList->setItemWidget(listItem, button);
+
+        curr_pos++;
+
+        auto mBox = new QMessageBox(mWidget);
+        std::string path = "Finished reading: " + split(fileName.toStdString(), "/").back();
+        mBox->setText(path.c_str());
+        mBox->setIcon(QMessageBox::Information);
+        mBox->setModal(false);
+        //mBox->show(); // TODO: Don't ask why I do multiple show()s here. I just do, and it works. However, seems like I don't need it anymore. So very mysterious...
+        QRect screenrect = mWidget->screen()[0].geometry();
+        mBox->move(mWidget->width() - mBox->width() / 2, -mWidget->width() / 2 - mBox->width() / 2);
+        mBox->show();
+        QTimer::singleShot(3000, mBox, SLOT(accept()));
+
+    }
+}
+
+
+void MainWindow::saveProject() {
+
+    // create file for saving which WSIs exist in folder
+    QString projectFileName = "/project.txt";
+    QFile file(projectFolderName + projectFileName);
+    file.resize(0);  // clear it and then write
+    if (file.open(QIODevice::ReadWrite)) {
+        foreach(std::string currPath, wsiList) {
+            QTextStream stream(&file);
+            std::cout << "\nLine: " << currPath << "\n";
+            stream << currPath.c_str() << endl;
+            //stream << "something" << endl;
+        }
+    }
 }
 
 
@@ -1577,10 +2072,10 @@ bool MainWindow::patchClassifier(std::string modelName) {
         }
         //network->setInferenceEngine("TensorRT"); //"TensorRT");
 
+        bool checkFlag = true;
         // /*
         // Now select best available IE based on which extensions exist for chosen model
         // TODO: Current optimization profile is: 0. Please ensure there are no enqueued operations pending in this context prior to switching profiles
-        bool checkFlag = true;
         if (std::find(acceptedModels.begin(), acceptedModels.end(), ".uff") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "TensorRT") != IEsList.end()) {
             network->setInferenceEngine("TensorRT");
         } else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "TensorFlowCUDA") != IEsList.end()) {
@@ -1681,7 +2176,9 @@ bool MainWindow::patchClassifier(std::string modelName) {
 
             // test
             //usleep(5);
-            if (modelMetadata["name"] == "tumor") {
+
+            //if (modelMetadata["name"] == "tumor") {
+            if (false) {
                 stitcher->update();
                 m_tumorMap_tensor = port->getNextFrame<Tensor>();
 
