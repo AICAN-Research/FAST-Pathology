@@ -44,6 +44,7 @@
 #include <FAST/Exporters/ImageExporter.hpp>
 #include <FAST/Exporters/ImageFileExporter.hpp>
 #include <FAST/Algorithms/ScaleImage/ScaleImage.hpp>
+#include <FAST/Data/Access/ImagePyramidAccess.hpp>
 //#include "ExtractThumbnail.hpp"
 
 using namespace std;
@@ -1424,7 +1425,7 @@ void MainWindow::selectFile() {
                 for (uint c = 0; c < input->getNrOfChannels(); c++) {
                     float data;
                     data = ((uchar *) inputData)[i * nrOfComponents + c]; // assumes TYPE_UINT8
-                    pixelData[i * 4 + c] = (unsigned char) data;
+                    pixelData[i * 4 + (2-c)] = (unsigned char) data;  // TODO: NOTE (2-c) fixed BGR->RGB, but maybe there is a smarter solution?
                     pixelData[i * 4 + 3] = 255; // Alpha
                 }
             }
@@ -1445,6 +1446,10 @@ void MainWindow::selectFile() {
         exporter->setInputData(input); //intensityScaler->updateAndGetOutputData<Image>());
         exporter->update();
          */
+
+        // BGR -> RGB
+        //auto channelConverter = new ImageChannelConverter::New();
+
 
         //QPixmap pixmap(exporter);
 
@@ -1497,7 +1502,7 @@ void MainWindow::selectFile() {
 
 void MainWindow::selectFileInProject(int pos) {
 
-    std::cout << "\n\n\n" << "hallo" << "\n wsi selection worked!\n";
+    std::cout << "\n wsi selection worked!\n";
 
     // if you select a WSI and it's already open, do nothing
     if (filename == wsiList[pos]) {
