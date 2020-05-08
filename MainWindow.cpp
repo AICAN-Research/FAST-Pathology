@@ -46,6 +46,7 @@
 #include <FAST/Algorithms/ScaleImage/ScaleImage.hpp>
 #include <FAST/Data/Access/ImagePyramidAccess.hpp>
 //#include "ExtractThumbnail.hpp"
+#include <QShortcut>
 
 using namespace std;
 
@@ -54,6 +55,8 @@ namespace fast {
 MainWindow::MainWindow() {
     setTitle("fastPathology");
     enableMaximized(); // <- function from Window.cpp
+
+    mWidget->setFocusPolicy(Qt::ClickFocus);  //Qt::ClickFocus);
 
     // get current working directory
     get_cwd();
@@ -150,6 +153,7 @@ void MainWindow::createMenubar() {
     fileMenu->addAction("Quit", QApplication::quit);
 
     auto editMenu = topFiller->addMenu(tr("&Edit"));
+    editMenu->addAction("Reset", this, &MainWindow::reset);
     editMenu->addAction("Select Mode");  // TODO: Add function that changes GUI for research/clinical use
     editMenu->addAction("Info");
 
@@ -184,6 +188,36 @@ void MainWindow::createMenubar() {
     //topFiller->addMenu(deployMenu);
 
     superLayout->insertWidget(0, topFiller);
+}
+
+
+void MainWindow::reset() {
+    //first prompt warning, that it will delete all unsaved results, etc...
+    if (pageComboBox->count() > 0) {
+        // prompt
+        QMessageBox mBox;
+        mBox.setIcon(QMessageBox::Warning);
+        mBox.setText("This will delete all history.");
+        mBox.setInformativeText("Are you sure you want to reset?");
+        mBox.setDefaultButton(QMessageBox::No);
+        mBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        int ret = mBox.exec();
+
+        switch (ret) {
+            case QMessageBox::Yes:
+                wsiList.clear();
+                scrollList->clear();
+                removeAllRenderers();
+                pageComboBox->clear();
+                exportComboBox->clear();
+                break;
+            case QMessageBox::No:
+                1;
+                break;
+            default:
+                break;
+        }
+    }
 }
 
 
@@ -369,10 +403,16 @@ void MainWindow::createWSIScrollAreaWidget() {
     scrollArea->setGeometry(10, 10, 200, 200);
 
     scrollList = new QListWidget();
+    scrollList->setStyleSheet("border: none, padding: 0, background: white, color: none");
+    scrollList->setSelectionMode(QAbstractItemView::ExtendedSelection);
     scrollList->setItemAlignment(Qt::AlignTop);
     scrollList->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     scrollList->setResizeMode(QListView::Adjust);  // resizable adaptively
     scrollList->setGeometry(10, 10, 200, 200);
+    //scrollList->setViewMode(QListWidget::IconMode);
+    //scrollList->setIconSize(QSize(100, 100));
+    //scrollList->setFlow(QListView::TopToBottom);
+    //scrollList->setResizeMode(QListWidget::Adjust);
     //QObject::connect(scrollList, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, 1));
     //QObject::connect(scrollList, &QListWidget::itemPressed, std::bind(&MainWindow::selectFileInProject, this, 1));  // this, SLOT(onListMailItemClicked(QListWidgetItem*)));
     //QObject::connect(scrollList,itemClicked(QListWidgetItem*), std::bind(&MainWindow::selectFileInProject, this, 1));
@@ -1143,23 +1183,135 @@ void MainWindow::createStatsWidget() {
 void MainWindow::createExportWidget() {
 
     exportLayout = new QVBoxLayout;
+    exportLayout->setAlignment(Qt::AlignTop);
 
     exportWidget = new QWidget;
     exportWidget->setLayout(exportLayout);
 
-    // make button that prints distribution of pixels of each class -> for histogram
-    auto exportSegmentationButton = new QPushButton(exportWidget);
-    exportSegmentationButton->setText("Export segmentation");
-    exportSegmentationButton->setFixedHeight(50);
-    QObject::connect(exportSegmentationButton, &QPushButton::clicked, std::bind(&MainWindow::exportSeg, this));
+    //auto wsiPageWidget = new QWidget;
+    exportStackedLayout = new QStackedLayout;
 
-    auto smallTextWindowExport = new QTextEdit;
-    smallTextWindowExport->setPlainText(tr("Yes some info yes"));
-    smallTextWindowExport->setReadOnly(true);
+    auto exportStackedWidget = new QWidget;
+    exportStackedWidget->setLayout(exportStackedLayout);
 
-    exportLayout->addWidget(exportSegmentationButton);
-    exportLayout->addWidget(smallTextWindowExport);
+    exportComboBox = new QComboBox;
+    exportComboBox->setFixedWidth(150);
+    connect(exportComboBox, SIGNAL(activated(int)), exportStackedLayout, SLOT(setCurrentIndex(int)));
+
+    exportComboBox->addItem(tr("Thumbnail"));
+    exportComboBox->addItem(tr("Tissue mask"));
+
+    QStringList itemsInComboBox;
+    for (int index = 0; index < pageComboBox->count(); index++) {
+        std::cout << "\n some item: " << pageComboBox->itemText(index).toStdString() << "\n";
+        itemsInComboBox << pageComboBox->itemText(index);
+    }
+
+    auto saveThumbnailButton = new QPushButton(exportWidget);
+    saveThumbnailButton->setText("Save thumbnail");
+    saveThumbnailButton->setFixedHeight(50);
+    saveThumbnailButton->setStyleSheet("color: white; background-color: blue");
+    QObject::connect(saveThumbnailButton, &QPushButton::clicked, std::bind(&MainWindow::saveThumbnail, this));
+
+    auto saveTissueButton = new QPushButton(exportWidget);
+    saveTissueButton->setText("Save tissue mask");
+    saveTissueButton->setFixedHeight(50);
+    saveTissueButton->setStyleSheet("color: white; background-color: blue");
+    QObject::connect(saveTissueButton, &QPushButton::clicked, std::bind(&MainWindow::saveTissueSegmentation, this));
+
+    exportLayout->addWidget(saveThumbnailButton);
+    exportLayout->addWidget(saveTissueButton);
+
 }
+
+
+void MainWindow::saveThumbnail() {
+
+    auto access = m_image->getAccess(ACCESS_READ);
+    auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
+
+    // try to convert to FAST Image -> QImage
+    QImage image(input->getWidth(), input->getHeight(), QImage::Format_RGB32);
+
+    // TODO have to do some type conversion here, assuming float for now
+    unsigned char *pixelData = image.bits();
+
+    ImageAccess::pointer new_access = input->getImageAccess(ACCESS_READ);
+    void *inputData = new_access->get();
+    uint nrOfComponents = input->getNrOfChannels();
+
+    for (uint x = 0; x < input->getWidth(); x++) {
+        for (uint y = 0; y < input->getHeight(); y++) {
+            uint i = x + y * input->getWidth();
+            for (uint c = 0; c < input->getNrOfChannels(); c++) {
+                float data;
+                data = ((uchar *) inputData)[i * nrOfComponents + c]; // assumes TYPE_UINT8
+                pixelData[i * 4 + (2-c)] = (unsigned char) data;  // TODO: NOTE (2-c) fixed BGR->RGB, but maybe there is a smarter solution?
+                pixelData[i * 4 + 3] = 255; // Alpha
+            }
+        }
+    }
+
+    auto intensityScaler = ScaleImage::New();
+    intensityScaler->setInputData(input); //m_tissue);  // expects Image data type
+    intensityScaler->setLowestValue(0.0f);
+    intensityScaler->setHighestValue(1.0f);
+    //intensityScaler->update();
+
+    // attempt to save thumbnail to disk as .png
+    ImageExporter::pointer exporter = ImageExporter::New();
+    exporter->setFilename(projectFolderName.toStdString() + "/thumbnails/" + split(split(filename, "/").back(), ".")[0] + ".png");
+    std::cout << "\n monster name: " << projectFolderName.toStdString() + "/thumbnails/" + split(split(filename, "/").back(), ".")[0] + ".png" << "\n";
+    exporter->setInputData(intensityScaler->updateAndGetOutputData<Image>());
+    exporter->update();
+
+    auto mBox = new QMessageBox(mWidget);
+    mBox->setText("Thumbnail has been saved.");
+    mBox->setIcon(QMessageBox::Information);
+    mBox->setModal(false);
+    //mBox->show();
+    QRect screenrect = mWidget->screen()[0].geometry();
+    mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
+    mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
+    QTimer::singleShot(3000, mBox, SLOT(accept()));
+}
+
+
+void MainWindow::saveTissueSegmentation() {
+
+    // check if folder for current WSI exists, if not, create one
+    std::string wsiResultPath = projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0] + "/";
+    if (!QDir(wsiResultPath.c_str()).exists()) {
+        QDir().mkdir(wsiResultPath.c_str());
+    }
+
+    std::cout << "\n tissue path: " << wsiResultPath + "/tissue_mask.png" << "\n";
+
+    auto intensityScaler = ScaleImage::New();
+    intensityScaler->setInputData(m_tissue); //m_tissue);  // expects Image data type
+    intensityScaler->setLowestValue(0.0f);
+    intensityScaler->setHighestValue(1.0f);
+    //intensityScaler->update();
+
+    // attempt to save tissue mask to disk as .png
+    ImageExporter::pointer exporter = ImageExporter::New();
+    exporter->setFilename(wsiResultPath + "tissue_mask.png");
+    exporter->setInputData(intensityScaler->updateAndGetOutputData<Image>());
+    exporter->update();
+
+    auto mBox = new QMessageBox(mWidget);
+    mBox->setText("Tissue segmentation has been saved.");
+    mBox->setIcon(QMessageBox::Information);
+    mBox->setModal(false);
+    //mBox->show();
+    QRect screenrect = mWidget->screen()[0].geometry();
+    mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
+    mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
+    QTimer::singleShot(3000, mBox, SLOT(accept()));
+}
+
+
+
 
 void MainWindow::createProcessWidget() {
 
@@ -1355,6 +1507,7 @@ void MainWindow::selectFile() {
     }
     if (pageComboBox->count() != 0) { // if not empty, clear
         pageComboBox->clear(); // clear
+        exportComboBox->clear();
     }
 
     auto fileNames = QFileDialog::getOpenFileNames(
@@ -1445,7 +1598,7 @@ void MainWindow::selectFile() {
         exporter->setFilename("/home/andrep/workspace/FAST-Pathology/ImageExporterTest.png");
         exporter->setInputData(input); //intensityScaler->updateAndGetOutputData<Image>());
         exporter->update();
-         */
+        */
 
         // BGR -> RGB
         //auto channelConverter = new ImageChannelConverter::New();
@@ -1460,8 +1613,10 @@ void MainWindow::selectFile() {
         QIcon ButtonIcon(m_NewPixMap); //pixmap);
         button->setIcon(ButtonIcon);
         //button->setIconSize(QSize(200, 200));
+        int width_val = 100;
         int height_val = 150;
-        button->setIconSize(QSize(height_val, (int) std::round((float) image.width() * (float) height_val / (float) image.height())));
+        button->setIconSize(QSize((int) std::round(0.9 * (float) image.width() * (float) height_val / (float) image.height()), (int) std::round(0.9f * (float) height_val)));
+        //button->setIconSize(QSize((int) std::round((float) image.width() * (float) height_val / (float) image.height()), height_val));
         //QObject::connect(button, &QPushButton::clicked,std::bind(&MainWindow::patchClassifier, this, modelName));
         //scrollLayout->addWidget(button);
         //scrollList->addItem()
@@ -1477,12 +1632,27 @@ void MainWindow::selectFile() {
         //QObject::connect(scrollList, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(&MainWindow::selectFileInProject));
 
         auto listItem = new QListWidgetItem;
-        listItem->setSizeHint(
-                QSize((int) std::round((float) image.width() * (float) height_val / (float) image.height()),
-                      height_val));
+        //listItem->setText(split(filename, "/").back().c_str());
+        //listItem->setFlags(listItem->flags() | Qt::ItemIsUserCheckable);
+        //listItem->setCheckState(Qt::Unchecked);
+        //listItem->setIcon(ButtonIcon);
+        //listItem->setSizeHint(QSize((int) std::round(0.9 * (float) image.width() * (float) height_val / (float) image.height()), (int) std::round(0.9f * (float) height_val)));
+        //listItem->setSizeHint(QSize((int) std::round((float) image.width() * (float) height_val / (float) image.height()), height_val));
+        listItem->setSizeHint(QSize(width_val, height_val));
+        //QObject::connect(scrollList, &QListWidget::itemDoubleClicked, std::bind(&MainWindow::selectFileInProject, this, curr_pos));
+        //QObject::connect(scrollList, SIGNAL(itemClicked(QListWidgetItem *)), SLOT(itemClicked(QListWIdgetItem *)));
+        //QObject::connect(listItem, &QListWidget::itemDoubleClicked, std::bind(&MainWindow::selectFileInProject, this, curr_pos));
         QObject::connect(button, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, curr_pos));
         scrollList->addItem(listItem);
         scrollList->setItemWidget(listItem, button);
+
+        /*
+        QShortcut *m_DeleteKeyAction;
+        m_DeleteKeyAction = new QShortcut(mWidget);
+        m_DeleteKeyAction->setKey(Qt::Key_Delete);
+        //connect(m_DeleteKeyAction, SIGNAL(activated()), this,SLOT(deleteTriggered()));
+        QObject::connect(m_DeleteKeyAction, , std::bind(&MainWindow::selectFile, this))
+         */
 
         curr_pos++;
 
@@ -1519,6 +1689,10 @@ void MainWindow::selectFileInProject(int pos) {
     }
 
     // if there are any results created, prompt if you want to save results
+
+    // remove results of previous WSI
+    pageComboBox->clear();
+    exportComboBox->clear();
 
     // add WSI to project list
     filename = wsiList[pos];
@@ -1608,8 +1782,31 @@ void MainWindow::createProject() {
 
 void MainWindow::openProject() {
 
-    // clear wsiList if new project is made right after another one has been in use
-    wsiList.clear();
+    if (pageComboBox->count() > 0) {
+        // prompt
+        QMessageBox mBox;
+        mBox.setIcon(QMessageBox::Warning);
+        mBox.setText("Opening project will erase current edits.");
+        mBox.setInformativeText("Do you still wish to open?");
+        mBox.setDefaultButton(QMessageBox::No);
+        mBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        int ret = mBox.exec();
+
+        switch (ret) {
+            case QMessageBox::Yes:
+                wsiList.clear();
+                scrollList->clear();
+                removeAllRenderers();
+                pageComboBox->clear();
+                exportComboBox->clear();
+                curr_pos=0;
+                break;
+            case QMessageBox::No:
+                break;
+            default:
+                break;
+        }
+    }
 
     // select project file
     QFileDialog dialog(mWidget);
@@ -1722,9 +1919,9 @@ void MainWindow::openProject() {
                 for (uint c = 0; c < input->getNrOfChannels(); c++) {
                     float data;
                     data = ((uchar *) inputData)[i * nrOfComponents + c]; // assumes TYPE_UINT8
-                    pixelData[i * 4 + c] = (unsigned char) data;
-                    pixelData[i * 4 + 3] = 255; // Alpha
+                    pixelData[i * 4 + (2-c)] = (unsigned char) data;  // TODO: NOTE (2-c) fixed BGR->RGB, but maybe there is a smarter solution?
                 }
+                pixelData[i * 4 + 3] = 255; // Alpha
             }
         }
 
@@ -1752,6 +1949,9 @@ void MainWindow::openProject() {
         auto m_NewPixMap = QPixmap::fromImage(image);
         QIcon ButtonIcon(m_NewPixMap); //pixmap);
         button->setIcon(ButtonIcon);
+        //button->setCheckable(true);
+        button->setAutoDefault(true);
+        //button->setStyleSheet("border: none, padding: 0, background: none");
         //button->setIconSize(QSize(200, 200));
         int height_val = 150;
         button->setIconSize(QSize(height_val, (int) std::round(

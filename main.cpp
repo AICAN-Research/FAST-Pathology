@@ -11,5 +11,6 @@ int main(int argc, char** argv) {
     // Setup window
     auto window = MainWindow::New();
     window->start();
+
 }
 

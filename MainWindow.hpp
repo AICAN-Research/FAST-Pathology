@@ -63,6 +63,8 @@ class MainWindow : public Window {
         void createMenuWidget();
         void createDynamicViewWidget(const std::string& someName, std::string modelName);
         void createWSIScrollAreaWidget();
+        void saveThumbnail();
+        void saveTissueSegmentation();
 
         bool hideChannel(const std::string &someName); //, uint channel_value);
         bool opacityRenderer(int value, const std::string& someName);
@@ -162,13 +164,17 @@ class MainWindow : public Window {
         QVBoxLayout *dynamicViewLayout;
         QWidget *dynamicViewWidget;
         QComboBox *pageComboBox;
+        QComboBox *exportComboBox;
         QStackedLayout *stackedLayout;
+        QStackedLayout *exportStackedLayout;
         //QSplitter *mainSplitter;
 
         QScrollArea *scrollArea;
         QWidget *scrollWidget;
         QVBoxLayout *scrollLayout;
         QListWidget *scrollList;
+
+        void reset();
 
         std::vector<std::string> wsiList;
 
@@ -195,7 +201,6 @@ class MainWindow : public Window {
 
     //signals:
     //    void valueChanged(int newValue);
-
 
 
     private:
@@ -235,6 +240,7 @@ class MainWindow : public Window {
 
     private slots:
         void updateChannelValue (int index);
+        //void itemClicked(QListWidgetItem *item);
 
 
 };
