@@ -41,12 +41,17 @@
 #include <QUrl>
 #include <QScreen>
 #include <QMessageBox>
+#include <FAST/Importers/ImageImporter.hpp>
 #include <FAST/Exporters/ImageExporter.hpp>
+#include <FAST/Importers/ImageFileImporter.hpp>
 #include <FAST/Exporters/ImageFileExporter.hpp>
 #include <FAST/Algorithms/ScaleImage/ScaleImage.hpp>
 #include <FAST/Data/Access/ImagePyramidAccess.hpp>
 //#include "ExtractThumbnail.hpp"
 #include <QShortcut>
+#include <FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp>
+#include <jkqtplotter/graphs/jkqtpbarchart.h>
+#include <FAST/Algorithms/ImageResizer/ImageResizer.hpp>
 
 using namespace std;
 
@@ -81,8 +86,6 @@ MainWindow::MainWindow() {
     //mWidget->setStyleSheet("font-size: 16px; background: (255, 125, 50); color: black;");
     mWidget->setStyleSheet("font-size: 16px");
 
-    float OpenGL_background_color = 0.0f; //200.0f / 255.0f;
-
     // opacityTumorSlider->setStyleSheet("font-size: 16px"); // <- to set style sheet for a specific button/slider
     //mainestLayout->addLayout(topHorizontalLayout);
 
@@ -100,7 +103,16 @@ MainWindow::MainWindow() {
 
     createMainMenuWidget();
 
-    auto view = createView();
+    // create Menubar
+    createMenubar();
+
+    createOpenGLWindow();
+}
+
+
+void MainWindow::createOpenGLWindow() {
+    float OpenGL_background_color = 0.0f; //200.0f / 255.0f;
+    view = createView();
     //view = mWidget->addView();
     //view->setLayout(mainLayout);
 
@@ -113,14 +125,16 @@ MainWindow::MainWindow() {
 
     // create QSplitter for adjustable windows
     auto mainSplitter = new QSplitter(Qt::Horizontal);
+    //mainSplitter->setHandleWidth(5);
+    //mainSplitter->setFrameShadow(QFrame::Sunken);
+    //mainSplitter->setStyleSheet("background-color: rgb(55, 100, 110);");
+    mainSplitter->setHandleWidth(5);
+    mainSplitter->setStyleSheet("QSplitter::handle { background-color: rgb(100, 100, 200); }; ");
     mainSplitter->addWidget(menuWidget);
     mainSplitter->addWidget(view);
     mainSplitter->setStretchFactor(1, 1);
 
     mainLayout->addWidget(mainSplitter);
-
-    // create Menubar
-    createMenubar();
 }
 
 
@@ -176,6 +190,7 @@ void MainWindow::createMenubar() {
     deployMenu->addAction("Segment Tissue");
     deployMenu->addAction("Predict Tumor");
     deployMenu->addAction("Classify Grade");
+    deployMenu->addAction("Lowres Tumor Segment", this, &MainWindow::lowresSegmenter);
     deployMenu->addSeparator();
 
     auto helpMenu = topFiller->addMenu(tr("&Help"));
@@ -206,6 +221,7 @@ void MainWindow::reset() {
         switch (ret) {
             case QMessageBox::Yes:
                 wsiList.clear();
+                savedList.clear();
                 scrollList->clear();
                 removeAllRenderers();
                 pageComboBox->clear();
@@ -676,7 +692,6 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 
     std::cout << "\n vi kom lengre 1 \n";
 
-
     dynamicViewLayout = new QVBoxLayout;
     dynamicViewLayout->setAlignment(Qt::AlignTop);
 
@@ -1067,116 +1082,12 @@ void MainWindow::createStatsWidget() {
     calcTissueHistButton->setFixedHeight(50);
     QObject::connect(calcTissueHistButton, &QPushButton::clicked, std::bind(&MainWindow::calcTissueHist, this));
 
-    int barWidth = 9;
-    int boxWidth = 250;
-    int boxHeight = 250;
-    QPixmap pm(boxWidth, boxHeight);
-    pm.fill();
-
-    int len = 5;
-
-    //int x_vec[] = {1, 2, 3, 4, 5};
-    std::string x_vec[] = {"a", "b", "c", "d", "e"};
-    int y_vec[] = {12, 20, 43, 30, 5};
-
-    double drawMinHeight = 0.1 * (double)(boxHeight);
-    double drawMinWidth = 0.1 * (double)(boxWidth);
-
-    double newWidth = (double)(boxWidth - drawMinWidth);
-    double newHeight = (double)(boxHeight - drawMinHeight);
-
-    double maxHeight = *std::max_element(y_vec,y_vec+len);
-    double drawMaxHeight = (double)(maxHeight + maxHeight*0.1);
-
-    auto painters = new QPainter(&pm);
-    painters->setPen(QColor(140, 140, 210));
-
-    for (int i = 0; i < len; i++) {
-        std::cout<<std::to_string(i)<<"\n\n\n";
-        qreal h = y_vec[i] * maxHeight;
-        // draw level
-        painters->fillRect(drawMinWidth / 2 + (double)(i + 1) * (double)(newWidth) / (double)(len + 1) - (double)((double)(barWidth)/(double)(2)),
-                           newHeight,
-                           barWidth,
-                           - (double)(y_vec[i]) / (double)(drawMaxHeight) * (double)(newHeight),
-                           Qt::blue);
-        // clear the rest of the control
-        //painters->fillRect(barWidth * i, 0, barWidth * (i + 1), maxHeight - h, Qt::black);
-    }
-
-    int lineWidth = 3;
-    int space = drawMinHeight;
-
-    //auto linePainter = new QPainter(&pm);
-    painters->setPen(QPen(QColor(0, 0, 0), lineWidth));
-    painters->drawLine(space, boxHeight - space, boxWidth - space, boxHeight - space);
-    painters->drawLine(space - 1, boxHeight - space, space - 1, space);
-
-    // add ticks on lines
-    painters->setPen(QPen(QColor(0, 0, 0), 2));
-    painters->setFont(QFont("times", 10));
-    std::string stringIter;
-    int xTextSpace = 18;
-    int numTicks = 5;
-    double tickSize = 10;
-    for (int j = 0; j < numTicks; j++) {
-        painters->drawLine(drawMinWidth / 2 + (double)(j + 1) * (double)(newWidth) / (double)(len + 1),
-                           newHeight,
-                           drawMinWidth / 2 + (double)(j + 1) * (double)(newWidth) / (double)(len + 1),
-                           newHeight + tickSize / 2);
-        painters->drawText(drawMinWidth / 2 + (double)(j + 1) * (double)(newWidth) / (double)(len + 1) - 4, newHeight + xTextSpace, QString::number(j + 1));
-
-    }
-
-    int yTextSpace = 22;
-    for (int j = 0; j < numTicks; j++) {
-        painters->drawLine(space - tickSize / 2,
-                           drawMinHeight - drawMinHeight*0.5 + (double)(j + 1) * (double)(newHeight) / (double)(len + 1),
-                           space,
-                           drawMinHeight - drawMinHeight*0.5 + (double)(j + 1) * (double)(newHeight) / (double)(len + 1));
-
-        painters->drawText(drawMinWidth - yTextSpace, drawMinHeight - drawMinHeight*0.5 + (double)(j + 1) * (double)(newHeight) / (double)(len + 1) + 4,
-                           QString::number((int)(std::round((double)(numTicks - j) * (double)(maxHeight) / (double)(len + 1) + 4))));
-        //painters->drawText(drawMinWidth - yTextSpace, drawMinHeight - drawMinHeight*0.5 + (double)(j + 1) * (double)(newHeight) / (double)(len + 1) + 4,
-        //        QString::number((int)(y_vec[numTicks - j - 1])));
-
-    }
-
-    // draw arrow heads on end of axes
-    int xArrowSize = 8;
-    int yArrowSize = 16;
-    QRectF rect = QRectF(space - xArrowSize + lineWidth, space - yArrowSize, xArrowSize, yArrowSize);
-
-    QPainterPath path;
-    path.moveTo(rect.left() + (rect.width() / 2), rect.top());
-    path.lineTo(rect.bottomLeft());
-    path.lineTo(rect.bottomRight());
-    path.lineTo(rect.left() + (rect.width() / 2), rect.top());
-
-    painters->fillPath(path, QBrush(QColor ("black")));
-
-    QTransform t;
-    t.translate(boxWidth, boxHeight - space - yArrowSize - xArrowSize);
-    t.rotate(90);
-    QPainterPath path2 = t.map(path);
-
-    // draw title of histogram
-    painters->setPen(QPen(QColor(0, 0, 0), 2));
-    painters->setFont(QFont("times", 10));
-
-
-    painters->fillPath(path2, QBrush(QColor ("black")));
-
-    auto histBox = new QLabel;
-    histBox->setPixmap(pm);
-
     auto smallTextWindowStats = new QTextEdit;
     smallTextWindowStats->setPlainText(tr("This is some window with text that displays some relevant"
                                           "information regarding the inference or analysis you just did"));
     smallTextWindowStats->setReadOnly(true);
 
     statsLayout->addWidget(calcTissueHistButton);
-    statsLayout->addWidget(histBox);
     statsLayout->addWidget(smallTextWindowStats);
 }
 
@@ -1219,8 +1130,15 @@ void MainWindow::createExportWidget() {
     saveTissueButton->setStyleSheet("color: white; background-color: blue");
     QObject::connect(saveTissueButton, &QPushButton::clicked, std::bind(&MainWindow::saveTissueSegmentation, this));
 
+    auto saveTumorButton = new QPushButton(exportWidget);
+    saveTumorButton->setText("Save tumor mask");
+    saveTumorButton->setFixedHeight(50);
+    saveTumorButton->setStyleSheet("color: white; background-color: blue");
+    QObject::connect(saveTumorButton, &QPushButton::clicked, std::bind(&MainWindow::saveTumor, this));
+
     exportLayout->addWidget(saveThumbnailButton);
     exportLayout->addWidget(saveTissueButton);
+    exportLayout->addWidget(saveTumorButton);
 
 }
 
@@ -1280,12 +1198,27 @@ void MainWindow::saveThumbnail() {
 void MainWindow::saveTissueSegmentation() {
 
     // check if folder for current WSI exists, if not, create one
-    std::string wsiResultPath = projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0] + "/";
-    if (!QDir(wsiResultPath.c_str()).exists()) {
-        QDir().mkdir(wsiResultPath.c_str());
+    QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0] + "/").c_str();
+    wsiResultPath = wsiResultPath.replace("//", "/");
+    if (!QDir(wsiResultPath).exists()) {
+        QDir().mkdir(wsiResultPath);
     }
 
-    std::cout << "\n tissue path: " << wsiResultPath + "/tissue_mask.png" << "\n";
+    if (std::find(savedList.begin(), savedList.end(), "tissue") != savedList.end()) {
+        auto mBox = new QMessageBox(mWidget);
+        mBox->setText("Result has already previously been saved.");
+        mBox->setIcon(QMessageBox::Information);
+        mBox->setModal(false);
+        //mBox->show();
+        QRect screenrect = mWidget->screen()[0].geometry();
+        mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
+        mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
+        QTimer::singleShot(3000, mBox, SLOT(accept()));
+        return;
+    }
+    savedList.emplace_back("tissue");
+
+    std::cout << "\n tissue path: " << wsiResultPath.toStdString() + "tissue_mask.png" << "\n";
 
     auto intensityScaler = ScaleImage::New();
     intensityScaler->setInputData(m_tissue); //m_tissue);  // expects Image data type
@@ -1293,10 +1226,28 @@ void MainWindow::saveTissueSegmentation() {
     intensityScaler->setHighestValue(1.0f);
     //intensityScaler->update();
 
+
+    auto thresholder = BinaryThresholding::New();
+    thresholder->setLowerThreshold(0.5f);
+    //thresholder->setUpperThreshold(1.0f);
+    thresholder->setInputConnection(intensityScaler->getOutputPort());
+    //thresholder->setInputData(intensityScaler->updateAndGetOutputData<Image>());
+    //thresholder->update();
+
+    //intensityScaler->update();
+    //DataChannel::pointer port = intensityScaler->getOutputPort();
+    //Image::pointer result = port->getNextFrame<Image>();
+
     // attempt to save tissue mask to disk as .png
+    QString outFile = (wsiResultPath.toStdString() + split(split(filename, "/").back(), ".")[0] + "_tissue_mask.png").c_str();
     ImageExporter::pointer exporter = ImageExporter::New();
-    exporter->setFilename(wsiResultPath + "tissue_mask.png");
+    exporter->setFilename(outFile.replace("//", "/").toStdString());
+    //exporter->setInputData(m_tissue);
     exporter->setInputData(intensityScaler->updateAndGetOutputData<Image>());
+    //exporter->setInputConnection(intensityScaler->getOutputPort());
+    //exporter->setInputData(thresholder->updateAndGetOutputData<Image>());
+    //exporter->setInputConnection(thresholder->getOutputPort());
+    //exporter->setInputData(result);
     exporter->update();
 
     auto mBox = new QMessageBox(mWidget);
@@ -1310,6 +1261,47 @@ void MainWindow::saveTissueSegmentation() {
     QTimer::singleShot(3000, mBox, SLOT(accept()));
 }
 
+
+void MainWindow::saveTumor() {
+    // check if folder for current WSI exists, if not, create one
+    QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0] + "/").c_str();
+    wsiResultPath = wsiResultPath.replace("//", "/");
+    if (!QDir(wsiResultPath).exists()) {
+        QDir().mkdir(wsiResultPath);
+    }
+
+    if (std::find(savedList.begin(), savedList.end(), "tumor") != savedList.end()) {
+        auto mBox = new QMessageBox(mWidget);
+        mBox->setText("Result has already previously been saved.");
+        mBox->setIcon(QMessageBox::Information);
+        mBox->setModal(false);
+        //mBox->show();
+        QRect screenrect = mWidget->screen()[0].geometry();
+        mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
+        mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
+        QTimer::singleShot(3000, mBox, SLOT(accept()));
+        return;
+    }
+    savedList.emplace_back("tumor");
+
+    // attempt to save tissue mask to disk as .png
+    QString outFile = (wsiResultPath.toStdString() + split(split(filename, "/").back(), ".")[0] + "_tumor_mask.png").c_str();
+    ImageExporter::pointer exporter = ImageExporter::New();
+    exporter->setFilename(outFile.replace("//", "/").toStdString());
+    //exporter->setInputData(intensityScaler->updateAndGetOutputData<Image>());
+    exporter->setInputData(m_tumorMap);
+    exporter->update();
+
+    auto mBox = new QMessageBox(mWidget);
+    mBox->setText("Tumor segmentation has been saved.");
+    mBox->setIcon(QMessageBox::Information);
+    mBox->setModal(false);
+    //mBox->show();
+    QRect screenrect = mWidget->screen()[0].geometry();
+    mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
+    mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
+    QTimer::singleShot(3000, mBox, SLOT(accept()));
+}
 
 
 
@@ -1525,12 +1517,8 @@ void MainWindow::selectFile() {
 
         wsiList.push_back(filename);
 
-        // if new file is chosen, clear all cache of previous images
-        //renderer->clearPyramid();
-        //tumorRenderer->clearHeatmap();
-
         // Import image from file using the ImageFileImporter
-        auto importer = WholeSlideImageImporter::New();
+        importer = WholeSlideImageImporter::New();
         importer->setFilename(fileName.toStdString());
         m_image = importer->updateAndGetOutputData<ImagePyramid>();
 
@@ -1584,75 +1572,19 @@ void MainWindow::selectFile() {
             }
         }
 
-        /*
-        auto intensityScaler = ScaleImage::New();
-        intensityScaler->setInputData(input); //m_tissue);  // expects Image data type
-        intensityScaler->setLowestValue(0.0f);
-        intensityScaler->setHighestValue(1.0f);
-        //intensityScaler->update();
-         */
-
-        // attempt to save tissue mask to disk as .png
-        /*
-        ImageExporter::pointer exporter = ImageExporter::New();
-        exporter->setFilename("/home/andrep/workspace/FAST-Pathology/ImageExporterTest.png");
-        exporter->setInputData(input); //intensityScaler->updateAndGetOutputData<Image>());
-        exporter->update();
-        */
-
-        // BGR -> RGB
-        //auto channelConverter = new ImageChannelConverter::New();
-
-
-        //QPixmap pixmap(exporter);
-
-        // /*
         auto button = new QPushButton();
-        //QPixmap pixmap("/home/andrep/workspace/FAST-Pathology/ImageExporterTest.png");
         auto m_NewPixMap = QPixmap::fromImage(image);
-        QIcon ButtonIcon(m_NewPixMap); //pixmap);
+        QIcon ButtonIcon(m_NewPixMap);
         button->setIcon(ButtonIcon);
-        //button->setIconSize(QSize(200, 200));
         int width_val = 100;
         int height_val = 150;
         button->setIconSize(QSize((int) std::round(0.9 * (float) image.width() * (float) height_val / (float) image.height()), (int) std::round(0.9f * (float) height_val)));
-        //button->setIconSize(QSize((int) std::round((float) image.width() * (float) height_val / (float) image.height()), height_val));
-        //QObject::connect(button, &QPushButton::clicked,std::bind(&MainWindow::patchClassifier, this, modelName));
-        //scrollLayout->addWidget(button);
-        //scrollList->addItem()
-        //fileLayout->insertWidget(2, scrollArea);  //widget);
-        // */
-        //QObject::connect(button, &QListWidget::itemClicked, std::bind(&MainWindow::selectFileInProject, this));
-
-        //QObject::connect(scrollList, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, 1));
-        //QObject::connect(scrollList, &QListWidget::itemPressed, std::bind(&MainWindow::selectFileInProject, this, 1));  // this, SLOT(onListMailItemClicked(QListWidgetItem*)));
-        //QObject::connect(scrollList,itemClicked(QListWidgetItem*), std::bind(&MainWindow::selectFileInProject, this, 1));
-        //connect(ui->listMail, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(onListMailItemClicked(QListWidgetItem*)));
-        // QListWidget::itemPressed(QListWidgetItem *item)
-        //QObject::connect(scrollList, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(&MainWindow::selectFileInProject));
 
         auto listItem = new QListWidgetItem;
-        //listItem->setText(split(filename, "/").back().c_str());
-        //listItem->setFlags(listItem->flags() | Qt::ItemIsUserCheckable);
-        //listItem->setCheckState(Qt::Unchecked);
-        //listItem->setIcon(ButtonIcon);
-        //listItem->setSizeHint(QSize((int) std::round(0.9 * (float) image.width() * (float) height_val / (float) image.height()), (int) std::round(0.9f * (float) height_val)));
-        //listItem->setSizeHint(QSize((int) std::round((float) image.width() * (float) height_val / (float) image.height()), height_val));
         listItem->setSizeHint(QSize(width_val, height_val));
-        //QObject::connect(scrollList, &QListWidget::itemDoubleClicked, std::bind(&MainWindow::selectFileInProject, this, curr_pos));
-        //QObject::connect(scrollList, SIGNAL(itemClicked(QListWidgetItem *)), SLOT(itemClicked(QListWIdgetItem *)));
-        //QObject::connect(listItem, &QListWidget::itemDoubleClicked, std::bind(&MainWindow::selectFileInProject, this, curr_pos));
         QObject::connect(button, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, curr_pos));
         scrollList->addItem(listItem);
         scrollList->setItemWidget(listItem, button);
-
-        /*
-        QShortcut *m_DeleteKeyAction;
-        m_DeleteKeyAction = new QShortcut(mWidget);
-        m_DeleteKeyAction->setKey(Qt::Key_Delete);
-        //connect(m_DeleteKeyAction, SIGNAL(activated()), this,SLOT(deleteTriggered()));
-        QObject::connect(m_DeleteKeyAction, , std::bind(&MainWindow::selectFile, this))
-         */
 
         curr_pos++;
 
@@ -1689,8 +1621,35 @@ void MainWindow::selectFileInProject(int pos) {
     }
 
     // if there are any results created, prompt if you want to save results
+    std::cout << "counts: " << (pageComboBox->count() - savedList.size()) << "\n";
+    if ((pageComboBox->count() - savedList.size()) > 1) {
+        QMessageBox mBox;
+        mBox.setIcon(QMessageBox::Warning);
+        mBox.setText("This will remove results on current WSI.");
+        mBox.setInformativeText("Do you want to save results?");
+        mBox.setDefaultButton(QMessageBox::Yes);
+        mBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+        int ret = mBox.exec();
+        switch (ret) {
+            case QMessageBox::Yes:
+                saveTissueSegmentation(); // TODO: Need to generalize this. Check which results exists, and save all sequentially
+                break;
+            case QMessageBox::No:
+                // remove results of current WSI
+                removeAllRenderers();
+                pageComboBox->clear();
+                exportComboBox->clear();
+                break;
+            case QMessageBox::Cancel:
+                return;
+            default:
+                break;
+        }
+    }
 
-    // remove results of previous WSI
+    // remove results of current WSI
+    savedList.clear();
+    removeAllRenderers();
     pageComboBox->clear();
     exportComboBox->clear();
 
@@ -1698,7 +1657,7 @@ void MainWindow::selectFileInProject(int pos) {
     filename = wsiList[pos];
 
     // Import image from file using the ImageFileImporter
-    auto importer = WholeSlideImageImporter::New();
+    importer = WholeSlideImageImporter::New();
     importer->setFilename(filename);
     m_image = importer->updateAndGetOutputData<ImagePyramid>();
 
@@ -1721,6 +1680,27 @@ void MainWindow::selectFileInProject(int pos) {
 
     // now make it possible to edit image in the View Widget
     createDynamicViewWidget("WSI", modelName);
+
+    // check if tissue segmentation already exists, if yes import it and add to renderer
+    std::string wsiPath = split(split(filename, "/").back(), ".")[0];
+    QString tissuePath = projectFolderName + "/results/" + wsiPath.c_str() + "/" + wsiPath.c_str() + "_tissue_mask.png";
+    tissuePath = tissuePath.replace("//", "/");  // FIXME: I doubt that this fix works for windows(?) / and \ used
+    //tissuePath = "/home/andrep/test2.png";
+    std::cout << "\nCurrent path: " << tissuePath.toStdString() << "\n";
+    if (QDir().exists(tissuePath)) {
+        loadTissue(tissuePath);
+        std::cout << "len of saved list: " << savedList.size() << "\n";
+    }
+
+    // check if tumor segmentation already exists, if yes import it and add to renderer
+    QString tumorPath = projectFolderName + "/results/" + wsiPath.c_str() + "/" + wsiPath.c_str() + "_tumor_mask.png";
+    tumorPath = tumorPath.replace("//", "/");  // FIXME: I doubt that this fix works for windows(?) / and \ used
+    //tissuePath = "/home/andrep/test2.png";
+    std::cout << "\nCurrent path: " << tumorPath.toStdString() << "\n";
+    if (QDir().exists(tumorPath)) {
+        loadTumor(tumorPath);
+        std::cout << "len of saved list: " << savedList.size() << "\n";
+    }
 }
 
 
@@ -1795,6 +1775,7 @@ void MainWindow::openProject() {
         switch (ret) {
             case QMessageBox::Yes:
                 wsiList.clear();
+                savedList.clear();
                 scrollList->clear();
                 removeAllRenderers();
                 pageComboBox->clear();
@@ -1819,9 +1800,7 @@ void MainWindow::openProject() {
     );
 
     std::cout << "\n " << projectPath.toStdString() << "\n";
-
     projectFolderName = split(projectPath.toStdString(), "project.txt")[0].c_str();
-
     std::cout << "\n " << projectFolderName.toStdString() << "\n";
 
     // check if all relevant files and folders are in selected folder directory
@@ -1897,51 +1876,44 @@ void MainWindow::openProject() {
 
             // now make it possible to edit image in the View Widget
             createDynamicViewWidget("WSI", modelName);
+
+            // check if tissue segmentation already exists, if yes import it and add to renderer
+            std::string wsiPath = split(split(filename, "/").back(), ".")[0];
+            QString tissuePath = projectFolderName + "/results/" + wsiPath.c_str() + "/" + wsiPath.c_str() + "_tissue_mask.png";
+            tissuePath = tissuePath.replace("//", "/");  // FIXME: I doubt that this fix works for windows(?) / and \ used
+            //tissuePath = "/home/andrep/test2.png";
+            std::cout << "\nCurrent path: " << tissuePath.toStdString() << "\n";
+            if (QDir().exists(tissuePath)) {
+                loadTissue(tissuePath);
+            }
+
+            // check if tumor segmentation already exists, if yes import it and add to renderer
+            QString tumorPath = projectFolderName + "/results/" + wsiPath.c_str() + "/" + wsiPath.c_str() + "_tumor_mask.png";
+            tumorPath = tumorPath.replace("//", "/");  // FIXME: I doubt that this fix works for windows(?) / and \ used
+            //tissuePath = "/home/andrep/test2.png";
+            std::cout << "\nCurrent path: " << tumorPath.toStdString() << "\n";
+            if (QDir().exists(tumorPath)) {
+                loadTumor(tumorPath);
+            }
         }
         counter++;
 
-        auto access = m_image->getAccess(ACCESS_READ);
-        auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
+        // check if thumbnail image exists for current WSI, if yes load it, else extract one
+        std::string wsiPath = split(split(filename, "/").back(), ".")[0];
+        QString fullPath = projectFolderName + "/thumbnails/" + wsiPath.c_str();
+        fullPath = fullPath.replace("//", "/") + ".png";
 
-        // try to convert to FAST Image -> QImage
-        QImage image(input->getWidth(), input->getHeight(), QImage::Format_RGB32);
-
-        // TODO have to do some type conversion here, assuming float for now
-        unsigned char *pixelData = image.bits();
-
-        ImageAccess::pointer new_access = input->getImageAccess(ACCESS_READ);
-        void *inputData = new_access->get();
-        uint nrOfComponents = input->getNrOfChannels();
-
-        for (uint x = 0; x < input->getWidth(); x++) {
-            for (uint y = 0; y < input->getHeight(); y++) {
-                uint i = x + y * input->getWidth();
-                for (uint c = 0; c < input->getNrOfChannels(); c++) {
-                    float data;
-                    data = ((uchar *) inputData)[i * nrOfComponents + c]; // assumes TYPE_UINT8
-                    pixelData[i * 4 + (2-c)] = (unsigned char) data;  // TODO: NOTE (2-c) fixed BGR->RGB, but maybe there is a smarter solution?
-                }
-                pixelData[i * 4 + 3] = 255; // Alpha
-            }
+        // try to convert FAST Image -> QImage
+        QImage image;
+        std::cout << "Path: " << fullPath.toStdString() << "\n";
+        if (QDir().exists(fullPath)) {
+            std::cout << "\n Thumbnail exists! Load it project folder \n";
+            image.load(fullPath);
+        } else {
+            std::cout << "\n Thumbnail does not exist! Creating one from the WSI \n";
+            // get thumbnail image
+            image = extractThumbnail();
         }
-
-        /*
-        auto intensityScaler = ScaleImage::New();
-        intensityScaler->setInputData(input); //m_tissue);  // expects Image data type
-        intensityScaler->setLowestValue(0.0f);
-        intensityScaler->setHighestValue(1.0f);
-        //intensityScaler->update();
-         */
-
-        // attempt to save tissue mask to disk as .png
-        /*
-        ImageExporter::pointer exporter = ImageExporter::New();
-        exporter->setFilename("/home/andrep/workspace/FAST-Pathology/ImageExporterTest.png");
-        exporter->setInputData(input); //intensityScaler->updateAndGetOutputData<Image>());
-        exporter->update();
-         */
-
-        //QPixmap pixmap(exporter);
 
         // /*
         auto button = new QPushButton();
@@ -1990,17 +1962,45 @@ void MainWindow::openProject() {
         mBox->move(mWidget->width() - mBox->width() / 2, -mWidget->width() / 2 - mBox->width() / 2);
         mBox->show();
         QTimer::singleShot(3000, mBox, SLOT(accept()));
-
     }
 }
 
 
-void MainWindow::saveProject() {
+QImage MainWindow::extractThumbnail() {
+        auto access = m_image->getAccess(ACCESS_READ);
+        auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
 
+        // try to convert FAST Image -> QImage
+        QImage image(input->getWidth(), input->getHeight(), QImage::Format_RGB32);
+
+        // TODO have to do some type conversion here, assuming float for now
+        unsigned char *pixelData = image.bits();
+
+        ImageAccess::pointer new_access = input->getImageAccess(ACCESS_READ);
+        void *inputData = new_access->get();
+        uint nrOfComponents = input->getNrOfChannels();
+
+        for (uint x = 0; x < input->getWidth(); x++) {
+            for (uint y = 0; y < input->getHeight(); y++) {
+                uint i = x + y * input->getWidth();
+                for (uint c = 0; c < input->getNrOfChannels(); c++) {
+                    float data;
+                    data = ((uchar *) inputData)[i * nrOfComponents + c]; // assumes TYPE_UINT8
+                    pixelData[i * 4 + (2-c)] = (unsigned char) data;  // TODO: NOTE (2-c) fixed BGR->RGB, but maybe there is a smarter solution?
+                }
+                pixelData[i * 4 + 3] = 255; // Alpha
+            }
+        }
+        return image;
+};
+
+
+void MainWindow::saveProject() {
     // create file for saving which WSIs exist in folder
     QString projectFileName = "/project.txt";
     QFile file(projectFolderName + projectFileName);
     file.resize(0);  // clear it and then write
+
     if (file.open(QIODevice::ReadWrite)) {
         foreach(std::string currPath, wsiList) {
             QTextStream stream(&file);
@@ -2184,7 +2184,6 @@ bool MainWindow::segmentTissue() {
         std::cout << "I was here, should be here :)! \n";
 
         // Patch wise classification -> heatmap
-        //auto tissueSegmentation = TissueSegmentation::New();
         auto tissueSegmentation = TissueSegmentation::New();
         tissueSegmentation->setInputData(m_image);
         m_tissue = tissueSegmentation->updateAndGetOutputData<Image>();
@@ -2195,7 +2194,7 @@ bool MainWindow::segmentTissue() {
         someRenderer->setOpacity(0.4); // <- necessary for the quick-fix temporary solution
         someRenderer->update();
 
-        insertRenderer("tissue", someRenderer); // TODO: Seems like it hangs when I want to replace renderer if it already exists, or something around this (?)
+        insertRenderer("tissue", someRenderer);
 
         //hideTissueMask(false);
 
@@ -2207,12 +2206,209 @@ bool MainWindow::segmentTissue() {
 }
 
 
-bool MainWindow::imageSegmenter(std::string modelName) {
-    // read model metadata (txtfile)
-    std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
+void MainWindow::loadTissue(QString tissuePath) {
+    //DeviceManager* deviceManager = DeviceManager::getInstance();
+    //OpenCLDevice::pointer device = deviceManager->getOneOpenCLDevice();
 
-    if (!hasRenderer(modelMetadata["name"])) { // only run analysis if it has not been ran previously on current WSI
-        1;
+    ImageImporter::pointer reader = ImageImporter::New();
+    reader->setGrayscale(false);
+    reader->setFilename(tissuePath.toStdString());
+    //reader->setMainDevice(device);
+    reader->setMainDevice(Host::getInstance());
+    DataChannel::pointer port = reader->getOutputPort();
+    reader->update();
+    Image::pointer someImage = port->getNextFrame<Image>();
+
+    //auto wsi = getInputData<ImagePyramid>();
+    auto access = m_image->getAccess(ACCESS_READ);
+    auto input = access->getLevelAsImage(m_image->getNrOfLevels()-1);
+
+    std::cout << "Dimensions info: " << input->getHeight() << ", " << input->getWidth() << "\n";
+    std::cout << "Dimensions info: " << m_image->getFullHeight() << ", " << m_image->getFullWidth() << "\n";
+
+    someImage->setSpacing((float) m_image->getFullHeight() / (float) input->getHeight(), (float) m_image->getFullWidth() / (float) input->getWidth(), 1.0f);
+
+    /*
+    auto intensityScaler = ScaleImage::New();
+    intensityScaler->setInputData(m_tissue); //m_tissue);  // expects Image data type
+    intensityScaler->setLowestValue(0.0f);
+    intensityScaler->setHighestValue(1.0f);
+    //intensityScaler->update();
+     */
+
+    // /*
+    auto thresholder = BinaryThresholding::New();
+    thresholder->setLowerThreshold(0.5f);
+    thresholder->setInputData(someImage);
+    // */
+
+    auto output = Segmentation::New();
+    //output->createFromImage(input);
+    //output->createFromImage(someImage);  // is it initialized or converted?
+    output->create(someImage->getSize(), TYPE_UINT8, 3);
+    //output->getOpenCLImageAccess(someImage);
+
+    auto thresholder2 = BinaryThresholding::New();
+    thresholder2->setLowerThreshold(0.5f);
+    thresholder2->setInputData(output);
+
+    //output->getOpenCLImageAccess(reader->updateAndGetOutputData<Image>());
+
+    std::cout << "\nLoading tissue mask... \n";
+
+    //m_tissue = reader->updateAndGetOutputData<Image>();
+
+    std::cout << "\nupdate... \n";
+
+    auto someRenderer = SegmentationRenderer::New();
+    someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0/255.0, 127.0/255.0, 80.0/255.0));
+    //someRenderer->setInputData(reader->updateAndGetOutputData<Image>());
+    //someRenderer->setInputData(output);  // someImage
+    someRenderer->setInputConnection(0, thresholder->getOutputPort());
+    //someRenderer->setInputData(someImage);
+    someRenderer->setOpacity(0.4); // <- necessary for the quick-fix temporary solution
+    someRenderer->update();
+
+    insertRenderer("tissue", someRenderer);
+
+    //hideTissueMask(false);
+
+    // now make it possible to edit prediction in the View Widget
+    createDynamicViewWidget("tissue", modelName);
+
+    std::cout << "\nfinished loading... \n";
+    savedList.emplace_back("tissue");
+}
+
+
+void MainWindow::loadTumor(QString tumorPath) {
+    //DeviceManager* deviceManager = DeviceManager::getInstance();
+    //OpenCLDevice::pointer device = deviceManager->getOneOpenCLDevice();
+
+    ImageImporter::pointer reader = ImageImporter::New();
+    reader->setGrayscale(false);
+    reader->setFilename(tumorPath.toStdString());
+    //reader->setMainDevice(device);
+    reader->setMainDevice(Host::getInstance());
+    DataChannel::pointer port = reader->getOutputPort();
+    reader->update();
+    Image::pointer someImage = port->getNextFrame<Image>();
+
+    //auto wsi = getInputData<ImagePyramid>();
+    auto access = m_image->getAccess(ACCESS_READ);
+    auto input = access->getLevelAsImage(5); //m_image->getNrOfLevels()-1);
+
+    someImage->setSpacing((float) m_image->getFullHeight() / (float) input->getHeight(), (float) m_image->getFullWidth() / (float) input->getWidth(), 1.0f);
+
+    /*
+    auto intensityScaler = ScaleImage::New();
+    intensityScaler->setInputData(m_tissue); //m_tissue);  // expects Image data type
+    intensityScaler->setLowestValue(0.0f);
+    intensityScaler->setHighestValue(1.0f);
+    //intensityScaler->update();
+     */
+
+    // /*
+    auto thresholder = BinaryThresholding::New();
+    thresholder->setLowerThreshold(0.5f);
+    thresholder->setInputData(someImage);
+    // */
+
+    auto output = Segmentation::New();
+    //output->createFromImage(input);
+    //output->createFromImage(someImage);  // is it initialized or converted?
+    output->create(someImage->getSize(), TYPE_UINT8, 3);
+    //output->getOpenCLImageAccess(someImage);
+
+    auto thresholder2 = BinaryThresholding::New();
+    thresholder2->setLowerThreshold(0.5f);
+    thresholder2->setInputData(output);
+
+    //output->getOpenCLImageAccess(reader->updateAndGetOutputData<Image>());
+
+    std::cout << "\nLoading tumor mask... \n";
+
+    //m_tissue = reader->updateAndGetOutputData<Image>();
+
+    std::cout << "\nupdate... \n";
+
+    auto someRenderer = SegmentationRenderer::New();
+    someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(0.0f, 0.0f, 255.0/255.0));
+    //someRenderer->setInputData(reader->updateAndGetOutputData<Image>());
+    //someRenderer->setInputData(output);  // someImage
+    someRenderer->setInputConnection(0, thresholder->getOutputPort());
+    //someRenderer->setInputData(someImage);
+    someRenderer->setOpacity(0.4); // <- necessary for the quick-fix temporary solution
+    someRenderer->update();
+
+    insertRenderer("tumor", someRenderer);
+
+    //hideTissueMask(false);
+
+    // now make it possible to edit prediction in the View Widget
+    createDynamicViewWidget("tumor", modelName);
+
+    std::cout << "\nfinished loading... \n";
+    savedList.emplace_back("tumor");
+}
+
+
+bool MainWindow::lowresSegmenter() {
+
+    modelName = "/home/andrep/workspace/FAST-Pathology/Models_old_020420/low_res_tumor_unet.pb";
+
+    // read model metadata (txtfile)
+    //std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
+
+    if (true) { //(!hasRenderer(modelMetadata["name"])) { // only run analysis if it has not been ran previously on current WSI
+        auto access = m_image->getAccess(ACCESS_READ);
+        //auto input = access->getLevelAsImage(m_image->getNrOfLevels()-1);
+        auto input = access->getLevelAsImage(5); //m_image->getNrOfLevels()-1);
+
+        // resize
+        ImageResizer::pointer resizer = ImageResizer::New();
+        resizer->setInputData(input);
+        resizer->setWidth(1024);
+        resizer->setHeight(1024);
+        auto port = resizer->getOutputPort();
+        resizer->update();
+        //Image::pointer resized = port->getNextFrame<Image>();
+
+        auto network = NeuralNetwork::New();
+        network->setInferenceEngine("TensorFlowCPU");
+        network->setInputNode(0, "input_1", NodeType::IMAGE, {1, 1024, 1024, 3});
+        network->setOutputNode(0, "conv2d_34/truediv", NodeType::TENSOR, {1, 1024, 1024, 2});
+        network->load("/home/andrep/workspace/FAST-Pathology/Models_old_020420/low_res_tumor_unet.pb");
+        network->setInputData(port->getNextFrame<Image>());
+        //vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
+        network->setScaleFactor(1.0f/255.0f);   // 1.0f/255.0f
+
+        auto converter = TensorToSegmentation::New();
+        converter->setInputConnection(network->getOutputPort());
+
+        // resize back
+        ImageResizer::pointer resizer2 = ImageResizer::New();
+        resizer2->setInputData(converter->updateAndGetOutputData<Image>());
+        resizer2->setWidth(input->getWidth());
+        resizer2->setHeight(input->getHeight());
+        auto port2 = resizer2->getOutputPort();
+        resizer2->update();
+
+        m_tumorMap = port2->getNextFrame<Image>();
+        m_tumorMap->setSpacing((float) m_image->getFullHeight() / (float) input->getHeight(), (float) m_image->getFullWidth() / (float) input->getWidth(), 1.0f);
+
+        auto segTumorRenderer = SegmentationRenderer::New();
+        segTumorRenderer->setOpacity(0.4);
+        segTumorRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0 / 255.0f, 0.0f, 0.0f));
+        segTumorRenderer->setColor(Segmentation::LABEL_BACKGROUND, Color(0.0f, 255.0f / 255.0f, 0.0f));
+        segTumorRenderer->setInputData(m_tumorMap);
+        //segTumorRenderer->setInterpolation(false);
+        segTumorRenderer->update();
+
+        insertRenderer("tumorSeg_lr", segTumorRenderer);
+
+        createDynamicViewWidget("tumorSeg_lr", modelName);
+
     }
 
     return true;
@@ -2349,13 +2545,12 @@ bool MainWindow::patchClassifier(std::string modelName) {
             //stitcher->update();
             //port->getNextFrame<Tensor>();
 
-
             // define renderer from metadata
             //auto someRenderer = HeatmapRenderer::New();
             if ((modelMetadata["problem"] == "classification") && (modelMetadata["resolution"] == "high")) {
                 auto someRenderer = HeatmapRenderer::New();
                 someRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
-                someRenderer->setInputConnection(port);
+                someRenderer->setInputConnection(stitcher->getOutputPort());
                 //heatmapRenderer->update();
                 vector<string> colors = split(modelMetadata["class_colors"], ";");
                 for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
@@ -2369,7 +2564,7 @@ bool MainWindow::patchClassifier(std::string modelName) {
 
             } else if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
                 auto someRenderer = SegmentationPyramidRenderer::New();
-                someRenderer->setInputConnection(port);
+                someRenderer->setInputConnection(stitcher->getOutputPort());
 
                 insertRenderer(modelMetadata["name"], someRenderer);
             }
@@ -2382,8 +2577,15 @@ bool MainWindow::patchClassifier(std::string modelName) {
             // test
             //usleep(5);
 
-            //if (modelMetadata["name"] == "tumor") {
-            if (false) {
+            /*
+            QTime dieTime= QTime::currentTime().addSecs(1);
+            while (QTime::currentTime() < dieTime)
+                QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+                */
+
+            if (modelMetadata["name"] == "tumor") {
+
+                //  if (false) {
                 stitcher->update();
                 m_tumorMap_tensor = port->getNextFrame<Tensor>();
 
@@ -2392,7 +2594,7 @@ bool MainWindow::patchClassifier(std::string modelName) {
 
                 m_tumorMap = tmp->updateAndGetOutputData<Image>();
 
-                // wait for process is finished, then same prediction as map
+                // wait for process is finished, then save prediction as map
                 /*
                 std::promise<void> promise;
                 std::future<void> future = promise.get_future();//std::future<int> out = std::async(heatmapRenderer); //ThreadPool.RegisterWaitForSingleObject();
@@ -2452,17 +2654,112 @@ vector<string> MainWindow::split (string s, string delimiter) {
 }
 
 bool MainWindow::calcTissueHist() {
-    std::cout<<"it worked!\n\n\n\n";
-    std::cout<<"tissue button hist\n\n\n\n\n\n";
-    if (m_tissue) {
-        std::cout<<std::to_string(m_tissue->calculateMinimumIntensity())<<"\n\n";
-        std::cout<<std::to_string(m_tissue->calculateMaximumIntensity())<<"\n\n\n";
-        std::cout<<std::to_string(m_tissue->getDimensions())<<"\n\n\n";
-        std::cout<<std::to_string(m_tissue->getNrOfVoxels())<<"\n\n\n";
-        //std::cout<<std::to_string(std::unique(m_tissue.begin(), m_tissue.end()))<<"\n\n\n";
-        std::cout<<std::to_string(m_tissue.unique())<<"\n\n\n";
+    std::cout<<"\nCalculating histogram...\n";
+
+    int barWidth = 9;
+    int boxWidth = 250;
+    int boxHeight = 250;
+    QPixmap pm(boxWidth, boxHeight);
+    pm.fill();
+
+    int len = 5;
+
+    //int x_vec[] = {1, 2, 3, 4, 5};
+    std::string x_vec[] = {"a", "b", "c", "d", "e"};
+    int y_vec[] = {12, 20, 43, 30, 5};
+
+    double drawMinHeight = 0.1 * (double)(boxHeight);
+    double drawMinWidth = 0.1 * (double)(boxWidth);
+
+    double newWidth = (double)(boxWidth - drawMinWidth);
+    double newHeight = (double)(boxHeight - drawMinHeight);
+
+    double maxHeight = *std::max_element(y_vec,y_vec+len);
+    double drawMaxHeight = (double)(maxHeight + maxHeight*0.1);
+
+    auto painters = new QPainter(&pm);
+    painters->setPen(QColor(140, 140, 210));
+
+    for (int i = 0; i < len; i++) {
+        std::cout<<std::to_string(i)<<"\n\n\n";
+        qreal h = y_vec[i] * maxHeight;
+        // draw level
+        painters->fillRect(drawMinWidth / 2 + (double)(i + 1) * (double)(newWidth) / (double)(len + 1) - (double)((double)(barWidth)/(double)(2)),
+                           newHeight,
+                           barWidth,
+                           - (double)(y_vec[i]) / (double)(drawMaxHeight) * (double)(newHeight),
+                           Qt::blue);
+        // clear the rest of the control
+        //painters->fillRect(barWidth * i, 0, barWidth * (i + 1), maxHeight - h, Qt::black);
     }
-    return true;
+
+    int lineWidth = 3;
+    int space = drawMinHeight;
+
+    //auto linePainter = new QPainter(&pm);
+    painters->setPen(QPen(QColor(0, 0, 0), lineWidth));
+    painters->drawLine(space, boxHeight - space, boxWidth - space, boxHeight - space);
+    painters->drawLine(space - 1, boxHeight - space, space - 1, space);
+
+    // add ticks on lines
+    painters->setPen(QPen(QColor(0, 0, 0), 2));
+    painters->setFont(QFont("times", 10));
+    std::string stringIter;
+    int xTextSpace = 18;
+    int numTicks = 5;
+    double tickSize = 10;
+    for (int j = 0; j < numTicks; j++) {
+        painters->drawLine(drawMinWidth / 2 + (double)(j + 1) * (double)(newWidth) / (double)(len + 1),
+                           newHeight,
+                           drawMinWidth / 2 + (double)(j + 1) * (double)(newWidth) / (double)(len + 1),
+                           newHeight + tickSize / 2);
+        painters->drawText(drawMinWidth / 2 + (double)(j + 1) * (double)(newWidth) / (double)(len + 1) - 4, newHeight + xTextSpace, QString::number(j + 1));
+
+    }
+
+    int yTextSpace = 22;
+    for (int j = 0; j < numTicks; j++) {
+        painters->drawLine(space - tickSize / 2,
+                           drawMinHeight - drawMinHeight*0.5 + (double)(j + 1) * (double)(newHeight) / (double)(len + 1),
+                           space,
+                           drawMinHeight - drawMinHeight*0.5 + (double)(j + 1) * (double)(newHeight) / (double)(len + 1));
+
+        painters->drawText(drawMinWidth - yTextSpace, drawMinHeight - drawMinHeight*0.5 + (double)(j + 1) * (double)(newHeight) / (double)(len + 1) + 4,
+                           QString::number((int)(std::round((double)(numTicks - j) * (double)(maxHeight) / (double)(len + 1) + 4))));
+        //painters->drawText(drawMinWidth - yTextSpace, drawMinHeight - drawMinHeight*0.5 + (double)(j + 1) * (double)(newHeight) / (double)(len + 1) + 4,
+        //        QString::number((int)(y_vec[numTicks - j - 1])));
+
+    }
+
+    // draw arrow heads on end of axes
+    int xArrowSize = 8;
+    int yArrowSize = 16;
+    QRectF rect = QRectF(space - xArrowSize + lineWidth, space - yArrowSize, xArrowSize, yArrowSize);
+
+    QPainterPath path;
+    path.moveTo(rect.left() + (rect.width() / 2), rect.top());
+    path.lineTo(rect.bottomLeft());
+    path.lineTo(rect.bottomRight());
+    path.lineTo(rect.left() + (rect.width() / 2), rect.top());
+
+    painters->fillPath(path, QBrush(QColor ("black")));
+
+    QTransform t;
+    t.translate(boxWidth, boxHeight - space - yArrowSize - xArrowSize);
+    t.rotate(90);
+    QPainterPath path2 = t.map(path);
+
+    // draw title of histogram
+    painters->setPen(QPen(QColor(0, 0, 0), 2));
+    painters->setFont(QFont("times", 10));
+
+    painters->fillPath(path2, QBrush(QColor ("black")));
+
+    auto histBox = new QLabel;
+    histBox->setPixmap(pm);
+    histBox->setAlignment(Qt::AlignHCenter);
+
+    statsLayout->insertWidget(1, histBox);
 }
 
 

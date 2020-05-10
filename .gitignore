@@ -12,6 +12,8 @@ cmake-build*
 *.bin
 WSI/
 WSI*
+*.png
+*.PNG
 Models/
 Models*
 Icons/

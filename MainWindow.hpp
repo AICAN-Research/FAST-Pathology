@@ -65,12 +65,14 @@ class MainWindow : public Window {
         void createWSIScrollAreaWidget();
         void saveThumbnail();
         void saveTissueSegmentation();
+        void saveTumor();
 
         bool hideChannel(const std::string &someName); //, uint channel_value);
         bool opacityRenderer(int value, const std::string& someName);
         bool toggleRenderer(std::string name);
         bool patchClassifier(std::string modelName);
-        bool imageSegmenter(std::string modelName);
+        bool lowresSegmenter();
+        //bool imageSegmenter(std::string modelName);
         bool showHeatmap();
         bool hideTissueMask(bool flag);
         bool toggleTissueMask();
@@ -95,8 +97,12 @@ class MainWindow : public Window {
         void pipelineEditor();
         void selectFileInProject(int pos);  // int pos);
         int curr_pos;
+        void loadTissue(QString tissuePath);
+        void loadTumor(QString tumorPath);
 
-        // script editor related functions
+        QImage extractThumbnail();
+
+    // script editor related functions
         QDialog *scriptEditorWidget;
         //QWidget *scriptEditorWidget;
         QVBoxLayout *scriptLayout;
@@ -113,6 +119,9 @@ class MainWindow : public Window {
         bool saveFileScript(const QString &fileName);
         QString currScript;
         QStatusBar *statusBar;
+
+        void createOpenGLWindow();
+        View *view;
 
         bool showTumorMask();
         bool hideBackgroundClass(std::string someName);
@@ -177,6 +186,7 @@ class MainWindow : public Window {
         void reset();
 
         std::vector<std::string> wsiList;
+        std::vector<std::string> savedList;
 
         /**
          * Removes a named renderer from the view
@@ -207,7 +217,7 @@ class MainWindow : public Window {
         std::map<std::string, SharedPointer<Renderer>> m_rendererList;
         MainWindow();
 
-        SharedPointer<TissueSegmentation> tissueSegmentation;
+        //SharedPointer<TissueSegmentation> tissueSegmentation;
         SharedPointer<WholeSlideImageImporter> importer;
         SharedPointer<ImagePyramid> m_image;
         SharedPointer<Image> m_tissue;
@@ -217,6 +227,8 @@ class MainWindow : public Window {
         SharedPointer<Tensor> m_bachMap;
         std::string filename;
         QString projectFolderName;
+        //SharedPointer<View> view;
+        //View *MainWindow::view;
 
         /*
         //QAction *newAct{};
@@ -238,9 +250,9 @@ class MainWindow : public Window {
         //QDialogButtonBox *buttonBox;
          */
 
-    private slots:
-        void updateChannelValue (int index);
-        //void itemClicked(QListWidgetItem *item);
+        private slots:
+            void updateChannelValue (int index);
+            //void itemClicked(QListWidgetItem *item);
 
 
 };
