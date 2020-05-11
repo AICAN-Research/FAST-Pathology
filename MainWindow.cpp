@@ -642,10 +642,16 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     //showHeatmapButton->setChecked(true);
     QObject::connect(toggleShowButton, &QPushButton::clicked, std::bind(&MainWindow::hideChannel, this, someName));
 
+    auto deleteButton = new QPushButton(dynamicViewWidget);
+    deleteButton->setText("Delete object");
+    deleteButton->setFixedHeight(50);
+    QObject::connect(deleteButton, &QPushButton::clicked, std::bind(&MainWindow::deleteViewObject, this, someName));
+    deleteButton->setStyleSheet("color: black; background-color: red");
+
 
     auto currComboBox = new QComboBox;
 
-    if ((someName != "WSI") && (someName != "tissue") && (someName != "tumorSeg")) {
+    if ((someName != "WSI") && (someName != "tissue") && (someName != "tumorSeg") && (someName != "tumorSeg_lr")) {
         // get metadata of current model
         std::map<std::string, std::string> metadata = getModelMetadata(modelName);
         std::cout << "\n" << metadata["class_names"] << "\n classes \n";
@@ -702,6 +708,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     dynamicViewLayout->insertWidget(1, smallTextBoxWidget_tissue);
     dynamicViewLayout->insertWidget(2, colorSetWidget);
     dynamicViewLayout->insertWidget(3, biggerTextBoxWidget_imageName);
+    dynamicViewLayout->insertWidget(4, deleteButton);
 
     // add widget to QComboBox
     pageComboBox->addItem(tr(tmpSomeName.c_str()));
@@ -1957,7 +1964,7 @@ void MainWindow::openProject() {
         mBox->setText(path.c_str());
         mBox->setIcon(QMessageBox::Information);
         mBox->setModal(false);
-        //mBox->show(); // TODO: Don't ask why I do multiple show()s here. I just do, and it works. However, seems like I don't need it anymore. So very mysterious...
+        //mBox->show(); // TODO: Don't ask why I do multiple show()s here. I just do, and it works. -> However, seems like I don't need it anymore. So very mysterious...
         QRect screenrect = mWidget->screen()[0].geometry();
         mBox->move(mWidget->width() - mBox->width() / 2, -mWidget->width() / 2 - mBox->width() / 2);
         mBox->show();
@@ -2135,7 +2142,7 @@ float MainWindow::getMagnificationLevel() {
 
     float magnification_lvl = 0.0f;
 
-    if ((wsiFormat == "generic-tiff") or (wsiFormat == "philips")) {
+    if ((wsiFormat == "generic-tiff") || (wsiFormat == "philips")) {
 
         int level_count = m_image->getNrOfLevels(); //(int)stof(metadata["openslide.level-count"]);
 
@@ -2437,6 +2444,8 @@ bool MainWindow::patchClassifier(std::string modelName) {
         generator->setPatchLevel(patch_lvl_model);
         generator->setInputData(0, m_image);
         generator->setInputData(1, m_tissue);
+        if (m_tumorMap)
+            generator->setInputData(1, m_tumorMap);
 
         //auto batchgen = ImageToBatchGenerator::New();  // TODO: Can't use this with TensorRT (!)
         //batchgen->setInputConnection(generator->getOutputPort());
@@ -2505,6 +2514,10 @@ bool MainWindow::patchClassifier(std::string modelName) {
 
             // TODO: Need to handle if model is in Models/, but inference engine is not available
             Config::getLibraryPath();
+
+            if (true) { //(modelMetadata["name"] == "grade") {
+                network->setInferenceEngine("TensorFlowCPU");
+            }
 
             const auto engine = network->getInferenceEngine()->getName();
             // IEs like TF and TensorRT need to be handled differently than IEs like OpenVINO
@@ -2901,6 +2914,38 @@ bool MainWindow::hideChannel(const std::string& someName) {
     }
 }
 
+
+void MainWindow::deleteViewObject(std::string someName) {
+    std::cout << "\nCurrent renderer: " << someName << "\n";
+    // need to remove from QComboBox, remove from renderer, remove potential saved results in project (need to check
+    // if project is made first), and in the end, need to update ViewWidget
+    removeRenderer(someName);
+
+    // TODO: Need to remove thumbnail
+    //pageComboBox->removeItem(pageComboBox->currentIndex());
+    //scrollList->removeItemWidget(scrollList->selectedItems());  // TODO: Apparently, this doesnt work as expected
+    //auto listItems = scrollList->selectedItems();
+
+    /*
+    foreach (QListWidgetItem *NAME, scrollList->selectedItems()) {
+        delete scrollList->takeItem(scrollList->row(NAME));
+    }
+
+
+    QModelIndexList selectedList = scrollList->selectionModel()->selectedIndexes(); // take the list of selected indexes
+    std::sort(selectedList.begin(),selectedList.end(),[](const QModelIndex& a, const QModelIndex& b)->bool{return a.row()>b.row();}); // sort from bottom to top
+    for(const QModelIndex& singleIndex : selectedList)
+        scrollList->model()->removeRow(singleIndex.row()); // remove each row
+
+    QListWidgetItem *it = scrollList->takeItem(scrollList->currentRow());
+    delete it;
+      */
+    //scrollList->removeItemWidget()
+
+
+}
+
+
 bool MainWindow::opacityHeatmap(int value) {
     //std::cout << (float)value/10.0f << std::endl;
     if (!hasRenderer("grade")){
@@ -2978,8 +3023,11 @@ bool MainWindow::fixImage() {
 void MainWindow::removeRenderer(std::string name) {
     if(m_rendererList.count(name) == 0)
         return;
+    return;  // TODO: added this for now, as it seems like its not possible to remove renderers...
+    std::cout << "Renderer to be deleted: " << name << "\n";
     auto renderer = m_rendererList[name];
-    getView(0)->removeRenderer(renderer);
+    m_rendererList.erase(name); // I added this, as it seemed like it should have been done
+    getView(0)->removeRenderer(renderer);  // FIXME: This crashed. Can you remove renderer that is still computing?
 }
 
 void MainWindow::insertRenderer(std::string name, SharedPointer<Renderer> renderer) {

@@ -66,6 +66,7 @@ class MainWindow : public Window {
         void saveThumbnail();
         void saveTissueSegmentation();
         void saveTumor();
+        void deleteViewObject(std::string someName);
 
         bool hideChannel(const std::string &someName); //, uint channel_value);
         bool opacityRenderer(int value, const std::string& someName);
