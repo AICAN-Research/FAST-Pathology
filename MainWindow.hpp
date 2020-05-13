@@ -104,7 +104,7 @@ class MainWindow : public Window {
 
         QImage extractThumbnail();
 
-    // script editor related functions
+		// script editor related functions
         QDialog *scriptEditorWidget;
         //QWidget *scriptEditorWidget;
         QVBoxLayout *scriptLayout;
@@ -232,26 +232,6 @@ class MainWindow : public Window {
         QString projectFolderName;
         //SharedPointer<View> view;
         //View *MainWindow::view;
-
-        /*
-        //QAction *newAct{};
-        //QWidget *topFiller;
-        //QMenu *fileMenus{};
-        //QAction *exitAction{};
-
-        enum { NumGridRows = 3, NumButtons = 4 };
-
-        //QMenuBar *menuBar{};
-        QGroupBox *horizontalGroupBox{};
-        QGroupBox *gridGroupBox{};
-        QGroupBox *formGroupBox{};
-        QTextEdit *smallEditor{};
-        //QTextEdit *bigEditor;
-        QLabel *labels[NumGridRows]{};
-        QLineEdit *lineEdits[NumGridRows]{};
-        QPushButton *buttons[NumButtons]{};
-        //QDialogButtonBox *buttonBox;
-         */
 
         private slots:
             void updateChannelValue (int index);

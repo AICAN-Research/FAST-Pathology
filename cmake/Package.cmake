@@ -10,18 +10,18 @@ install(
     DESTINATION licenses/fastPathology
 )
 
-# Install FAST dependency
+# Install FAST dependency (need to include plugins.xml for OpenVINO as well)
 if(WIN32)
     install(
         DIRECTORY ${FAST_BINARY_DIR}
         DESTINATION bin
-        FILES_MATCHING PATTERN "*.dll"
+        FILES_MATCHING PATTERN "*.dll" PATTERN "*plugins.xml"
     )
 else()
     install(
         DIRECTORY ${FAST_BINARY_DIR}
         DESTINATION bin
-        FILES_MATCHING PATTERN "*.so"
+        FILES_MATCHING PATTERN "*.so" PATTERN "*plugins.xml"
     )
 endif()
 install(
@@ -46,6 +46,12 @@ install(
     DIRECTORY_PERMISSIONS OWNER_READ OWNER_EXECUTE OWNER_WRITE GROUP_READ GROUP_EXECUTE GROUP_WRITE WORLD_READ WORLD_WRITE WORLD_EXECUTE
 )
 
+# add Data folder for storing saved models, icons, pipelines and other stuff, and move necessary folders
+install(
+    DIRECTORY ${PROJECT_BINARY_DIR}/../data/Icons
+    DESTINATION data
+)
+
 # Setup fast_configuration.txt file
 set(FILE_CONTENT "TestDataPath = @ROOT@/data/
 KernelSourcePath = @ROOT@/kernels/
@@ -67,7 +73,7 @@ install(
 
 set(CPACK_PACKAGE_NAME "FastPathology")
 set(CPACK_PACKAGE_VENDOR "SINTEF and NTNU")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "FAST pathology is an open-source platform for artificial intelligence-based digital pathology created by SINTEF Medical Technology and the Norwegian University of Science and Technology (NTNU).")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "FastPathology is an open-source platform for artificial intelligence-based digital pathology created by SINTEF Medical Technology and the Norwegian University of Science and Technology (NTNU).")
 set(CPACK_PACKAGE_VERSION_MAJOR "0")
 set(CPACK_PACKAGE_VERSION_MINOR "1")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
@@ -84,6 +90,9 @@ if(WIN32 AND NOT UNIX)
 else()
     ## UNIX
     # Create debian package
+    set(CPACK_GENERATOR "DEB")
+
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "FastPathology")
 endif()
 
 include(CPack)

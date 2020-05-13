@@ -61,26 +61,30 @@ MainWindow::MainWindow() {
     setTitle("fastPathology");
     enableMaximized(); // <- function from Window.cpp
 
-    mWidget->setFocusPolicy(Qt::ClickFocus);  //Qt::ClickFocus);
+    //mWidget->setFocusPolicy(Qt::ClickFocus);  //Qt::ClickFocus);
 
     // get current working directory
     //get_cwd(); // FIXME: This should be the directory of where FastPathology is built, and all subfolders saved should be stored here
     // <- TODO: Currently, this is done instead, as the current get_cwd() does not work for windows
-    cwd = "/home/andrep/workspace/FAST-Pathology/Models";
+    //cwd = "/home/andrep/workspace/FAST-Pathology/"; //cwd = "C:/Users/andrep/workspace/FAST-Pathology/";
+    cwd = QDir::homePath().toStdString();
+    cwd += "/FastPathology/";
+    std::cout << "\nFastPathology path cwd: " << cwd;
 
     // create temporary tmp folder to store stuff, and create temporary file to keep history for visualization and
     // other stuff
     //create_tmp_folder_file();
     QTemporaryDir tmpDir;
     std::string tmpPath = tmpDir.path().toStdString();
-    std::cout << "\n temporary path: " << tmpDir.path().toStdString() << "\n";
+    std::cout << "\nTemporary path: " << tmpDir.path().toStdString();
+
+	//printf("\n%d\n",__LINE__); // <- this is nice for debugging
 
     // Create models folder platform assumes that this folder exists and contains all relevant models
-    std::string dir_str;
-    dir_str = cwd + "Models";
-    createDirectories(dir_str);
+    //createDirectories(dir_str);
+	QDir().mkpath(QString::fromStdString(cwd) + "Models"); // <- mkpath creates the entire path recursively (convenient if subfolder dependency is missing)
 
-    // changing color to the Qt background
+    // changing color to the Qt background)
     //mWidget->setStyleSheet("font-size: 16px; background: gray; color: white;");
     //mWidget->setStyleSheet("font-size: 16px; background: rgb(75, 74, 103); color: black;");
     //mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;"); // Current favourite
@@ -88,6 +92,8 @@ MainWindow::MainWindow() {
     //mWidget->setStyleSheet("font-size: 16px; background: (255, 125, 50); color: black;");
     //mWidget->setStyleSheet("font-size: 16px"); // used most recently
     // FIXME: setStyleSheet() didn't work on windows?
+	mWidget->setStyle(QStyleFactory::create("Fusion"));
+	mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;");
 
     // opacityTumorSlider->setStyleSheet("font-size: 16px"); // <- to set style sheet for a specific button/slider
     //mainestLayout->addLayout(topHorizontalLayout);
@@ -104,40 +110,37 @@ MainWindow::MainWindow() {
     //mWidget->setLayout(mainLayout);
     mainWidget->setLayout(mainLayout);
 
-    createMainMenuWidget();
-
-    // create Menubar
-    createMenubar();
-
-    createOpenGLWindow();
+    createMainMenuWidget(); // create menu widget
+    createMenubar(); // create Menubar
+    createOpenGLWindow(); // create OpenGL window
 }
 
 
 void MainWindow::createOpenGLWindow() {
-    float OpenGL_background_color = 0.0f; //200.0f / 255.0f;
-    view = createView();
-    //view = mWidget->addView();
-    //view->setLayout(mainLayout);
+	float OpenGL_background_color = 0.0f; //200.0f / 255.0f;
+	view = createView();
+	//view = mWidget->addView();
+	//view->setLayout(mainLayout);
 
-    //mainLayout->addLayout(menuLayout);
-    //mainLayout->insertWidget(1, view);
-    view->set2DMode();
-    view->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
-    view->setAutoUpdateCamera(true);
-    //view->setLayout(mainLayout);
+	//mainLayout->addLayout(menuLayout);
+	//mainLayout->insertWidget(1, view);
+	view->set2DMode();
+	view->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
+	view->setAutoUpdateCamera(true);
+	//view->setLayout(mainLayout);
 
-    // create QSplitter for adjustable windows
-    auto mainSplitter = new QSplitter(Qt::Horizontal);
-    //mainSplitter->setHandleWidth(5);
-    //mainSplitter->setFrameShadow(QFrame::Sunken);
-    //mainSplitter->setStyleSheet("background-color: rgb(55, 100, 110);");
-    mainSplitter->setHandleWidth(5);
-    //mainSplitter->setStyleSheet("QSplitter::handle { background-color: rgb(100, 100, 200); }; ");  // FIXME: didnt work on windows?
-    mainSplitter->addWidget(menuWidget);
-    mainSplitter->addWidget(view);
-    mainSplitter->setStretchFactor(1, 1);
+	// create QSplitter for adjustable windows
+	auto mainSplitter = new QSplitter(Qt::Horizontal);
+	//mainSplitter->setHandleWidth(5);
+	//mainSplitter->setFrameShadow(QFrame::Sunken);
+	//mainSplitter->setStyleSheet("background-color: rgb(55, 100, 110);");
+	mainSplitter->setHandleWidth(5);
+	//mainSplitter->setStyleSheet("QSplitter::handle { background-color: rgb(100, 100, 200); }; ");  // FIXME: didnt work on windows?
+	mainSplitter->addWidget(menuWidget);
+	mainSplitter->addWidget(view);
+	mainSplitter->setStretchFactor(1, 1);
 
-    mainLayout->addWidget(mainSplitter);
+	mainLayout->addWidget(mainSplitter);
 }
 
 
@@ -244,10 +247,10 @@ void MainWindow::createMainMenuWidget() {
 
     // create widgets for Menu layout
     createFileWidget();
-    createProcessWidget(); // TODO: MAKE IT DYNAMIC DEPENDING ON WHICH MODELS ARE AVAILABLE IN MODELS FOLDER
-    createViewWidget(); // TODO: MAKE IT DYNAMIC DEPENDING ON WHAT ANALYSIS HAVE BEEN DONE
+    createProcessWidget();
+    createViewWidget();
     createStatsWidget();
-    createExportWidget();
+    createExportWidget(); // TODO: MAKE IT DYNAMIC DEPENDING ON WHAT RESULTS ARE AVAILABLE
     createMenuWidget();
 
     // add widgets to meny layout
@@ -295,11 +298,11 @@ void MainWindow::createMenuWidget() {
 
 
     //auto toolBar = new QToolBar;
-    QPixmap openPix(QString::fromStdString(cwd + "/Icons/import-data-icon-19.png"));
-    QPixmap processPix(QString::fromStdString(cwd + "/Icons/machine-learning-icon-8.png"));
-    QPixmap viewPix(QString::fromStdString(cwd + "/Icons/visualize.png"));  //"/home/andre/Downloads/quick-view-icon-8.png");
-    QPixmap resultPix(QString::fromStdString(cwd + "/Icons/Simpleicons_Business_bars-chart-up.svg.png"));
-    QPixmap savePix(QString::fromStdString(cwd + "/Icons/save-time-icon-1.png"));
+    QPixmap openPix(QString::fromStdString(cwd + "data/Icons/import-data-icon-19.png"));
+    QPixmap processPix(QString::fromStdString(cwd + "data/Icons/machine-learning-icon-8.png"));
+    QPixmap viewPix(QString::fromStdString(cwd + "data/Icons/visualize.png"));  //"/home/andre/Downloads/quick-view-icon-8.png");
+    QPixmap resultPix(QString::fromStdString(cwd + "data/Icons/Simpleicons_Business_bars-chart-up.svg.png"));
+    QPixmap savePix(QString::fromStdString(cwd + "data/Icons/save-time-icon-1.png"));
 
     //viewPix->
 
@@ -422,7 +425,7 @@ void MainWindow::createWSIScrollAreaWidget() {
     scrollArea->setGeometry(10, 10, 200, 200);
 
     scrollList = new QListWidget();
-    scrollList->setStyleSheet("border: none, padding: 0, background: white, color: none");
+    //scrollList->setStyleSheet("border: none, padding: 0, background: white, color: none");
     scrollList->setSelectionMode(QAbstractItemView::ExtendedSelection);
     scrollList->setItemAlignment(Qt::AlignTop);
     scrollList->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
@@ -480,23 +483,23 @@ void MainWindow::createFileWidget() {
     fileWidget->setLayout(fileLayout);
     //fileWidget->setFixedWidth(200);
 
-    auto createProjectButton = new QPushButton(fileWidget);
+    auto createProjectButton = new QPushButton(mWidget);
     createProjectButton->setText("Create Project");
     createProjectButton->setFixedHeight(50);
     createProjectButton->setStyleSheet("color: white; background-color: blue");
     QObject::connect(createProjectButton, &QPushButton::clicked, std::bind(&MainWindow::createProject, this));
 
-    auto openProjectButton = new QPushButton(fileWidget);
+    auto openProjectButton = new QPushButton(mWidget);
     openProjectButton->setText("Open Project");
     openProjectButton->setFixedHeight(50);
-    openProjectButton->setStyleSheet("color: white; background-color: blue");
+    //openProjectButton->setStyleSheet("color: white; background-color: blue");
     QObject::connect(openProjectButton, &QPushButton::clicked, std::bind(&MainWindow::openProject, this));
 
-    auto selectFileButton = new QPushButton(fileWidget);
+    auto selectFileButton = new QPushButton(mWidget);
     selectFileButton->setText("Select WSI");
     //selectFileButton->setFixedWidth(200);
     selectFileButton->setFixedHeight(50);
-    selectFileButton->setStyleSheet("color: white; background-color: blue");
+    //selectFileButton->setStyleSheet("color: white; background-color: blue");
     QObject::connect(selectFileButton, &QPushButton::clicked, std::bind(&MainWindow::selectFile, this));
 
     /*
@@ -594,7 +597,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 
     dynamicViewWidget = new QWidget;
 
-    auto imageButton = new QPushButton(dynamicViewWidget);
+    auto imageButton = new QPushButton(mWidget);
     imageButton->setText("Toggle image");
     //showHeatmapButton->setFixedWidth(200);
     imageButton->setFixedHeight(50);
@@ -635,7 +638,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     // to be able to set which classes to show/hide
     channel_value = 0;
 
-    auto toggleShowButton = new QPushButton(dynamicViewWidget);
+    auto toggleShowButton = new QPushButton(mWidget);
     toggleShowButton->setText("Toggle class");
     //showHeatmapButton->setFixedWidth(200);
     toggleShowButton->setFixedHeight(50);
@@ -645,7 +648,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     //showHeatmapButton->setChecked(true);
     QObject::connect(toggleShowButton, &QPushButton::clicked, std::bind(&MainWindow::hideChannel, this, someName));
 
-    auto deleteButton = new QPushButton(dynamicViewWidget);
+    auto deleteButton = new QPushButton(mWidget);
     deleteButton->setText("Delete object");
     deleteButton->setFixedHeight(50);
     QObject::connect(deleteButton, &QPushButton::clicked, std::bind(&MainWindow::deleteViewObject, this, someName));
@@ -664,7 +667,6 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
         // clear vector first
         currentClassesInUse.clear();
         for (const auto & i : someVector){
-            std::cout << "\n her er vi class" << i << "\n";
             currentClassesInUse.append(QString::fromStdString(i));
         }
         currComboBox->clear();
@@ -699,8 +701,6 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
         biggerTextBoxWidget_imageName->setDisabled(true);
     }
 
-    std::cout << "\n vi kom lengre 1 \n";
-
     dynamicViewLayout = new QVBoxLayout;
     dynamicViewLayout->setAlignment(Qt::AlignTop);
 
@@ -725,8 +725,6 @@ void MainWindow::pipelineEditor() {
     // get screen geometry (resolution/size)
     //QRect screenGeometry = QApplication::desktop()->screenGeometry();
     //QGuiApplication::screens();
-    1;
-    std::cout << "\n\n hallo";
 
     auto scriptEditorWidgetBackground = new QWidget(mWidget);
     auto backgroundLayout = new QVBoxLayout;
@@ -1128,28 +1126,28 @@ void MainWindow::createExportWidget() {
         itemsInComboBox << pageComboBox->itemText(index);
     }
 
-    auto saveThumbnailButton = new QPushButton(exportWidget);
+    auto saveThumbnailButton = new QPushButton(mWidget);
     saveThumbnailButton->setText("Save thumbnail");
     saveThumbnailButton->setFixedHeight(50);
-    saveThumbnailButton->setStyleSheet("color: white; background-color: blue");
+    //saveThumbnailButton->setStyleSheet("color: white; background-color: blue");
     QObject::connect(saveThumbnailButton, &QPushButton::clicked, std::bind(&MainWindow::saveThumbnail, this));
 
-    auto saveTissueButton = new QPushButton(exportWidget);
+    auto saveTissueButton = new QPushButton(mWidget);
     saveTissueButton->setText("Save tissue mask");
     saveTissueButton->setFixedHeight(50);
-    saveTissueButton->setStyleSheet("color: white; background-color: blue");
+    //saveTissueButton->setStyleSheet("color: white; background-color: blue");
     QObject::connect(saveTissueButton, &QPushButton::clicked, std::bind(&MainWindow::saveTissueSegmentation, this));
 
-    auto saveTumorButton = new QPushButton(exportWidget);
+    auto saveTumorButton = new QPushButton(mWidget);
     saveTumorButton->setText("Save tumor mask");
     saveTumorButton->setFixedHeight(50);
-    saveTumorButton->setStyleSheet("color: white; background-color: blue");
+    //saveTumorButton->setStyleSheet("color: white; background-color: blue");
     QObject::connect(saveTumorButton, &QPushButton::clicked, std::bind(&MainWindow::saveTumor, this));
 
-    auto saveGradeButton = new QPushButton(exportWidget);
+    auto saveGradeButton = new QPushButton(mWidget);
     saveGradeButton->setText("Save grade heatmap");
     saveGradeButton->setFixedHeight(50);
-    saveGradeButton->setStyleSheet("color: white; background-color: blue");
+    //saveGradeButton->setStyleSheet("color: white; background-color: blue");
     //QObject::connect(saveGradeButton, &QPushButton::clicked, std::bind(&MainWindow::saveGrade, this));
 
     exportLayout->addWidget(saveThumbnailButton);
@@ -1195,7 +1193,7 @@ void MainWindow::saveThumbnail() {
     // attempt to save thumbnail to disk as .png
     ImageExporter::pointer exporter = ImageExporter::New();
     exporter->setFilename(projectFolderName.toStdString() + "/thumbnails/" + split(split(filename, "/").back(), ".")[0] + ".png");
-    std::cout << "\n monster name: " << projectFolderName.toStdString() + "/thumbnails/" + split(split(filename, "/").back(), ".")[0] + ".png" << "\n";
+    std::cout << "\n name: " << projectFolderName.toStdString() + "/thumbnails/" + split(split(filename, "/").back(), ".")[0] + ".png" << "\n";
     exporter->setInputData(intensityScaler->updateAndGetOutputData<Image>());
     exporter->update();
 
@@ -1361,7 +1359,7 @@ void MainWindow::createProcessWidget() {
     processWidget->setLayout(processLayout);
     //processWidget->setFixedWidth(200);
 
-    auto segTissueButton = new QPushButton(exportWidget);
+    auto segTissueButton = new QPushButton; //(exportWidget);
     segTissueButton->setText("Segment Tissue");
     //segTissueButton->setFixedWidth(200);
     segTissueButton->setFixedHeight(50);
@@ -1377,7 +1375,6 @@ void MainWindow::createProcessWidget() {
     QStringList paths = directory.entryList(QStringList() << "*.txt" << "*.TXT",QDir::Files);
     int counter=1;
     foreach(QString currFile, paths) {
-        std::cout << "\n" << currFile.toStdString() << "\n halloeeen";
 
         // current model
         modelName = split(currFile.toStdString(), ".")[0];
@@ -1385,7 +1382,7 @@ void MainWindow::createProcessWidget() {
         // get metadata of current model
         std::map<std::string, std::string> metadata = getModelMetadata(modelName);
 
-        auto someButton = new QPushButton(exportWidget);
+        auto someButton = new QPushButton;//(exportWidget);
         someButton->setText(QString::fromStdString(metadata["task"]));
         //predGradeButton->setFixedWidth(200);
         someButton->setFixedHeight(50);
@@ -1652,8 +1649,6 @@ void MainWindow::selectFile() {
 
 void MainWindow::selectFileInProject(int pos) {
 
-    std::cout << "\n wsi selection worked!\n";
-
     // if you select a WSI and it's already open, do nothing
     if (filename == wsiList[pos]) {
         auto mBox = new QMessageBox(mWidget);
@@ -1836,6 +1831,8 @@ void MainWindow::openProject() {
                 break;
         }
     }
+
+    curr_pos = 0; // reset
 
     // select project file
     QFileDialog dialog(mWidget);
@@ -2075,13 +2072,10 @@ void MainWindow::addPipelines() {
         if (fileName == "")
             continue;
 
-        std::cout << "\n testing... " << fileName.toStdString();
-
         std::string someFile = split(fileName.toStdString(), "/").back();
         std::string oldLocation = split(fileName.toStdString(), someFile)[0];
         std::string newLocation = cwd + "Pipelines/";
         std::string newPath = cwd + "Pipelines/" + someFile;
-        std::cout << "\n testing2... " << newPath;
         if (fileExists(newPath)) {
             std::cout << "\n" << fileName.toStdString() << "\n: File with the same name already exists in folder, didn't transfer... \n";
             continue;
@@ -2403,7 +2397,8 @@ void MainWindow::loadTumor(QString tumorPath) {
 
 bool MainWindow::lowresSegmenter() {
 
-    modelName = "/home/andrep/workspace/FAST-Pathology/Models_old_020420/low_res_tumor_unet.pb";
+    //modelName = "/home/andrep/workspace/FAST-Pathology/Models_old_020420/low_res_tumor_unet.pb";
+    modelName = "C:/Users/andrep/workspace/FAST-Pathology/data/Models/low_res_tumor_unet.xml";
 
     // read model metadata (txtfile)
     //std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
@@ -2423,10 +2418,10 @@ bool MainWindow::lowresSegmenter() {
         //Image::pointer resized = port->getNextFrame<Image>();
 
         auto network = NeuralNetwork::New();
-        network->setInferenceEngine("TensorFlowCPU");
-        network->setInputNode(0, "input_1", NodeType::IMAGE, {1, 1024, 1024, 3});
-        network->setOutputNode(0, "conv2d_34/truediv", NodeType::TENSOR, {1, 1024, 1024, 2});
-        network->load("/home/andrep/workspace/FAST-Pathology/Models_old_020420/low_res_tumor_unet.pb");
+        //network->setInferenceEngine("TensorFlowCPU");
+        //network->setInputNode(0, "input_1", NodeType::IMAGE, {1, 1024, 1024, 3});
+        //network->setOutputNode(0, "conv2d_34/truediv", NodeType::TENSOR, {1, 1024, 1024, 2});
+        network->load(modelName);
         network->setInputData(port->getNextFrame<Image>());
         //vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
         network->setScaleFactor(1.0f/255.0f);   // 1.0f/255.0f
@@ -2538,7 +2533,8 @@ bool MainWindow::patchClassifier(std::string modelName) {
             network->setInferenceEngine("OpenVINO");
         } else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "TensorFlowCPU") != IEsList.end()) {
             network->setInferenceEngine("TensorFlowCPU");
-        } else {
+        } 
+		/* else {
             std::cout << "\nModel does not exist in Models/ folder. Please add it using AddModels(). "
                          "It might also be that the model exists, but the Inference Engine does not. "
                          "Available IEs are: ";
@@ -2548,7 +2544,7 @@ bool MainWindow::patchClassifier(std::string modelName) {
             std::cout << "\n";
             checkFlag = false;
         }
-        // */
+         */
 
         if (checkFlag) {
             std::cout << "\nModel was found.";
@@ -2556,7 +2552,7 @@ bool MainWindow::patchClassifier(std::string modelName) {
             // TODO: Need to handle if model is in Models/, but inference engine is not available
             Config::getLibraryPath();
 
-            if (true) { //(modelMetadata["name"] == "grade") {
+            if (false) { //(modelMetadata["name"] == "grade") {
                 network->setInferenceEngine("TensorFlowCPU");
             }
 
@@ -2723,6 +2719,7 @@ vector<string> MainWindow::split (string s, string delimiter) {
 bool MainWindow::calcTissueHist() {
     std::cout<<"\nCalculating histogram...\n";
 
+	/*
     int barWidth = 9;
     int boxWidth = 250;
     int boxHeight = 250;
@@ -2827,6 +2824,10 @@ bool MainWindow::calcTissueHist() {
     histBox->setAlignment(Qt::AlignHCenter);
 
     statsLayout->insertWidget(1, histBox);
+
+	 */
+	
+	return true;
 }
 
 
