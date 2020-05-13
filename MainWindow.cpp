@@ -50,7 +50,7 @@
 //#include "ExtractThumbnail.hpp"
 #include <QShortcut>
 #include <FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp>
-#include <jkqtplotter/graphs/jkqtpbarchart.h>
+//#include <jkqtplotter/graphs/jkqtpbarchart.h>
 #include <FAST/Algorithms/ImageResizer/ImageResizer.hpp>
 
 using namespace std;
@@ -64,7 +64,9 @@ MainWindow::MainWindow() {
     mWidget->setFocusPolicy(Qt::ClickFocus);  //Qt::ClickFocus);
 
     // get current working directory
-    get_cwd();
+    //get_cwd(); // FIXME: This should be the directory of where FastPathology is built, and all subfolders saved should be stored here
+    // <- TODO: Currently, this is done instead, as the current get_cwd() does not work for windows
+    cwd = "/home/andrep/workspace/FAST-Pathology/Models";
 
     // create temporary tmp folder to store stuff, and create temporary file to keep history for visualization and
     // other stuff
@@ -81,10 +83,11 @@ MainWindow::MainWindow() {
     // changing color to the Qt background
     //mWidget->setStyleSheet("font-size: 16px; background: gray; color: white;");
     //mWidget->setStyleSheet("font-size: 16px; background: rgb(75, 74, 103); color: black;");
-    mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;"); // Current favourite
+    //mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;"); // Current favourite
     //mWidget->setStyleSheet("font-size: 16px; background: rgb(181, 211, 231); color: black;");
     //mWidget->setStyleSheet("font-size: 16px; background: (255, 125, 50); color: black;");
-    mWidget->setStyleSheet("font-size: 16px");
+    //mWidget->setStyleSheet("font-size: 16px"); // used most recently
+    // FIXME: setStyleSheet() didn't work on windows?
 
     // opacityTumorSlider->setStyleSheet("font-size: 16px"); // <- to set style sheet for a specific button/slider
     //mainestLayout->addLayout(topHorizontalLayout);
@@ -129,7 +132,7 @@ void MainWindow::createOpenGLWindow() {
     //mainSplitter->setFrameShadow(QFrame::Sunken);
     //mainSplitter->setStyleSheet("background-color: rgb(55, 100, 110);");
     mainSplitter->setHandleWidth(5);
-    mainSplitter->setStyleSheet("QSplitter::handle { background-color: rgb(100, 100, 200); }; ");
+    //mainSplitter->setStyleSheet("QSplitter::handle { background-color: rgb(100, 100, 200); }; ");  // FIXME: didnt work on windows?
     mainSplitter->addWidget(menuWidget);
     mainSplitter->addWidget(view);
     mainSplitter->setStretchFactor(1, 1);
@@ -605,7 +608,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     auto opacitySlider = new QSlider(Qt::Horizontal, dynamicViewWidget);
     opacitySlider->setFixedWidth(150);
     opacitySlider->setMinimum(0);
-    opacitySlider->setMaximum(10);
+    opacitySlider->setMaximum(20);
     //opacityTissueSlider->setText("Tissue");
     opacitySlider->setValue(4);
     opacitySlider->setTickInterval(1);
@@ -1143,10 +1146,16 @@ void MainWindow::createExportWidget() {
     saveTumorButton->setStyleSheet("color: white; background-color: blue");
     QObject::connect(saveTumorButton, &QPushButton::clicked, std::bind(&MainWindow::saveTumor, this));
 
+    auto saveGradeButton = new QPushButton(exportWidget);
+    saveGradeButton->setText("Save grade heatmap");
+    saveGradeButton->setFixedHeight(50);
+    saveGradeButton->setStyleSheet("color: white; background-color: blue");
+    //QObject::connect(saveGradeButton, &QPushButton::clicked, std::bind(&MainWindow::saveGrade, this));
+
     exportLayout->addWidget(saveThumbnailButton);
     exportLayout->addWidget(saveTissueButton);
     exportLayout->addWidget(saveTumorButton);
-
+    exportLayout->addWidget(saveGradeButton);
 }
 
 
@@ -1277,7 +1286,7 @@ void MainWindow::saveTumor() {
         QDir().mkdir(wsiResultPath);
     }
 
-    if (std::find(savedList.begin(), savedList.end(), "tumor") != savedList.end()) {
+    if (std::find(savedList.begin(), savedList.end(), "tumorSeg_lr") != savedList.end()) {
         auto mBox = new QMessageBox(mWidget);
         mBox->setText("Result has already previously been saved.");
         mBox->setIcon(QMessageBox::Information);
@@ -1289,7 +1298,7 @@ void MainWindow::saveTumor() {
         QTimer::singleShot(3000, mBox, SLOT(accept()));
         return;
     }
-    savedList.emplace_back("tumor");
+    savedList.emplace_back("tumorSeg_lr");
 
     // attempt to save tissue mask to disk as .png
     QString outFile = (wsiResultPath.toStdString() + split(split(filename, "/").back(), ".")[0] + "_tumor_mask.png").c_str();
@@ -1301,6 +1310,36 @@ void MainWindow::saveTumor() {
 
     auto mBox = new QMessageBox(mWidget);
     mBox->setText("Tumor segmentation has been saved.");
+    mBox->setIcon(QMessageBox::Information);
+    mBox->setModal(false);
+    //mBox->show();
+    QRect screenrect = mWidget->screen()[0].geometry();
+    mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
+    mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
+    QTimer::singleShot(3000, mBox, SLOT(accept()));
+}
+
+
+void MainWindow::saveGrade() {
+    // check if folder for current WSI exists, if not, create one
+    QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0] + "/").c_str();
+    wsiResultPath = wsiResultPath.replace("//", "/");
+    if (!QDir(wsiResultPath).exists()) {
+        QDir().mkdir(wsiResultPath);
+    }
+
+    savedList.emplace_back("grade");
+
+    // attempt to save tissue mask to disk as .png
+    QString outFile = (wsiResultPath.toStdString() + split(split(filename, "/").back(), ".")[0] + "_grade_mask.png").c_str();
+    ImageExporter::pointer exporter = ImageExporter::New();
+    exporter->setFilename(outFile.replace("//", "/").toStdString());
+    //exporter->setInputData(intensityScaler->updateAndGetOutputData<Image>());
+    exporter->setInputData(m_gradeMap);
+    exporter->update();
+
+    auto mBox = new QMessageBox(mWidget);
+    mBox->setText("Grade heatmap has been saved.");
     mBox->setIcon(QMessageBox::Information);
     mBox->setModal(false);
     //mBox->show();
@@ -1417,6 +1456,7 @@ void MainWindow::create_tmp_folder_file() {
 }
 
 
+/*
 void MainWindow::get_cwd() {
     long size;
     char *buf;
@@ -1447,6 +1487,7 @@ void MainWindow::get_cwd() {
         cwd.erase(pos2, delimiter2.length());
     }
 }
+ */
 
 int MainWindow::mkdir(const char *path)
 {
@@ -2348,15 +2389,15 @@ void MainWindow::loadTumor(QString tumorPath) {
     someRenderer->setOpacity(0.4); // <- necessary for the quick-fix temporary solution
     someRenderer->update();
 
-    insertRenderer("tumor", someRenderer);
+    insertRenderer("tumorSeg_lr", someRenderer);
 
     //hideTissueMask(false);
 
     // now make it possible to edit prediction in the View Widget
-    createDynamicViewWidget("tumor", modelName);
+    createDynamicViewWidget("tumorSeg_lr", modelName);
 
     std::cout << "\nfinished loading... \n";
-    savedList.emplace_back("tumor");
+    savedList.emplace_back("tumorSeg_lr");
 }
 
 
@@ -2585,18 +2626,32 @@ bool MainWindow::patchClassifier(std::string modelName) {
             // now make it possible to edit prediction in the View Widget
             createDynamicViewWidget(modelMetadata["name"], modelName);
 
-            //std::future<void> fut = std::async(stitcher, network->getOutputPort());
-
-            // test
-            //usleep(5);
-
+            // TODO: Save stitched heatmap as variable to be used later
             /*
-            QTime dieTime= QTime::currentTime().addSecs(1);
-            while (QTime::currentTime() < dieTime)
-                QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
-                */
+            m_futureData = std::async(std::launch::async, [&, port]{
+                // Wait for stitcher to finish before returning the data
+                auto resultData = port->getNextFrame<Tensor>();
+                while(true) {
+                    if(resultData->isLastFrame())
+                        break;
+                    std::cout << "Not last frame, sleeping for 1 second" << std::endl;
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                }
+                std::cout << "Data is finished" << std::endl;
+                // TODO Add the stuff you want to do here!
+                auto converter = TensorToSegmentation::New();
+                converter->setInputData(port->getNextFrame<Tensor>());
 
-            if (modelMetadata["name"] == "tumor") {
+                m_gradeMap = converter->updateAndGetOutputData<Image>();
+
+                saveGrade();
+                //saveTissueSegmentation();
+
+                return resultData;
+            });
+             */
+
+            if (false) { //(modelMetadata["name"] == "tumor") {
 
                 //  if (false) {
                 stitcher->update();
@@ -2627,7 +2682,6 @@ bool MainWindow::patchClassifier(std::string modelName) {
 
                 createDynamicViewWidget("tumorSeg", modelName);
             }
-
         }
     }
 }
@@ -2880,13 +2934,13 @@ bool MainWindow::opacityRenderer(int value, const std::string& someName) {
     if (!hasRenderer(someName)) {
         return false;
     }else{
-        if ((someName == "tissue") && (someName == "tumorSeg")) { // TODO: Make this more generic -> should recognize which renderer type automatically
+        if ((someName == "tissue") || (someName == "tumorSeg") || (someName == "tumorSeg_lr")) { // TODO: Make this more generic -> should recognize which renderer type automatically
             auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(getRenderer(someName));
-            someRenderer->setOpacity((float) value / 10.0f);
+            someRenderer->setOpacity((float) value / 20.0f);
             someRenderer->setModified(true);
         } else {
             auto someRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(getRenderer(someName));
-            someRenderer->setMaxOpacity((float) value / 10.0f);
+            someRenderer->setMaxOpacity((float) value / 20.0f);
             //someRenderer->setMinConfidence(0.9);
         }
         return true;

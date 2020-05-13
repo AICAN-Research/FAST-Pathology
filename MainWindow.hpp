@@ -66,6 +66,7 @@ class MainWindow : public Window {
         void saveThumbnail();
         void saveTissueSegmentation();
         void saveTumor();
+        void saveGrade();
         void deleteViewObject(std::string someName);
 
         bool hideChannel(const std::string &someName); //, uint channel_value);
@@ -218,11 +219,12 @@ class MainWindow : public Window {
         std::map<std::string, SharedPointer<Renderer>> m_rendererList;
         MainWindow();
 
+        std::future<SharedPointer<Tensor>> m_futureData;
         //SharedPointer<TissueSegmentation> tissueSegmentation;
         SharedPointer<WholeSlideImageImporter> importer;
         SharedPointer<ImagePyramid> m_image;
         SharedPointer<Image> m_tissue;
-        SharedPointer<Tensor> m_gradeMap;
+        SharedPointer<Image> m_gradeMap;
         SharedPointer<Tensor> m_tumorMap_tensor;
         SharedPointer<Image> m_tumorMap;
         SharedPointer<Tensor> m_bachMap;
