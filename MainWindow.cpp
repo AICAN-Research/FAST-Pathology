@@ -316,11 +316,11 @@ void MainWindow::createMenuWidget() {
 
 
     //auto toolBar = new QToolBar;
-    QPixmap openPix(QString::fromStdString(cwd + "data/Icons/import_icon_new_cropped.png"));
-    QPixmap processPix(QString::fromStdString(cwd + "data/Icons/process_icon_new_cropped.png"));
-    QPixmap viewPix(QString::fromStdString(cwd + "data/Icons/visualize_icon_new_cropped.png"));  //"/home/andre/Downloads/quick-view-icon-8.png");
-    QPixmap resultPix(QString::fromStdString(cwd + "data/Icons/statistics_icon_new_cropped.png"));
-    QPixmap savePix(QString::fromStdString(cwd + "data/Icons/export_icon_new_cropped.png"));
+    QPixmap openPix(QString::fromStdString(cwd + "data/Icons/import_icon_new_cropped_resized.png"));
+    QPixmap processPix(QString::fromStdString(cwd + "data/Icons/process_icon_new_cropped_resized.png"));
+    QPixmap viewPix(QString::fromStdString(cwd + "data/Icons/visualize_icon_new_cropped_resized.png"));
+    QPixmap resultPix(QString::fromStdString(cwd + "data/Icons/statistics_icon_new_cropped_resized.png"));
+    QPixmap savePix(QString::fromStdString(cwd + "data/Icons/export_icon_new_cropped_resized.png"));
 
     //viewPix->
 
