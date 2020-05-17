@@ -47,11 +47,13 @@
 #include <FAST/Exporters/ImageFileExporter.hpp>
 #include <FAST/Algorithms/ScaleImage/ScaleImage.hpp>
 #include <FAST/Data/Access/ImagePyramidAccess.hpp>
-//#include "ExtractThumbnail.hpp"
 #include <QShortcut>
 #include <FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp>
 //#include <jkqtplotter/graphs/jkqtpbarchart.h>
 #include <FAST/Algorithms/ImageResizer/ImageResizer.hpp>
+#include <FAST/PipelineEditor.hpp>
+#include <FAST/Pipeline.hpp>
+#include <FAST/Visualization/MultiViewWindow.hpp>
 
 using namespace std;
 
@@ -82,9 +84,10 @@ MainWindow::MainWindow() {
 
     //printf("\n%d\n",__LINE__); // <- this is nice for debugging
 
-    // Create models folder platform assumes that this folder exists and contains all relevant models
+    // Create models folder platform assumes that this folder exists and contains all relevant models (and pipelines)
     //createDirectories(dir_str);
 	QDir().mkpath(QString::fromStdString(cwd) + "data/Models"); // <- mkpath creates the entire path recursively (convenient if subfolder dependency is missing)
+    QDir().mkpath(QString::fromStdString(cwd) + "data/Pipelines");
 
     // changing color to the Qt background)
     //mWidget->setStyleSheet("font-size: 16px; background: gray; color: white;");
@@ -197,13 +200,18 @@ void MainWindow::createMenubar() {
 
     auto pipelineMenu = topFiller->addMenu(tr("&Pipelines"));
     pipelineMenu->addAction("Import pipelines", this, &MainWindow::addPipelines);
-    pipelineMenu->addAction("Run Pipeline");
     pipelineMenu->addAction("Pipeline Editor", this, &MainWindow::pipelineEditor);
+    runPipelineMenu = new QMenu("&Run Pipeline", mWidget);
+    //runPipelineMenu->addAction("Tumor segmentation", this, &MainWindow::lowresSegmenter);
+    //runPipelineMenu->addAction("Grade classification");
+    pipelineMenu->addMenu(runPipelineMenu);
 
     auto projectMenu = topFiller->addMenu(tr("&Projects"));
     projectMenu->addAction("Create Project", this, &MainWindow::createProject);
     projectMenu->addAction("Open Project", this, &MainWindow::openProject);
     projectMenu->addAction("Save Project", this, &MainWindow::saveProject);
+
+    loadPipelines(); // load pipelines that exists in the data/Pipelines directory
 
     //auto deployMenu = new QMenu();
     auto deployMenu = topFiller->addMenu(tr("&Deploy"));
@@ -227,6 +235,35 @@ void MainWindow::createMenubar() {
     //topFiller->addMenu(deployMenu);
 
     superLayout->insertWidget(0, topFiller);
+}
+
+
+void MainWindow::runPipeline(std::string path) {
+    // TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
+    // pipeline requires some user-defined inputs, e.g. which WSI to use (and which model?)
+    std::map<std::string, std::string> arguments;
+    arguments["filename"] = filename;
+
+    // parse fpl-file, and run pipeline with correspodning input arguments
+    auto pipeline = Pipeline(path, arguments);
+    pipeline.parsePipelineFile();
+
+    // add renderer
+    insertRenderer("testPipeline", pipeline.getRenderers()[1]); // only render the NN-results (not the WSI)
+    createDynamicViewWidget("testPipeline", "testPipeline"); //modelMetadata["name"], modelName);
+}
+
+
+void MainWindow::loadPipelines() {
+    QStringList pipelines = QDir(QString::fromStdString(cwd) + "data/Pipelines").entryList(QStringList() << "*.fpl" << "*.FPL",QDir::Files);
+    foreach(QString currentFpl, pipelines) {
+        //runPipelineMenu->addAction(QString::fromStdString(split(currentFpl.toStdString(), ".")[0]), this, &MainWindow::lowresSegmenter);
+        auto currentAction = runPipelineMenu->addAction(currentFpl); //QString::fromStdString(split(split(currentFpl.toStdString(), "/")[-1], ".")[0]));
+        QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, cwd + "data/Pipelines/" + currentFpl.toStdString()));
+
+        //auto currentAction = runPipelineMenu->addAction(QString::fromStdString(split(someFile, ".")[0]));
+        //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, someFile));
+    }
 }
 
 
@@ -726,105 +763,39 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 
 
 void MainWindow::pipelineEditor() {
-    // get screen geometry (resolution/size)
-    //QRect screenGeometry = QApplication::desktop()->screenGeometry();
-    //QGuiApplication::screens();
 
     auto scriptEditorWidgetBackground = new QWidget(mWidget);
     auto backgroundLayout = new QVBoxLayout;
 
     scriptEditorWidget = new QDialog(mWidget);
     scriptEditorWidget->setWindowTitle("Script Editor");
-    //scriptEditorWidget = new QWidget(mWidget);
-    //scriptEditorWidget->setSizeGripEnabled(true);
-
-    //QRect scr = QApplication::desktop()->screenGeometry();
-    //move(scr.center() - rect().center() );
-
     backgroundLayout->addWidget(scriptEditorWidget);
 
-    //scriptEditorWidget->setCentralWidget;
-    //scriptEditorWidget->setWindowFlags(Qt::AlignHCenter);
-    //scriptEditorWidget->setWindowFlags(Qt::Popup);
-    //scriptEditorWidget->setBaseSize(500, 500);
     scriptEditorWidget->setMinimumWidth(800);
     scriptEditorWidget->setMinimumHeight(1000);  // TODO: Better to use baseSize, but not working?
-    //QLayout *scriptLayout;
 
-    scriptLayout = new QVBoxLayout; // mWidget);
+    scriptLayout = new QVBoxLayout;
     scriptEditorWidget->setLayout(scriptLayout);
 
     scriptEditor = new QPlainTextEdit;
+    auto highlighter = new PipelineHighlighter(scriptEditor->document());
+    const QFont fixedFont("UbuntuMono");
+    scriptEditor->setFont(fixedFont);
     scriptLayout->insertWidget(1, scriptEditor);
-
-    /*
-    scriptLayout->setGeometry(QStyle::alignedRect(
-            Qt::LeftToRight,
-            Qt::AlignCenter,
-            mWidget->size(),
-            mWidget->QGuiApplication::primaryScreen()));
-            //qApp->desktop()->availableGeometry()));
-    */
-
-
-    //QRect rec = QApplication::desktop()->screenGeometry();
-
-
-    //QScreen *screen = QGuiApplication::primaryScreen();
-    //QRect  screenGeometry = screen->geometry();
-
-    //scriptEditorWidget->move(300, 300);
-    /*
-    scriptEditorWidget->move(mWidget->window()->frameGeometry().topLeft() +
-                             mWidget->window()->rect().center() -
-                             screenGeometry.center());
-    */
 
     // center QDialog when opened
     QRect rect = scriptEditorWidget->geometry();
     QRect parentRect = mWidget->geometry();
     rect.moveTo(mWidget->mapToGlobal(QPoint(parentRect.x() + parentRect.width() - rect.width(), parentRect.y())));
 
-    /*
-    scriptEditorWidget->adjustSize();
-    scriptEditorWidget->move(mWidget->window()->frameGeometry().topLeft() +
-                             mWidget->window()->rect().center() -
-                             screenGeometry.center());
-    */
-
-    /*
-    QPoint dialogCenter = scriptEditorWidget->mapToGlobal(scriptEditorWidget->rect().center());
-    QPoint parentWindowCenter = mWidget->window()->mapToGlobal(
-            mWidget->window()->rect().center());
-    move(parentWindowCenter - dialogCenter);
-     */
-
-    //scriptEditorWidget->move(QGuiApplication::screens()[0]->rect().center() - scriptEditorWidget->rect().center())
-
-    // resizable window using QSplitter
-    /*
-    auto mainSplitter = new QSplitter(Qt::);
-    mainSplitter->addWidget(menuWidget);
-    mainSplitter->addWidget(view);
-    mainSplitter->setStretchFactor(1, 1);
-
-    mainLayout->addWidget(mainSplitter);
-     */
-
     createActionsScript();
-
-    // finally, show window
-    //scriptEditorWidgetBackground->show();
-    scriptEditorWidget->show();
-    //scriptEditorWidget->close();
+    scriptEditorWidget->show(); // finally slow editor
 }
 
 
 void MainWindow::createActionsScript() {
 
     auto menuBar = new QMenuBar(scriptEditorWidget); //scriptEditorWidget);
-    //menuBar->setMinimumHeight(200);
-
     auto toolBar = new QToolBar();
 
     //QMenu *fileMenu = menuBar->addMenu(tr("&File"));
@@ -2047,8 +2018,8 @@ void MainWindow::addPipelines() {
 
         std::string someFile = split(fileName.toStdString(), "/").back();
         std::string oldLocation = split(fileName.toStdString(), someFile)[0];
-        std::string newLocation = cwd + "Pipelines/";
-        std::string newPath = cwd + "Pipelines/" + someFile;
+        std::string newLocation = cwd + "data/Pipelines/";
+        std::string newPath = cwd + "data/Pipelines/" + someFile;
         if (fileExists(newPath)) {
             std::cout << "\n" << fileName.toStdString() << "\n: File with the same name already exists in folder, didn't transfer... \n";
             continue;
@@ -2057,6 +2028,14 @@ void MainWindow::addPipelines() {
                 QFile::copy(fileName, QString::fromStdString(newPath));
             }
         }
+        // should update runPipelineMenu as new pipelines are being added
+        //runPipelineMenu->addAction(QString::fromStdString(split(someFile, ".")[0]), this, &MainWindow::runPipeline);
+        //auto currentAction = new QAction(QString::fromStdString(split(someFile, ".")[0]));
+        auto currentAction = runPipelineMenu->addAction(QString::fromStdString(split(someFile, ".")[0]));
+        QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, someFile));
+
+        //auto currentAction = runPipelineMenu->addAction(currentFpl); //QString::fromStdString(split(split(currentFpl.toStdString(), "/")[-1], ".")[0]));
+        //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, cwd + "data/Pipelines/" + currentFpl.toStdString()));
     }
 }
 
@@ -2549,11 +2528,11 @@ bool MainWindow::pixelClassifier(std::string modelName) {
             // TODO: Need to handle if model is in Models/, but inference engine is not available
             //Config::getLibraryPath();
 
-            // If model has CPU flag only, need to check if TensorFlowCPU is available, else run on OpenVINO, else don't run
+            // If model has CPU flag only, need to check if TensorFlowCPU is available, else run on OpenVINO, else use best available
             if (std::stoi(modelMetadata["cpu"]) == 1) {
-                if (std::find(acceptedModels.begin(), acceptedModels.end(), "TensorFlowCPU") == acceptedModels.end()) {
+                if (std::find(IEsList.begin(), IEsList.end(), "TensorFlowCPU") != IEsList.end()) {
                     network->setInferenceEngine("TensorFlowCPU");
-                } else if (std::find(acceptedModels.begin(), acceptedModels.end(), "OpenVINO") == acceptedModels.end()) {
+                } else if (std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end()) {
                     network->setInferenceEngine("OpenVINO");
                 }
                 // else continue -> will use default one (one that is available)

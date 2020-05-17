@@ -104,6 +104,7 @@ class MainWindow : public Window {
         int curr_pos;
         void loadTissue(QString tissuePath);
         void loadTumor(QString tumorPath);
+        void loadPipelines();
 
         QImage extractThumbnail();
 
@@ -182,6 +183,9 @@ class MainWindow : public Window {
         QStackedLayout *stackedLayout;
         QStackedLayout *exportStackedLayout;
         //QSplitter *mainSplitter;
+
+        QMenu *runPipelineMenu;
+        void runPipeline(std::string path);
 
         QScrollArea *scrollArea;
         QWidget *scrollWidget;
