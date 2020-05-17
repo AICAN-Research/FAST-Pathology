@@ -84,7 +84,7 @@ MainWindow::MainWindow() {
 
     // Create models folder platform assumes that this folder exists and contains all relevant models
     //createDirectories(dir_str);
-	QDir().mkpath(QString::fromStdString(cwd) + "Models"); // <- mkpath creates the entire path recursively (convenient if subfolder dependency is missing)
+	QDir().mkpath(QString::fromStdString(cwd) + "data/Models"); // <- mkpath creates the entire path recursively (convenient if subfolder dependency is missing)
 
     // changing color to the Qt background)
     //mWidget->setStyleSheet("font-size: 16px; background: gray; color: white;");
@@ -182,11 +182,11 @@ void MainWindow::createMenubar() {
     auto fileMenu = topFiller->addMenu(tr("&File"));
     //fileMenu->setFixedHeight(100);
     //fileMenu->setFixedWidth(100);
-    QAction *createProjectAction;
+    //QAction *createProjectAction;
     fileMenu->addAction("Create Project", this,  &MainWindow::createProject);
-    fileMenu->addAction("Import WSI", this, &MainWindow::selectFile);
-    fileMenu->addAction("add Models", this, &MainWindow::addModels);
-    fileMenu->addAction("add Pipelines", this, &MainWindow::addPipelines);
+    fileMenu->addAction("Import WSIs", this, &MainWindow::selectFile);
+    fileMenu->addAction("Add Models", this, &MainWindow::addModels);
+    fileMenu->addAction("Add Pipelines", this, &MainWindow::addPipelines);
     fileMenu->addSeparator();
     fileMenu->addAction("Quit", QApplication::quit);
 
@@ -309,6 +309,14 @@ void MainWindow::createMenuWidget() {
 
     auto mapper = new QSignalMapper;
 
+    auto spacerWidgetLeft = new QWidget;
+    spacerWidgetLeft->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    spacerWidgetLeft->setVisible(true);
+
+    auto spacerWidgetRight = new QWidget;
+    spacerWidgetRight->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    spacerWidgetRight->setVisible(true);
+
     auto tb = new QToolBar();
     //tb->setStyleSheet("QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };");
     //                         "border-bottom:2px solid rgba(25,25,120,75); "
@@ -337,6 +345,8 @@ void MainWindow::createMenuWidget() {
     painter.setFont(font);
     painter.setPen(*(new QColor(Qt::black)));
     //painter.drawText(QPoint(0, 500), "Read WSI");
+
+    tb->addWidget(spacerWidgetLeft);
 
     auto actionGroup = new QActionGroup(tb);
 
@@ -375,6 +385,8 @@ void MainWindow::createMenuWidget() {
     tb->addAction(save_action);
     mapper->setMapping(save_action, 4);
     mapper->connect(save_action, SIGNAL(triggered(bool)), SLOT(map()));
+
+    tb->addWidget(spacerWidgetRight);
 
     //stackedWidget->connect(&mapper, SIGNAL(mapped(int)), SLOT(setCurrentIndex(int)));
     connect(mapper, SIGNAL(mapped(int)), stackedWidget, SLOT(setCurrentIndex(int)));
@@ -451,21 +463,6 @@ void MainWindow::createWSIScrollAreaWidget() {
 
     //connect(scrollList, SIGNAL(activated(int)), scrollLayout, SLOT(setCurrentIndex(int)));
 
-    /*
-    for (int i = 0; i < 4; i++)
-    {
-        auto button = new QPushButton(); //QString( "%1" ).arg( i ) );
-        //QPixmap pixmap("/home/andrep/workspace/FAST-Pathology/ImageExporterTest.png"); //"/home/andrep/Pictures/medium.png");
-        QPixmap pixmap("/home/andrep/Pictures/medium.png");
-        QIcon ButtonIcon(pixmap);
-        button->setIcon(ButtonIcon);
-        //button->setIconSize(pixmap.rect().size());
-        button->setIconSize(QSize(200, 200));
-        //button->setFixedSize(100, 100);
-        scrollLayout->addWidget(button);
-    }
-     */
-
     //fileLayout->insertWidget(2, scrollArea);  //widget);
     fileLayout->addWidget(scrollArea);
 
@@ -495,7 +492,7 @@ void MainWindow::createFileWidget() {
     QObject::connect(openProjectButton, &QPushButton::clicked, std::bind(&MainWindow::openProject, this));
 
     auto selectFileButton = new QPushButton(mWidget);
-    selectFileButton->setText("Add WSIs");
+    selectFileButton->setText("Import WSIs");
     //selectFileButton->setFixedWidth(200);
     selectFileButton->setFixedHeight(50);
     //selectFileButton->setStyleSheet("color: white; background-color: blue");
@@ -1351,7 +1348,6 @@ void MainWindow::saveGrade() {
 }
 
 
-
 void MainWindow::createProcessWidget() {
 
     processLayout = new QVBoxLayout;
@@ -1374,7 +1370,7 @@ void MainWindow::createProcessWidget() {
     // check Models folder which models are available and make button for each model and add to widget
     //QDir directory = QFileDialog::getExistingDirectory(this, tr("select directory"));
 
-    QDir directory(QString::fromStdString(cwd + "Models/"));
+    QDir directory(QString::fromStdString(cwd + "data/Models/"));
     QStringList paths = directory.entryList(QStringList() << "*.txt" << "*.TXT",QDir::Files);
     int counter=1;
     foreach(QString currFile, paths) {
@@ -1456,51 +1452,15 @@ void MainWindow::create_tmp_folder_file() {
 }
 
 
-/*
-void MainWindow::get_cwd() {
-    long size;
-    char *buf;
-    char *ptr;
-
-    // TODO FIX
-    size = pathconf(".", _PC_PATH_MAX);
-
-    if ((buf = (char *) malloc((size_t) size)) != NULL)
-        ptr = getcwd(buf, (size_t) size);
-
-    cwd = ptr;
-    std::string delimiter = "cmake-build-release";
-    std::string delimiter2 = "cmake-build-debug";
-
-    // Search for the substring in string
-    size_t pos = cwd.find(delimiter);
-    if (pos != std::string::npos) {
-        // If found then erase it from string
-        cwd.erase(pos, delimiter.length());
-    }
-
-    // Search for the substring in string
-    size_t pos2 = cwd.find(delimiter2);
-
-    if (pos2 != std::string::npos) {
-    // If found then erase it from string
-        cwd.erase(pos2, delimiter2.length());
-    }
-}
- */
-
 int MainWindow::mkdir(const char *path)
 {
     return QDir().mkdir(path);
 }
 
+
 int MainWindow::rmdir(const char *path)
 {
     return QDir(path).removeRecursively();
-}
-
-void MainWindow::drawHist() {
-    int aa = 2;
 }
 
 
@@ -1529,9 +1489,9 @@ void MainWindow::selectFile() {
 
         switch (ret) {
             case QMessageBox::Save:
-                std::cout << "\n Saved! \n";
+                std::cout << "\n Results not saved yet. Just cancelled the switch! \n";
                 // Save was clicked
-                break;
+                return;
             case QMessageBox::Discard:
                 // Don't Save was clicked
                 std::cout << "\n Discarded! \n";
@@ -1539,7 +1499,7 @@ void MainWindow::selectFile() {
             case QMessageBox::Cancel:
                 // Cancel was clicked
                 std::cout << "\n Cancelled! \n";
-                break;
+                return;
             default:
                 // should never be reached
                 break;
@@ -2130,7 +2090,7 @@ void MainWindow::addModels() {
         std::cout << "\nPath: " << someFile;
         std::string oldLocation = split(fileName.toStdString(), someFile)[0];
 
-        std::string newLocation = cwd + "Models/";
+        std::string newLocation = cwd + "data/Models/";
 
         std::cout << "Old cwd: \n" << cwd;
 
@@ -2140,7 +2100,7 @@ void MainWindow::addModels() {
 
         // copy selected file to Models folder
         // check if file already exists in new folder, if yes, print warning, and stop
-        string newPath = cwd + "Models/" + someFile;
+        string newPath = cwd + "data/Models/" + someFile;
         if (fileExists(newPath)) {
             std::cout << "\n file with same name already exists in folder, didn't transfer... \n";
             continue;
@@ -2155,9 +2115,9 @@ void MainWindow::addModels() {
             std::string oldPath = oldLocation + fileNameNoFormat + "." + currExtension;
             std::cout << currExtension << "\n\n" << oldPath << "\n\n";
             if (fileExists(oldPath)) {
-                QFile::copy(QString::fromStdString(oldPath),QString::fromStdString(cwd + "Models/" + fileNameNoFormat + "." + currExtension));
+                QFile::copy(QString::fromStdString(oldPath), QString::fromStdString(cwd + "data/Models/" + fileNameNoFormat + "." + currExtension));
             }
-            }
+        }
 
         // when models are added, ProcessWidget should be updated by adding the new widget to ProcessWidget layout
         // current model
@@ -2190,6 +2150,7 @@ float MainWindow::getMagnificationLevel() {
 
     float magnification_lvl = 0.0f;
 
+    // TODO: Should check which formats are supported by OpenSlide, and do this for all (in a generalized matter...)
     if ((wsiFormat == "generic-tiff") || (wsiFormat == "philips")) {
 
         int level_count = m_image->getNrOfLevels(); //(int)stof(metadata["openslide.level-count"]);
@@ -2537,7 +2498,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
         }
 
         // check which model formats exists, before choosing inference engine
-        QDir directory(QString::fromStdString(cwd + "Models/"));
+        QDir directory(QString::fromStdString(cwd + "data/Models/"));
         QStringList models = directory.entryList(QStringList(), QDir::Files);
 
         std::list<std::string> acceptedModels;
@@ -2551,8 +2512,6 @@ bool MainWindow::pixelClassifier(std::string modelName) {
         auto network = NeuralNetwork::New(); // default, need special case for high_res segmentation
         if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
             network = SegmentationNetwork::New();
-        } else {
-            std::cout << "\nSomething is wrong in the .txt-file... Please check that it is written correctly.\n";
         }
         //network->setInferenceEngine("TensorRT"); //"TensorRT");
 
@@ -2590,8 +2549,14 @@ bool MainWindow::pixelClassifier(std::string modelName) {
             // TODO: Need to handle if model is in Models/, but inference engine is not available
             //Config::getLibraryPath();
 
+            // If model has CPU flag only, need to check if TensorFlowCPU is available, else run on OpenVINO, else don't run
             if (std::stoi(modelMetadata["cpu"]) == 1) {
-                network->setInferenceEngine("TensorFlowCPU");
+                if (std::find(acceptedModels.begin(), acceptedModels.end(), "TensorFlowCPU") != acceptedModels.end()) {
+                    network->setInferenceEngine("TensorFlowCPU");
+                } else if (std::find(acceptedModels.begin(), acceptedModels.end(), "OpenVINO") != acceptedModels.end()) {
+                    network->setInferenceEngine("OpenVINO");
+                }
+                // else continue -> will use default one (one that is available)
             }
 
             const auto engine = network->getInferenceEngine()->getName();
@@ -2618,7 +2583,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
                                        TensorShape({1, std::stoi(modelMetadata["nb_classes"])}));
             }
-            network->load(cwd + "Models/" + modelName + "." + network->getInferenceEngine()->getDefaultFileExtension()); //".uff");
+            network->load(cwd + "data/Models/" + modelName + "." + network->getInferenceEngine()->getDefaultFileExtension()); //".uff");
             if (modelMetadata["resolution"] == "low") { // special case handling for low_res NN inference
                 auto port = resizer->getOutputPort();
                 resizer->update();
@@ -2789,7 +2754,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
 std::map<std::string, std::string> MainWindow::getModelMetadata(std::string modelName) {
     // parse corresponding txt file for relevant information regarding model
-    std::ifstream infile(cwd + "Models/" + modelName + ".txt");
+    std::ifstream infile(cwd + "data/Models/" + modelName + ".txt");
     std::string key, value, str;
     std::string delimiter = ":";
     std::map<std::string, std::string> metadata;
