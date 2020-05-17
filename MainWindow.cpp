@@ -61,6 +61,8 @@ MainWindow::MainWindow() {
     setTitle("fastPathology");
     enableMaximized(); // <- function from Window.cpp
 
+    //mWidget->setMouseTracking(true);
+    //mWidget->setFocusPolicy(Qt::StrongFocus);
     //mWidget->setFocusPolicy(Qt::ClickFocus);  //Qt::ClickFocus);
 
     // get current working directory
@@ -78,7 +80,7 @@ MainWindow::MainWindow() {
     std::string tmpPath = tmpDir.path().toStdString();
     std::cout << "\nTemporary path: " << tmpDir.path().toStdString();
 
-	//printf("\n%d\n",__LINE__); // <- this is nice for debugging
+    //printf("\n%d\n",__LINE__); // <- this is nice for debugging
 
     // Create models folder platform assumes that this folder exists and contains all relevant models
     //createDirectories(dir_str);
@@ -91,10 +93,22 @@ MainWindow::MainWindow() {
     //mWidget->setStyleSheet("font-size: 16px; background: rgb(181, 211, 231); color: black;");
     //mWidget->setStyleSheet("font-size: 16px; background: (255, 125, 50); color: black;");
     //mWidget->setStyleSheet("font-size: 16px"); // used most recently
-    // FIXME: setStyleSheet() didn't work on windows?
-	mWidget->setStyle(QStyleFactory::create("Fusion"));
-	mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;");
-
+	mWidget->setStyle(QStyleFactory::create("Fusion")); // TODO: This has to be before setStyleSheet?
+	/*
+    const auto qss =
+            "QToolButton:!hover{background-color: #00ff00;}"
+            "QToolButton:hover{background-color: #ff0000;}"
+            "font-size: 16px"
+            "background: rgb(221, 209, 199)"
+            "color: black"
+            ;
+	 */
+    const auto qss = "font-size: 16px;"
+                     "QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };"
+                     "QMenu{background-color:palette(window);border:1px solid palette(shadow);};"
+                     ;
+	//mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;");
+    mWidget->setStyleSheet(qss);
     // opacityTumorSlider->setStyleSheet("font-size: 16px"); // <- to set style sheet for a specific button/slider
     //mainestLayout->addLayout(topHorizontalLayout);
 
@@ -158,6 +172,10 @@ void MainWindow::createMenubar() {
 
     // need to create a new QHBoxLayout for the menubar
     auto topFiller = new QMenuBar();
+    //topFiller->setStyleSheet("QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };"
+    //                         "border-bottom:2px solid rgba(25,25,120,75); "
+    //                         "QMenu{background-color:palette(window);border:1px solid palette(shadow);}");
+    //topFiller->setStyleSheet(qss);
     topFiller->setMaximumHeight(30);
 
     //auto fileMenu = new QMenu();
@@ -167,8 +185,8 @@ void MainWindow::createMenubar() {
     QAction *createProjectAction;
     fileMenu->addAction("Create Project", this,  &MainWindow::createProject);
     fileMenu->addAction("Import WSI", this, &MainWindow::selectFile);
-    fileMenu->addAction("Import Models", this, &MainWindow::addModels);
-    fileMenu->addAction("Import Pipelines", this, &MainWindow::addPipelines);
+    fileMenu->addAction("add Models", this, &MainWindow::addModels);
+    fileMenu->addAction("add Pipelines", this, &MainWindow::addPipelines);
     fileMenu->addSeparator();
     fileMenu->addAction("Quit", QApplication::quit);
 
@@ -298,11 +316,11 @@ void MainWindow::createMenuWidget() {
 
 
     //auto toolBar = new QToolBar;
-    QPixmap openPix(QString::fromStdString(cwd + "data/Icons/import-data-icon-19.png"));
-    QPixmap processPix(QString::fromStdString(cwd + "data/Icons/machine-learning-icon-8.png"));
-    QPixmap viewPix(QString::fromStdString(cwd + "data/Icons/visualize.png"));  //"/home/andre/Downloads/quick-view-icon-8.png");
-    QPixmap resultPix(QString::fromStdString(cwd + "data/Icons/Simpleicons_Business_bars-chart-up.svg.png"));
-    QPixmap savePix(QString::fromStdString(cwd + "data/Icons/save-time-icon-1.png"));
+    QPixmap openPix(QString::fromStdString(cwd + "data/Icons/import_icon_new_cropped.png"));
+    QPixmap processPix(QString::fromStdString(cwd + "data/Icons/process_icon_new_cropped.png"));
+    QPixmap viewPix(QString::fromStdString(cwd + "data/Icons/visualize_icon_new_cropped.png"));  //"/home/andre/Downloads/quick-view-icon-8.png");
+    QPixmap resultPix(QString::fromStdString(cwd + "data/Icons/statistics_icon_new_cropped.png"));
+    QPixmap savePix(QString::fromStdString(cwd + "data/Icons/export_icon_new_cropped.png"));
 
     //viewPix->
 
@@ -1386,7 +1404,7 @@ void MainWindow::createProcessWidget() {
         someButton->setText(QString::fromStdString(metadata["task"]));
         //predGradeButton->setFixedWidth(200);
         someButton->setFixedHeight(50);
-        QObject::connect(someButton, &QPushButton::clicked, std::bind(&MainWindow::patchClassifier, this, modelName));
+        QObject::connect(someButton, &QPushButton::clicked, std::bind(&MainWindow::pixelClassifier, this, modelName));
         someButton->show();
 
         processLayout->insertWidget(counter, someButton);
@@ -1578,6 +1596,7 @@ void MainWindow::selectFile() {
 
             // TODO: Something here results in me not being able to run analysis on new images (after the first)
             removeAllRenderers();
+            m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
             insertRenderer("WSI", renderer);
             getView(0)->reinitialize(); // Must call this after removing all renderers
 
@@ -1712,6 +1731,7 @@ void MainWindow::selectFileInProject(int pos) {
 
     // TODO: Something here results in me not being able to run analyzis on new images (after the first)
     removeAllRenderers();
+    m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
     insertRenderer("WSI", renderer);
     getView(0)->reinitialize(); // Must call this after removing all renderers
 
@@ -1910,6 +1930,7 @@ void MainWindow::openProject() {
 
             // TODO: Something here results in me not being able to run analysis on new images (after the first)
             removeAllRenderers();
+            m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
             insertRenderer("WSI", renderer);
             getView(0)->reinitialize(); // Must call this after removing all renderers
 
@@ -2158,7 +2179,7 @@ void MainWindow::addModels() {
         //predGradeButton->setFixedWidth(200);
         someButton->setFixedHeight(50);
         QObject::connect(someButton, &QPushButton::clicked,
-                         std::bind(&MainWindow::patchClassifier, this, modelName));
+                         std::bind(&MainWindow::pixelClassifier, this, modelName));
         someButton->show();
 
         processLayout->insertWidget(processLayout->count(), someButton);
@@ -2236,6 +2257,7 @@ bool MainWindow::segmentTissue() {
         someRenderer->setOpacity(0.4); // <- necessary for the quick-fix temporary solution
         someRenderer->update();
 
+        m_rendererTypeList["tissue"] = "SegmentationRenderer";
         insertRenderer("tissue", someRenderer);
 
         //hideTissueMask(false);
@@ -2311,6 +2333,7 @@ void MainWindow::loadTissue(QString tissuePath) {
     someRenderer->setOpacity(0.4); // <- necessary for the quick-fix temporary solution
     someRenderer->update();
 
+    m_rendererTypeList["tissue"] = "SegmentationRenderer";
     insertRenderer("tissue", someRenderer);
 
     //hideTissueMask(false);
@@ -2383,6 +2406,7 @@ void MainWindow::loadTumor(QString tumorPath) {
     someRenderer->setOpacity(0.4); // <- necessary for the quick-fix temporary solution
     someRenderer->update();
 
+    m_rendererTypeList["tumorSeg_lr"] = "SegmentationRenderer";
     insertRenderer("tumorSeg_lr", someRenderer);
 
     //hideTissueMask(false);
@@ -2397,8 +2421,8 @@ void MainWindow::loadTumor(QString tumorPath) {
 
 bool MainWindow::lowresSegmenter() {
 
-    //modelName = "/home/andrep/workspace/FAST-Pathology/Models_old_020420/low_res_tumor_unet.pb";
-    modelName = "C:/Users/andrep/workspace/FAST-Pathology/data/Models/low_res_tumor_unet.xml";
+    modelName = "/home/andrep/workspace/FAST-Pathology/Models_old_020420/low_res_tumor_unet.pb";
+    //modelName = "C:/Users/andrep/workspace/FAST-Pathology/data/Models/low_res_tumor_unet.xml";
 
     // read model metadata (txtfile)
     //std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
@@ -2406,7 +2430,7 @@ bool MainWindow::lowresSegmenter() {
     if (true) { //(!hasRenderer(modelMetadata["name"])) { // only run analysis if it has not been ran previously on current WSI
         auto access = m_image->getAccess(ACCESS_READ);
         //auto input = access->getLevelAsImage(m_image->getNrOfLevels()-1);
-        auto input = access->getLevelAsImage(5); //m_image->getNrOfLevels()-1);
+        auto input = access->getLevelAsImage(5); //m_image->getNrOfLevels()-1); // FIXME: Should automatically find best suitable magn.lvl.
 
         // resize
         ImageResizer::pointer resizer = ImageResizer::New();
@@ -2418,9 +2442,9 @@ bool MainWindow::lowresSegmenter() {
         //Image::pointer resized = port->getNextFrame<Image>();
 
         auto network = NeuralNetwork::New();
-        //network->setInferenceEngine("TensorFlowCPU");
-        //network->setInputNode(0, "input_1", NodeType::IMAGE, {1, 1024, 1024, 3});
-        //network->setOutputNode(0, "conv2d_34/truediv", NodeType::TENSOR, {1, 1024, 1024, 2});
+        network->setInferenceEngine("TensorFlowCPU");
+        network->setInputNode(0, "input_1", NodeType::IMAGE, {1, 1024, 1024, 3});
+        network->setOutputNode(0, "conv2d_34/truediv", NodeType::TENSOR, {1, 1024, 1024, 2});
         network->load(modelName);
         network->setInputData(port->getNextFrame<Image>());
         //vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
@@ -2459,7 +2483,8 @@ bool MainWindow::lowresSegmenter() {
 
 
 // TODO: Integrate SegmentationClassifier inside this or make functions for each task?
-bool MainWindow::patchClassifier(std::string modelName) {
+//  perhaps make a new class instead?
+bool MainWindow::pixelClassifier(std::string modelName) {
 
     // read model metadata (txtfile)
     std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
@@ -2475,17 +2500,40 @@ bool MainWindow::patchClassifier(std::string modelName) {
         segmentTissue(); // TODO: Something weird happens when I run this again
         hideTissueMask(true);
 
-        auto generator = PatchGenerator::New();
-        generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
-        generator->setPatchLevel(patch_lvl_model);
-        generator->setInputData(0, m_image);
-        generator->setInputData(1, m_tissue);
-        if (m_tumorMap)
-            generator->setInputData(1, m_tumorMap);
+        ImageResizer::pointer resizer = ImageResizer::New();
+        int currLvl;
+        if (modelMetadata["resolution"] == "low") {
+            auto access = m_image->getAccess(ACCESS_READ);
+            // TODO: Should automatically find best suitable magn.lvl.
 
-        //auto batchgen = ImageToBatchGenerator::New();  // TODO: Can't use this with TensorRT (!)
-        //batchgen->setInputConnection(generator->getOutputPort());
-        //batchgen->setMaxBatchSize(std::stoi(modelMetadata["batch_process"])); // set 256 for testing stuff (tumor -> annotation, then grade from tumor segment)
+            int levelCount = std::stoi(metadata["openslide.level-count"]);
+            int inputWidth = std::stoi(modelMetadata["input_img_size_x"]);
+            int inputHeight = std::stoi(modelMetadata["input_img_size_y"]);
+            bool breakFlag = false;
+            for (int i=0; i<levelCount; i++) {
+                if ((std::stoi(metadata["openslide.level[" + std::to_string(i) + "].width"]) <= inputWidth) ||
+                    (std::stoi(metadata["openslide.level[" + std::to_string(i) + "].height"]) <= inputHeight)) {
+                    currLvl = i-1;
+                    breakFlag = true;
+                    break;
+                }
+            }
+            if (!breakFlag)
+                currLvl = levelCount - 1;
+
+            std::cout << "\nOptimal patch level: " << std::to_string(currLvl);
+            if (currLvl < 0) {
+                std::cout<<"\nAutomatic chosen patch level for low_res is invalid: "<<std::to_string(currLvl)<<"\n";
+                return false;
+            }
+            auto input = access->getLevelAsImage(currLvl);
+
+            // resize
+            //ImageResizer::pointer resizer = ImageResizer::New();
+            resizer->setInputData(input);
+            resizer->setWidth(inputWidth);
+            resizer->setHeight(inputHeight);
+        }
 
         // get available IEs as a list
         std::list<std::string> IEsList;
@@ -2508,11 +2556,9 @@ bool MainWindow::patchClassifier(std::string modelName) {
         }
 
         // init network
-        auto network = NeuralNetwork::New();
+        auto network = NeuralNetwork::New(); // default, need special case for high_res segmentation
         if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
             network = SegmentationNetwork::New();
-        } else if ((modelMetadata["problem"] == "classification") && (modelMetadata["resolution"] == "high")) {
-            network = NeuralNetwork::New();
         } else {
             std::cout << "\nSomething is wrong in the .txt-file... Please check that it is written correctly.\n";
         }
@@ -2550,9 +2596,9 @@ bool MainWindow::patchClassifier(std::string modelName) {
             std::cout << "\nModel was found.";
 
             // TODO: Need to handle if model is in Models/, but inference engine is not available
-            Config::getLibraryPath();
+            //Config::getLibraryPath();
 
-            if (false) { //(modelMetadata["name"] == "grade") {
+            if (std::stoi(modelMetadata["cpu"]) == 1) {
                 network->setInferenceEngine("TensorFlowCPU");
             }
 
@@ -2580,24 +2626,36 @@ bool MainWindow::patchClassifier(std::string modelName) {
                 network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
                                        TensorShape({1, std::stoi(modelMetadata["nb_classes"])}));
             }
-            network->load(cwd + "Models/" + modelName + "." +
-                          network->getInferenceEngine()->getDefaultFileExtension()); //".uff");
-            network->setInputConnection(generator->getOutputPort());
+            network->load(cwd + "Models/" + modelName + "." + network->getInferenceEngine()->getDefaultFileExtension()); //".uff");
+            if (modelMetadata["resolution"] == "low") { // special case handling for low_res NN inference
+                auto port = resizer->getOutputPort();
+                resizer->update();
+                network->setInputData(port->getNextFrame<Image>());
+            } else {
+                auto generator = PatchGenerator::New();
+                generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
+                generator->setPatchLevel(patch_lvl_model);
+                generator->setInputData(0, m_image);
+                generator->setInputData(1, m_tissue);
+                if (m_tumorMap)
+                    generator->setInputData(1, m_tumorMap);
+
+                //auto batchgen = ImageToBatchGenerator::New();  // TODO: Can't use this with TensorRT (!)
+                //batchgen->setInputConnection(generator->getOutputPort());
+                //batchgen->setMaxBatchSize(std::stoi(modelMetadata["batch_process"])); // set 256 for testing stuff (tumor -> annotation, then grade from tumor segment)
+
+                network->setInputConnection(generator->getOutputPort());
+            }
             vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
-            network->setScaleFactor(
-                    (float) std::stoi(scale_factor[0]) / (float) std::stoi(scale_factor[1]));   // 1.0f/255.0f
+            network->setScaleFactor((float) std::stoi(scale_factor[0]) / (float) std::stoi(scale_factor[1]));   // 1.0f/255.0f
 
-            auto stitcher = PatchStitcher::New();
-            stitcher->setInputConnection(network->getOutputPort());
-
-            auto port = stitcher->getOutputPort();
-            //port->getNextFrame();
-            //stitcher->update();
-            //port->getNextFrame<Tensor>();
 
             // define renderer from metadata
-            //auto someRenderer = HeatmapRenderer::New();
             if ((modelMetadata["problem"] == "classification") && (modelMetadata["resolution"] == "high")) {
+                auto stitcher = PatchStitcher::New();
+                stitcher->setInputConnection(network->getOutputPort());
+                auto port = stitcher->getOutputPort();
+
                 auto someRenderer = HeatmapRenderer::New();
                 someRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
                 someRenderer->setInputConnection(stitcher->getOutputPort());
@@ -2610,13 +2668,57 @@ bool MainWindow::patchClassifier(std::string modelName) {
                                                            (float) std::stoi(rgb[2]) / 255.0f));
                 }
 
+                m_rendererTypeList[modelMetadata["name"]] = "HeatmapRenderer";
                 insertRenderer(modelMetadata["name"], someRenderer);
 
             } else if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
+                auto stitcher = PatchStitcher::New();
+                stitcher->setInputConnection(network->getOutputPort());
+                auto port = stitcher->getOutputPort();
+
                 auto someRenderer = SegmentationPyramidRenderer::New();
                 someRenderer->setInputConnection(stitcher->getOutputPort());
 
+                m_rendererTypeList[modelMetadata["name"]] = "SegmentationPyramidRenderer";
                 insertRenderer(modelMetadata["name"], someRenderer);
+            } else if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "low")) {
+
+                auto converter = TensorToSegmentation::New();
+                converter->setInputConnection(network->getOutputPort());
+
+                // resize back
+                auto access = m_image->getAccess(ACCESS_READ);
+                auto input = access->getLevelAsImage(currLvl);
+                ImageResizer::pointer resizer2 = ImageResizer::New();
+                resizer2->setInputData(converter->updateAndGetOutputData<Image>());
+                resizer2->setWidth(input->getWidth());
+                resizer2->setHeight(input->getHeight());
+                auto port2 = resizer2->getOutputPort();
+                resizer2->update();
+
+                m_tumorMap = port2->getNextFrame<Image>();
+                m_tumorMap->setSpacing((float) m_image->getFullHeight() / (float) input->getHeight(), (float) m_image->getFullWidth() / (float) input->getWidth(), 1.0f);
+
+                auto someRenderer = SegmentationRenderer::New();
+                someRenderer->setOpacity(0.4);
+                vector<string> colors = split(modelMetadata["class_colors"], ";");
+                for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
+                    vector<string> rgb = split(colors[i], ",");
+                    someRenderer->setColor(i, Color((float) std::stoi(rgb[0]) / 255.0f,
+                                                           (float) std::stoi(rgb[1]) / 255.0f,
+                                                           (float) std::stoi(rgb[2]) / 255.0f));
+                }
+
+                //someRenderer->setColor(Segmentation::LABEL_BACKGROUND, Color(0.0f, 255.0f / 255.0f, 0.0f));
+                someRenderer->setInputData(m_tumorMap);
+                //someRenderer->setInterpolation(false);
+                someRenderer->update();
+
+                m_rendererTypeList[modelMetadata["name"]] = "SegmentationRenderer";
+                insertRenderer(modelMetadata["name"], someRenderer);
+
+                // should kill network to free memory when finished
+                network->stopPipeline(); // TODO: Does nothing. Or at least I cannot see a different using "nvidia-smi"
             }
 
             // now make it possible to edit prediction in the View Widget
@@ -2647,7 +2749,13 @@ bool MainWindow::patchClassifier(std::string modelName) {
             });
              */
 
+
             if (false) { //(modelMetadata["name"] == "tumor") {
+
+                auto stitcher = PatchStitcher::New();
+                stitcher->setInputConnection(network->getOutputPort());
+
+                auto port = stitcher->getOutputPort();
 
                 //  if (false) {
                 stitcher->update();
@@ -2674,6 +2782,7 @@ bool MainWindow::patchClassifier(std::string modelName) {
                 //segTumorRenderer->setInterpolation(false);
                 segTumorRenderer->update();
 
+                m_rendererTypeList["tumorSeg"] = "SegmentationRenderer";
                 insertRenderer("tumorSeg", segTumorRenderer);
 
                 createDynamicViewWidget("tumorSeg", modelName);
@@ -2719,7 +2828,6 @@ vector<string> MainWindow::split (string s, string delimiter) {
 bool MainWindow::calcTissueHist() {
     std::cout<<"\nCalculating histogram...\n";
 
-	/*
     int barWidth = 9;
     int boxWidth = 250;
     int boxHeight = 250;
@@ -2824,8 +2932,6 @@ bool MainWindow::calcTissueHist() {
     histBox->setAlignment(Qt::AlignHCenter);
 
     statsLayout->insertWidget(1, histBox);
-
-	 */
 	
 	return true;
 }
@@ -2864,6 +2970,7 @@ bool MainWindow::showHeatmap() {
     }
 }
 
+
 bool MainWindow::showBachMap() {
     if (!hasRenderer("bach")) {
         return false;
@@ -2874,6 +2981,7 @@ bool MainWindow::showBachMap() {
     }
 }
 
+
 bool MainWindow::showTumorMask() {
     if (!hasRenderer("tumor")){
         return false;
@@ -2883,6 +2991,7 @@ bool MainWindow::showTumorMask() {
         return true;
     }
 }
+
 
 bool MainWindow::toggleTissueMask() {
     if (!hasRenderer("tissue")) { //segRenderer) {
@@ -2916,6 +3025,7 @@ bool MainWindow::hideTissueMask(bool flag) {
     }
 }
 
+
 bool MainWindow::opacityTissue(int value) {
     //std::cout << (float)value/10.0f << std::endl;
     if (!hasRenderer("tissue")) {
@@ -2928,14 +3038,16 @@ bool MainWindow::opacityTissue(int value) {
     }
 }
 
+
 bool MainWindow::opacityRenderer(int value, const std::string& someName) {
-    if (someName == "WSI") { // TODO: make getRenderer more generic, to automatically recognize renderer type, such that I only need to set cases on renderer type not some random names I set myself...
+    if (m_rendererTypeList[someName] == "ImagePyramidRenderer") {
         return false;
     }
     if (!hasRenderer(someName)) {
         return false;
     }else{
-        if ((someName == "tissue") || (someName == "tumorSeg") || (someName == "tumorSeg_lr")) { // TODO: Make this more generic -> should recognize which renderer type automatically
+        //if ((someName == "tissue") || (someName == "tumorSeg") || (someName == "tumorSeg_lr")) { // TODO: Make this more generic -> should recognize which renderer type automatically
+        if (m_rendererTypeList[someName] == "SegmentationRenderer") {
             auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(getRenderer(someName));
             someRenderer->setOpacity((float) value / 20.0f);
             someRenderer->setModified(true);
@@ -2950,7 +3062,7 @@ bool MainWindow::opacityRenderer(int value, const std::string& someName) {
 
 
 bool MainWindow::hideChannel(const std::string& someName) {
-    if ((someName == "WSI") || (someName == "tissue")){
+    if (m_rendererTypeList[someName] != "HeatmapRenderer") { //((someName == "WSI") || (someName == "tissue")){
         return false;
     }
     if (!hasRenderer(someName)) {
@@ -2964,7 +3076,6 @@ bool MainWindow::hideChannel(const std::string& someName) {
         auto someRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(getRenderer(someName));
         std::cout << (unsigned int)channel_value << "\n";
         someRenderer->setChannelHidden(channel_value, background_flag);
-        std::cout << "\n vi kom hiit :) \n";
         return true;
     }
 }
@@ -2974,7 +3085,7 @@ void MainWindow::deleteViewObject(std::string someName) {
     std::cout << "\nCurrent renderer: " << someName << "\n";
     // need to remove from QComboBox, remove from renderer, remove potential saved results in project (need to check
     // if project is made first), and in the end, need to update ViewWidget
-    removeRenderer(someName);
+    removeRenderer(someName); // FIXME: This produces bug... Why?
 
     // TODO: Need to remove thumbnail
     //pageComboBox->removeItem(pageComboBox->currentIndex());
@@ -3012,6 +3123,7 @@ bool MainWindow::opacityHeatmap(int value) {
     }
 }
 
+
 bool MainWindow::opacityTumor(int value) {
     //std::cout << (float)value/10.0f << std::endl;
     if (!hasRenderer("tumor")){
@@ -3023,6 +3135,7 @@ bool MainWindow::opacityTumor(int value) {
     }
 }
 
+
 bool MainWindow::showImage() {
     if (!hasRenderer("WSI")){
         return false;
@@ -3033,35 +3146,18 @@ bool MainWindow::showImage() {
     }
 }
 
+
 bool MainWindow::hideBackgroundClass(std::string someName) {
     if (!hasRenderer(someName)) {
         return false;
     }else{
-        std::cout<<background_flag<<"\n\n\n\n\n";
         background_flag = !background_flag;
-        std::cout<<background_flag<<"\n\n\n\n\n";
         auto tumorRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(getRenderer(someName));
         tumorRenderer->setChannelHidden(0, background_flag); // TODO: Some functionalities in heatmapRenderer does not exist in Renderer (?)
         return true;
     }
-    /*
-    if (!tumorRenderer && !heatmapRenderer) {
-        return false;
-    }else if (tumorRenderer && !heatmapRenderer) {
-        background_flag = !background_flag;
-        std::cout<<background_flag<<"\n\n\n\n\n";
-        tumorRenderer->setChannelHidden(0, background_flag);
-        return true;
-    } else if (!tumorRenderer && heatmapRenderer) {
-        heatmapRenderer->setChannelHidden(3, true);
-        return true;
-    } else {
-        heatmapRenderer->setChannelHidden(3, true);
-        tumorRenderer->setChannelHidden(0, true);
-        return true;
-    }
-     */
 }
+
 
 bool MainWindow::fixImage() {
     if (!hasRenderer("WSI")){
@@ -3085,6 +3181,7 @@ void MainWindow::removeRenderer(std::string name) {
     getView(0)->removeRenderer(renderer);  // FIXME: This crashed. Can you remove renderer that is still computing?
 }
 
+
 void MainWindow::insertRenderer(std::string name, SharedPointer<Renderer> renderer) {
     std::cout << "calling insert renderer" << std::endl;
     if(!hasRenderer(name)) {
@@ -3095,14 +3192,17 @@ void MainWindow::insertRenderer(std::string name, SharedPointer<Renderer> render
     std::cout << "finished insert renderer" << std::endl;
 }
 
+
 void MainWindow::removeAllRenderers() {
     m_rendererList.clear();
     getView(0)->removeAllRenderers();
 }
 
+
 bool MainWindow::hasRenderer(std::string name) {
     return m_rendererList.count(name) > 0;
 }
+
 
 SharedPointer<Renderer> MainWindow::getRenderer(std::string name) {
     if(!hasRenderer(name))

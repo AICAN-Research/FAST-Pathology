@@ -72,7 +72,7 @@ class MainWindow : public Window {
         bool hideChannel(const std::string &someName); //, uint channel_value);
         bool opacityRenderer(int value, const std::string& someName);
         bool toggleRenderer(std::string name);
-        bool patchClassifier(std::string modelName);
+        bool pixelClassifier(std::string modelName);
         bool lowresSegmenter();
         //bool imageSegmenter(std::string modelName);
         bool showHeatmap();
@@ -217,9 +217,10 @@ class MainWindow : public Window {
 
     private:
         std::map<std::string, SharedPointer<Renderer>> m_rendererList;
+        std::map<std::string, std::string> m_rendererTypeList;
         MainWindow();
-
-        std::future<SharedPointer<Tensor>> m_futureData;
+        //std::map<std::string, std::future<SharedPointer<Tensor>>> m_futureData;
+        //std::future<SharedPointer<Tensor>> m_futureData;
         //SharedPointer<TissueSegmentation> tissueSegmentation;
         SharedPointer<WholeSlideImageImporter> importer;
         SharedPointer<ImagePyramid> m_image;
@@ -230,8 +231,6 @@ class MainWindow : public Window {
         SharedPointer<Tensor> m_bachMap;
         std::string filename;
         QString projectFolderName;
-        //SharedPointer<View> view;
-        //View *MainWindow::view;
 
         private slots:
             void updateChannelValue (int index);

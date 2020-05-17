@@ -78,10 +78,10 @@ set(CPACK_PACKAGE_VERSION_MAJOR "0")
 set(CPACK_PACKAGE_VERSION_MINOR "1")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
 set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE.md) # TODO somehow concatenate all licences to this file..
-
 set(CPACK_PACKAGE_EXECUTABLES fastPathology "FastPathology")
 
 if(WIN32 AND NOT UNIX)
+
     ## Windows
     # Create windows installer (Requires NSIS from http://nsis.sourceforge.net)
     set(CPACK_GENERATOR NSIS)
@@ -89,8 +89,19 @@ if(WIN32 AND NOT UNIX)
     set(CPACK_PACKAGE_INSTALL_DIRECTORY "FastPathology")
 else()
     ## UNIX
+    set(CPACK_PACKAGE_FILE_NAME "PACKAGE")
+
     # Create debian package
     set(CPACK_GENERATOR "DEB")
+    # Select components to avoid some cmake leftovers from built dependencies
+    set(CPACK_DEB_COMPONENT_INSTALL ON)
+    set(CPACK_PACKAGING_INSTALL_PREFIX "/opt")
+    set(CPACK_DEBIAN_COMPRESSION_TYPE "xz")
+
+    set(CPACK_DEBIAN_FAST_FILE_NAME "fast_${DISTRO_NAME}${DISTRO_VERSION}_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}.deb")
+    set(CPACK_COMPONENTS_ALL FastPathology)
+    set(CPACK_DEBIAN_FAST_FILE_NAME "FastPathology_0.1.0.deb")
+    set(CPACK_DEBIAN_FAST_PACKAGE_NAME "FastPathology")
 
     set(CPACK_PACKAGE_INSTALL_DIRECTORY "FastPathology")
 endif()
