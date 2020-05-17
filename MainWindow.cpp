@@ -2551,9 +2551,9 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
             // If model has CPU flag only, need to check if TensorFlowCPU is available, else run on OpenVINO, else don't run
             if (std::stoi(modelMetadata["cpu"]) == 1) {
-                if (std::find(acceptedModels.begin(), acceptedModels.end(), "TensorFlowCPU") != acceptedModels.end()) {
+                if (std::find(acceptedModels.begin(), acceptedModels.end(), "TensorFlowCPU") == acceptedModels.end()) {
                     network->setInferenceEngine("TensorFlowCPU");
-                } else if (std::find(acceptedModels.begin(), acceptedModels.end(), "OpenVINO") != acceptedModels.end()) {
+                } else if (std::find(acceptedModels.begin(), acceptedModels.end(), "OpenVINO") == acceptedModels.end()) {
                     network->setInferenceEngine("OpenVINO");
                 }
                 // else continue -> will use default one (one that is available)
@@ -2583,6 +2583,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
                                        TensorShape({1, std::stoi(modelMetadata["nb_classes"])}));
             }
+
             network->load(cwd + "data/Models/" + modelName + "." + network->getInferenceEngine()->getDefaultFileExtension()); //".uff");
             if (modelMetadata["resolution"] == "low") { // special case handling for low_res NN inference
                 auto port = resizer->getOutputPort();
