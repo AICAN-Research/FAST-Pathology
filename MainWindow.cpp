@@ -647,6 +647,12 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     //showHeatmapButton->setChecked(true);
     QObject::connect(toggleShowButton, &QPushButton::clicked, std::bind(&MainWindow::hideChannel, this, someName));
 
+    auto killInferenceButton = new QPushButton(mWidget);
+    killInferenceButton->setText("Kill inference");
+    killInferenceButton->setFixedHeight(50);
+    QObject::connect(killInferenceButton, &QPushButton::clicked, std::bind(&MainWindow::killInference, this, someName));
+    killInferenceButton->setStyleSheet("color: black; background-color: red");
+
     auto deleteButton = new QPushButton(mWidget);
     deleteButton->setText("Delete object");
     deleteButton->setFixedHeight(50);
@@ -692,11 +698,13 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     biggerTextBoxWidget_imageName->setLayout(biggerTextBox_imageName);
 
     // disable some features for specific types
-    if (someName == "WSI") {
+    //if (someName == "WSI") {
+    //} else if ((someName == "tissue") || (someName == "tumorSeg")) {
+    if (m_rendererTypeList[someName] == "ImagePyramidRenderer") {
         opacitySlider->setDisabled(true);
         colorSetWidget->setDisabled(true);
         biggerTextBoxWidget_imageName->setDisabled(true);
-    } else if ((someName == "tissue") || (someName == "tumorSeg")) {
+    } else if (m_rendererTypeList[someName] == "SegmentationRenderer") {
         biggerTextBoxWidget_imageName->setDisabled(true);
     }
 
@@ -705,12 +713,13 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 
     dynamicViewWidget->setLayout(dynamicViewLayout);
 
-    dynamicViewLayout->insertWidget(0, imageButton);
-    //dynamicViewLayout->insertWidget(1, opacitySlider);
-    dynamicViewLayout->insertWidget(1, smallTextBoxWidget_tissue);
-    dynamicViewLayout->insertWidget(2, colorSetWidget);
-    dynamicViewLayout->insertWidget(3, biggerTextBoxWidget_imageName);
-    dynamicViewLayout->insertWidget(4, deleteButton);
+    dynamicViewLayout->addWidget(imageButton);
+    //dynamicViewLayout->addWidget(opacitySlider);
+    dynamicViewLayout->addWidget(smallTextBoxWidget_tissue);
+    dynamicViewLayout->addWidget(colorSetWidget);
+    dynamicViewLayout->addWidget(biggerTextBoxWidget_imageName);
+    dynamicViewLayout->addWidget(killInferenceButton);
+    dynamicViewLayout->addWidget(deleteButton);
 
     // add widget to QComboBox
     pageComboBox->addItem(tr(tmpSomeName.c_str()));
@@ -720,7 +729,6 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 
 
 void MainWindow::pipelineEditor() {
-
     // get screen geometry (resolution/size)
     //QRect screenGeometry = QApplication::desktop()->screenGeometry();
     //QGuiApplication::screens();
@@ -1079,9 +1087,11 @@ void MainWindow::updateChannelValue(int index) {
 void MainWindow::createStatsWidget() {
 
     statsLayout = new QVBoxLayout;
+    statsLayout->setAlignment(Qt::AlignTop); //|Qt::AlignHCenter);
 
     statsWidget = new QWidget;
     statsWidget->setLayout(statsLayout);
+    //statsWidget->setFixedWidth(150);
 
     // make button that prints distribution of pixels of each class -> for histogram
     auto calcTissueHistButton = new QPushButton(statsWidget);
@@ -1089,13 +1099,7 @@ void MainWindow::createStatsWidget() {
     calcTissueHistButton->setFixedHeight(50);
     QObject::connect(calcTissueHistButton, &QPushButton::clicked, std::bind(&MainWindow::calcTissueHist, this));
 
-    auto smallTextWindowStats = new QTextEdit;
-    smallTextWindowStats->setPlainText(tr("This is some window with text that displays some relevant"
-                                          "information regarding the inference or analysis you just did"));
-    smallTextWindowStats->setReadOnly(true);
-
-    statsLayout->addWidget(calcTissueHistButton);
-    statsLayout->addWidget(smallTextWindowStats);
+    statsLayout->insertWidget(0, calcTissueHistButton);
 }
 
 void MainWindow::createExportWidget() {
@@ -2484,8 +2488,8 @@ bool MainWindow::pixelClassifier(std::string modelName) {
         // based on predicted magnification level of WSI, set magnificiation level for optimal input to model based on predicted resolution of WSI
         int patch_lvl_model = (int) (std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) / std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
 
-        // segment tissue
-        segmentTissue(); // TODO: Something weird happens when I run this again
+        // segment tissue if not already ran, but hide it
+        segmentTissue();
         hideTissueMask(true);
 
         ImageResizer::pointer resizer = ImageResizer::New();
@@ -2643,6 +2647,8 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 auto stitcher = PatchStitcher::New();
                 stitcher->setInputConnection(network->getOutputPort());
                 auto port = stitcher->getOutputPort();
+
+                m_patchStitcherList[modelMetadata["name"]] = stitcher; // add stitcher to global list to be accessible later on
 
                 auto someRenderer = HeatmapRenderer::New();
                 someRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
@@ -2920,76 +2926,19 @@ bool MainWindow::calcTissueHist() {
     histBox->setPixmap(pm);
     histBox->setAlignment(Qt::AlignHCenter);
 
-    statsLayout->insertWidget(1, histBox);
+    statsLayout->insertWidget(2, histBox); // finally, add histogram to Widget
+
+    // add some text box that explains in words the result from the analysis or something similar...
+    auto smallTextWindowStats = new QTextEdit;
+    smallTextWindowStats->setPlainText(tr("This is some window with text that displays some relevant "
+                                          "information regarding the inference or analysis you just did."));
+    smallTextWindowStats->setReadOnly(true);
+    smallTextWindowStats->show();
+    smallTextWindowStats->setFixedHeight(smallTextWindowStats->document()->size().toSize().height() + 3);
+
+    statsLayout->insertWidget(1, smallTextWindowStats); // FIXME: AlignTop doesn't work for setting element under hist? -> pushed to the bottom...
 	
 	return true;
-}
-
-
-bool MainWindow::saveTumorPred() {
-    std::cout<<"it worked!\n\n\n\n";
-
-    return true;
-}
-
-
-bool MainWindow::exportSeg() {
-    std::cout<<"Data has been exported...\n\n";
-
-    return true;
-}
-
-
-bool MainWindow::fixTumorSegment() {
-    std::cout<<"upsups...\n\n\n\n";
-
-    //tumorRenderer->setInputData(m_tumorMap);
-
-    return true;
-}
-
-
-bool MainWindow::showHeatmap() {
-    if (!hasRenderer("grade")) {
-        return false;
-    }else{
-        auto heatmapRenderer = getRenderer("grade");
-        heatmapRenderer->setDisabled(!heatmapRenderer->isDisabled());
-        return true;
-    }
-}
-
-
-bool MainWindow::showBachMap() {
-    if (!hasRenderer("bach")) {
-        return false;
-    }else{
-        auto bachRenderer = getRenderer("bach");
-        bachRenderer->setDisabled(!bachRenderer->isDisabled());
-        return true;
-    }
-}
-
-
-bool MainWindow::showTumorMask() {
-    if (!hasRenderer("tumor")){
-        return false;
-    }else {
-        auto tumorRenderer = getRenderer("tumor");
-        tumorRenderer->setDisabled(!tumorRenderer->isDisabled());
-        return true;
-    }
-}
-
-
-bool MainWindow::toggleTissueMask() {
-    if (!hasRenderer("tissue")) { //segRenderer) {
-        return false;
-    } else {
-        auto segRenderer = getRenderer("tissue");
-        segRenderer->setDisabled(!segRenderer->isDisabled());
-        return true;
-    }
 }
 
 
@@ -3010,19 +2959,6 @@ bool MainWindow::hideTissueMask(bool flag) {
     }else {
         auto segRenderer = getRenderer("tissue");
         segRenderer->setDisabled(flag);
-        return true;
-    }
-}
-
-
-bool MainWindow::opacityTissue(int value) {
-    //std::cout << (float)value/10.0f << std::endl;
-    if (!hasRenderer("tissue")) {
-        return false;
-    }else{
-        auto segRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(getRenderer("tissue"));
-        segRenderer->setOpacity((float) value / 10.0f); // TODO: Some functionalities in SegmentationRenderer does not exist in Renderer (?)
-        segRenderer->setModified(true);
         return true;
     }
 }
@@ -3086,7 +3022,6 @@ void MainWindow::deleteViewObject(std::string someName) {
         delete scrollList->takeItem(scrollList->row(NAME));
     }
 
-
     QModelIndexList selectedList = scrollList->selectionModel()->selectedIndexes(); // take the list of selected indexes
     std::sort(selectedList.begin(),selectedList.end(),[](const QModelIndex& a, const QModelIndex& b)->bool{return a.row()>b.row();}); // sort from bottom to top
     for(const QModelIndex& singleIndex : selectedList)
@@ -3096,67 +3031,15 @@ void MainWindow::deleteViewObject(std::string someName) {
     delete it;
       */
     //scrollList->removeItemWidget()
-
-
 }
 
 
-bool MainWindow::opacityHeatmap(int value) {
-    //std::cout << (float)value/10.0f << std::endl;
-    if (!hasRenderer("grade")){
-        return false;
-    }else {
-        auto heatmapRenderer = getRenderer("grade");
-        //heatmapRenderer->setMaxOpacity((float) value / 10.0f);
-        return true;
-    }
-}
-
-
-bool MainWindow::opacityTumor(int value) {
-    //std::cout << (float)value/10.0f << std::endl;
-    if (!hasRenderer("tumor")){
-        return false;
-    }else {
-        auto tumorRenderer = getRenderer("tumor");
-        //tumorRenderer->setMaxOpacity((float) value / 10.0f); // TODO: Some functionalities in heatmapRenderer does not exist in Renderer (?)
-        return true;
-    }
-}
-
-
-bool MainWindow::showImage() {
-    if (!hasRenderer("WSI")){
-        return false;
-    }else{
-        auto renderer = getRenderer("WSI");
-        renderer->setDisabled(!renderer->isDisabled());
-        return true;
-    }
-}
-
-
-bool MainWindow::hideBackgroundClass(std::string someName) {
-    if (!hasRenderer(someName)) {
-        return false;
-    }else{
-        background_flag = !background_flag;
-        auto tumorRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(getRenderer(someName));
-        tumorRenderer->setChannelHidden(0, background_flag); // TODO: Some functionalities in heatmapRenderer does not exist in Renderer (?)
-        return true;
-    }
-}
-
-
-bool MainWindow::fixImage() {
-    if (!hasRenderer("WSI")){
-        return false;
-    }else{
-        //stopComputationThread();
-        //getView(0)->reinitialize();
-        //startComputationThread();
-        return false;
-    }
+// FIXME: This does not work as intended... It seems to stop inference, but makes it not possible to run next inference
+void MainWindow::killInference(std::string someName) {
+    auto neuralNetwork = m_neuralNetworkList[someName];
+    neuralNetwork->stopPipeline(); // TODO: Fix? I'm guessing the patchStitcher is then still waiting...
+    auto patchStitcher = m_patchStitcherList[someName];
+    patchStitcher->stopPipeline(); // need to stop patchStitcher as well? FIXME: Doesn't help...
 }
 
 
@@ -3199,9 +3082,6 @@ SharedPointer<Renderer> MainWindow::getRenderer(std::string name) {
     return m_rendererList[name];
 }
 
-
-//bool MainWindow::stopInference() {
-//}
 
 
 }

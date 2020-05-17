@@ -35,6 +35,7 @@ QT_END_NAMESPACE
 namespace fast {
 
     class NeuralNetwork;
+    class PatchStitcher;
     class SegmentationRenderer;
     class SegmentationPyramidRenderer;
     //class ImagePyramidRenderer;
@@ -68,6 +69,7 @@ class MainWindow : public Window {
         void saveTissueSegmentation();
         void saveTumor();
         void saveGrade();
+        void killInference(std::string someName);
         void deleteViewObject(std::string someName);
 
         bool hideChannel(const std::string &someName); //, uint channel_value);
@@ -220,6 +222,7 @@ class MainWindow : public Window {
         std::map<std::string, SharedPointer<Renderer>> m_rendererList;
         std::map<std::string, std::string> m_rendererTypeList;
         std::map<std::string, SharedPointer<NeuralNetwork>> m_neuralNetworkList;
+        std::map<std::string, SharedPointer<PatchStitcher>> m_patchStitcherList;
         MainWindow();
         //std::map<std::string, std::future<SharedPointer<Tensor>>> m_futureData;
         //std::future<SharedPointer<Tensor>> m_futureData;
