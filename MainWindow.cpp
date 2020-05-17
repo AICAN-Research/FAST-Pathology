@@ -310,7 +310,14 @@ void MainWindow::createMenuWidget() {
     auto mapper = new QSignalMapper;
 
     auto tb = new QToolBar();
+    //tb->setStyleSheet("QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };");
+    //                         "border-bottom:2px solid rgba(25,25,120,75); "
+    //                         "QMenu{background-color:palette(window);border:1px solid palette(shadow);}");
     tb->setIconSize(QSize(im_size, im_size));
+    //tb->setFixedWidth(200);
+    //tb->setMovable(true);
+    //tb->setMinimumSize(QSize(im_size, im_size));
+    //tb->setBaseSize(QSize(im_size, im_size));
     tb->setFont(QFont("Times", 8)); //QFont::Bold));
     tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);  // adds text under icons
 
@@ -356,38 +363,46 @@ void MainWindow::createMenuWidget() {
     mapper->connect(act, SIGNAL(clicked), SLOT(map()));
      */
 
-    // /*
-    QAction *file_action = tb->addAction(QIcon(openPix), "Import");
+    auto actionGroup = new QActionGroup(tb);
+
+    auto file_action = new QAction("Import", actionGroup);
+    file_action->setIcon(QIcon(openPix));
+    file_action->setCheckable(true);
+    file_action->setChecked(true);
+    tb->addAction(file_action);
     mapper->setMapping(file_action, 0);
     mapper->connect(file_action, SIGNAL(triggered(bool)), SLOT(map()));
 
-    tb->addSeparator();
-
-    //QIcon icon = style()->standardIcon(QStyle::SP_DialogOkButton);
-    //QPixmap pixmap = icon.pixmap(QSize(64, 64));
-
-    QAction *process_action = tb->addAction(QIcon(processPix),tr("Process"));
-    //QAction *process_action = tb->addAction(QIcon(myLabel), "Process");
+    auto process_action = new QAction("Process", actionGroup);
+    process_action->setIcon(QIcon(processPix));
+    process_action->setCheckable(true);
+    tb->addAction(process_action);
     mapper->setMapping(process_action, 1);
     mapper->connect(process_action, SIGNAL(triggered(bool)), SLOT(map()));
 
-    QAction *view_action = tb->addAction(QIcon(viewPix), "View");
+    auto view_action = new QAction("View", actionGroup);
+    view_action->setIcon(QIcon(viewPix));
+    view_action->setCheckable(true);
+    tb->addAction(view_action);
     mapper->setMapping(view_action, 2);
     mapper->connect(view_action, SIGNAL(triggered(bool)), SLOT(map()));
 
-    QAction *result_action = tb->addAction(QIcon(resultPix), "Stats"); //"Statistics");
-    mapper->setMapping(result_action, 3);
-    mapper->connect(result_action, SIGNAL(triggered(bool)), SLOT(map()));
+    auto stats_action = new QAction("View", actionGroup);
+    stats_action->setIcon(QIcon(resultPix));
+    stats_action->setCheckable(true);
+    tb->addAction(stats_action);
+    mapper->setMapping(stats_action, 3);
+    mapper->connect(stats_action, SIGNAL(triggered(bool)), SLOT(map()));
 
-    QAction *save_action = tb->addAction(QIcon(savePix), "Export");
+    auto save_action = new QAction("View", actionGroup);
+    save_action->setIcon(QIcon(savePix));
+    save_action->setCheckable(true);
+    tb->addAction(save_action);
     mapper->setMapping(save_action, 4);
     mapper->connect(save_action, SIGNAL(triggered(bool)), SLOT(map()));
-    // */
-
 
     //stackedWidget->connect(&mapper, SIGNAL(mapped(int)), SLOT(setCurrentIndex(int)));
     connect(mapper, SIGNAL(mapped(int)), stackedWidget, SLOT(setCurrentIndex(int)));
-
 
     auto dockLayout = new QVBoxLayout(); //or any other layout type you want
     dockLayout->setMenuBar(tb); // <-- the interesting part
