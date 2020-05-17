@@ -329,20 +329,6 @@ void MainWindow::createMenuWidget() {
     QPixmap resultPix(QString::fromStdString(cwd + "data/Icons/statistics_icon_new_cropped_resized.png"));
     QPixmap savePix(QString::fromStdString(cwd + "data/Icons/export_icon_new_cropped_resized.png"));
 
-    //viewPix->
-
-    QLabel myLabel;
-
-    /*
-    // icons
-    QImage image(QString::fromStdString(cwd + "/Icons/import-data-icon-19.png"));
-    QPainter p(&image);
-    p.setPen(QPen(Qt::red));
-    p.setFont(QFont("Times", 12, QFont::Bold));
-    p.drawText(image.rect(), Qt::AlignCenter, "Text");
-    myLabel.setPixmap(QPixmap::fromImage(image));
-     */
-
     QPainter painter(&savePix);
     QFont font = painter.font();
     font.setPixelSize(4);
@@ -351,17 +337,6 @@ void MainWindow::createMenuWidget() {
     painter.setFont(font);
     painter.setPen(*(new QColor(Qt::black)));
     //painter.drawText(QPoint(0, 500), "Read WSI");
-
-    /*
-    auto toolButton = new QToolButton(tb);
-    toolButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    toolButton->setStyleSheet("border: 0px; background-color: red;");
-    auto act = new QAction();
-    act->setIcon(QIcon("/home/andre/Downloads/import-data-icon-19.png"));
-    //act->setText("some text");
-    toolButton->setDefaultAction(act);
-    mapper->connect(act, SIGNAL(clicked), SLOT(map()));
-     */
 
     auto actionGroup = new QActionGroup(tb);
 
@@ -387,14 +362,14 @@ void MainWindow::createMenuWidget() {
     mapper->setMapping(view_action, 2);
     mapper->connect(view_action, SIGNAL(triggered(bool)), SLOT(map()));
 
-    auto stats_action = new QAction("View", actionGroup);
+    auto stats_action = new QAction("Stats", actionGroup);
     stats_action->setIcon(QIcon(resultPix));
     stats_action->setCheckable(true);
     tb->addAction(stats_action);
     mapper->setMapping(stats_action, 3);
     mapper->connect(stats_action, SIGNAL(triggered(bool)), SLOT(map()));
 
-    auto save_action = new QAction("View", actionGroup);
+    auto save_action = new QAction("Export", actionGroup);
     save_action->setIcon(QIcon(savePix));
     save_action->setCheckable(true);
     tb->addAction(save_action);
@@ -410,14 +385,6 @@ void MainWindow::createMenuWidget() {
     auto dockContent = new QWidget();
     dockContent->setLayout(dockLayout);
 
-    //yourDockWidget->setWidget(dockContent);
-
-    //QAction *quit = toolbar->addAction(QIcon(openPix), "Open File");
-
-    //toolbar->addAction(QIcon(openPix), "Open File");
-    //toolbar->addSeparator();
-
-
     /*
     auto pageComboBox = new QComboBox; // <- perhaps use toolbar instead?
     pageComboBox->setFixedWidth(100);
@@ -428,7 +395,6 @@ void MainWindow::createMenuWidget() {
     connect(pageComboBox, SIGNAL(activated(int)), stackedWidget, SLOT(setCurrentIndex(int)));
     //pageComboBox->setCurrentIndex(0);
      */
-
 
     dockLayout = new QVBoxLayout;
     dockLayout->insertWidget(0, dockContent); //addWidget(dockContent);
@@ -529,7 +495,7 @@ void MainWindow::createFileWidget() {
     QObject::connect(openProjectButton, &QPushButton::clicked, std::bind(&MainWindow::openProject, this));
 
     auto selectFileButton = new QPushButton(mWidget);
-    selectFileButton->setText("Select WSI");
+    selectFileButton->setText("Add WSIs");
     //selectFileButton->setFixedWidth(200);
     selectFileButton->setFixedHeight(50);
     //selectFileButton->setStyleSheet("color: white; background-color: blue");
@@ -690,13 +656,13 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 
     auto currComboBox = new QComboBox;
 
-    if ((someName != "WSI") && (someName != "tissue") && (someName != "tumorSeg") && (someName != "tumorSeg_lr")) {
+    // special case for pw-classifiers (toggle which class to show)
+    // TODO: Should do something similar in the future for multiclass SegmentationRenderer
+    if (m_rendererTypeList[someName] == "HeatmapRenderer") {
         // get metadata of current model
         std::map<std::string, std::string> metadata = getModelMetadata(modelName);
         std::cout << "\n" << metadata["class_names"] << "\n classes \n";
         std::vector someVector = split(metadata["class_names"], ";");
-        //QStringList myList;
-        //QList<QString> someClasses;
         // clear vector first
         currentClassesInUse.clear();
         for (const auto & i : someVector){
@@ -1730,6 +1696,13 @@ void MainWindow::selectFileInProject(int pos) {
     pageComboBox->clear();
     exportComboBox->clear();
 
+    // kill all NN pipelines and clear holders
+    for (auto const& keyValue : m_neuralNetworkList) {
+        auto neuralNetwork = keyValue.second;
+        neuralNetwork->stopPipeline();
+    }
+    m_neuralNetworkList.clear(); // finally clear map
+
     // add WSI to project list
     filename = wsiList[pos];
 
@@ -2519,15 +2492,15 @@ bool MainWindow::pixelClassifier(std::string modelName) {
         int currLvl;
         if (modelMetadata["resolution"] == "low") {
             auto access = m_image->getAccess(ACCESS_READ);
-            // TODO: Should automatically find best suitable magn.lvl.
+            // TODO: Should automatically find best suitable magn.lvl. (NOTE: 2x the image size as for selecting lvl!)
 
             int levelCount = std::stoi(metadata["openslide.level-count"]);
             int inputWidth = std::stoi(modelMetadata["input_img_size_x"]);
             int inputHeight = std::stoi(modelMetadata["input_img_size_y"]);
             bool breakFlag = false;
             for (int i=0; i<levelCount; i++) {
-                if ((std::stoi(metadata["openslide.level[" + std::to_string(i) + "].width"]) <= inputWidth) ||
-                    (std::stoi(metadata["openslide.level[" + std::to_string(i) + "].height"]) <= inputHeight)) {
+                if ((std::stoi(metadata["openslide.level[" + std::to_string(i) + "].width"]) <= inputWidth * 2) ||
+                    (std::stoi(metadata["openslide.level[" + std::to_string(i) + "].height"]) <= inputHeight * 2)) {
                     currLvl = i-1;
                     breakFlag = true;
                     break;
@@ -2685,6 +2658,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
                 m_rendererTypeList[modelMetadata["name"]] = "HeatmapRenderer";
                 insertRenderer(modelMetadata["name"], someRenderer);
+                m_neuralNetworkList[modelMetadata["name"]] = network;
 
             } else if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
                 auto stitcher = PatchStitcher::New();

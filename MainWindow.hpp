@@ -34,6 +34,7 @@ QT_END_NAMESPACE
 
 namespace fast {
 
+    class NeuralNetwork;
     class SegmentationRenderer;
     class SegmentationPyramidRenderer;
     //class ImagePyramidRenderer;
@@ -218,6 +219,7 @@ class MainWindow : public Window {
     private:
         std::map<std::string, SharedPointer<Renderer>> m_rendererList;
         std::map<std::string, std::string> m_rendererTypeList;
+        std::map<std::string, SharedPointer<NeuralNetwork>> m_neuralNetworkList;
         MainWindow();
         //std::map<std::string, std::future<SharedPointer<Tensor>>> m_futureData;
         //std::future<SharedPointer<Tensor>> m_futureData;
