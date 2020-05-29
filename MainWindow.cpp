@@ -17,6 +17,9 @@
 #include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
 #include <FAST/Visualization/SegmentationPyramidRenderer/SegmentationPyramidRenderer.hpp>
 #include <FAST/Algorithms/NeuralNetwork/TensorToSegmentation.hpp>
+#include <FAST/Algorithms/NeuralNetwork/BoundingBoxNetwork.hpp>
+#include <FAST/Visualization/BoundingBoxRenderer/BoundingBoxRenderer.hpp>
+#include <FAST/Data/BoundingBox.hpp>
 #include <string>
 #include <QtWidgets>
 #include <QWidget>
@@ -60,7 +63,7 @@ using namespace std;
 namespace fast {
 
 MainWindow::MainWindow() {
-    setTitle("fastPathology");
+    setTitle("FastPathology");
     enableMaximized(); // <- function from Window.cpp
 
     //mWidget->setMouseTracking(true);
@@ -2491,6 +2494,8 @@ bool MainWindow::pixelClassifier(std::string modelName) {
         auto network = NeuralNetwork::New(); // default, need special case for high_res segmentation
         if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
             network = SegmentationNetwork::New();
+        } else if ((modelMetadata["problem"] == "object_detection") && (modelMetadata["resolution"] == "high")) {
+            network = BoundingBoxNetwork::New();
         }
         //network->setInferenceEngine("TensorRT"); //"TensorRT");
 
@@ -2553,6 +2558,9 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                     network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
                                            TensorShape({1, std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]),
                                                         std::stoi(modelMetadata["nb_classes"])}));
+                } else if (modelMetadata["problem"] == "object_detection") {
+                    network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
+                                                 TensorShape({1, std::stoi(modelMetadata["nb_classes"])}));
                 }
             } else if (engine == "TensorRT") {
                 // TensorRT needs to know everything about the input and output nodes
@@ -2563,7 +2571,10 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                                        TensorShape({1, std::stoi(modelMetadata["nb_classes"])}));
             }
 
+            //network->setInferenceEngine("OpenVINO"); // force it to use a specific IE -> only for testing
+            //network->setInferenceEngine("TensorRT");
             network->load(cwd + "data/Models/" + modelName + "." + network->getInferenceEngine()->getDefaultFileExtension()); //".uff");
+
             if (modelMetadata["resolution"] == "low") { // special case handling for low_res NN inference
                 auto port = resizer->getOutputPort();
                 resizer->update();
@@ -2621,6 +2632,15 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
                 m_rendererTypeList[modelMetadata["name"]] = "SegmentationPyramidRenderer";
                 insertRenderer(modelMetadata["name"], someRenderer);
+            } else if ((modelMetadata["problem"] == "object_detection") && (modelMetadata["resolution"] == "high")) {
+                auto boxAccum = BoundingBoxSetAccumulator::New();
+                boxAccum->setInputConnection(network->getOutputPort());
+
+                auto boxRenderer = BoundingBoxRenderer::New();
+                boxRenderer->setInputConnection(boxAccum->getOutputPort());
+
+                m_rendererTypeList[modelMetadata["name"]] = "BoundingBoxRenderer";
+                insertRenderer(modelMetadata["name"], boxRenderer);
             } else if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "low")) {
 
                 auto converter = TensorToSegmentation::New();
@@ -2666,7 +2686,8 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
             // TODO: Save stitched heatmap as variable to be used later
             /*
-            m_futureData = std::async(std::launch::async, [&, port]{
+            m_futureData = std::async(std::launch::async, [&, port]
+             {
                 // Wait for stitcher to finish before returning the data
                 auto resultData = port->getNextFrame<Tensor>();
                 while(true) {

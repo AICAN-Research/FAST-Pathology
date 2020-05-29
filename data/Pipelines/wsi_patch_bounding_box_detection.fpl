@@ -1,0 +1,50 @@
+PipelineName "Neural network WSI segmentation"
+PipelineDescription "asd"
+
+### Processing chain
+
+ProcessObject importer WholeSlideImageImporter
+Attribute filename $TEST_DATA_PATH$/WSI/A05.svs
+
+ProcessObject tissueSeg TissueSegmentation
+Input 0 importer 0
+
+ProcessObject patch PatchGenerator
+Attribute patch-size 256 256
+Attribute patch-level 0
+Input 0 importer 0
+Input 1 tissueSeg 0
+
+ProcessObject network BoundingBoxNetwork
+#Attribute input-names "input_1"
+#Attribute output-names "conv2d_10/BiasAdd"
+Attribute output-names "conv2d_13/BiasAdd"
+#Attribute model C:/fastPathology_models/detector_nuclei_yolov3.pb
+Attribute scale-factor 0.003921568627451
+#Attribute output-names "conv2d_10/BiasAdd"
+#Attribute inference-engine TensorFlowCPU
+#Attribute inference-engine OpenVINO
+Attribute inference-engine TensorFlowCUDA
+#Attribute model "C:/fastPathology_models/detector_nuclei_yolov3.xml"
+#Attribute model "/home/andrep/FastPathology/data/Models/detector_nuclei_yolov3.pb"
+#Attribute model "/home/andrep/workspace/FAST-Pathology/Models/yolo_test_model_fixed_output_nodes_single_node.xml"
+Attribute model "/home/andrep/workspace/FAST-Pathology/Models/yolo_test_model_fixed_output_nodes.pb"
+Attribute threshold 0.1
+Input 0 patch 0
+
+ProcessObject accumulator BoundingBoxSetAccumulator
+Input 0 network 0
+
+### Renderers
+
+Renderer imgRenderer ImagePyramidRenderer
+Input 0 importer 0
+
+Renderer bboxRenderer BoundingBoxRenderer
+Input 0 accumulator 0
+
+### Views
+
+View view1 imgRenderer bboxRenderer
+Attribute 2Dmode true
+Attribute background-color white
