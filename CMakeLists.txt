@@ -5,7 +5,6 @@ project(FastPathology)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -pthread")
 
-
 include_directories(.)
 find_package(FAST REQUIRED)
 include(${FAST_USE_FILE})
