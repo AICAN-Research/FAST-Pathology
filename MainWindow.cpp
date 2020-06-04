@@ -52,11 +52,14 @@
 #include <FAST/Data/Access/ImagePyramidAccess.hpp>
 #include <QShortcut>
 #include <FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp>
-//#include <jkqtplotter/graphs/jkqtpbarchart.h>
 #include <FAST/Algorithms/ImageResizer/ImageResizer.hpp>
 #include <FAST/PipelineEditor.hpp>
 #include <FAST/Pipeline.hpp>
 #include <FAST/Visualization/MultiViewWindow.hpp>
+#include <FAST/Algorithms/NonMaximumSuppression/NonMaximumSuppression.hpp>
+
+
+//#include <jkqtplotter/graphs/jkqtpbarchart.h>
 
 using namespace std;
 
@@ -649,7 +652,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     opacitySlider->setMinimum(0);
     opacitySlider->setMaximum(20);
     //opacityTissueSlider->setText("Tissue");
-    opacitySlider->setValue(4);
+    opacitySlider->setValue(8);
     opacitySlider->setTickInterval(1);
     QObject::connect(opacitySlider, &QSlider::valueChanged, std::bind(&MainWindow::opacityRenderer, this, std::placeholders::_1, someName));
 
@@ -1001,7 +1004,7 @@ void MainWindow::openScript() {
     if (maybeSaveScript()) {
         auto fileName = QFileDialog::getOpenFileName(
                 mWidget,
-                tr("Open File"), nullptr, tr("WSI Files (*.fpl)"),
+                tr("Open File"), nullptr, tr("WSI Files (*.fpl *.txt)"),
                 nullptr, QFileDialog::DontUseNativeDialog
         );
         if (!fileName.isEmpty())
@@ -1497,6 +1500,8 @@ void MainWindow::selectFile() {
             return;
         filename = fileName.toStdString();
 
+        std::cout << "\nSelected file: " << filename << "\n";
+
         wsiList.push_back(filename);
 
         // Import image from file using the ImageFileImporter
@@ -1917,6 +1922,7 @@ void MainWindow::openProject() {
         button->setAutoDefault(true);
         //button->setStyleSheet("border: none, padding: 0, background: none");
         //button->setIconSize(QSize(200, 200));
+        button->setToolTip(QString::fromStdString(wsiPath));
         int height_val = 150;
         button->setIconSize(QSize(height_val, (int) std::round(
                 (float) image.width() * (float) height_val / (float) image.height())));
@@ -1935,6 +1941,7 @@ void MainWindow::openProject() {
         //QObject::connect(scrollList, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(&MainWindow::selectFileInProject));
 
         auto listItem = new QListWidgetItem;
+        listItem->setToolTip(QString::fromStdString(wsiPath));
         listItem->setSizeHint(
                 QSize((int) std::round((float) image.width() * (float) height_val / (float) image.height()),
                       height_val));
@@ -2495,8 +2502,13 @@ bool MainWindow::pixelClassifier(std::string modelName) {
         if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
             network = SegmentationNetwork::New();
         } else if ((modelMetadata["problem"] == "object_detection") && (modelMetadata["resolution"] == "high")) {
-            network = BoundingBoxNetwork::New();
+            1;
+            //network = BoundingBoxNetwork::New();  // FIXME: This cannot be done, because the stuff right below is not available in NeuralNetwork
+            //network->loadAttributes();
+            //network->setThreshold(0.3); // default value: 0.3
+            //network->setAnchors(getAnchorMetadata("tiny_yolo_anchors_pannuke"));
         }
+        std::cout << "\n :) \n";
         //network->setInferenceEngine("TensorRT"); //"TensorRT");
 
         bool checkFlag = true;
@@ -2507,9 +2519,11 @@ bool MainWindow::pixelClassifier(std::string modelName) {
             network->setInferenceEngine("TensorRT");
         } else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "TensorFlowCUDA") != IEsList.end()) {
             network->setInferenceEngine("TensorFlowCUDA");
+            /*
             if (std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end()) {
                 network->setInferenceEngine("OpenVINO");
             }
+             */
         } else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end()) {
             network->setInferenceEngine("OpenVINO");
         } else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "TensorFlowCPU") != IEsList.end()) {
@@ -2543,6 +2557,8 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 // else continue -> will use default one (one that is available)
             }
 
+            //network->setInferenceEngine("TensorFlowCUDA");
+            //network->setInferenceEngine("OpenVINO"); // default
             const auto engine = network->getInferenceEngine()->getName();
             // IEs like TF and TensorRT need to be handled differently than IEs like OpenVINO
             if (engine.substr(0, 10) == "TensorFlow") {
@@ -2559,6 +2575,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                                            TensorShape({1, std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]),
                                                         std::stoi(modelMetadata["nb_classes"])}));
                 } else if (modelMetadata["problem"] == "object_detection") {
+                    // FIXME: This is outdated for YoloV3, as it has multiple output nodes -> need a way of handling this!
                     network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
                                                  TensorShape({1, std::stoi(modelMetadata["nb_classes"])}));
                 }
@@ -2609,6 +2626,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 auto someRenderer = HeatmapRenderer::New();
                 someRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
                 someRenderer->setInputConnection(stitcher->getOutputPort());
+                someRenderer->setMaxOpacity(0.6);
                 //heatmapRenderer->update();
                 vector<string> colors = split(modelMetadata["class_colors"], ";");
                 for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
@@ -2620,7 +2638,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
                 m_rendererTypeList[modelMetadata["name"]] = "HeatmapRenderer";
                 insertRenderer(modelMetadata["name"], someRenderer);
-                m_neuralNetworkList[modelMetadata["name"]] = network;
+                //m_neuralNetworkList[modelMetadata["name"]] = network;
 
             } else if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
                 auto stitcher = PatchStitcher::New();
@@ -2628,13 +2646,55 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 auto port = stitcher->getOutputPort();
 
                 auto someRenderer = SegmentationPyramidRenderer::New();
+                someRenderer->setOpacity(0.7);
                 someRenderer->setInputConnection(stitcher->getOutputPort());
 
                 m_rendererTypeList[modelMetadata["name"]] = "SegmentationPyramidRenderer";
                 insertRenderer(modelMetadata["name"], someRenderer);
             } else if ((modelMetadata["problem"] == "object_detection") && (modelMetadata["resolution"] == "high")) {
+
+                // FIXME: Currently, need to do special handling for object detection as setThreshold and setAnchors only exist for BBNetwork and not NeuralNetwork
+                auto generator = PatchGenerator::New();
+                generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
+                generator->setPatchLevel(patch_lvl_model);
+                generator->setInputData(0, m_image);
+                generator->setInputData(1, m_tissue);
+                if (m_tumorMap)
+                    generator->setInputData(1, m_tumorMap);
+
+                auto currNetwork = BoundingBoxNetwork::New();
+                currNetwork->setThreshold(0.1); //0.01); // default: 0.5
+
+                std::vector<std::vector<Vector2f> > anchors; // FIXME: Not correct?
+                std::vector<Vector2f> levelAnchors;
+                levelAnchors.push_back(Vector2f(10, 10));
+                levelAnchors.push_back(Vector2f(18, 17));
+                levelAnchors.push_back(Vector2f(19, 26));
+                anchors.push_back(levelAnchors);
+
+                levelAnchors.clear();
+                levelAnchors.push_back(Vector2f(28, 21));
+                levelAnchors.push_back(Vector2f(30, 31));
+                levelAnchors.push_back(Vector2f(39, 43));
+                anchors.push_back(levelAnchors);
+
+                currNetwork->setAnchors(anchors);
+
+                vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
+                currNetwork->setScaleFactor((float) std::stoi(scale_factor[0]) / (float) std::stoi(scale_factor[1]));   // 1.0f/255.0f
+                currNetwork->setInferenceEngine("OpenVINO"); // FIXME: OpenVINO only currently, as I haven't generalized multiple output nodes case
+                currNetwork->load(cwd + "data/Models/" + modelName + "." + currNetwork->getInferenceEngine()->getDefaultFileExtension()); //".uff");
+                currNetwork->setInputConnection(generator->getOutputPort());
+
+                /* // FIXME: Bug when using NMS - ERROR [140237963507456] Terminated with unhandled exception: Size must be > 0, got: -49380162997889393559076864.000000 -96258.851562
+                auto nms = NonMaximumSuppression::New();
+                nms->setThreshold(0);
+                nms->setInputConnection(currNetwork->getOutputPort());
+                 */
+
                 auto boxAccum = BoundingBoxSetAccumulator::New();
-                boxAccum->setInputConnection(network->getOutputPort());
+                //boxAccum->setInputConnection(nms->getOutputPort());
+                boxAccum->setInputConnection(currNetwork->getOutputPort());
 
                 auto boxRenderer = BoundingBoxRenderer::New();
                 boxRenderer->setInputConnection(boxAccum->getOutputPort());
@@ -2678,7 +2738,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 insertRenderer(modelMetadata["name"], someRenderer);
 
                 // should kill network to free memory when finished
-                network->stopPipeline(); // TODO: Does nothing. Or at least I cannot see a different using "nvidia-smi"
+                //network->stopPipeline(); // TODO: Does nothing. Or at least I cannot see a different using "nvidia-smi"
             }
 
             // now make it possible to edit prediction in the View Widget
@@ -2767,6 +2827,21 @@ std::map<std::string, std::string> MainWindow::getModelMetadata(std::string mode
         metadata[key] = value;
     }
     return metadata;
+}
+
+std::vector<std::vector<Vector2f> > MainWindow::getAnchorMetadata(std::string anchorFileName) {
+    std::ifstream infile(cwd + "data/Anchors/" + anchorFileName + ".txt");
+    std::string key, value, str;
+    std::string delimiter = ":";
+    std::vector<std::vector<Vector2f> > currMetadata;
+    while (std::getline(infile, str))
+    {
+        vector<string> v = split (str, delimiter);
+        key = v[0];
+        value = v[1];
+        //currMetadata[key] = value;
+    }
+    return currMetadata;
 }
 
 
@@ -2937,9 +3012,12 @@ bool MainWindow::opacityRenderer(int value, const std::string& someName) {
     if (!hasRenderer(someName)) {
         return false;
     }else{
-        //if ((someName == "tissue") || (someName == "tumorSeg") || (someName == "tumorSeg_lr")) { // TODO: Make this more generic -> should recognize which renderer type automatically
         if (m_rendererTypeList[someName] == "SegmentationRenderer") {
             auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(getRenderer(someName));
+            someRenderer->setOpacity((float) value / 20.0f);
+            someRenderer->setModified(true);
+        } else if (m_rendererTypeList[someName] == "SegmentationPyramidRenderer") { // FIXME: Apparently, this doesn't change opacity
+            auto someRenderer = std::dynamic_pointer_cast<SegmentationPyramidRenderer>(getRenderer(someName));
             someRenderer->setOpacity((float) value / 20.0f);
             someRenderer->setModified(true);
         } else {
@@ -2953,19 +3031,14 @@ bool MainWindow::opacityRenderer(int value, const std::string& someName) {
 
 
 bool MainWindow::hideChannel(const std::string& someName) {
-    if (m_rendererTypeList[someName] != "HeatmapRenderer") { //((someName == "WSI") || (someName == "tissue")){
+    if (m_rendererTypeList[someName] != "HeatmapRenderer") {
         return false;
     }
     if (!hasRenderer(someName)) {
         return false;
     }else{
-        std::cout<<background_flag<<"\n\n\n\n\n";
         background_flag = !background_flag;
-        std::cout<<background_flag<<"\n\n\n\n\n"<<":)\n";
-        std::cout << channel_value << "\n";
-        std::cout << someName << "\n";
         auto someRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(getRenderer(someName));
-        std::cout << (unsigned int)channel_value << "\n";
         someRenderer->setChannelHidden(channel_value, background_flag);
         return true;
     }

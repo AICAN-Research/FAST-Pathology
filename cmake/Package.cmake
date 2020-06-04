@@ -21,7 +21,7 @@ else()
     install(
         DIRECTORY ${FAST_BINARY_DIR}
         DESTINATION bin
-        FILES_MATCHING PATTERN "*.so" PATTERN "*plugins.xml"
+        FILES_MATCHING PATTERN "*.so*" PATTERN "*plugins.xml"
     )
 endif()
 install(
@@ -94,6 +94,13 @@ if(WIN32 AND NOT UNIX)
 else()
     ## UNIX
 
+    # attempt to fix .so-dependency of FAST by copying them to FastPathology
+    install(
+            DIRECTORY ${FAST_BINARY_DIR}/../lib/
+            DESTINATION bin
+            FILES_MATCHING PATTERN "*.so*" PATTERN "*plugins.xml"
+    )
+
     # Get distro name and version
     find_program(LSB_RELEASE_EXEC lsb_release)
     execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
@@ -109,11 +116,15 @@ else()
     # Create debian package
     set(CPACK_GENERATOR "DEB")
 
+    #set(CPACK_DEBIAN_PACKAGE_DEPENDS ${FAST_BINARY_DIR}) # TODO: Add FAST as dependency?
+
     # Select components to avoid some cmake leftovers from built dependencies
     set(CPACK_DEB_COMPONENT_INSTALL ON)
-    set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/FastPathology") # @FIXME: files were created directly in /opt and not in the correct directory if I didnt do this
+    set(CPACK_PACKAGING_INSTALL_PREFIX "$HOME/FastPathology") # @FIXME: files were created directly in /opt and not in the correct directory if I didnt do this
+    #set(CPACK_PACKAGING_INSTALL_PREFIX "/opt")
     set(CPACK_DEBIAN_COMPRESSION_TYPE "xz")
 
+    #set(CPACK_PACKAGE_INSTALL_DIRECTORY "FastPathology")
     #set(CPACK_COMPONENTS_ALL FastPathology)
 
     set(CPACK_DEBIAN_FAST_FILE_NAME "fast_${DISTRO_NAME}${DISTRO_VERSION}_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}.deb")

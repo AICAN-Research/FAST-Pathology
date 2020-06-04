@@ -154,6 +154,7 @@ class MainWindow : public Window {
         std::string wsiFormat;
         std::string cwd;
         std::map<std::string, std::string>getModelMetadata(std::string modelName);
+        std::vector<std::vector<Vector2f>>getAnchorMetadata(std::string anchorFileName);
         std::vector<float> getDownsamplingLevels();
         std::vector<std::string> split (std::string s, std::string delimiter);
 
