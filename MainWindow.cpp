@@ -57,6 +57,7 @@
 #include <FAST/Pipeline.hpp>
 #include <FAST/Visualization/MultiViewWindow.hpp>
 #include <FAST/Algorithms/NonMaximumSuppression/NonMaximumSuppression.hpp>
+#include <FAST/Algorithms/Morphology/Dilation.hpp>
 
 
 //#include <jkqtplotter/graphs/jkqtpbarchart.h>
@@ -2602,8 +2603,15 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 generator->setPatchLevel(patch_lvl_model);
                 generator->setInputData(0, m_image);
                 generator->setInputData(1, m_tissue);
-                if (m_tumorMap)
-                    generator->setInputData(1, m_tumorMap);
+                if (m_tumorMap) {
+                    // dilate tumorMap a little to reduce risk of loosing nuclei within the area of interest
+                    auto dilation = Dilation::New(); // first two, initial closing (instead of opening) to increase sensitivity in detection
+                    dilation->setInputData(m_tumorMap);
+                    dilation->setStructuringElementSize(25);
+
+                    generator->setInputData(1, dilation->updateAndGetOutputData<Image>());
+                    //generator->setInputData(1, m_tumorMap);
+                }
 
                 //auto batchgen = ImageToBatchGenerator::New();  // TODO: Can't use this with TensorRT (!)
                 //batchgen->setInputConnection(generator->getOutputPort());
@@ -2651,7 +2659,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
                 m_rendererTypeList[modelMetadata["name"]] = "SegmentationPyramidRenderer";
                 insertRenderer(modelMetadata["name"], someRenderer);
-            } else if ((modelMetadata["problem"] == "object_detection") && (modelMetadata["resolution"] == "high")) {
+            } else if ((modelMetadata["problem"] == "object_detection") && (modelMetadata["resolution"] == "high")) {  // TODO: Perhaps use switch() instead of tons of if-statements?
 
                 // FIXME: Currently, need to do special handling for object detection as setThreshold and setAnchors only exist for BBNetwork and not NeuralNetwork
                 auto generator = PatchGenerator::New();
