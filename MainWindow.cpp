@@ -58,7 +58,7 @@
 #include <FAST/Visualization/MultiViewWindow.hpp>
 #include <FAST/Algorithms/NonMaximumSuppression/NonMaximumSuppression.hpp>
 #include <FAST/Algorithms/Morphology/Dilation.hpp>
-
+#include <FAST/Algorithms/Morphology/Erosion.hpp>
 
 //#include <jkqtplotter/graphs/jkqtpbarchart.h>
 
@@ -67,7 +67,9 @@ using namespace std;
 namespace fast {
 
 MainWindow::MainWindow() {
-    setTitle("FastPathology");
+    applicationName = "FastPathology";
+    advancedMode = false;
+    setTitle(applicationName);
     enableMaximized(); // <- function from Window.cpp
 
     //mWidget->setMouseTracking(true);
@@ -152,6 +154,7 @@ void MainWindow::createOpenGLWindow() {
 	view->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
 	view->setAutoUpdateCamera(true);
 	//view->setLayout(mainLayout);
+	view->setToolTip("hallo");
 
 	// create QSplitter for adjustable windows
 	auto mainSplitter = new QSplitter(Qt::Horizontal);
@@ -164,7 +167,46 @@ void MainWindow::createOpenGLWindow() {
 	mainSplitter->addWidget(view);
 	mainSplitter->setStretchFactor(1, 1);
 
-	mainLayout->addWidget(mainSplitter);
+    mainLayout->addWidget(mainSplitter);
+}
+
+
+void MainWindow::setApplicationMode() {
+    // prompt
+    QMessageBox mBox;
+    mBox.setIcon(QMessageBox::Warning);
+    if (setModeButton->text() == "Clinical mode") {
+        mBox.setText("This will set the application from clinical mode to advanced mode.");
+    } else {
+        mBox.setText("This will set the application from advanced mode to clinical mode.");
+    }
+    mBox.setInformativeText("Are you sure you want to change mode?");
+    mBox.setDefaultButton(QMessageBox::No);
+    mBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    int ret = mBox.exec();
+
+    switch (ret) {
+        case QMessageBox::Yes:
+            // toggle and update text on button to show current mode
+            advancedMode = !advancedMode; // toggle
+            if (setModeButton->text() == "Clinical mode") {
+                setModeButton->setText("Research mode");
+            } else {
+                setModeButton->setText("Clinical mode");
+            }
+            // also update title
+            if (advancedMode) {
+                setTitle(applicationName + " (Research mode)" + " - " + split(filename, "/").back());
+            } else {
+                setTitle(applicationName + " - " + split(filename, "/").back());
+            }
+            break;
+        case QMessageBox::No:
+            1; // if "No", do nothing (also default)
+            break;
+        default:
+            break;
+    }
 }
 
 
@@ -202,7 +244,7 @@ void MainWindow::createMenubar() {
 
     auto editMenu = topFiller->addMenu(tr("&Edit"));
     editMenu->addAction("Reset", this, &MainWindow::reset);
-    editMenu->addAction("Select Mode");  // TODO: Add function that changes GUI for research/clinical use
+    editMenu->addAction("Change mode", this, &MainWindow::setApplicationMode);
     editMenu->addAction("Info");
 
     auto pipelineMenu = topFiller->addMenu(tr("&Pipelines"));
@@ -302,6 +344,14 @@ void MainWindow::reset() {
                 break;
         }
     }
+
+    // update application name to contain current WSI
+    if (advancedMode) {
+        setTitle(applicationName + " (Research mode)");
+    } else {
+        setTitle(applicationName);
+    }
+
 }
 
 
@@ -372,7 +422,6 @@ void MainWindow::createMenuWidget() {
     //tb->setBaseSize(QSize(im_size, im_size));
     tb->setFont(QFont("Times", 8)); //QFont::Bold));
     tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);  // adds text under icons
-
 
     //auto toolBar = new QToolBar;
     QPixmap openPix(QString::fromStdString(cwd + "data/Icons/import_icon_new_cropped_resized.png"));
@@ -464,6 +513,16 @@ void MainWindow::createMenuWidget() {
     menuWidget->setMinimumWidth(360);
     //tmpWidget->setStyleSheet("border:1px solid rgb(0, 255, 0); ");
     menuWidget->setLayout(dockLayout);
+
+    // add button on the bottom of widget for toggling clinical/advanced mode
+    setModeButton = new QPushButton(mWidget);
+    setModeButton->setText("Clinical mode");
+    setModeButton->setFixedHeight(50);
+    setModeButton->setStyleSheet("color: white; background-color: gray");
+    QObject::connect(setModeButton, &QPushButton::clicked, std::bind(&MainWindow::setApplicationMode, this));
+
+    advancedMode = false; // true : advanced mode
+    dockLayout->addWidget(setModeButton);
 }
 
 
@@ -1459,6 +1518,7 @@ void MainWindow::selectFile() {
         // prompt
         QMessageBox mBox;
         mBox.setIcon(QMessageBox::Warning);
+        mBox.setStyleSheet(mWidget->styleSheet());
         mBox.setText("There are unsaved results.");
         mBox.setInformativeText("Do you wish to save them?");
         mBox.setDefaultButton(QMessageBox::Save);
@@ -1484,7 +1544,7 @@ void MainWindow::selectFile() {
         }
     }
     if (pageComboBox->count() != 0) { // if not empty, clear
-        pageComboBox->clear(); // clear
+        pageComboBox->clear();
         exportComboBox->clear();
     }
 
@@ -1494,27 +1554,35 @@ void MainWindow::selectFile() {
             nullptr, QFileDialog::DontUseNativeDialog
             );
 
+    auto progDialog = QProgressDialog(mWidget);
+    progDialog.setRange(0, fileNames.count()-1);
+    progDialog.setVisible(true);
+    progDialog.setModal(false);
+    progDialog.setLabelText("Loading WSIs...");
+    QRect screenrect = mWidget->screen()[0].geometry();
+    progDialog.move(mWidget->width() - progDialog.width() / 2, - mWidget->width() / 2 - progDialog.width() / 2);
+    progDialog.show();
+
     int counter = 0;
     for (QString& fileName : fileNames) {
 
         if (fileName == "")
             return;
         filename = fileName.toStdString();
-
         std::cout << "\nSelected file: " << filename << "\n";
-
         wsiList.push_back(filename);
 
         // Import image from file using the ImageFileImporter
-        importer = WholeSlideImageImporter::New();
+        auto importer = WholeSlideImageImporter::New();
         importer->setFilename(fileName.toStdString());
-        m_image = importer->updateAndGetOutputData<ImagePyramid>();
+        auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
 
         // for reading of multiple WSIs, only render last one
-        if (counter == fileNames.count()-1) {
+        if (counter == 0) { //fileNames.count()-1) {
 
-            // get metadata
-            metadata = m_image->getMetadata();
+            m_image = currImage;
+            std::cout << "\n count:" << counter;
+            metadata = m_image->getMetadata(); // get metadata
 
             auto renderer = ImagePyramidRenderer::New();
             renderer->setInputData(m_image);
@@ -1525,19 +1593,25 @@ void MainWindow::selectFile() {
             insertRenderer("WSI", renderer);
             getView(0)->reinitialize(); // Must call this after removing all renderers
 
-            // get WSI format
-            wsiFormat = metadata["openslide.vendor"];
-
-            // get magnification level of current WSI
-            magn_lvl = getMagnificationLevel();
+            wsiFormat = metadata["openslide.vendor"]; // get WSI format
+            magn_lvl = getMagnificationLevel(); // get magnification level of current WSI
 
             // now make it possible to edit image in the View Widget
             createDynamicViewWidget("WSI", modelName);
+
+            // update application name to contain current WSI
+            //setTitle(applicationName + " - " + split(filename, "/").back());
+            if (advancedMode) {
+                setTitle(applicationName + " (Research mode)" + " - " + split(filename, "/").back());
+            } else {
+                setTitle(applicationName + " - " + split(filename, "/").back());
+            }
         }
         counter ++;
 
-        auto access = m_image->getAccess(ACCESS_READ);
-        auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
+        // @TODO: This is a little bit slow. Possible to speed it up? Bottleneck is probably the creation of thumbnails
+        auto access = currImage->getAccess(ACCESS_READ);
+        auto input = access->getLevelAsImage(currImage->getNrOfLevels() - 1);
 
         // try to convert to FAST Image -> QImage
         QImage image(input->getWidth(), input->getHeight(), QImage::Format_RGB32);
@@ -1577,17 +1651,29 @@ void MainWindow::selectFile() {
 
         curr_pos++;
 
+        // TODO: Importing multiple WSIs, results in QMessageBox flickering... (2speedy)
+        /*
         auto mBox = new QMessageBox(mWidget);
         std::string path = "Finished reading: " + split(fileName.toStdString(), "/").back();
         mBox->setText(path.c_str());
+        mBox->close();
         mBox->setIcon(QMessageBox::Information);
         mBox->setModal(false);
-        //mBox->show(); // TODO: Don't ask why I do multiple show()s here. I just do, and it works. Seems like I don't need it (anymore?)
         QRect screenrect = mWidget->screen()[0].geometry();
         mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
         mBox->show();
         QTimer::singleShot(3000, mBox, SLOT(accept()));
+         */
+
+        // update progress bar
+        progDialog.setValue(counter);
+
+
+        // to render straight away (avoid waiting on all WSIs to be handled before rendering)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
     }
+
+    // in the end, report when all WSIs are loaded in
 }
 
 
@@ -1695,6 +1781,14 @@ void MainWindow::selectFileInProject(int pos) {
     if (QDir().exists(tumorPath)) {
         loadTumor(tumorPath);
         std::cout << "len of saved list: " << savedList.size() << "\n";
+    }
+
+    // update application name to contain current WSI
+    //setTitle(applicationName + " - " + split(filename, "/").back());
+    if (advancedMode) {
+        setTitle(applicationName + " (Research mode)" + " - " + split(filename, "/").back());
+    } else {
+        setTitle(applicationName + " - " + split(filename, "/").back());
     }
 }
 
@@ -2183,30 +2277,196 @@ float MainWindow::getMagnificationLevel() {
 
 bool MainWindow::segmentTissue() {
 
-    if (hasRenderer("tissue")) { // if analysis is ran again on same WSI, don't.
+    if (hasRenderer("tissue")) { // prompt if you want to run the analysis again, if it has already been ran
         std::cout << "Analysis on current WSI has already been performed... \n";
-        return false;
-    } else {
+        //return false;
+        //} else {
+    }
+    if (true) {
         std::cout << "I was here, should be here :)! \n";
 
         // Patch wise classification -> heatmap
         auto tissueSegmentation = TissueSegmentation::New();
         tissueSegmentation->setInputData(m_image);
-        m_tissue = tissueSegmentation->updateAndGetOutputData<Image>();
+        //tissueSegmentation->setThreshold(85);
+        //tissueSegmentation->setErode(9);
+        //tissueSegmentation->setDilate(9);
+
+        stopFlag = false;
+        if (advancedMode) {
+            // option for setting parameters
+            QDialog paramDialog;
+            paramDialog.setStyleSheet(mWidget->styleSheet()); // transfer style sheet from parent
+            QFormLayout form(&paramDialog);
+            form.addRow(new QLabel("Please, set the parameters for this analysis: "));
+
+            // threshold : for WSI this should be grayed out, shouldn't be able to change it
+            auto threshSlider = new QSlider(Qt::Horizontal, dynamicViewWidget);
+            threshSlider->setFixedWidth(150);
+            threshSlider->setMinimum(0);
+            threshSlider->setMaximum(255);
+            threshSlider->setValue(tissueSegmentation->thresh());
+            threshSlider->setTickInterval(1);
+            QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue){tissueSegmentation->setThreshold(newValue);});
+
+            auto currValue = new QLabel;
+            currValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->thresh())));
+            currValue->setFixedWidth(50);
+            QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue){currValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->thresh())));});
+
+            auto threshWidget = new QWidget;
+            auto sliderLayout = new QHBoxLayout;
+            threshWidget->setLayout(sliderLayout);
+            sliderLayout->addWidget(threshSlider);
+            sliderLayout->addWidget(currValue);
+
+            // dilation
+            auto dilateSlider = new QSlider(Qt::Horizontal, dynamicViewWidget);
+            dilateSlider->setFixedWidth(150);
+            dilateSlider->setMinimum(1);
+            dilateSlider->setMaximum(28);
+            dilateSlider->setValue(tissueSegmentation->dilate());
+            dilateSlider->setTickInterval(2);
+            QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue){tissueSegmentation->setDilate(newValue);});
+
+            auto currDilateValue = new QLabel;
+            currDilateValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->dilate())));
+            currDilateValue->setFixedWidth(50);
+            QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue){currDilateValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->dilate())));});
+
+            auto dilateWidget = new QWidget;
+            auto dilateSliderLayout = new QHBoxLayout;
+            dilateWidget->setLayout(dilateSliderLayout);
+            dilateSliderLayout->addWidget(dilateSlider);
+            dilateSliderLayout->addWidget(currDilateValue);
+
+            // erosion
+            auto erodeSlider = new QSlider(Qt::Horizontal, dynamicViewWidget);
+            erodeSlider->setFixedWidth(150);
+            erodeSlider->setMinimum(1);
+            erodeSlider->setMaximum(28);
+            erodeSlider->setValue(tissueSegmentation->erode());
+            erodeSlider->setTickInterval(2);
+            QObject::connect(erodeSlider, &QSlider::valueChanged, [=](int newValue){tissueSegmentation->setErode(newValue);});
+
+            auto currErodeValue = new QLabel;
+            currErodeValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->erode())));
+            currErodeValue->setFixedWidth(50);
+            QObject::connect(erodeSlider, &QSlider::valueChanged, [=](int newValue){currErodeValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->erode())));});
+
+            auto erodeWidget = new QWidget;
+            auto erodeSliderLayout = new QHBoxLayout;
+            erodeWidget->setLayout(erodeSliderLayout);
+            erodeSliderLayout->addWidget(erodeSlider);
+            erodeSliderLayout->addWidget(currErodeValue);
+
+            QList<QSlider *> fields;
+            QString labelThresh = "Threshold";
+            form.addRow(labelThresh, threshWidget);
+            fields << threshSlider;
+
+            QString labelDilate = "Dilation";
+            form.addRow(labelDilate, dilateWidget);
+            fields << dilateSlider;
+
+            QString labelErode = "Erosion";
+            form.addRow(labelErode, erodeWidget);
+            fields << erodeSlider;
+
+            /*
+            //QList<QLineEdit *> fields;
+            //QList<QVariant *> fields;
+            //QVariant<T> fields;
+            QList<QSlider *> fields;
+            //auto lineEdit = new QLineEdit(&paramDialog);
+            //lineEdit->setText(QString::number(tissueSegmentation->thresh()));
+            QString label = "Threshold";
+            //form.addRow(label, lineEdit);
+            form.addRow(label, sliderWidget);
+            fields << threshSlider; //lineEdit;
+             */
+
+            /*
+            auto lineEdit2 = new QLineEdit(&paramDialog);
+            lineEdit2->setText(QString::number(tissueSegmentation->dilate()));
+            label = "Dilation";
+            form.addRow(label, lineEdit2);
+            fields << lineEdit2;
+
+            auto lineEdit3 = new QLineEdit(&paramDialog);
+            lineEdit3->setText(QString::number(tissueSegmentation->erode()));
+            label = "Erosion";
+            form.addRow(label, lineEdit3);
+            fields << lineEdit3;
+             */
+
+            // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+            QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+                    Qt::Horizontal, &paramDialog);
+            buttonBox.button(QDialogButtonBox::Ok)->setText("Run");
+            form.addRow(&buttonBox);
+            QObject::connect(&buttonBox, SIGNAL(accepted()), &paramDialog, SLOT(accept()));
+            QObject::connect(&buttonBox, SIGNAL(rejected()), &paramDialog, SLOT(reject()));
+
+            // Show the dialog as modal
+            int ret = paramDialog.exec();
+            std::cout << "\nValue chosen: " << ret << "\n";
+            switch (ret) {
+                case 1:
+                    std::cout << "\nOK was pressed, should have updated params!\n";
+                    tissueSegmentation->setThreshold(fields.takeFirst()->value());
+                    tissueSegmentation->setDilate(fields.takeFirst()->value());
+                    tissueSegmentation->setErode(fields.takeFirst()->value());
+                    /*
+                    tissueSegmentation->setThreshold(std::stoi(fields.takeFirst()->text().toStdString()));
+                    tissueSegmentation->setDilate(std::stoi(fields.takeFirst()->text().toStdString()));
+                    tissueSegmentation->setErode(std::stoi(fields.takeFirst()->text().toStdString()));
+                     */
+                    break;
+                case 0:
+                    std::cout << "\nCancel was pressed.\n";
+                    stopFlag = true;
+                    break;
+                default:
+                    std::cout << "\nDefault was pressed.\n";
+                    break;
+            }
+        }
+
+        if (stopFlag)
+            return false;
+
+        std::cout << "\nThresh: " << tissueSegmentation->thresh();
+        std::cout << "\nDilate: " << tissueSegmentation->dilate();
+        std::cout << "\nErode:  " << tissueSegmentation->erode();
+        std::cout << "\n";
+
+        //m_tissue = tissueSegmentation->updateAndGetOutputData<Image>();
 
         auto someRenderer = SegmentationRenderer::New();
         someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0/255.0, 127.0/255.0, 80.0/255.0));
-        someRenderer->setInputData(m_tissue);
+        //someRenderer->setInputData(m_tissue);
+        someRenderer->setInputData(tissueSegmentation->updateAndGetOutputData<Image>());
         someRenderer->setOpacity(0.4); // <- necessary for the quick-fix temporary solution
         someRenderer->update();
 
-        m_rendererTypeList["tissue"] = "SegmentationRenderer";
-        insertRenderer("tissue", someRenderer);
-
-        //hideTissueMask(false);
-
-        // now make it possible to edit prediction in the View Widget
-        createDynamicViewWidget("tissue", modelName);
+        if (!hasRenderer("tissue")) {
+            // now make it possible to edit prediction in the View Widget
+            1; //createDynamicViewWidget("tissue", modelName);
+        } else {
+            1;
+            //removeRenderer("tissue");
+        }
+        std::string origSegment = "tissue";
+        std::string currSegment = "tissue";
+        auto iter = 2;
+        while (hasRenderer(currSegment)) {
+            currSegment = origSegment + std::to_string(iter);
+            iter++;
+        }
+        createDynamicViewWidget(currSegment, modelName);
+        m_rendererTypeList[currSegment] = "SegmentationRenderer";
+        insertRenderer(currSegment, someRenderer);
 
         return true;
     }
@@ -2418,10 +2678,51 @@ bool MainWindow::lowresSegmenter() {
         insertRenderer("tumorSeg_lr", segTumorRenderer);
 
         createDynamicViewWidget("tumorSeg_lr", modelName);
+    }
+    return true;
+}
 
+
+// Setting parameters for different methods
+std::map<std::string, std::string> MainWindow::setParameterDialog(std::map<std::string, std::string> modelMetadata) {
+    QDialog paramDialog;
+    paramDialog.setStyleSheet(mWidget->styleSheet()); // transfer style sheet from parent
+    QFormLayout form(&paramDialog);
+    form.addRow(new QLabel("Please, set the parameters for this analysis: "));
+
+    QList<QLineEdit *> fields;
+    for (auto const& [key, val] : modelMetadata) {
+        std::cout << key << ":" << val << "\n";
+        auto lineEdit = new QLineEdit(&paramDialog);
+        lineEdit->setText(QString::fromStdString(val));
+        QString label = QString::fromStdString(key); //QString::fromStdString(val).arg(QString::fromStdString(key));
+        form.addRow(label, lineEdit);
+
+        fields << lineEdit;
     }
 
-    return true;
+    // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+    QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+            Qt::Horizontal, &paramDialog);
+    buttonBox.button(QDialogButtonBox::Ok)->setText("Run");
+    form.addRow(&buttonBox);
+    QObject::connect(&buttonBox, SIGNAL(accepted()), &paramDialog, SLOT(accept()));
+    QObject::connect(&buttonBox, SIGNAL(rejected()), &paramDialog, SLOT(reject()));
+
+    // Show the dialog as modal
+    int ret = paramDialog.exec();
+    switch (ret) {
+        case QMessageBox::Ok:
+            for (auto const& [key, val] : modelMetadata) {
+                modelMetadata[key] = fields.takeFirst()->text().toStdString(); //fields.takeAt(cnt)->text().toStdString();
+            }
+        case QMessageBox::Cancel:
+            stopFlag = true;
+            break;
+        default:
+            break;
+    }
+    return modelMetadata;
 }
 
 
@@ -2432,7 +2733,17 @@ bool MainWindow::pixelClassifier(std::string modelName) {
     // read model metadata (txtfile)
     std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
 
+    stopFlag = false;
+
     if (!hasRenderer(modelMetadata["name"])) { // only run analysis if it has not been ran previously on current WSI
+
+        // set parameters yourself (only enabled if advanced mode is ON
+        if (advancedMode) {
+            modelMetadata = setParameterDialog(modelMetadata);
+        }
+        if (stopFlag) { // if "Cancel" is selected in advanced mode in parameter selection, don't run analysis
+            return false;
+        }
 
         //auto tmpRenderer = getRenderer(metadata["name"]);
 
@@ -2598,11 +2909,18 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 resizer->update();
                 network->setInputData(port->getNextFrame<Image>());
             } else {
+                // for tissue, apply erosion to filter some of the tissue
+                auto erosion = Erosion::New();
+                erosion->setInputData(m_tissue);
+                erosion->setStructuringElementSize(9);
+
                 auto generator = PatchGenerator::New();
                 generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
                 generator->setPatchLevel(patch_lvl_model);
                 generator->setInputData(0, m_image);
-                generator->setInputData(1, m_tissue);
+                if (m_tissue) {
+                    generator->setInputData(1, erosion->updateAndGetOutputData<Image>());
+                }
                 if (m_tumorMap) {
                     // dilate tumorMap a little to reduce risk of loosing nuclei within the area of interest
                     auto dilation = Dilation::New(); // first two, initial closing (instead of opening) to increase sensitivity in detection

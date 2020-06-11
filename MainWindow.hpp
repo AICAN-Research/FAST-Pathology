@@ -76,6 +76,7 @@ class MainWindow : public Window {
         bool opacityRenderer(int value, const std::string& someName);
         bool toggleRenderer(std::string name);
         bool pixelClassifier(std::string modelName);
+        std::map<std::string, std::string> setParameterDialog(std::map<std::string, std::string> modelMetadata);
         bool lowresSegmenter();
         //bool imageSegmenter(std::string modelName);
         bool showHeatmap();
@@ -88,6 +89,7 @@ class MainWindow : public Window {
         bool calcTissueHist();
         bool showImage();
         bool segmentTissue();
+        bool stopFlag;
 
         static void helpUrl();
         static void reportIssueUrl();
@@ -149,7 +151,9 @@ class MainWindow : public Window {
 
         uint channel_value;
 
+        std::string applicationName;
         std::string modelName;
+        bool advancedMode = false;
         std::string getWsiFormat();
         std::string wsiFormat;
         std::string cwd;
@@ -157,6 +161,8 @@ class MainWindow : public Window {
         std::vector<std::vector<Vector2f>>getAnchorMetadata(std::string anchorFileName);
         std::vector<float> getDownsamplingLevels();
         std::vector<std::string> split (std::string s, std::string delimiter);
+
+        void setApplicationMode();
 
         std::unordered_map<std::string, std::string> metadata; // make metadata information a global variable
         QList<QString> currentClassesInUse;
@@ -184,6 +190,7 @@ class MainWindow : public Window {
         QStackedLayout *stackedLayout;
         QStackedLayout *exportStackedLayout;
         //QSplitter *mainSplitter;
+        QPushButton *setModeButton;
 
         QMenu *runPipelineMenu;
         void runPipeline(std::string path);
