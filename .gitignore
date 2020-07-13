@@ -24,3 +24,4 @@ fastPathology_stuff*
 data/Models/*
 build/
 out/
+openslide_test_data/

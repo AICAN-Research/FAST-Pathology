@@ -6,6 +6,7 @@
 #include <QMainWindow>
 #include <QDialog>
 #include <QObject>
+#include <QWidget>
 
 //#include "FAST/ProcessObject.hpp"
 
@@ -30,6 +31,8 @@ class QStatusbar;
 class QString;
 class QScrollArea;
 class QListWidget;
+class QDragEnterEvent;
+class QDropEvent;
 QT_END_NAMESPACE
 
 namespace fast {
@@ -64,11 +67,14 @@ class MainWindow : public Window {
         void createStatsWidget();
         void createMenuWidget();
         void createDynamicViewWidget(const std::string& someName, std::string modelName);
+        void createDynamicExportWidget(const std::string& someName);
         void createWSIScrollAreaWidget();
         void saveThumbnail();
         void saveTissueSegmentation();
         void saveTumor();
         void saveGrade();
+        void saveResults(std::string result);
+        void displayMessage(QString message);
         void killInference(std::string someName);
         void deleteViewObject(std::string someName);
 
@@ -95,6 +101,7 @@ class MainWindow : public Window {
         static void reportIssueUrl();
 
         void selectFile();
+        void selectFileDrag(const QList<QString> &fileNames);
         void addModels();
         void addPipelines();
         void createProject();
@@ -158,6 +165,7 @@ class MainWindow : public Window {
         std::string wsiFormat;
         std::string cwd;
         std::map<std::string, std::string>getModelMetadata(std::string modelName);
+        //std::map<std::string, std::any> availableResults; // <- doesn't work // TODO: Fix thisinsert
         std::vector<std::vector<Vector2f>>getAnchorMetadata(std::string anchorFileName);
         std::vector<float> getDownsamplingLevels();
         std::vector<std::string> split (std::string s, std::string delimiter);
@@ -195,6 +203,8 @@ class MainWindow : public Window {
         QMenu *runPipelineMenu;
         void runPipeline(std::string path);
 
+        void receiveFileList(const QList<QString> &names); // FIXME: silly stuff
+
         QScrollArea *scrollArea;
         QWidget *scrollWidget;
         QVBoxLayout *scrollLayout;
@@ -220,6 +230,11 @@ class MainWindow : public Window {
          * Remove all current renderers
          */
         void removeAllRenderers();
+        /**
+         * Checks if a named renderer exists
+         * @param name
+         * @return boolean
+         */
         bool hasRenderer(std::string name);
         SharedPointer<Renderer> getRenderer(std::string name);
 
@@ -229,12 +244,13 @@ class MainWindow : public Window {
     //signals:
     //    void valueChanged(int newValue);
 
-
     private:
         std::map<std::string, SharedPointer<Renderer>> m_rendererList;
         std::map<std::string, std::string> m_rendererTypeList;
         std::map<std::string, SharedPointer<NeuralNetwork>> m_neuralNetworkList;
         std::map<std::string, SharedPointer<PatchStitcher>> m_patchStitcherList;
+        std::map<std::string, std::map<std::string, std::string>> m_modelMetadataList;
+        std::map<std::string, SharedPointer<Image>> availableResults;
         MainWindow();
         //std::map<std::string, std::future<SharedPointer<Tensor>>> m_futureData;
         //std::future<SharedPointer<Tensor>> m_futureData;
@@ -243,15 +259,19 @@ class MainWindow : public Window {
         SharedPointer<ImagePyramid> m_image;
         SharedPointer<Image> m_tissue;
         SharedPointer<Image> m_gradeMap;
+        SharedPointer<Image> m_tumorHeatmap;
         SharedPointer<Tensor> m_tumorMap_tensor;
         SharedPointer<Image> m_tumorMap;
         SharedPointer<Tensor> m_bachMap;
         std::string filename;
         QString projectFolderName;
 
-        private slots:
-            void updateChannelValue (int index);
-            //void itemClicked(QListWidgetItem *item);
+
+
+    private slots:
+        void updateChannelValue (int index);
+        //void receiveFileList(QList<QString> &names);
+        //void itemClicked(QListWidgetItem *item);
 
 
 };
