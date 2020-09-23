@@ -154,7 +154,9 @@ void MainWindow::receiveFileList(const QList<QString> &names) {
 
 void MainWindow::createOpenGLWindow() {
 	float OpenGL_background_color = 0.0f; //200.0f / 255.0f;
+    printf("\n%d\n",__LINE__);
 	view = createView();
+    printf("\n%d\n",__LINE__);
 	//view = mWidget->addView();
 	//view->setLayout(mainLayout);
 
@@ -460,8 +462,6 @@ void MainWindow::createMenuWidget() {
     tb->addAction(file_action);
     mapper->setMapping(file_action, 0);
     auto test2 = mapper->connect(file_action, SIGNAL(triggered(bool)), SLOT(map()));
-
-    std::cout << "\nTest2 if connect worked: " << test2 << std::endl;
 
     auto process_action = new QAction("Process", actionGroup);
     process_action->setIcon(QIcon(processPix));
@@ -2551,11 +2551,8 @@ bool MainWindow::segmentTissue() {
 
     if (hasRenderer("tissue")) { // prompt if you want to run the analysis again, if it has already been ran
         std::cout << "Analysis on current WSI has already been performed... \n";
-        //return false;
-        //} else {
-    }
-    if (true) {
-        std::cout << "I was here, should be here :)! \n";
+        return false;
+    } else {
 
         // Patch wise classification -> heatmap
         auto tissueSegmentation = TissueSegmentation::New();
@@ -3237,6 +3234,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 // else continue -> will use default one (one that is available)
             }
 
+            //network->setInferenceEngine("TensorFlowCPU");  // TODO: CUDA is not working? Why? Probably because I purged nvidia because of some driver issues. Need to install something...
             //network->setInferenceEngine("TensorFlowCUDA");
             //network->setInferenceEngine("OpenVINO"); // default
             const auto engine = network->getInferenceEngine()->getName();
