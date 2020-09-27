@@ -1,7 +1,0 @@
-TestDataPath = @ROOT@/data/
-KernelSourcePath = @ROOT@/kernels/
-KernelBinaryPath = @ROOT@/kernel_binaries/
-DocumentationPath = @ROOT@/doc/
-PipelinePath = @ROOT@/pipelines/
-LibraryPath = @ROOT@/bin/
-QtPluginsPath = @ROOT@/plugins/
