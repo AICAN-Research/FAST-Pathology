@@ -175,9 +175,6 @@
 		<Unit filename="/home/andrep/workspace/FAST-Pathology/fastPathology_autogen/mocs_compilation.cpp">
 			<Option target="fastPathology"/>
 		</Unit>
-		<Unit filename="/home/andrep/workspace/FAST-Pathology/inference_study/measurePipelinePerformance.cpp">
-			<Option target="fastPathology"/>
-		</Unit>
 		<Unit filename="/home/andrep/workspace/FAST-Pathology/main.cpp">
 			<Option target="fastPathology"/>
 		</Unit>

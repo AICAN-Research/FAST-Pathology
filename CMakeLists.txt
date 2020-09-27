@@ -12,8 +12,7 @@ include(${FAST_USE_FILE})
 
 add_executable(fastPathology
         main.cpp
-        MainWindow.cpp
-        MainWindow.hpp inference_study/measurePipelinePerformance.cpp)
+        MainWindow.cpp)
 add_dependencies(fastPathology fast_copy)
 target_link_libraries(fastPathology ${FAST_LIBRARIES})
 

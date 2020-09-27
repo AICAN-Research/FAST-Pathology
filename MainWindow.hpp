@@ -225,7 +225,7 @@ class MainWindow : public Window {
          * If a renderer with that name already exist, replace it.
          * @param name
          */
-        void insertRenderer(std::string name, SharedPointer<Renderer> renderer);
+        void insertRenderer(std::string name, std::shared_ptr<Renderer> renderer);
         /**
          * Remove all current renderers
          */
@@ -236,7 +236,7 @@ class MainWindow : public Window {
          * @return boolean
          */
         bool hasRenderer(std::string name);
-        SharedPointer<Renderer> getRenderer(std::string name);
+        std::shared_ptr<Renderer> getRenderer(std::string name);
 
     //signals:
     //    void my_signal(int, const std::string&);
@@ -245,24 +245,24 @@ class MainWindow : public Window {
     //    void valueChanged(int newValue);
 
     private:
-        std::map<std::string, SharedPointer<Renderer>> m_rendererList;
+        std::map<std::string, std::shared_ptr<Renderer>> m_rendererList;
         std::map<std::string, std::string> m_rendererTypeList;
-        std::map<std::string, SharedPointer<NeuralNetwork>> m_neuralNetworkList;
-        std::map<std::string, SharedPointer<PatchStitcher>> m_patchStitcherList;
+        std::map<std::string, std::shared_ptr<NeuralNetwork>> m_neuralNetworkList;
+        std::map<std::string, std::shared_ptr<PatchStitcher>> m_patchStitcherList;
         std::map<std::string, std::map<std::string, std::string>> m_modelMetadataList;
-        std::map<std::string, SharedPointer<Image>> availableResults;
+        std::map<std::string, std::shared_ptr<Image>> availableResults;
         MainWindow();
-        //std::map<std::string, std::future<SharedPointer<Tensor>>> m_futureData;
-        //std::future<SharedPointer<Tensor>> m_futureData;
-        //SharedPointer<TissueSegmentation> tissueSegmentation;
-        SharedPointer<WholeSlideImageImporter> importer;
-        SharedPointer<ImagePyramid> m_image;
-        SharedPointer<Image> m_tissue;
-        SharedPointer<Image> m_gradeMap;
-        SharedPointer<Image> m_tumorHeatmap;
-        SharedPointer<Tensor> m_tumorMap_tensor;
-        SharedPointer<Image> m_tumorMap;
-        SharedPointer<Tensor> m_bachMap;
+        //std::map<std::string, std::future<std::shared_ptr<Tensor>>> m_futureData;
+        //std::future<std::shared_ptr<Tensor>> m_futureData;
+        //std::shared_ptr<TissueSegmentation> tissueSegmentation;
+        std::shared_ptr<WholeSlideImageImporter> importer;
+        std::shared_ptr<ImagePyramid> m_image;
+        std::shared_ptr<Image> m_tissue;
+        std::shared_ptr<Image> m_gradeMap;
+        std::shared_ptr<Image> m_tumorHeatmap;
+        std::shared_ptr<Tensor> m_tumorMap_tensor;
+        std::shared_ptr<Image> m_tumorMap;
+        std::shared_ptr<Tensor> m_bachMap;
         std::string filename;
         QString projectFolderName;
 

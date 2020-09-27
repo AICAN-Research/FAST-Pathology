@@ -2588,14 +2588,14 @@ bool MainWindow::segmentTissue() {
             threshSlider->setFixedWidth(150);
             threshSlider->setMinimum(0);
             threshSlider->setMaximum(255);
-            threshSlider->setValue(tissueSegmentation->thresh());
+            threshSlider->setValue(tissueSegmentation->getThreshold());
             threshSlider->setTickInterval(1);
             QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue){tissueSegmentation->setThreshold(newValue);});
 
             auto currValue = new QLabel;
-            currValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->thresh())));
+            currValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getThreshold())));
             currValue->setFixedWidth(50);
-            QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue){currValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->thresh())));});
+            QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue){currValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getThreshold())));});
 
             auto threshWidget = new QWidget;
             auto sliderLayout = new QHBoxLayout;
@@ -2608,7 +2608,7 @@ bool MainWindow::segmentTissue() {
             dilateSlider->setFixedWidth(150);
             dilateSlider->setMinimum(1);
             dilateSlider->setMaximum(28);
-            dilateSlider->setValue(tissueSegmentation->dilate());
+            dilateSlider->setValue(tissueSegmentation->getDilate());
             dilateSlider->setSingleStep(2);
             //QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue){tissueSegmentation->setDilate(newValue);});
             QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue) {
@@ -2626,9 +2626,9 @@ bool MainWindow::segmentTissue() {
             });
 
             auto currDilateValue = new QLabel;
-            currDilateValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->dilate())));
+            currDilateValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getDilate())));
             currDilateValue->setFixedWidth(50);
-            QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue){currDilateValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->dilate())));});
+            QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue){currDilateValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getDilate())));});
 
             auto dilateWidget = new QWidget;
             auto dilateSliderLayout = new QHBoxLayout;
@@ -2641,7 +2641,7 @@ bool MainWindow::segmentTissue() {
             erodeSlider->setFixedWidth(150);
             erodeSlider->setMinimum(1);
             erodeSlider->setMaximum(28);
-            erodeSlider->setValue(tissueSegmentation->erode());
+            erodeSlider->setValue(tissueSegmentation->getErode());
             erodeSlider->setSingleStep(2);
             //QObject::connect(erodeSlider, &QSlider::valueChanged, [=](int newValue){tissueSegmentation->setErode(newValue);});
             QObject::connect(erodeSlider, &QSlider::valueChanged, [=](int newValue) {
@@ -2695,9 +2695,9 @@ bool MainWindow::segmentTissue() {
             });
 
             auto currErodeValue = new QLabel;
-            currErodeValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->erode())));
+            currErodeValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getErode())));
             currErodeValue->setFixedWidth(50);
-            QObject::connect(erodeSlider, &QSlider::valueChanged, [=](int newValue){currErodeValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->erode())));});
+            QObject::connect(erodeSlider, &QSlider::valueChanged, [=](int newValue){currErodeValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getErode())));});
 
             auto erodeWidget = new QWidget;
             auto erodeSliderLayout = new QHBoxLayout;
@@ -2781,9 +2781,9 @@ bool MainWindow::segmentTissue() {
         if (stopFlag)
             return false;
 
-        std::cout << "\nThresh: " << tissueSegmentation->thresh();
-        std::cout << "\nDilate: " << tissueSegmentation->dilate();
-        std::cout << "\nErode:  " << tissueSegmentation->erode();
+        std::cout << "\nThresh: " << tissueSegmentation->getThreshold();
+        std::cout << "\nDilate: " << tissueSegmentation->getDilate();
+        std::cout << "\nErode:  " << tissueSegmentation->getErode();
         std::cout << "\n";
 
         //m_tissue = tissueSegmentation->updateAndGetOutputData<Image>();
@@ -3184,6 +3184,8 @@ bool MainWindow::pixelClassifier(std::string modelName) {
             //network->loadAttributes();
             //network->setThreshold(0.3); // default value: 0.3
             //network->setAnchors(getAnchorMetadata("tiny_yolo_anchors_pannuke"));
+        } else if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "low")) {
+            network = SegmentationNetwork::New();
         }
         std::cout << "\n :) \n";
         //network->setInferenceEngine("TensorRT"); //"TensorRT");
@@ -3234,7 +3236,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 // else continue -> will use default one (one that is available)
             }
 
-            //network->setInferenceEngine("TensorFlowCPU");  // TODO: CUDA is not working? Why? Probably because I purged nvidia because of some driver issues. Need to install something...
+            //network->setInferenceEngine("TensorFlowCPU");
             //network->setInferenceEngine("TensorFlowCUDA");
             //network->setInferenceEngine("OpenVINO"); // default
             const auto engine = network->getInferenceEngine()->getName();
@@ -3321,6 +3323,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 //const std::map<std::string, std::string> &testModelMetadata = modelMetadata;
 
                 // testing RunLambda in FAST for saving heatmaps
+                /*
                 auto lambda = RunLambdaOnLastFrame::New();
                 lambda->setInputConnection(stitcher->getOutputPort());
                 lambda->setLambda([this, modelMetadata](DataObject::pointer data) {
@@ -3334,21 +3337,11 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
                     auto converter = TensorToSegmentation::New();
                     converter->setInputData(tensor);
-                    converter->setBackgroundLabel(200); //std::stoi(modelMetadata.at("nb_classes")) + 1); //200); // FIXME: This will not work in general, for instance if a model has the classes {0, 1, 3}, should set to a unique class
+                    //converter->setBackgroundLabel(200); //std::stoi(modelMetadata.at("nb_classes")) + 1); //200); // FIXME: This will not work in general, for instance if a model has the classes {0, 1, 3}, should set to a unique class
                     //converter->setThreshold(0.333f); // FIXME: This should be possible to set, but modelMetadata is not accessible in this thread
                     printf("\n%d\n",__LINE__); // <- this is nice for debugging
 
                     //auto currModelMetadata = m_modelMetadataList[]
-
-                    /*
-                    auto tempPort = converter->updateAndGetOutputData<Image>();
-
-                    auto intensityScaler = ScaleImage::New();
-                    intensityScaler->setInputData(tempPort); //m_tissue);  // expects Image data type
-                    intensityScaler->setLowestValue(1);
-                    intensityScaler->setHighestValue(3);
-                    //intensityScaler->update();
-                    */
 
                     //auto port = intensityScaler->getOutputPort();
                     //intensityScaler->update();
@@ -3361,15 +3354,6 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                     //m_gradeMap = intensityScaler->updateAndGetOutputData<Image>();
 
                     // attempt simple post-processing
-                    /*
-                    auto dilation = Dilation::New();
-                    dilation->setInputData(m_tumorHeatmap);
-                    dilation->setStructuringElementSize(9);
-
-                    auto erosion = Erosion::New();
-                    erosion->setInputConnection(dilation->getOutputPort());
-                    erosion->setStructuringElementSize(9);
-                     */
 
                     auto finalRenderer = SegmentationRenderer::New();
                     finalRenderer->setOpacity(0.4);
@@ -3383,16 +3367,6 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                     //tmpRenderer->setColor(0, Color(1.0f, 0.0f, 0.0f));
                     //tmpRenderer->setColor(1, Color(0.0f, 1.0f, 0.0f));
                     //tmpRenderer->setColor(2, Color(0.0f, 0.0f, 1.0f));
-                    /*
-                    vector<string> colors = split(modelMetadata["class_colors"], ";");
-                    for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
-                        vector<string> rgb = split(colors[i], ",");
-                        tmpRenderer->setColor(i, Color((float) std::stoi(rgb[0]) / 255.0f,
-                                                               (float) std::stoi(rgb[1]) / 255.0f,
-                                                               (float) std::stoi(rgb[2]) / 255.0f));
-                    }
-
-                     */
                     //finalRenderer->setChannelHidden(0, false);
                     finalRenderer->setInterpolation(false); // false : no minecraft
                     finalRenderer->setInputData(currSegmentation);
@@ -3415,6 +3389,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                     //availableResults[modelMetadata.at("name") + "_final"] = currSegmentation;
                     //exportComboBox->addItem(tr((modelMetadata.at("name") + "_final").c_str()));
                 });
+                 */
 
                 auto port = stitcher->getOutputPort();
 
@@ -3422,8 +3397,8 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
                 auto someRenderer = HeatmapRenderer::New();
                 someRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
-                //someRenderer->setInputConnection(stitcher->getOutputPort());
-                someRenderer->setInputConnection(lambda->getOutputPort());
+                someRenderer->setInputConnection(stitcher->getOutputPort());
+                //someRenderer->setInputConnection(lambda->getOutputPort());
                 someRenderer->setMaxOpacity(0.6);
                 //heatmapRenderer->update();
                 vector<string> colors = split(modelMetadata["class_colors"], ";");
@@ -3506,14 +3481,15 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 insertRenderer(modelMetadata["name"], boxRenderer);
             } else if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "low")) {
 
-                auto converter = TensorToSegmentation::New();
-                converter->setInputConnection(network->getOutputPort());
+                //auto converter = TensorToSegmentation::New();
+                //converter->setInputConnection(network->getOutputPort());
 
                 // resize back
                 auto access = m_image->getAccess(ACCESS_READ);
                 auto input = access->getLevelAsImage(currLvl);
                 ImageResizer::pointer resizer2 = ImageResizer::New();
-                resizer2->setInputData(converter->updateAndGetOutputData<Image>());
+                //resizer2->setInputData(converter->updateAndGetOutputData<Image>());
+                resizer2->setInputConnection(network->getOutputPort());
                 resizer2->setWidth(input->getWidth());
                 resizer2->setHeight(input->getHeight());
                 auto port2 = resizer2->getOutputPort();
@@ -3908,7 +3884,7 @@ void MainWindow::removeRenderer(std::string name) {
 }
 
 
-void MainWindow::insertRenderer(std::string name, SharedPointer<Renderer> renderer) {
+void MainWindow::insertRenderer(std::string name, std::shared_ptr<Renderer> renderer) {
     std::cout << "calling insert renderer" << std::endl;
     if(!hasRenderer(name)) {
         renderer->setSynchronizedRendering(false);
@@ -3936,7 +3912,7 @@ bool MainWindow::hasRenderer(std::string name) {
 }
 
 
-SharedPointer<Renderer> MainWindow::getRenderer(std::string name) {
+std::shared_ptr<Renderer> MainWindow::getRenderer(std::string name) {
     if(!hasRenderer(name))
         throw Exception("Renderer with name " + name + " does not exist");
     return m_rendererList[name];
