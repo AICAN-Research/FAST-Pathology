@@ -50,12 +50,16 @@ int main(int argc, char** argv) {
     const bool case1_batch = !parser.getOption("disable-case-1-batch");
     const bool case1_inceptionv3 = !parser.getOption("disable-case-1_inceptionv3");
     //const bool case3_batch = !parser.getOption("disable-case-3-batch");
+    const std::string machine = "windows";  // ubuntu or windows, just for storing results on both machines used in the experiments
 
 
     if(case1) {
         std::cout << "\nPatch-wise classification...\n" << std::endl;
         // CASE 1 - Patch-wise classification using BACH-model on 20x WSI
-        const std::string resultFilename = "../results/neural-network-runtimes-case-1.csv";
+        std::string resultFilename = "../results_" + machine + "/neural-network-runtimes-case-1.csv";
+        if (machine == "windows") {
+            resultFilename = "../" + resultFilename;
+        }
         std::ofstream file(resultFilename.c_str());
 
         std::vector<int> img_size {512, 512};
@@ -65,8 +69,12 @@ int main(int argc, char** argv) {
         // Write header
         file << "Engine;Device Type;Iteration;Patch generator AVG;Patch generator STD;NN input AVG;NN input STD;NN inference AVG;NN inference STD;NN output AVG;NN output STD;Patch stitcher AVG;Patch stitcher STD;Total\n";
 
+        auto engines = {"TensorRT", "TensorFlowCUDA", "OpenVINO", "TensorFlowCPU"};
+        if (machine == "windows") {
+            engines = {"OpenVINO", "TensorFlowCPU"};
+        }
         //for(auto &engine : InferenceEngineManager::getEngineList()) {TensorFlowCUDA
-        for(std::string engine : {"TensorRT", "TensorFlowCUDA", "OpenVINO", "TensorFlowCPU"}) {
+        for(std::string engine : engines) {
             std::map<std::string, InferenceDeviceType> deviceTypes = {{"ANY", InferenceDeviceType::ANY}};
             if(engine == "OpenVINO") {
                 // On OpenVINO, try all device types
@@ -75,6 +83,13 @@ int main(int argc, char** argv) {
                         //{"GPU", InferenceDeviceType::GPU},
                         //{"VPU", InferenceDeviceType::VPU},
                 };
+                if (machine == "windows") {
+                    deviceTypes = std::map<std::string, InferenceDeviceType>{
+                        {"CPU", InferenceDeviceType::CPU},
+                        {"GPU", InferenceDeviceType::GPU},
+                        //{"VPU", InferenceDeviceType::VPU},
+                };
+                }
             }
             for(auto &&deviceType : deviceTypes) {
                 std::cout << engine << " for device type " << deviceType.first << std::endl;
@@ -90,7 +105,11 @@ int main(int argc, char** argv) {
 
                     for (int iteration = 0; iteration <= iterations; ++iteration) {
                         auto importer = WholeSlideImageImporter::New();
-                        importer->setFilename(Config::getTestDataPath() + "/WSI/A05.svs");
+                        if (machine == "windows") {
+                            importer->setFilename("C:/Users/andrep/workspace/FAST-Pathology_old/A05.svs");
+                        } else {
+                            importer->setFilename(Config::getTestDataPath() + "/WSI/A05.svs");
+                        }
 
                         auto tissueSegmentation = TissueSegmentation::New();
                         tissueSegmentation->setInputConnection(importer->getOutputPort());
@@ -126,8 +145,14 @@ int main(int argc, char** argv) {
                             }
                         }
                         //network->load(Config::getTestDataPath() + "NeuralNetworkModels/wsi_classification" + postfix + "." + network->getInferenceEngine()->getDefaultFileExtension());
-                        network->load("/home/andrep/FastPathology/data/Models/mobilenet_v2_bach_model" + postfix + "." +
+                        if (machine == "ubuntu") {
+                            network->load("/home/andrep/FastPathology/data/Models/mobilenet_v2_bach_model" + postfix + "." +
                                       network->getInferenceEngine()->getDefaultFileExtension());
+                        }
+                        else if (machine == "windows") {
+                            network->load("C:/Users/andrep/FastPathology/data/Models/mobilenet_v2_bach_model" + postfix + "." +
+                                      network->getInferenceEngine()->getDefaultFileExtension());
+                        }
                         network->setInputConnection(generator->getOutputPort());
                         network->setScaleFactor(1.0f / 255.0f);
                         network->enableRuntimeMeasurements();
@@ -190,7 +215,7 @@ int main(int argc, char** argv) {
     if(case2) {
         std::cout << "\nLow-res semantic segmentation...\n" << std::endl;
         // CASE 2 - Low-res semantic segmentation of nuclei on 20x WSI
-        const std::string resultFilename = "../results/neural-network-runtimes-case-2.csv";
+        const std::string resultFilename = "../results_" + machine + "neural-network-runtimes-case-2.csv";
         std::ofstream file(resultFilename.c_str());
 
         std::vector<int> img_size {1024, 1024};
@@ -242,7 +267,7 @@ int main(int argc, char** argv) {
                         resizer->update();
                         //Image::pointer resized = port->getNextFrame<Image>();
 
-                        auto network = NeuralNetwork::New();
+                        auto network = SegmentationNetwork::New();
                         network->setInferenceEngine(engine);
                         network->getInferenceEngine()->setDevice(1);
                         std::string postfix;
@@ -277,9 +302,11 @@ int main(int argc, char** argv) {
                         converter->enableRuntimeMeasurements();
                         //converter->update();
 
+                        /*
                         if ((engine == "TensorRT") || (engine == "OpenVINO")) {
                             converter->setNCHW(true);
                         }
+                         */
 
                         // resize back
                         ImageResizer::pointer resizer2 = ImageResizer::New();
@@ -373,7 +400,7 @@ int main(int argc, char** argv) {
     if(case3) {
         std::cout << "\nPatch-wise high-res semantic segmentation...\n" << std::endl;
         // CASE 3 - Patch-wise high-res semantic segmentation on 20x WSI (of nuceli)
-        const std::string resultFilename = "../results/neural-network-runtimes-case-3.csv";
+        const std::string resultFilename = "../results_" + machine + "neural-network-runtimes-case-3.csv";
         std::ofstream file(resultFilename.c_str());
 
         std::vector<int> img_size{512, 512};
@@ -479,7 +506,7 @@ int main(int argc, char** argv) {
     if(case4) {
         std::cout << "\nPatch-wise object detection and classification...\n" << std::endl;
         // CASE 4 - Patch-wise object detection and classification 20x WSI of nuclei (ODAC)
-        const std::string resultFilename = "../results/neural-network-runtimes-case-4.csv";
+        const std::string resultFilename = "../results_" + machine + "neural-network-runtimes-case-4.csv";
         std::ofstream file(resultFilename.c_str());
 
         std::vector<int> img_size {256, 256};
@@ -612,7 +639,7 @@ int main(int argc, char** argv) {
 
     if(case1_batch) {
         std::cout << "\nBatch-inference with use-case patch-wise classification...\n" << std::endl;
-        const std::string resultFilename = "../results/neural-network-runtimes-case-1_batch.csv";
+        const std::string resultFilename = "../results_" + machine + "neural-network-runtimes-case-1_batch.csv";
         std::ofstream file(resultFilename.c_str());
 
         std::vector<int> img_size {512, 512};
@@ -750,8 +777,16 @@ int main(int argc, char** argv) {
 
     if(case1_inceptionv3) {
         std::cout << "\nPatch-wise classification with InceptionV3...\n" << std::endl;
-        const std::string resultFilename = "../results/neural-network-runtimes-case-1_inceptionv3.csv";
+        /*
+        std::string resultFilename = "../results_" + machine + "/neural-network-runtimes-case-1_inceptionv3.csv";
+        if (machine == "windows") {
+            resultFilename = "../" + resultFilename;
+        }
+         */
+        const std::string resultFilename = "C:/Users/andrep/workspace/FAST-Pathology/inference_study/results_windows/neural-network-runtimes-case-1_inceptionv3.csv";
         std::ofstream file(resultFilename.c_str());
+
+        std::cout << "\nFile: " << resultFilename << std::endl;
 
         std::vector<int> img_size {512, 512};
         int patch_level = 0;
@@ -762,7 +797,11 @@ int main(int argc, char** argv) {
         file << "Engine;Device Type;Iteration;Patch generator AVG;Patch generator STD;NN input AVG;NN input STD;NN inference AVG;NN inference STD;NN output AVG;NN output STD;Patch stitcher AVG;Patch stitcher STD;Total\n";
 
         //for(auto &engine : InferenceEngineManager::getEngineList()) {TensorFlowCUDA
-        for(std::string engine : {"TensorFlowCUDA", "OpenVINO", "TensorFlowCPU"}) {
+        auto engines = {"TensorFlowCUDA", "OpenVINO", "TensorFlowCPU"};
+        if (machine == "windows") {
+            engines = {"OpenVINO", "TensorFlowCPU"};
+        }
+        for(std::string engine : engines) {
             std::map<std::string, InferenceDeviceType> deviceTypes = {{"ANY", InferenceDeviceType::ANY}};
             if(engine == "OpenVINO") {
                 // On OpenVINO, try all device types
@@ -771,6 +810,13 @@ int main(int argc, char** argv) {
                         //{"GPU", InferenceDeviceType::GPU},
                         //{"VPU", InferenceDeviceType::VPU},
                 };
+                if (machine == "windows") {
+                    deviceTypes = std::map<std::string, InferenceDeviceType>{
+                        {"CPU", InferenceDeviceType::CPU},
+                        {"GPU", InferenceDeviceType::GPU},
+                        //{"VPU", InferenceDeviceType::VPU},
+                };
+                }
             }
             for(auto &&deviceType : deviceTypes) {
                 std::cout << engine << " for device type " << deviceType.first << std::endl;
@@ -786,7 +832,12 @@ int main(int argc, char** argv) {
 
                     for (int iteration = 0; iteration <= iterations; ++iteration) {
                         auto importer = WholeSlideImageImporter::New();
-                        importer->setFilename(Config::getTestDataPath() + "/WSI/A05.svs");
+                        //importer->setFilename(Config::getTestDataPath() + "/WSI/A05.svs");
+                        if (machine == "windows") {
+                            importer->setFilename("C:/Users/andrep/workspace/FAST-Pathology_old/A05.svs");
+                        } else {
+                            importer->setFilename(Config::getTestDataPath() + "/WSI/A05.svs");
+                        }
 
                         auto tissueSegmentation = TissueSegmentation::New();
                         tissueSegmentation->setInputConnection(importer->getOutputPort());
@@ -827,7 +878,16 @@ int main(int argc, char** argv) {
                                 postfix = "_fp16";
                             }
                         }
-                        network->load(Config::getTestDataPath() + "NeuralNetworkModels/wsi_classification" + postfix + "." + network->getInferenceEngine()->getDefaultFileExtension());
+                        /*
+                        if (machine == "ubuntu") {
+                            network->load(Config::getTestDataPath() + "NeuralNetworkModels/wsi_classification" + postfix + "." + network->getInferenceEngine()->getDefaultFileExtension());
+                        } else if (machine == "windows") {
+                            network->load("C:/Users/andrep/FastPathology/data/Models/mobilenet_v2_bach_model" + postfix + "." +
+                                      network->getInferenceEngine()->getDefaultFileExtension());
+                        }
+                         */
+                        network->load("C:/Users/andrep/Downloads/FAST_Test_Data/data/NeuralNetworkModels/wsi_classification" + postfix + "." + network->getInferenceEngine()->getDefaultFileExtension());
+                        //network->load(Config::getTestDataPath() + "NeuralNetworkModels/wsi_classification" + postfix + "." + network->getInferenceEngine()->getDefaultFileExtension());
                         //network->load("/home/andrep/FastPathology/data/Models/mobilenet_v2_bach_model" + postfix + "." + network->getInferenceEngine()->getDefaultFileExtension());
                         network->setInputConnection(generator->getOutputPort());
                         network->setScaleFactor(1.0f / 255.0f);
@@ -891,7 +951,7 @@ int main(int argc, char** argv) {
         std::cout << "\nCASE 3a - Inference on different magnification levels with rendering with high-res U-Net model...\n" << std::endl;
         //std::cout << "\nCASE 3a - Inference on different magnification levels with rendering with tiny-YOLOv3 model...\n" << std::endl;
         // CASE 3a - Inference on different magnification levels (40x, 20x, 10x, 5x, 2.5x) with tiny-YOLOv3 model
-        const std::string resultFilename = "../results/neural-network-runtimes-case-3a.csv";
+        const std::string resultFilename = "../results_" + machine + "neural-network-runtimes-case-3a.csv";
         std::ofstream file(resultFilename.c_str());
 
         //std::vector<int> img_size {256, 256};
@@ -1028,7 +1088,7 @@ int main(int argc, char** argv) {
     if(case4a) {
         std::cout << "\nCASE 4a - Inference on different magnification levels with rendering with high-res U-Net model...\n" << std::endl;
         // CASE 4a - Inference on different magnification levels (40x, 20x, 10x, 5x, 2.5x) with high-res U-Net for nuclei seg.
-        const std::string resultFilename = "../results/neural-network-runtimes-case-4a.csv";
+        const std::string resultFilename = "../results_" + machine + "neural-network-runtimes-case-4a.csv";
         std::ofstream file(resultFilename.c_str());
 
         std::vector<int> img_size {256, 256};

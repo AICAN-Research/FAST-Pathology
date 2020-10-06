@@ -3,10 +3,11 @@ import pandas as pd
 from tabulate import tabulate
 import os
 
-path = "./results/"
+path = "./results_windows/"
 filename = "neural-network-runtimes-case-"
 
-cases = list(range(1, 5)) + ["1_batch", "1_inceptionv3"]
+#cases = list(range(1, 5)) + ["1_batch", "1_inceptionv3"]
+cases = [1, "1_inceptionv3"]
 
 for i in cases:
     loc = path + filename + str(i) + ".csv"

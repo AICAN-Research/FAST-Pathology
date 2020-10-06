@@ -12,6 +12,7 @@ cmake-build*
 *.mapping
 *.bin
 *build/
+*build*
 WSI/
 WSI*
 Models/
@@ -26,3 +27,5 @@ data/Models/*
 build/
 out/
 openslide_test_data/
+inference_study/Debug/
+inference_study/Release/

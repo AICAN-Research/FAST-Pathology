@@ -110,7 +110,7 @@ class MainWindow : public Window {
         void createPipeline();
         void pipelineEditor();
         void selectFileInProject(int pos);  // int pos);
-        int curr_pos;
+        int curr_pos = 0;
         void loadTissue(QString tissuePath);
         void loadTumor(QString tumorPath);
         void loadPipelines();

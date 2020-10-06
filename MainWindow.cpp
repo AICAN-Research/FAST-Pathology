@@ -856,7 +856,7 @@ void MainWindow::pipelineEditor() {
     scriptEditorWidget->setLayout(scriptLayout);
 
     scriptEditor = new QPlainTextEdit;
-    auto highlighter = new PipelineHighlighter(scriptEditor->document());
+    //auto highlighter = new PipelineHighlighter(scriptEditor->document());
     const QFont fixedFont("UbuntuMono");
     scriptEditor->setFont(fixedFont);
     scriptLayout->insertWidget(1, scriptEditor);
@@ -1940,6 +1940,8 @@ void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
 void MainWindow::selectFileInProject(int pos) {
 
     // if you select a WSI and it's already open, do nothing
+    std::cout << "CurrentPos: " << pos << std::endl;
+    std::cout << "Length of wsiList: " << std::to_string(wsiList.size()) << std::endl;
     if (filename == wsiList[pos]) {
         auto mBox = new QMessageBox(mWidget);
         mBox->setText("WSI is already open.");
@@ -2006,6 +2008,7 @@ void MainWindow::selectFileInProject(int pos) {
     //stopComputationThread();
     // Import image from file using the ImageFileImporter
     importer = WholeSlideImageImporter::New();
+    std::cout << "\nCurrent filename: " << filename << std::endl;
     importer->setFilename(filename);
     m_image = importer->updateAndGetOutputData<ImagePyramid>();
 
@@ -2576,7 +2579,7 @@ bool MainWindow::segmentTissue() {
          */
 
         stopFlag = false;
-        if (false) { //(advancedMode) { // FIXME: Turned off for testing. Something wrong
+        if (advancedMode) { // FIXME: Turned off for testing. Something wrong
             // option for setting parameters
             QDialog paramDialog;
             paramDialog.setStyleSheet(mWidget->styleSheet()); // transfer style sheet from parent
