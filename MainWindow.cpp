@@ -77,7 +77,7 @@ MainWindow::MainWindow() {
     enableMaximized(); // <- function from Window.cpp
 
     mWidget->setAcceptDrops(true); // to enable drag/drop events
-    QObject::connect(mWidget, &WindowWidget::fileNamesSent, std::bind(&MainWindow::receiveFileList, this, std::placeholders::_1));  //this, SLOT(receiveFileList(QList<QString>))); //std::bind(&MainWindow::receiveFileList, this));
+    QObject::connect(mWidget, &WindowWidget::filesDropped, std::bind(&MainWindow::receiveFileList, this, std::placeholders::_1));  //this, SLOT(receiveFileList(QList<QString>))); //std::bind(&MainWindow::receiveFileList, this));
 
     //mWidget->setMouseTracking(true);
     //mWidget->setFocusPolicy(Qt::StrongFocus);
@@ -3092,6 +3092,8 @@ std::map<std::string, std::string> MainWindow::setParameterDialog(std::map<std::
 //  perhaps make a new class instead?
 bool MainWindow::pixelClassifier(std::string modelName) {
 
+	std::cout << "Current model: " << modelName << std::endl;
+
     // read model metadata (txtfile)
     std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
 
@@ -3160,11 +3162,18 @@ bool MainWindow::pixelClassifier(std::string modelName) {
         // get available IEs as a list
         std::list<std::string> IEsList;
         QStringList tmpPaths = QDir(QString::fromStdString(Config::getLibraryPath())).entryList(QStringList(), QDir::Files);
-        foreach(QString filePath, tmpPaths) {
+        // case : ubuntu
+		foreach(QString filePath, tmpPaths) {
             if (filePath.toStdString().find("libInferenceEngine") != std::string::npos) {
                 IEsList.push_back(split(split(filePath.toStdString(), "libInferenceEngine").back(), ".so")[0]);
             }
         }
+		// case : windows
+		foreach(QString filePath, tmpPaths) {
+			if (filePath.toStdString().find("InferenceEngine") != std::string::npos) {
+				IEsList.push_back(split(split(filePath.toStdString(), "InferenceEngine").back(), ".dll")[0]);
+			}
+		}
 
         // check which model formats exists, before choosing inference engine
         QDir directory(QString::fromStdString(cwd + "data/Models/"));
@@ -3174,6 +3183,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
         foreach(QString currentModel, models) {
             if (currentModel.toStdString().find(modelName) != std::string::npos) {
                 acceptedModels.push_back("." + split(currentModel.toStdString(), modelName + ".").back());
+				std::cout << "accepted models: ." + split(currentModel.toStdString(), modelName + ".").back() << std::endl;
             }
         }
 
@@ -3190,26 +3200,40 @@ bool MainWindow::pixelClassifier(std::string modelName) {
         } else if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "low")) {
             network = SegmentationNetwork::New();
         }
-        std::cout << "\n :) \n";
         //network->setInferenceEngine("TensorRT"); //"TensorRT");
 
         bool checkFlag = true;
+
+		std::cout << "\nCurrent available IEs: " << std::endl;
+		foreach(std::string elem, IEsList) {
+			std::cout << elem << ", ";
+		}
+
+		std::cout << "\nWhich model formats are available and that there exists an IE for: " << std::endl;
+		foreach(std::string elem, acceptedModels) {
+			std::cout << elem << ", ";
+		}
+
         // /*
         // Now select best available IE based on which extensions exist for chosen model
         // TODO: Current optimization profile is: 0. Please ensure there are no enqueued operations pending in this context prior to switching profiles
-        if (std::find(acceptedModels.begin(), acceptedModels.end(), ".uff") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "TensorRT") != IEsList.end()) {
-            network->setInferenceEngine("TensorRT");
+        if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".uff") != acceptedModels.end()) && (std::find(IEsList.begin(), IEsList.end(), "TensorRT") != IEsList.end())) {
+			std::cout << "TensorRT selected" << std::endl;
+			network->setInferenceEngine("TensorRT");
         } else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "TensorFlowCUDA") != IEsList.end()) {
-            network->setInferenceEngine("TensorFlowCUDA");
+			std::cout << "TensorFlowCUDA selected" << std::endl;
+			network->setInferenceEngine("TensorFlowCUDA");
             /*
             if (std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end()) {
                 network->setInferenceEngine("OpenVINO");
             }
              */
         } else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end()) {
-            network->setInferenceEngine("OpenVINO");
+			std::cout << "OpenVINO selected" << std::endl;
+			network->setInferenceEngine("OpenVINO");
         } else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "TensorFlowCPU") != IEsList.end()) {
-            network->setInferenceEngine("TensorFlowCPU");
+			std::cout << "TensorFlowCPU selected" << std::endl;
+			network->setInferenceEngine("TensorFlowCPU");
         } 
 		/* else {
             std::cout << "\nModel does not exist in Models/ folder. Please add it using AddModels(). "
@@ -3467,15 +3491,15 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 currNetwork->load(cwd + "data/Models/" + modelName + "." + currNetwork->getInferenceEngine()->getDefaultFileExtension()); //".uff");
                 currNetwork->setInputConnection(generator->getOutputPort());
 
-                /* // FIXME: Bug when using NMS - ERROR [140237963507456] Terminated with unhandled exception: Size must be > 0, got: -49380162997889393559076864.000000 -96258.851562
+                // FIXME: Bug when using NMS - ERROR [140237963507456] Terminated with unhandled exception: Size must be > 0, got: -49380162997889393559076864.000000 -96258.851562
                 auto nms = NonMaximumSuppression::New();
                 nms->setThreshold(0);
                 nms->setInputConnection(currNetwork->getOutputPort());
-                 */
+                
 
                 auto boxAccum = BoundingBoxSetAccumulator::New();
-                //boxAccum->setInputConnection(nms->getOutputPort());
-                boxAccum->setInputConnection(currNetwork->getOutputPort());
+                boxAccum->setInputConnection(nms->getOutputPort());
+                //boxAccum->setInputConnection(currNetwork->getOutputPort());
 
                 auto boxRenderer = BoundingBoxRenderer::New();
                 boxRenderer->setInputConnection(boxAccum->getOutputPort());
