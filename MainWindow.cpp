@@ -174,10 +174,16 @@ void MainWindow::createOpenGLWindow() {
 	//mainSplitter->setFrameShadow(QFrame::Sunken);
 	//mainSplitter->setStyleSheet("background-color: rgb(55, 100, 110);");
 	mainSplitter->setHandleWidth(5);
-	//mainSplitter->setStyleSheet("QSplitter::handle { background-color: rgb(100, 100, 200); }; ");  // FIXME: didnt work on windows?
+	mainSplitter->setStyleSheet("QSplitter::handle { background-color: rgb(100, 100, 200); }; QMenuBar::handle { background-color: rgb(20, 100, 20); }");
 	mainSplitter->addWidget(menuWidget);
 	mainSplitter->addWidget(view);
 	mainSplitter->setStretchFactor(1, 1);
+
+	/*
+	//tb->setStyleSheet("QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };");
+    //                         "border-bottom:2px solid rgba(25,25,120,75); "
+    //                         "QMenu{background-color:palette(window);border:1px solid palette(shadow);}");
+	*/
 
     mainLayout->addWidget(mainSplitter);
 }
@@ -261,7 +267,7 @@ void MainWindow::createMenubar() {
 
     auto pipelineMenu = topFiller->addMenu(tr("&Pipelines"));
     pipelineMenu->addAction("Import pipelines", this, &MainWindow::addPipelines);
-    pipelineMenu->addAction("Pipeline Editor", this, &MainWindow::pipelineEditor);
+    pipelineMenu->addAction("Pipeline Editor", this, &MainWindow::customPipelineEditor);
     runPipelineMenu = new QMenu("&Run Pipeline", mWidget);
     //runPipelineMenu->addAction("Tumor segmentation", this, &MainWindow::lowresSegmenter);
     //runPipelineMenu->addAction("Grade classification");
@@ -840,31 +846,42 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 }
 
 
-void MainWindow::pipelineEditor() {
+void MainWindow::customPipelineEditor() {
 
-    auto scriptEditorWidgetBackground = new QWidget(mWidget);
+    //auto scriptEditorWidgetBackground = new QWidget(mWidget);
     auto backgroundLayout = new QVBoxLayout;
 
     scriptEditorWidget = new QDialog(mWidget);
     scriptEditorWidget->setWindowTitle("Script Editor");
     backgroundLayout->addWidget(scriptEditorWidget);
 
-    scriptEditorWidget->setMinimumWidth(800);
-    scriptEditorWidget->setMinimumHeight(1000);  // TODO: Better to use baseSize, but not working?
+    //scriptEditorWidget->setMinimumWidth(800);
+    //scriptEditorWidget->setMinimumHeight(1000);  // TODO: Better to use baseSize, but not working?
+
+	//scriptEditorWidget->setBaseSize(800, 1000);
 
     scriptLayout = new QVBoxLayout;
     scriptEditorWidget->setLayout(scriptLayout);
 
     scriptEditor = new QPlainTextEdit;
-    //auto highlighter = new PipelineHighlighter(scriptEditor->document());
+    auto highlighter = new PipelineHighlighter(scriptEditor->document());
     const QFont fixedFont("UbuntuMono");
     scriptEditor->setFont(fixedFont);
+
+	//auto scriptEditor = new PipelineEditor("C:/Users/andrp/fast/pipelines/wsi_patch_segmentation.fpl");
+	
+	// @TODO: This works, but I don't like the editor, and I just want to be able to start the editor without needing to 
+	//auto scriptEditor = new PipelineEditor("C:/Users/andrp/fast/pipelines/wsi_patch_segmentation.fpl");
+	//scriptEditor->show();
+
     scriptLayout->insertWidget(1, scriptEditor);
 
     // center QDialog when opened
     QRect rect = scriptEditorWidget->geometry();
     QRect parentRect = mWidget->geometry();
     rect.moveTo(mWidget->mapToGlobal(QPoint(parentRect.x() + parentRect.width() - rect.width(), parentRect.y())));
+
+	scriptEditorWidget->resize(600, 800); //resize((int)(0.6 * scriptEditorWidget->width()), (int) (0.8 * scriptEditorWidget->height()));
 
     createActionsScript();
     scriptEditorWidget->show(); // finally slow editor
@@ -1596,16 +1613,16 @@ void MainWindow::selectFile() {
 
         switch (ret) {
             case QMessageBox::Save:
-                std::cout << "\n Results not saved yet. Just cancelled the switch! \n";
+                std::cout << "Results not saved yet. Just cancelled the switch!" << std::endl;
                 // Save was clicked
                 return;
             case QMessageBox::Discard:
                 // Don't Save was clicked
-                std::cout << "\n Discarded! \n";
+				std::cout << "Discarded!" << std::endl;
                 break;
             case QMessageBox::Cancel:
                 // Cancel was clicked
-                std::cout << "\n Cancelled! \n";
+                std::cout << "Cancelled!"  << std::endl;
                 return;
             default:
                 // should never be reached
@@ -1631,11 +1648,12 @@ void MainWindow::selectFile() {
 
     auto progDialog = QProgressDialog(mWidget);
     progDialog.setRange(0, fileNames.count()-1);
+	//progDialog.setContentsMargins(0, 0, 0, 0);
     progDialog.setVisible(true);
     progDialog.setModal(false);
     progDialog.setLabelText("Loading WSIs...");
-    QRect screenrect = mWidget->screen()[0].geometry();
-    progDialog.move(mWidget->width() - progDialog.width() / 2, - mWidget->width() / 2 - progDialog.width() / 2);
+    //QRect screenrect = mWidget->screen()[0].geometry();
+	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1); //-mWidget->height() / 2 - progDialog.height() / 2);
     progDialog.show();
 
     int counter = 0;
@@ -1645,7 +1663,7 @@ void MainWindow::selectFile() {
             return;
         //filename = fileName.toStdString();
         auto currFileName = fileName.toStdString();
-        std::cout << "\nSelected file: " << currFileName << "\n";
+        std::cout << "Selected file: " << currFileName << std::endl;
         wsiList.push_back(currFileName);
 
         // Import image from file using the ImageFileImporter
@@ -1660,7 +1678,7 @@ void MainWindow::selectFile() {
             filename = currFileName;
 
             m_image = currImage;
-            std::cout << "\n count:" << counter;
+            std::cout << "count:" << counter << std::endl;
             metadata = m_image->getMetadata(); // get metadata
 
             /*
@@ -2433,6 +2451,17 @@ void MainWindow::addModels() {
             nullptr, QFileDialog::DontUseNativeDialog
     ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
 
+	auto progDialog = QProgressDialog(mWidget);
+	//std::cout << "\nNum files: " << ls.count() << std::endl;
+	progDialog.setRange(0, ls.count() - 1);
+	progDialog.setVisible(true);
+	progDialog.setModal(false);
+	progDialog.setLabelText("Adding models...");
+	QRect screenrect = mWidget->screen()[0].geometry();
+	progDialog.move(mWidget->width() - progDialog.width() / 2, -mWidget->width() / 2 - progDialog.width() / 2);
+	progDialog.show();
+
+	int counter = 0;
     // now iterate over all selected files and add selected files and corresponding ones to Models/
     for (QString& fileName : ls) {
 
@@ -2460,6 +2489,8 @@ void MainWindow::addModels() {
         string newPath = cwd + "data/Models/" + someFile;
         if (fileExists(newPath)) {
             std::cout << "\n file with same name already exists in folder, didn't transfer... \n";
+			progDialog.setValue(counter);
+			counter++;
             continue;
         }
         //QFile::copy(fileName, QString::fromStdString(newPath));
@@ -2499,6 +2530,12 @@ void MainWindow::addModels() {
         //}
         //createProcessWidget();
         //mainLayout->removeWidget(menuWidget); // this doesnt work...
+
+		progDialog.setValue(counter);
+		counter++;
+
+		// to render straight away (avoid waiting on all WSIs to be handled before rendering)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
     }
 }
 
@@ -3493,10 +3530,9 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
                 // FIXME: Bug when using NMS - ERROR [140237963507456] Terminated with unhandled exception: Size must be > 0, got: -49380162997889393559076864.000000 -96258.851562
                 auto nms = NonMaximumSuppression::New();
-                nms->setThreshold(0);
+                //nms->setThreshold(0);
                 nms->setInputConnection(currNetwork->getOutputPort());
                 
-
                 auto boxAccum = BoundingBoxSetAccumulator::New();
                 boxAccum->setInputConnection(nms->getOutputPort());
                 //boxAccum->setInputConnection(currNetwork->getOutputPort());

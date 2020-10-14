@@ -108,7 +108,7 @@ class MainWindow : public Window {
         void openProject();
         void saveProject();
         void createPipeline();
-        void pipelineEditor();
+        void customPipelineEditor();
         void selectFileInProject(int pos);  // int pos);
         int curr_pos = 0;
         void loadTissue(QString tissuePath);

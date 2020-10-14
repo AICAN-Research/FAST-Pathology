@@ -3,7 +3,7 @@ import pandas as pd
 from tabulate import tabulate
 import os
 
-path = "./results_windows/"
+path = "./results_windows2/"  # results_windows, results_windows2, results
 filename = "neural-network-runtimes-case-"
 
 #cases = list(range(1, 5)) + ["1_batch", "1_inceptionv3"]

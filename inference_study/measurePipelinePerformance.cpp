@@ -50,14 +50,14 @@ int main(int argc, char** argv) {
     const bool case1_batch = !parser.getOption("disable-case-1-batch");
     const bool case1_inceptionv3 = !parser.getOption("disable-case-1_inceptionv3");
     //const bool case3_batch = !parser.getOption("disable-case-3-batch");
-    const std::string machine = "windows";  // ubuntu or windows, just for storing results on both machines used in the experiments
+    const std::string machine = "windows2";  // {windows, windows2, ubuntu}, just for storing results on both machines used in the experiments
 
 
     if(case1) {
         std::cout << "\nPatch-wise classification...\n" << std::endl;
         // CASE 1 - Patch-wise classification using BACH-model on 20x WSI
         std::string resultFilename = "../results_" + machine + "/neural-network-runtimes-case-1.csv";
-        if (machine == "windows") {
+        if (machine.substr(0, 7) == "windows") {
             resultFilename = "../" + resultFilename;
         }
         std::ofstream file(resultFilename.c_str());
@@ -72,7 +72,9 @@ int main(int argc, char** argv) {
         auto engines = {"TensorRT", "TensorFlowCUDA", "OpenVINO", "TensorFlowCPU"};
         if (machine == "windows") {
             engines = {"OpenVINO", "TensorFlowCPU"};
-        }
+		} else if (machine == "windows2") {
+			engines = {"TensorRT", "OpenVINO", "TensorFlowCPU"};
+		}
         //for(auto &engine : InferenceEngineManager::getEngineList()) {TensorFlowCUDA
         for(std::string engine : engines) {
             std::map<std::string, InferenceDeviceType> deviceTypes = {{"ANY", InferenceDeviceType::ANY}};
@@ -83,7 +85,7 @@ int main(int argc, char** argv) {
                         //{"GPU", InferenceDeviceType::GPU},
                         //{"VPU", InferenceDeviceType::VPU},
                 };
-                if (machine == "windows") {
+                if (machine.substr(0, 7) == "windows") {
                     deviceTypes = std::map<std::string, InferenceDeviceType>{
                         {"CPU", InferenceDeviceType::CPU},
                         {"GPU", InferenceDeviceType::GPU},
@@ -105,8 +107,10 @@ int main(int argc, char** argv) {
 
                     for (int iteration = 0; iteration <= iterations; ++iteration) {
                         auto importer = WholeSlideImageImporter::New();
-                        if (machine == "windows") {
-                            importer->setFilename("C:/Users/andrep/workspace/FAST-Pathology_old/A05.svs");
+						if (machine == "windows") {
+							importer->setFilename("C:/Users/andrep/workspace/FAST-Pathology_old/A05.svs");
+						} else if (machine == "windows2") {
+							importer->setFilename("C:/Users/andrp/workspace/FAST-Pathology/A05.svs");
                         } else {
                             importer->setFilename(Config::getTestDataPath() + "/WSI/A05.svs");
                         }
@@ -152,7 +156,11 @@ int main(int argc, char** argv) {
                         else if (machine == "windows") {
                             network->load("C:/Users/andrep/FastPathology/data/Models/mobilenet_v2_bach_model" + postfix + "." +
                                       network->getInferenceEngine()->getDefaultFileExtension());
-                        }
+						}
+						else {
+							network->load("C:/Users/andrp/FastPathology/data/Models/mobilenet_v2_bach_model" + postfix + "." +
+								network->getInferenceEngine()->getDefaultFileExtension());
+						}
                         network->setInputConnection(generator->getOutputPort());
                         network->setScaleFactor(1.0f / 255.0f);
                         network->enableRuntimeMeasurements();
@@ -777,13 +785,14 @@ int main(int argc, char** argv) {
 
     if(case1_inceptionv3) {
         std::cout << "\nPatch-wise classification with InceptionV3...\n" << std::endl;
-        /*
+        // /*
         std::string resultFilename = "../results_" + machine + "/neural-network-runtimes-case-1_inceptionv3.csv";
-        if (machine == "windows") {
+        if (machine.substr(0, 7) == "windows") {
             resultFilename = "../" + resultFilename;
         }
-         */
-        const std::string resultFilename = "C:/Users/andrep/workspace/FAST-Pathology/inference_study/results_windows/neural-network-runtimes-case-1_inceptionv3.csv";
+
+        // */
+        //const std::string resultFilename = "C:/Users/andrep/workspace/FAST-Pathology/inference_study/results_windows/neural-network-runtimes-case-1_inceptionv3.csv";
         std::ofstream file(resultFilename.c_str());
 
         std::cout << "\nFile: " << resultFilename << std::endl;
@@ -797,10 +806,12 @@ int main(int argc, char** argv) {
         file << "Engine;Device Type;Iteration;Patch generator AVG;Patch generator STD;NN input AVG;NN input STD;NN inference AVG;NN inference STD;NN output AVG;NN output STD;Patch stitcher AVG;Patch stitcher STD;Total\n";
 
         //for(auto &engine : InferenceEngineManager::getEngineList()) {TensorFlowCUDA
-        auto engines = {"TensorFlowCUDA", "OpenVINO", "TensorFlowCPU"};
+        auto engines = {"TensorFlowCUDA", "OpenVINO", "TensorFlowCPU"};  // ubuntu default
         if (machine == "windows") {
             engines = {"OpenVINO", "TensorFlowCPU"};
-        }
+		} else if (machine == "windows2") {
+			engines = {"TensorRT", "OpenVINO", "TensorFlowCPU"};
+		}
         for(std::string engine : engines) {
             std::map<std::string, InferenceDeviceType> deviceTypes = {{"ANY", InferenceDeviceType::ANY}};
             if(engine == "OpenVINO") {
@@ -810,7 +821,7 @@ int main(int argc, char** argv) {
                         //{"GPU", InferenceDeviceType::GPU},
                         //{"VPU", InferenceDeviceType::VPU},
                 };
-                if (machine == "windows") {
+                if (machine.substr(0, 7) == "windows") {
                     deviceTypes = std::map<std::string, InferenceDeviceType>{
                         {"CPU", InferenceDeviceType::CPU},
                         {"GPU", InferenceDeviceType::GPU},
@@ -835,7 +846,9 @@ int main(int argc, char** argv) {
                         //importer->setFilename(Config::getTestDataPath() + "/WSI/A05.svs");
                         if (machine == "windows") {
                             importer->setFilename("C:/Users/andrep/workspace/FAST-Pathology_old/A05.svs");
-                        } else {
+						} else if (machine == "windows2") {
+							importer->setFilename("C:/Users/andrp/workspace/FAST-Pathology/A05.svs");
+						} else {
                             importer->setFilename(Config::getTestDataPath() + "/WSI/A05.svs");
                         }
 
@@ -859,7 +872,9 @@ int main(int argc, char** argv) {
                         network->setInferenceEngine(engine);
                         if (engine != "TensorRT") {
                             //if (!((engine == "TensorRT") || (engine == "TensorFlowCUDA"))) {
-                            network->getInferenceEngine()->setDevice(1);
+							if (machine == "ubuntu") {
+								network->getInferenceEngine()->setDevice(1);
+							}
                         } else {
                             network->getInferenceEngine()->setDevice(currDevice);
                         }
@@ -886,7 +901,14 @@ int main(int argc, char** argv) {
                                       network->getInferenceEngine()->getDefaultFileExtension());
                         }
                          */
-                        network->load("C:/Users/andrep/Downloads/FAST_Test_Data/data/NeuralNetworkModels/wsi_classification" + postfix + "." + network->getInferenceEngine()->getDefaultFileExtension());
+						if (machine == "windows") {
+							network->load("C:/Users/andrep/Downloads/FAST_Test_Data/data/NeuralNetworkModels/wsi_classification" + postfix + "." + network->getInferenceEngine()->getDefaultFileExtension());
+						} else if (machine == "windows2") {
+							network->load("C:/Users/andrp/Downloads/FAST_Test_Data/data/NeuralNetworkModels/wsi_classification" + postfix + "." + network->getInferenceEngine()->getDefaultFileExtension());
+						}
+						else {
+							network->load(Config::getTestDataPath() + "NeuralNetworkModels/wsi_classification" + postfix + "." + network->getInferenceEngine()->getDefaultFileExtension());
+						}
                         //network->load(Config::getTestDataPath() + "NeuralNetworkModels/wsi_classification" + postfix + "." + network->getInferenceEngine()->getDefaultFileExtension());
                         //network->load("/home/andrep/FastPathology/data/Models/mobilenet_v2_bach_model" + postfix + "." + network->getInferenceEngine()->getDefaultFileExtension());
                         network->setInputConnection(generator->getOutputPort());
