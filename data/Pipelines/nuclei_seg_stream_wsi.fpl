@@ -16,17 +16,9 @@ Input 0 importer 0
 Input 1 tissueSeg 0
 
 ProcessObject network SegmentationNetwork
-#Attribute model C:/fastPathology_models/high_res_nuclei_unet.pb
-#Attribute input-names "input_1"
 Attribute output-names "conv2d_26/truediv"
 Attribute scale-factor 0.003921568627451
-#Attribute inference-engine TensorFlowCPU
 Attribute inference-engine TensorFlowCUDA
-#Attribute inference-engine TensorRT
-#Attribute gpu 0
-#Attribute 
-#Attribute inference-engine OpenVINO
-#Attribute model "C:/fastPathology_models/high_res_nuclei_unet.xml"
 Attribute model "/home/andrep/workspace/FAST-Pathology/fastPathology_stuff_290420/models/high_res_nuclei_unet.pb"
 Input 0 patch 0
 

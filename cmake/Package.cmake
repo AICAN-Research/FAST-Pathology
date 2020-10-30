@@ -131,5 +131,6 @@ else()
     #set(CPACK_COMPONENTS_ALL FastPathology)
     #set(CPACK_DEBIAN_FAST_FILE_NAME "FastPathology_0.1.0.deb")
     set(CPACK_DEBIAN_FAST_PACKAGE_NAME "FastPathology")
-    include(CPack)
 endif()
+
+include(CPack)

@@ -96,9 +96,16 @@ class MainWindow : public Window {
         bool showImage();
         bool segmentTissue();
         bool stopFlag;
+		
+		bool m_runForProject = false;
+		std::vector<std::string> m_runForProjectWsis;
+		void runForProject_apply(std::string method);
 
         static void helpUrl();
         static void reportIssueUrl();
+		
+		void aboutProgram();
+		QColor changeColor();
 
         void selectFile();
         void selectFileDrag(const QList<QString> &fileNames);
@@ -107,6 +114,7 @@ class MainWindow : public Window {
         void createProject();
         void openProject();
         void saveProject();
+		void runForProject();
         void createPipeline();
         void customPipelineEditor();
         void selectFileInProject(int pos);  // int pos);
@@ -160,6 +168,7 @@ class MainWindow : public Window {
 
         std::string applicationName;
         std::string modelName;
+		std::map<std::string, std::string> modelNames;
         bool advancedMode = false;
         std::string getWsiFormat();
         std::string wsiFormat;
@@ -219,7 +228,7 @@ class MainWindow : public Window {
          * Removes a named renderer from the view
          * @param name
          */
-        void removeRenderer(std::string name);
+        void removeRendererObject(std::string name);
         /**
          * Insert a renderer into the view with a given name.
          * If a renderer with that name already exist, replace it.

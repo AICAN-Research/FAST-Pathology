@@ -812,6 +812,7 @@ int main(int argc, char** argv) {
 		} else if (machine == "windows2") {
 			engines = {"TensorRT", "OpenVINO", "TensorFlowCPU"};
 		}
+
         for(std::string engine : engines) {
             std::map<std::string, InferenceDeviceType> deviceTypes = {{"ANY", InferenceDeviceType::ANY}};
             if(engine == "OpenVINO") {
