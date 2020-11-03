@@ -10,13 +10,15 @@ include_directories(.)
 find_package(FAST REQUIRED)
 include(${FAST_USE_FILE})
 
-add_executable(fastPathology
+set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
+
+add_executable(fastpathology
         main.cpp
         MainWindow.cpp)
-add_dependencies(fastPathology fast_copy)
-target_link_libraries(fastPathology ${FAST_LIBRARIES})
+add_dependencies(fastpathology fast_copy)
+target_link_libraries(fastpathology ${FAST_LIBRARIES})
 
-set_target_properties(fastPathology PROPERTIES
+set_target_properties(fastpathology PROPERTIES
         CXX_STANDARD 17
         CXX_EXTENSIONS OFF
         )

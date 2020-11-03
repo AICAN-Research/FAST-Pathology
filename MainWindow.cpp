@@ -246,7 +246,7 @@ void MainWindow::aboutProgram() {
 	textBox->append("");
 	textBox->append("");
 	textBox->setAlignment(Qt::AlignCenter);
-	textBox->append("Author: Andr" + QStringLiteral("é") + " Pedersen");
+	textBox->append("Author: Andre Pedersen"); // + QStringLiteral("ï¿½") + " Pedersen");
 	textBox->setAlignment(Qt::AlignCenter);
 	textBox->setStyleSheet("QTextEdit { border: none }");
 	//textBox->setBaseSize(150, 200);
@@ -855,7 +855,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 		QObject::connect(colorButton, &QPushButton::clicked, [=]() {
 			auto rgb = colorSetWidget->getColor().toRgb();
 			auto someRenderer = std::dynamic_pointer_cast<SegmentationPyramidRenderer>(m_rendererList[someName]);
-			someRenderer->setChannelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
+			//someRenderer->setChannelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
 		});
 	} else if (m_rendererTypeList[someName] == "BoundingBoxRenderer") {
 		// get metadata of current model
@@ -1437,7 +1437,7 @@ void MainWindow::saveThumbnail() {
 	progDialog.show();
 
 	auto counter = 0;
-	for (auto &const currWSI : currentWSIs) {
+	for (const auto& currWSI : currentWSIs) {
 
 		std::cout << "current WSI: " << currWSI << std::endl;
 		auto access = m_image->getAccess(ACCESS_READ);
@@ -1531,7 +1531,7 @@ void MainWindow::saveTissueSegmentation() {
 	progDialog.show();
 
 	auto counter = 0;
-	for (auto &const currWSI : currentWSIs) {
+	for (const auto& currWSI : currentWSIs) {
 
 		// check if folder for current WSI exists, if not, create one
 		QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(currWSI, "/").back(), ".")[0] + "/").c_str();
@@ -2606,7 +2606,7 @@ void MainWindow::runForProject() {
 
 	auto allFilesWidget = new QListWidget(projectDialog);
 	allFilesWidget->setSelectionMode(QAbstractItemView::MultiSelection);
-	for (auto &const item : wsiList) {
+	for (const auto& item : wsiList) {
 		allFilesWidget->addItem(QString::fromStdString(item));
 	}
 	allFilesWidget->setMinimumWidth(allFilesWidget->sizeHintForColumn(0));
@@ -2635,7 +2635,7 @@ void MainWindow::runForProject() {
 
 	auto selectedFilesWidget = new QListWidget(projectDialog);
 	selectedFilesWidget->setSelectionMode(QAbstractItemView::MultiSelection);
-	for (auto &const item : m_runForProjectWsis) {
+	for (const auto& item : m_runForProjectWsis) {
 		selectedFilesWidget->addItem(QString::fromStdString(item));
 	}
 	selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
@@ -2647,7 +2647,7 @@ void MainWindow::runForProject() {
 	// introduce events -> signals and slots, connect and stuff
 	QObject::connect(allSelectButton, &QPushButton::clicked, [=]() {
 		selectedFilesWidget->clear();
-		for (auto &const item : wsiList) {
+		for (const auto& item : wsiList) {
 			selectedFilesWidget->addItem(QString::fromStdString(item));
 		}
 		selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
@@ -2662,7 +2662,7 @@ void MainWindow::runForProject() {
 			currItemsAlreadySelected.push_back(selectedFilesWidget->item(row)->text().toStdString());
 		}
 
-		for (auto &const currItem : currSelectedItems) {
+		for (const auto& currItem : currSelectedItems) {
 			std::cout << "current item: " << currItem->text().toStdString() << std::endl;
 			if (std::find(currItemsAlreadySelected.begin(), currItemsAlreadySelected.end(), currItem->text().toStdString()) != currItemsAlreadySelected.end()) {
 				1;
@@ -2682,7 +2682,7 @@ void MainWindow::runForProject() {
 	QObject::connect(fewRemoveButton, &QPushButton::clicked, [=]() {
 		auto currSelectedItems = selectedFilesWidget->selectedItems();
 
-		for (auto &const currItem : currSelectedItems) {
+		for (const auto& currItem : currSelectedItems) {
 			delete selectedFilesWidget->takeItem(selectedFilesWidget->row(currItem));
 		}
 
@@ -3401,7 +3401,7 @@ void MainWindow::runPipeline(std::string path) {
 	progDialog.show();
 
 	auto counter = 0;
-	for (auto &const currWSI : currentWSIs) {
+	for (const auto& currWSI : currentWSIs) {
 
 		// TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
 		// pipeline requires some user-defined inputs, e.g. which WSI to use (and which model?)
