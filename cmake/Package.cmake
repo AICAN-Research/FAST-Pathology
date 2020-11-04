@@ -58,7 +58,7 @@ install(
 # add Data folder for storing saved models, icons, pipelines and other stuff, and move necessary folders
 install(
     DIRECTORY ${PROJECT_BINARY_DIR}/../data/Icons
-    DESTINATION data
+    DESTINATION ../data
 )
 
 
@@ -69,6 +69,10 @@ set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
 DocumentationPath = @ROOT@/doc/
 LibraryPath = @ROOT@/bin/
 QtPluginsPath = @ROOT@/plugins/")
+
+# move data folder to specific location
+#file(MAKE_DIRECTORY $ENV{HOME}/fastpathology/data/Icons)
+
 else()
 # UNIX
 set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
@@ -125,12 +129,32 @@ set(CPACK_COMPONENT_FAST_REQUIRED ON)
 #set(CPACK_PACKAGE_EXECUTABLES fastpathology "fastpathology")
 
 if(WIN32 AND NOT UNIX)
-
+	
     ## Windows
     # Create windows installer (Requires NSIS from http://nsis.sourceforge.net)
     set(CPACK_GENERATOR NSIS)
 
-    set(CPACK_PACKAGE_INSTALL_DIRECTORY "fastpathology")
+	set(CPACK_PACKAGE_INSTALL_DIRECTORY "fastpathology")
+	set(CPACK_PACKAGE_FILE_NAME "fastpathology_windows10_v${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+	#set(CPACK_NSIS_FILE_NAME "fastpathology_windows10_v${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}.exe")
+	set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+
+	# this works
+	set(CPACK_NSIS_MENU_LINKS "bin\\\\fastpathology.exe" "FastPathology")
+
+	# this doesn't
+	set(CPACK_CREATE_DESKTOP_LINKS "fastpathology")
+
+	# Icon stuff
+	set(CPACK_NSIS_MODIFY_PATH ON)
+	#set(CPACK_NSIS_MUI_ICON ${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon.ico)
+	#set(CPACK_NSIS_MUI_UNICON ${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon.ico)
+	set(CPACK_CREATE_DESKTOP_LINKS ON)
+	set(CPACK_NSIS_INSTALLED_ICON_NAME bin\\\\fastpathology.exe)
+
+	## testing WIX instead of NSIS for windows installer
+	#set(CPACK_GENERATOR WIX)
+
     include(CPack)
 else()
     ## UNIX
@@ -144,17 +168,17 @@ else()
     )
     ]]
 
-    # Get distro name and version
-    find_program(LSB_RELEASE_EXEC lsb_release)
-    execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
-            OUTPUT_VARIABLE DISTRO_NAME
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    string(TOLOWER ${DISTRO_NAME} DISTRO_NAME)
-    execute_process(COMMAND ${LSB_RELEASE_EXEC} -rs
-            OUTPUT_VARIABLE DISTRO_VERSION
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
+	# Get distro name and version
+	find_program(LSB_RELEASE_EXEC lsb_release)
+	execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
+			OUTPUT_VARIABLE DISTRO_NAME
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+	string(TOLOWER ${DISTRO_NAME} DISTRO_NAME)
+	execute_process(COMMAND ${LSB_RELEASE_EXEC} -rs
+			OUTPUT_VARIABLE DISTRO_VERSION
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
 
     # Create debian package
     set(CPACK_GENERATOR "DEB")

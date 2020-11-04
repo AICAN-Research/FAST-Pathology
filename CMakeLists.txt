@@ -12,9 +12,17 @@ include(${FAST_USE_FILE})
 
 set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
 
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+
 add_executable(fastpathology
         main.cpp
-        MainWindow.cpp)
+        MainWindow.cpp
+		AppIcon.rc
+		qtres.qrc
+		qtres.cpp
+		cproject.pro)
+
 add_dependencies(fastpathology fast_copy)
 target_link_libraries(fastpathology ${FAST_LIBRARIES})
 

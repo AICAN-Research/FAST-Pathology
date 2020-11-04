@@ -67,6 +67,8 @@
 
 using namespace std;
 
+//inline void initMyResource() { Q_INIT_RESOURCE(qtres); }
+
 namespace fast {
 
 MainWindow::MainWindow() {
@@ -86,9 +88,16 @@ MainWindow::MainWindow() {
     //get_cwd(); // FIXME: This should be the directory of where FastPathology is built, and all subfolders saved should be stored here
     // <- TODO: Currently, this is done instead, as the current get_cwd() does not work for windows
     //cwd = "/home/andrep/workspace/FAST-Pathology/"; //cwd = "C:/Users/andrep/workspace/FAST-Pathology/";
-    cwd = QDir::homePath().toStdString();
+
+	//initMyResource();
+    
+	cwd = QDir::homePath().toStdString();
     cwd += "/FastPathology/";
-    std::cout << "FastPathology path cwd: " << std::endl;
+    std::cout << "FastPathology path cwd: " << cwd << std::endl;
+
+	// set window icon
+	//mWidget->setWindowIcon(QIcon(QString::fromStdString(cwd) + "data/Icons/fastpathology_logo.ico"));
+	mWidget->setWindowIcon(QIcon(":/data/Icons/fastpathology_logo.ico"));
 
     // create temporary tmp folder to store stuff, and create temporary file to keep history for visualization and
     // other stuff
@@ -450,12 +459,26 @@ void MainWindow::createMenuWidget() {
     tb->setFont(QFont("Times", 8)); //QFont::Bold));
     tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);  // adds text under icons
 
+	//QResource::registerResource("qtres.qrc");
+
+	std::cout << "Anything in Qt Resources: " << std::endl;
+	QDirIterator it(":", QDir::NoFilter);
+	while (it.hasNext()) {
+		auto tmp = it.next();
+		QDirIterator it2(tmp, QDir::NoFilter);
+		std::cout << "elem: " << tmp.toStdString() << std::endl;
+		while (it2.hasNext()) {
+			std::cout << "elem: " << it2.next().toStdString() << std::endl;
+		}
+		//qDebug() << it.next();
+	}
+		
     //auto toolBar = new QToolBar;
-    QPixmap openPix(QString::fromStdString(cwd + "data/Icons/import_icon_new_cropped_resized.png"));
-    QPixmap processPix(QString::fromStdString(cwd + "data/Icons/process_icon_new_cropped_resized.png"));
-    QPixmap viewPix(QString::fromStdString(cwd + "data/Icons/visualize_icon_new_cropped_resized.png"));
-    QPixmap resultPix(QString::fromStdString(cwd + "data/Icons/statistics_icon_new_cropped_resized.png"));
-    QPixmap savePix(QString::fromStdString(cwd + "data/Icons/export_icon_new_cropped_resized.png"));
+    QPixmap openPix(QString::fromStdString(":/data/Icons/import_icon_new_cropped_resized.png"));
+	QPixmap processPix(QStringLiteral(":/data/Icons/import_icon_new_cropped_resized.png"));
+    QPixmap viewPix(QString::fromStdString(":/data/Icons/visualize_icon_new_cropped_resized.png"));
+    QPixmap resultPix(QString::fromStdString(":/data/Icons/statistics_icon_new_cropped_resized.png"));
+    QPixmap savePix(QString::fromStdString(":/data/Icons/export_icon_new_cropped_resized.png"));
 
     QPainter painter(&savePix);
     QFont font = painter.font();

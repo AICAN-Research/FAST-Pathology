@@ -1,6 +1,8 @@
 #include <FAST/Tools/CommandLineParser.hpp>
 #include "MainWindow.hpp"
 #include <QApplication>
+#include <QtCore>
+#include <QtGui>
 
 using namespace fast;
 
@@ -14,6 +16,7 @@ int main(int argc, char** argv) {
 
     // Setup window
     auto window = MainWindow::New();
+	//Q_INIT_RESOURCE(qtres);
     window->start();
 }
 
