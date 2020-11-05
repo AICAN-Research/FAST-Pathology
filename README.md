@@ -1,11 +1,27 @@
-FAST Pathology
+FastPathology
 ===================================
 
-FAST pathology is an open-source platform for artificial intelligence-based digital pathology created by SINTEF Medical Technology and the Norwegian University of Science and Technology (NTNU).
+FastPathology is an open-source platform for deep learning-based research and decision support in digital pathology, created by SINTEF Medical Technology and the Norwegian University of Science and Technology (NTNU).
 
 Install
 -----------------------------------
-Download an appropriate installer from the [release page](https://github.com/SINTEFMedtek/FAST-Pathology/releases/).
+Download an appropriate installer from the [release page](https://github.com/SINTEFMedtek/FAST-Pathology/releases/). Installers for Win10 and Ubuntu (18 and 20) are available.
+
+Features
+-----------------------------------
+The software is implemented in C++ based on FAST. A wide range of features has been added to the platform and FAST to make working with Whole Slide Images (WSIs) a piece of cake!
+* **Graphical User Interface -** User-friendly GUI for working with WSIs without any code iteraction
+* **Deep learning -** Deployment of a wide range of multi-input/output Convolutional Neural Networks (CNNs)
+* **Visualization -** Real-time streaming of predictions on top of the WSI with low memory cost
+* **Use cases -** Patch-wise classification, low and high-resolution segmentation, and object detection are supported
+* **Inference Engines -** FAST includes a variety of different inference engines, e.g. TensorFlow CUDA, TensorRT and OpenVINO.
+* **Text pipelines -** Possibility to create your own pipelines using the built-in script editor
+* **Formats -** Using OpenSlide FastPathology supports lots of WSI formats
+
+Demos
+-----------------------------------
+Very simple demonstrations of the platforms can be found on [Youtube](https://www.youtube.com/channel/UC4GM2KW54-vEZ0M1kH5-oig).
+Tutorials and more in-depth demonstrations will be added in the future.
 
 Development setup
 -----------------------------------
@@ -32,15 +48,17 @@ Development setup
    ```
 4. Build
    ```bash
-   cmake --build . --config Release --target fastPathology
+   cmake --build . --config Release --target fastpathology
    ```
 5. Run
    *Linux (Ubuntu)*
    ```bash
-   ./fastPathology
+   ./fastpathology
    ```
    *Windows*
    ```powershell
    cd Release
-   fastPathology.exe
+   fastpathology.exe
    ```
+
+**NOTE:** Both VS 17 and 19 have been tested with both FAST and FastPathology and works well.
