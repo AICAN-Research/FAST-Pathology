@@ -7,6 +7,10 @@ Install
 -----------------------------------
 Download an appropriate installer from the [release page](https://github.com/SINTEFMedtek/FAST-Pathology/releases/). Installers for Win10 and Ubuntu (18 and 20) are available.
 
+Test data
+-----------------------------------
+Data for testing the application can be downloaded from this [link](http://folk.ntnu.no/andpeder/). It includes some pretrained models, two WSIs (x200, x400), and some example text pipelines.
+
 Features
 -----------------------------------
 The software is implemented in C++ based on FAST. A wide range of features has been added to the platform and FAST to make working with Whole Slide Images (WSIs) a piece of cake!
