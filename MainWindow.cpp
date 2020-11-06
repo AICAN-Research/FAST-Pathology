@@ -3445,7 +3445,7 @@ void MainWindow::runPipeline(std::string path) {
 
 		// parse fpl-file, and run pipeline with correspodning input arguments
 		auto pipeline = Pipeline(path, arguments);
-		pipeline.parsePipelineFile();
+		//pipeline.parsePipelineFile();
 
 		// add renderer
 		//insertRenderer("testPipeline", pipeline.getRenderers()[1]); // only render the NN-results (not the WSI)
