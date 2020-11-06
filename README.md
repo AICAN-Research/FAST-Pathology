@@ -7,9 +7,11 @@ Install
 -----------------------------------
 Download an appropriate installer from the [release page](https://github.com/SINTEFMedtek/FAST-Pathology/releases/). Installers for Win10 and Ubuntu (18 and 20) are available.
 
+**NOTE:** FastPathology depends on OpenCL. Most Windows machines have OpenCL by default, whereas Ubuntu does not. Thus, for Ubuntu depending on which CPU/GPU you have and want to use install: [NVIDIA CUDA Toolkit](https://developer.nvidia.com/cuda-10.1-download-archive-base) or [Intel OpenCL SDK](https://software.intel.com/content/www/us/en/develop/tools/opencl-sdk.html).
+
 Test data
 -----------------------------------
-Data for testing the application can be downloaded from this [link](http://folk.ntnu.no/andpeder/). It includes some pretrained models, two WSIs (x200, x400), and some example text pipelines.
+Data for testing the application can be downloaded from [here](http://folk.ntnu.no/andpeder/). It includes some pretrained models, two WSIs (x200, x400), and some example text pipelines.
 
 Features
 -----------------------------------
