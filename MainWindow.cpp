@@ -83,28 +83,17 @@ MainWindow::MainWindow() {
     //mWidget->setMouseTracking(true);
     //mWidget->setFocusPolicy(Qt::StrongFocus);
     //mWidget->setFocusPolicy(Qt::ClickFocus);  //Qt::ClickFocus);
-
-    // get current working directory
-    //get_cwd(); // FIXME: This should be the directory of where FastPathology is built, and all subfolders saved should be stored here
-    // <- TODO: Currently, this is done instead, as the current get_cwd() does not work for windows
-    //cwd = "/home/andrep/workspace/FAST-Pathology/"; //cwd = "C:/Users/andrep/workspace/FAST-Pathology/";
-
-	//initMyResource();
     
 	cwd = QDir::homePath().toStdString();
-    cwd += "/FastPathology/";
-    std::cout << "FastPathology path cwd: " << cwd << std::endl;
+    cwd += "/fastpathology/";
 
 	// set window icon
-	//mWidget->setWindowIcon(QIcon(QString::fromStdString(cwd) + "data/Icons/fastpathology_logo.ico"));
-	mWidget->setWindowIcon(QIcon(":/data/Icons/fastpathology_logo.ico"));
+	mWidget->setWindowIcon(QIcon(":/data/Icons/fastpathology_logo_large.png"));
 
-    // create temporary tmp folder to store stuff, and create temporary file to keep history for visualization and
-    // other stuff
-    //create_tmp_folder_file();
+    // create temporary tmp folder to store stuff, and create temporary file to store history
     QTemporaryDir tmpDir;
     std::string tmpPath = tmpDir.path().toStdString();
-    std::cout << "\nTemporary path: " << tmpDir.path().toStdString();
+	std::cout << "Temporary path: " << tmpDir.path().toStdString() << std::endl;
 
     //printf("\n%d\n",__LINE__); // <- this is nice for debugging
 
@@ -114,12 +103,7 @@ MainWindow::MainWindow() {
     QDir().mkpath(QString::fromStdString(cwd) + "data/Pipelines");
 
     // changing color to the Qt background)
-    //mWidget->setStyleSheet("font-size: 16px; background: gray; color: white;");
-    //mWidget->setStyleSheet("font-size: 16px; background: rgb(75, 74, 103); color: black;");
     //mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;"); // Current favourite
-    //mWidget->setStyleSheet("font-size: 16px; background: rgb(181, 211, 231); color: black;");
-    //mWidget->setStyleSheet("font-size: 16px; background: (255, 125, 50); color: black;");
-    //mWidget->setStyleSheet("font-size: 16px"); // used most recently
 	mWidget->setStyle(QStyleFactory::create("Fusion")); // TODO: This has to be before setStyleSheet?
 	/*
     const auto qss =
@@ -136,28 +120,28 @@ MainWindow::MainWindow() {
                      ;
 	//mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;");
     mWidget->setStyleSheet(qss);
-    // opacityTumorSlider->setStyleSheet("font-size: 16px"); // <- to set style sheet for a specific button/slider
-    //mainestLayout->addLayout(topHorizontalLayout);
 
-    superLayout = new QVBoxLayout();
+    superLayout = new QVBoxLayout;
     mWidget->setLayout(superLayout);
 
     // make overall Widget
-    mainWidget = new QWidget();
-    superLayout->insertWidget(1, mainWidget); //addWidget(mainWidget);
+    mainWidget = new QWidget(mWidget);
+    superLayout->insertWidget(1, mainWidget);
 
     // Create vertical GUI layout:
     mainLayout = new QHBoxLayout;
-    //mWidget->setLayout(mainLayout);
     mainWidget->setLayout(mainLayout);
 
     createMainMenuWidget(); // create menu widget
-    createMenubar(); // create Menubar
-    createOpenGLWindow(); // create OpenGL window
+    createMenubar();        // create Menubar
+    createOpenGLWindow();   // create OpenGL window
 }
+
+
 void MainWindow::receiveFileList(const QList<QString> &names) {
     selectFileDrag(names);
 }
+
 
 void MainWindow::createOpenGLWindow() {
 	float OpenGL_background_color = 0.0f; //0.0f; //200.0f / 255.0f;
@@ -241,6 +225,7 @@ void MainWindow::reportIssueUrl() {
 void MainWindow::helpUrl() {
     QDesktopServices::openUrl(QUrl("https://github.com/SINTEFMedtek/FAST-Pathology", QUrl::TolerantMode));
 }
+
 
 void MainWindow::aboutProgram() {
 
@@ -450,7 +435,7 @@ void MainWindow::createMenuWidget() {
     //tb->setStyleSheet("QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };");
     //                         "border-bottom:2px solid rgba(25,25,120,75); "
     //                         "QMenu{background-color:palette(window);border:1px solid palette(shadow);}");
-	tb->setStyleSheet("{ background-color: rgb(100, 100, 200); }; QMenuBar::handle { background-color: rgb(20, 100, 20);");
+	//tb->setStyleSheet("{ background-color: rgb(100, 100, 200); }; QMenuBar::handle { background-color: rgb(20, 100, 20);");
     tb->setIconSize(QSize(im_size, im_size));
     //tb->setFixedWidth(200);
     //tb->setMovable(true);
@@ -461,6 +446,7 @@ void MainWindow::createMenuWidget() {
 
 	//QResource::registerResource("qtres.qrc");
 
+	/*
 	std::cout << "Anything in Qt Resources: " << std::endl;
 	QDirIterator it(":", QDir::NoFilter);
 	while (it.hasNext()) {
@@ -472,6 +458,7 @@ void MainWindow::createMenuWidget() {
 		}
 		//qDebug() << it.next();
 	}
+	 */
 		
     //auto toolBar = new QToolBar;
     QPixmap openPix(QString::fromStdString(":/data/Icons/import_icon_new_cropped_resized.png"));
@@ -1450,7 +1437,7 @@ void MainWindow::saveThumbnail() {
 	}
 
 	auto progDialog = QProgressDialog(mWidget);
-	progDialog.setRange(0, currentWSIs.size() - 1);
+	progDialog.setRange(0, (int)currentWSIs.size() - 1);
 	//progDialog.setContentsMargins(0, 0, 0, 0);
 	progDialog.setVisible(true);
 	progDialog.setModal(false);
@@ -1544,7 +1531,7 @@ void MainWindow::saveTissueSegmentation() {
 	}
 
 	auto progDialog = QProgressDialog(mWidget);
-	progDialog.setRange(0, currentWSIs.size() - 1);
+	progDialog.setRange(0, (int)currentWSIs.size() - 1);
 	//progDialog.setContentsMargins(0, 0, 0, 0);
 	progDialog.setVisible(true);
 	progDialog.setModal(false);
@@ -1906,10 +1893,10 @@ void MainWindow::selectFile() {
         void *inputData = new_access->get();
         uint nrOfComponents = input->getNrOfChannels();
 
-        for (uint x = 0; x < input->getWidth(); x++) {
-            for (uint y = 0; y < input->getHeight(); y++) {
+        for (uint x = 0; x < (uint)input->getWidth(); x++) {
+            for (uint y = 0; y < (uint)input->getHeight(); y++) {
                 uint i = x + y * input->getWidth();
-                for (uint c = 0; c < input->getNrOfChannels(); c++) {
+                for (uint c = 0; c < (uint)input->getNrOfChannels(); c++) {
                     float data;
                     data = ((uchar *) inputData)[i * nrOfComponents + c]; // assumes TYPE_UINT8
                     pixelData[i * 4 + (2-c)] = (unsigned char) data;  // TODO: NOTE (2-c) fixed BGR->RGB, but maybe there is a smarter solution?
@@ -2082,10 +2069,10 @@ void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
         void *inputData = new_access->get();
         uint nrOfComponents = input->getNrOfChannels();
 
-        for (uint x = 0; x < input->getWidth(); x++) {
-            for (uint y = 0; y < input->getHeight(); y++) {
+        for (uint x = 0; x < (uint)input->getWidth(); x++) {
+            for (uint y = 0; y < (uint)input->getHeight(); y++) {
                 uint i = x + y * input->getWidth();
-                for (uint c = 0; c < input->getNrOfChannels(); c++) {
+                for (uint c = 0; c < (uint)input->getNrOfChannels(); c++) {
                     float data;
                     data = ((uchar *) inputData)[i * nrOfComponents + c]; // assumes TYPE_UINT8
                     pixelData[i * 4 + (2-c)] = (unsigned char) data;  // TODO: NOTE (2-c) fixed BGR->RGB, but maybe there is a smarter solution?
@@ -2546,10 +2533,10 @@ QImage MainWindow::extractThumbnail() {
         void *inputData = new_access->get();
         uint nrOfComponents = input->getNrOfChannels();
 
-        for (uint x = 0; x < input->getWidth(); x++) {
-            for (uint y = 0; y < input->getHeight(); y++) {
+        for (uint x = 0; x < (uint)input->getWidth(); x++) {
+            for (uint y = 0; y < (uint)input->getHeight(); y++) {
                 uint i = x + y * input->getWidth();
-                for (uint c = 0; c < input->getNrOfChannels(); c++) {
+                for (uint c = 0; c < (uint)input->getNrOfChannels(); c++) {
                     float data;
                     data = ((uchar *) inputData)[i * nrOfComponents + c]; // assumes TYPE_UINT8
                     //pixelData[i * 4 + (2-c)] = (unsigned char) data;  // TODO: NOTE (2-c) fixed BGR->RGB, but maybe there is a smarter solution?
@@ -3017,9 +3004,9 @@ bool MainWindow::segmentTissue() {
 					temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
 
 					auto someRenderer = SegmentationRenderer::New();
-					someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0 / 255.0, 127.0 / 255.0, 80.0 / 255.0));
+					someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
 					someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
-					someRenderer->setOpacity(0.4); // <- necessary for the quick-fix temporary solution
+					someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
 					someRenderer->update();
 
 					std::string tempTissueName = "temporaryTissue";
@@ -3080,9 +3067,9 @@ bool MainWindow::segmentTissue() {
 					temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
 
 					auto someRenderer = SegmentationRenderer::New();
-					someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0 / 255.0, 127.0 / 255.0, 80.0 / 255.0));
+					someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
 					someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
-					someRenderer->setOpacity(0.4); // <- necessary for the quick-fix temporary solution
+					someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
 					someRenderer->update();
 
 					std::string tempTissueName = "temporaryTissue";
@@ -3153,9 +3140,9 @@ bool MainWindow::segmentTissue() {
                     temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
 
                     auto someRenderer = SegmentationRenderer::New();
-                    someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0/255.0, 127.0/255.0, 80.0/255.0));
+                    someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
                     someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
-                    someRenderer->setOpacity(0.4); // <- necessary for the quick-fix temporary solution
+                    someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
                     someRenderer->update();
 
                     std::string tempTissueName = "temporaryTissue";
@@ -3298,10 +3285,10 @@ bool MainWindow::segmentTissue() {
         m_tissue = tissueSegmentation->updateAndGetOutputData<Image>();
 
         auto someRenderer = SegmentationRenderer::New();
-        someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0/255.0, 127.0/255.0, 80.0/255.0));
+        someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
         someRenderer->setInputData(m_tissue);
         //someRenderer->setInputData(tissueSegmentation->updateAndGetOutputData<Image>());
-        someRenderer->setOpacity(0.4); // <- necessary for the quick-fix temporary solution
+        someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
         //someRenderer->setBackgroundLabel(5);
         someRenderer->update();
 
@@ -3382,12 +3369,12 @@ void MainWindow::loadTissue(QString tissuePath) {
     //m_tissue = reader->updateAndGetOutputData<Image>();
 
     auto someRenderer = SegmentationRenderer::New();
-    someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0/255.0, 127.0/255.0, 80.0/255.0));
+    someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
     //someRenderer->setInputData(reader->updateAndGetOutputData<Image>());
     //someRenderer->setInputData(output);  // someImage
     someRenderer->setInputConnection(0, thresholder->getOutputPort());
     //someRenderer->setInputData(someImage);
-    someRenderer->setOpacity(0.4); // <- necessary for the quick-fix temporary solution
+    someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
     someRenderer->update();
 
     m_rendererTypeList["tissue"] = "SegmentationRenderer";
@@ -3414,7 +3401,7 @@ void MainWindow::runPipeline(std::string path) {
 	}
 
 	auto progDialog = QProgressDialog(mWidget);
-	progDialog.setRange(0, currentWSIs.size() - 1);
+	progDialog.setRange(0, (int)currentWSIs.size() - 1);
 	//progDialog.setContentsMargins(0, 0, 0, 0);
 	progDialog.setVisible(true);
 	progDialog.setModal(false);
@@ -3513,12 +3500,12 @@ void MainWindow::loadTumor(QString tumorPath) {
     std::cout << "\nupdate... \n";
 
     auto someRenderer = SegmentationRenderer::New();
-    someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(0.0f, 0.0f, 255.0/255.0));
+    someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(0.0f, 0.0f, 255.0f/255.0f));
     //someRenderer->setInputData(reader->updateAndGetOutputData<Image>());
     //someRenderer->setInputData(output);  // someImage
     someRenderer->setInputConnection(0, thresholder->getOutputPort());
     //someRenderer->setInputData(someImage);
-    someRenderer->setOpacity(0.4); // <- necessary for the quick-fix temporary solution
+    someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
     someRenderer->update();
 
     m_rendererTypeList["tumorSeg_lr"] = "SegmentationRenderer";
@@ -3580,7 +3567,7 @@ bool MainWindow::lowresSegmenter() {
         m_tumorMap->setSpacing((float) m_image->getFullHeight() / (float) input->getHeight(), (float) m_image->getFullWidth() / (float) input->getWidth(), 1.0f);
 
         auto segTumorRenderer = SegmentationRenderer::New();
-        segTumorRenderer->setOpacity(0.4);
+        segTumorRenderer->setOpacity(0.4f);
         segTumorRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0 / 255.0f, 0.0f, 0.0f));
         segTumorRenderer->setColor(Segmentation::LABEL_BACKGROUND, Color(0.0f, 255.0f / 255.0f, 0.0f));
         segTumorRenderer->setInputData(m_tumorMap);
@@ -4006,7 +3993,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 someRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
                 someRenderer->setInputConnection(stitcher->getOutputPort());
                 //someRenderer->setInputConnection(lambda->getOutputPort());
-                someRenderer->setMaxOpacity(0.6);
+                someRenderer->setMaxOpacity(0.6f);
                 //heatmapRenderer->update();
                 vector<string> colors = split(modelMetadata["class_colors"], ";");
                 for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
@@ -4026,7 +4013,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 auto port = stitcher->getOutputPort();
 
                 auto someRenderer = SegmentationPyramidRenderer::New();
-                someRenderer->setOpacity(0.7);
+                someRenderer->setOpacity(0.7f);
                 someRenderer->setInputConnection(stitcher->getOutputPort());
 
                 m_rendererTypeList[modelMetadata["name"]] = "SegmentationPyramidRenderer";
@@ -4043,7 +4030,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                     generator->setInputData(1, m_tumorMap);
 
                 auto currNetwork = BoundingBoxNetwork::New();
-                currNetwork->setThreshold(0.1); //0.01); // default: 0.5
+                currNetwork->setThreshold(0.1f); //0.01); // default: 0.5
 
                 // read anchors from corresponding anchor file
                 std::vector<std::vector<Vector2f> > anchors;
@@ -4105,7 +4092,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                 m_tumorMap->setSpacing((float) m_image->getFullHeight() / (float) input->getHeight(), (float) m_image->getFullWidth() / (float) input->getWidth(), 1.0f);
 
                 auto someRenderer = SegmentationRenderer::New();
-                someRenderer->setOpacity(0.4);
+                someRenderer->setOpacity(0.4f);
                 vector<string> colors = split(modelMetadata["class_colors"], ";");
                 for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
                     vector<string> rgb = split(colors[i], ",");
@@ -4185,7 +4172,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                  */
 
                 auto segTumorRenderer = SegmentationRenderer::New();
-                segTumorRenderer->setOpacity(0.4);
+                segTumorRenderer->setOpacity(0.4f);
                 segTumorRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0 / 255.0f, 0.0f, 0.0f));
                 segTumorRenderer->setColor(Segmentation::LABEL_BACKGROUND, Color(0.0f, 255.0f / 255.0f, 0.0f));
                 segTumorRenderer->setInputData(m_tumorMap);
@@ -4199,6 +4186,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
             }
         }
     }
+	return true;
 }
 
 

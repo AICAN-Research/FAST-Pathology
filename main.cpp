@@ -16,7 +16,6 @@ int main(int argc, char** argv) {
 
     // Setup window
     auto window = MainWindow::New();
-	//Q_INIT_RESOURCE(qtres);
     window->start();
 }
 

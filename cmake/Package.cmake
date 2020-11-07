@@ -19,14 +19,6 @@ if(WIN32)
         FILES_MATCHING PATTERN "*.dll" PATTERN "*plugins.xml"
     )
 else()
-    #[[
-    install(
-        DIRECTORY ${FAST_BINARY_DIR}
-        DESTINATION lib
-        FILES_MATCHING PATTERN "*.so*" PATTERN "*plugins.xml"
-    )
-    ]]
-
     install(
         DIRECTORY ${FAST_BINARY_DIR}/../lib/
         DESTINATION lib  # lib or bin?
@@ -62,9 +54,8 @@ install(
 # add Data folder for storing saved models, icons, pipelines and other stuff, and move necessary folders
 install(
     DIRECTORY ${PROJECT_BINARY_DIR}/../data/Icons
-    DESTINATION ../data
+    DESTINATION data
 )
-
 
 # Setup fast_configuration.txt file
 if(WIN32)
@@ -95,7 +86,6 @@ install(
     RENAME fast_configuration.txt
 )
 
-
 # setup .desktop file
 if (UNIX)
 set(APP_CONFIG_CONTENT "[Desktop Entry]
@@ -104,7 +94,7 @@ Comment=FastPathology
 Exec=/opt/fastpathology/bin/fastpathology
 Terminal=false
 Type=Application
-Icon=/opt/fastpathology/data/Icons/fastpathology_logo.png
+Icon=/opt/fastpathology/data/Icons/fastpathology_logo_large.png
 Categories=public.app-categorical.medical")
 
 # write
@@ -118,11 +108,10 @@ install(
 )
 endif()
 
-
 set(CPACK_PACKAGE_NAME "fastpathology")
 set(CPACK_PACKAGE_CONTACT "Andre Pedersen andre.pedersen@sintef.no")
 set(CPACK_PACKAGE_VENDOR "SINTEF and NTNU")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "fastpathology is an open-source platform for artificial intelligence-based digital pathology created by SINTEF Medical Technology and the Norwegian University of Science and Technology (NTNU).")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "fastpathology is an open-source platform for deep learning-based digital pathology created by SINTEF Medical Technology and the Norwegian University of Science and Technology (NTNU).")
 #set(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.md")
 set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE.md) # @TODO somehow concatenate all licences to this file..
 set(CPACK_PACKAGE_VERSION_MAJOR "0")
@@ -130,7 +119,6 @@ set(CPACK_PACKAGE_VERSION_MINOR "1")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
 set(CPACK_PACKAGE_FILE_NAME "fastpathology")
 set(CPACK_COMPONENT_FAST_REQUIRED ON)
-#set(CPACK_PACKAGE_EXECUTABLES fastpathology "fastpathology")
 
 if(WIN32 AND NOT UNIX)
 	
@@ -138,39 +126,23 @@ if(WIN32 AND NOT UNIX)
     # Create windows installer (Requires NSIS from http://nsis.sourceforge.net)
     set(CPACK_GENERATOR NSIS)
 
-	set(CPACK_PACKAGE_INSTALL_DIRECTORY "fastpathology")
+	set(CPACK_PACKAGE_INSTALL_DIRECTORY "FastPathology")
 	set(CPACK_PACKAGE_FILE_NAME "fastpathology_win10_v${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
-	#set(CPACK_NSIS_FILE_NAME "fastpathology_windows10_v${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}.exe")
 	set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
-
-	# this works
 	set(CPACK_NSIS_MENU_LINKS "bin\\\\fastpathology.exe" "FastPathology")
-
-	# this doesn't
-	set(CPACK_CREATE_DESKTOP_LINKS "fastpathology")
+	set(CPACK_CREATE_DESKTOP_LINKS "FastPathology")
 
 	# Icon stuff
 	set(CPACK_NSIS_MODIFY_PATH ON)
-	#set(CPACK_NSIS_MUI_ICON ${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon.ico)
-	#set(CPACK_NSIS_MUI_UNICON ${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon.ico)
+	#set(CPACK_NSIS_MUI_ICON ${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon_large.ico)  # @TODO: find a way to add icon to installer
+	#set(CPACK_NSIS_MUI_UNICON ${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon_large.ico)
 	set(CPACK_CREATE_DESKTOP_LINKS ON)
 	set(CPACK_NSIS_INSTALLED_ICON_NAME bin\\\\fastpathology.exe)
-
-	## testing WIX instead of NSIS for windows installer
-	#set(CPACK_GENERATOR WIX)
+	set(CPACK_NSIS_INSTALL_DIRECTORY ${CPACK_NSIS_INSTALL_ROOT}/FastPathology) #${CPACK_PACKAGE_INSTALL_DIRECTORY})
 
     include(CPack)
 else()
     ## UNIX
-
-    # attempt to fix .so-dependency of FAST by copying them to fastpathology
-    #[[
-    install(
-            DIRECTORY ${FAST_BINARY_DIR}/../lib/
-            DESTINATION bin
-            FILES_MATCHING PATTERN "*.so*" PATTERN "*plugins.xml"
-    )
-    ]]
 
 	# Get distro name and version
 	find_program(LSB_RELEASE_EXEC lsb_release)
@@ -187,22 +159,14 @@ else()
     # Create debian package
     set(CPACK_GENERATOR "DEB")
 
-    # add libopenslide dependency here! Something like this (see WSI module in FAST, GitHub):
+    # add libopenslide dependency
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "libopenslide0")
 
     # Select components to avoid some cmake leftovers from built dependencies
     set(CPACK_DEB_COMPONENT_INSTALL OFF)
-    #set(CPACK_PACKAGING_INSTALL_PREFIX "$HOME/fastpathology") # @FIXME: files were created directly in /opt and not in the correct directory if I didnt do this
-    set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/fastpathology")  #"/opt/")
+    set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/fastpathology")  #"/opt/")  $HOME/fastpathology
     set(CPACK_DEBIAN_COMPRESSION_TYPE "xz")
-
-    #set(CPACK_PACKAGE_INSTALL_DIRECTORY "fastpathology")
-    #set(CPACK_COMPONENTS_ALL fastpathology)
-
-    #set(CPACK_DEBIAN_FILE_NAME "fastpathology_${DISTRO_NAME}${DISTRO_VERSION}_v${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}.deb")
 	set(CPACK_DEBIAN_FILE_NAME "fastpathology_ubuntu_v${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}.deb")
-    #set(CPACK_COMPONENTS_ALL fastpathology)
-    #set(CPACK_DEBIAN_FAST_FILE_NAME "fastpathology_0.1.0.deb")
     set(CPACK_DEBIAN_fastpathology_PACKAGE_NAME "fastpathology")
 
     include(CPack)
