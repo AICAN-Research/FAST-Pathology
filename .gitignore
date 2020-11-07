@@ -13,6 +13,8 @@ cmake-build*
 *.bin
 *build/
 *build*
+*.rcc
+*.pro
 WSI/
 WSI*
 Models/

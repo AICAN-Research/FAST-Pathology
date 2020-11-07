@@ -120,6 +120,8 @@ set(CPACK_PACKAGE_VERSION_PATCH "0")
 set(CPACK_PACKAGE_FILE_NAME "fastpathology")
 set(CPACK_COMPONENT_FAST_REQUIRED ON)
 
+SET(CPACK_PACKAGE_EXECUTABLES "fastpathology" "fastpathology")
+
 if(WIN32 AND NOT UNIX)
 	
     ## Windows
@@ -130,13 +132,13 @@ if(WIN32 AND NOT UNIX)
 	set(CPACK_PACKAGE_FILE_NAME "fastpathology_win10_v${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 	set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 	set(CPACK_NSIS_MENU_LINKS "bin\\\\fastpathology.exe" "FastPathology")
-	set(CPACK_CREATE_DESKTOP_LINKS "FastPathology")
+	set(CPACK_CREATE_DESKTOP_LINKS "fastpathology")
 
 	# Icon stuff
 	set(CPACK_NSIS_MODIFY_PATH ON)
 	#set(CPACK_NSIS_MUI_ICON ${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon_large.ico)  # @TODO: find a way to add icon to installer
 	#set(CPACK_NSIS_MUI_UNICON ${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon_large.ico)
-	set(CPACK_CREATE_DESKTOP_LINKS ON)
+	#set(CPACK_CREATE_DESKTOP_LINKS ON)
 	set(CPACK_NSIS_INSTALLED_ICON_NAME bin\\\\fastpathology.exe)
 	set(CPACK_NSIS_INSTALL_DIRECTORY ${CPACK_NSIS_INSTALL_ROOT}/FastPathology) #${CPACK_PACKAGE_INSTALL_DIRECTORY})
 

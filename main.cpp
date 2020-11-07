@@ -1,8 +1,5 @@
 #include <FAST/Tools/CommandLineParser.hpp>
 #include "MainWindow.hpp"
-#include <QApplication>
-#include <QtCore>
-#include <QtGui>
 
 using namespace fast;
 
