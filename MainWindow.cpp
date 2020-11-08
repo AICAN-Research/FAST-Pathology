@@ -50,6 +50,8 @@
 #include <FAST/Exporters/ImageExporter.hpp>
 #include <FAST/Importers/ImageFileImporter.hpp>
 #include <FAST/Exporters/ImageFileExporter.hpp>
+#include <FAST/Importers/HDF5TensorImporter.hpp>
+#include <FAST/Exporters/HDF5TensorExporter.hpp>
 #include <FAST/Algorithms/ScaleImage/ScaleImage.hpp>
 #include <FAST/Data/Access/ImagePyramidAccess.hpp>
 #include <QShortcut>
@@ -1707,6 +1709,40 @@ void MainWindow::saveResults(std::string result) {
 }
 
 
+void MainWindow::saveHeatmap() {
+	/*
+	auto exporter = HDF5TensorExporter::New();
+	exporter->setFilename("tensor.hd5");
+	exporter->setInputData(tensor);
+	exporter->update();
+	 */
+
+	// check if folder for current WSI exists, if not, create one
+	QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0] + "/").c_str();
+	wsiResultPath = wsiResultPath.replace("//", "/");
+	if (!QDir(wsiResultPath).exists()) {
+		QDir().mkdir(wsiResultPath);
+	}
+
+	1;
+
+	auto exporter = HDF5TensorExporter::New();
+	exporter->setFilename(wsiResultPath.toStdString() + "tensor.h5");
+	//exporter->setInputData(tensor);
+	exporter->update();
+
+	auto mBox = new QMessageBox(mWidget);
+	mBox->setText("Heatmap has been saved.");
+	mBox->setIcon(QMessageBox::Information);
+	mBox->setModal(false);
+	//mBox->show();
+	QRect screenrect = mWidget->screen()[0].geometry();
+	mBox->move(mWidget->width() - mBox->width() / 2, -mWidget->width() / 2 - mBox->width() / 2);
+	mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
+	QTimer::singleShot(3000, mBox, SLOT(accept()));
+}
+
+
 void MainWindow::saveTumor() {
     // check if folder for current WSI exists, if not, create one
     QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0] + "/").c_str();
@@ -2196,112 +2232,137 @@ void MainWindow::selectFileInProject(int pos) {
         mBox->show();
         QRect screenrect = mWidget->screen()[0].geometry();
         mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
-        mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
-        QTimer::singleShot(3000, mBox, SLOT(accept()));
-        return;
-    }
+		mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
+		QTimer::singleShot(3000, mBox, SLOT(accept()));
+		return;
+	}
 
-    // if there are any results created, prompt if you want to save results
-    std::cout << "counts: " << (pageComboBox->count() - savedList.size()) << std::endl;
-    if ((pageComboBox->count() - savedList.size()) > 1) {
+	// if there are any results created, prompt if you want to save results
+	std::cout << "counts: " << (pageComboBox->count() - savedList.size()) << std::endl;
+	if ((pageComboBox->count() - savedList.size()) > 1) {
 		QMessageBox mBox;
-        mBox.setIcon(QMessageBox::Warning);
-        mBox.setText("This will remove results on current WSI.");
-        mBox.setInformativeText("Do you want to save results?");
-        mBox.setDefaultButton(QMessageBox::Yes);
-        mBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-        int ret = mBox.exec();
-        switch (ret) {
-            case QMessageBox::Yes:
-                std::cout << "\nYes was pressed." << std::endl;
-                saveTissueSegmentation(); // TODO: Need to generalize this. Check which results exists, and save all sequentially
-                break;
-            case QMessageBox::No:
-                std::cout << "\nNo was pressed." << std::endl;
-                // remove results of current WSI
-                removeAllRenderers();
-                pageComboBox->clear();
-                exportComboBox->clear();
-                break;
-            case QMessageBox::Cancel:
-                std::cout << "\nCancel was pressed." << std::endl;
-                return;
-            default:
-                std::cout << "\nDefault was pressed." << std::endl;
-                break;
-        }
-    }
+		mBox.setIcon(QMessageBox::Warning);
+		mBox.setText("This will remove results on current WSI.");
+		mBox.setInformativeText("Do you want to save results?");
+		mBox.setDefaultButton(QMessageBox::Yes);
+		mBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+		int ret = mBox.exec();
+		switch (ret) {
+		case QMessageBox::Yes:
+			std::cout << "Yes was pressed." << std::endl;
+			saveTissueSegmentation(); // TODO: Need to generalize this. Check which results exists, and save all sequentially
+			break;
+		case QMessageBox::No:
+			std::cout << "No was pressed." << std::endl;
+			// remove results of current WSI
+			removeAllRenderers();
+			pageComboBox->clear();
+			exportComboBox->clear();
+			break;
+		case QMessageBox::Cancel:
+			std::cout << "Cancel was pressed." << std::endl;
+			return;
+		default:
+			std::cout << "Default was pressed." << std::endl;
+			break;
+		}
+	}
 
-    // remove results of current WSI
-    savedList.clear();
-    removeAllRenderers();
-    pageComboBox->clear();
-    exportComboBox->clear();
-    m_rendererList.clear();
-    m_rendererTypeList.clear();
+	// remove results of current WSI
+	savedList.clear();
+	removeAllRenderers();
+	pageComboBox->clear();
+	exportComboBox->clear();
+	m_rendererList.clear();
+	m_rendererTypeList.clear();
 	clearLayout(stackedLayout);
 
 
-    // kill all NN pipelines and clear holders
-    for (auto const& keyValue : m_neuralNetworkList) {
-        auto neuralNetwork = keyValue.second;
-        neuralNetwork->stopPipeline();
-    }
-    m_neuralNetworkList.clear(); // finally clear map
+	// kill all NN pipelines and clear holders
+	for (auto const& keyValue : m_neuralNetworkList) {
+		auto neuralNetwork = keyValue.second;
+		neuralNetwork->stopPipeline();
+	}
+	m_neuralNetworkList.clear(); // finally clear map
 
-    // add WSI to project list
-    filename = wsiList[pos];
+	// add WSI to project list
+	filename = wsiList[pos];
 
-    //stopComputationThread();
-    // Import image from file using the ImageFileImporter
-    importer = WholeSlideImageImporter::New();
-    std::cout << "\nCurrent filename: " << filename << std::endl;
-    importer->setFilename(filename);
-    m_image = importer->updateAndGetOutputData<ImagePyramid>();
+	//stopComputationThread();
+	// Import image from file using the ImageFileImporter
+	importer = WholeSlideImageImporter::New();
+	std::cout << "\nCurrent filename: " << filename << std::endl;
+	importer->setFilename(filename);
+	m_image = importer->updateAndGetOutputData<ImagePyramid>();
 
-    // get metadata
-    metadata = m_image->getMetadata();
+	// get metadata
+	metadata = m_image->getMetadata();
 
-    auto renderer = ImagePyramidRenderer::New();
-    renderer->setInputData(m_image);
+	auto renderer = ImagePyramidRenderer::New();
+	renderer->setInputData(m_image);
 
-    // TODO: Something here results in me not being able to run analyzis on new images (after the first)
-    removeAllRenderers();
-    m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
-    insertRenderer("WSI", renderer);
-    getView(0)->reinitialize(); // Must call this after removing all renderers
+	// TODO: Something here results in me not being able to run analyzis on new images (after the first)
+	removeAllRenderers();
+	m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
+	insertRenderer("WSI", renderer);
+	getView(0)->reinitialize(); // Must call this after removing all renderers
 
-    //startComputationThread();
+	//startComputationThread();
 
-    // get WSI format
-    wsiFormat = metadata["openslide.vendor"];
+	// get WSI format
+	wsiFormat = metadata["openslide.vendor"];
 
-    // get magnification level of current WSI
-    magn_lvl = getMagnificationLevel();
+	// get magnification level of current WSI
+	magn_lvl = getMagnificationLevel();
 
-    // now make it possible to edit image in the View Widget
-    createDynamicViewWidget("WSI", modelName);
+	// now make it possible to edit image in the View Widget
+	createDynamicViewWidget("WSI", modelName);
 
+	// check if any results exists for current WSI, if there are load them
+	std::string wsiPath = split(split(filename, "/").back(), ".")[0];
+	auto currentResultPath = projectFolderName.toStdString() + "/results/" + wsiPath.c_str();
+
+	QDirIterator iter(QString::fromStdString(currentResultPath));
+	std::cout << "Current result folder path: " << currentResultPath << std::endl;
+	while (iter.hasNext()) {
+		auto currentResult = iter.next().toStdString();
+		auto splits = split(split(currentResult.c_str(), "/").back(), ".");
+		std::cout << "Current result path: " << currentResult << std::endl;
+
+		auto str = splits.back();
+		if ((str == "png") || (str == "PNG")) {
+			loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(split(split(split(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
+		} else if ((str == "h5") || (str == "hd5") || (str == "hdf5")) {
+			std::cout << "heatmap chosen: " << str << std::endl;
+			loadHeatmap(QString::fromStdString(currentResult), QString::fromStdString(split(split(split(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
+		} else {
+			std::cout << "Unable to load result (format is not supported): " << currentResultPath << std::endl;
+		}
+
+	}
+
+	/*
     // check if tissue segmentation already exists, if yes import it and add to renderer
     std::string wsiPath = split(split(filename, "/").back(), ".")[0];
     QString tissuePath = projectFolderName + "/results/" + wsiPath.c_str() + "/" + wsiPath.c_str() + "_tissue_mask.png";
     tissuePath = tissuePath.replace("//", "/");  // FIXME: I doubt that this fix works for windows(?) / and \ used
     //tissuePath = "/home/andrep/test2.png";
-    std::cout << "\nCurrent path: " << tissuePath.toStdString() << "\n";
+    std::cout << "Current path: " << tissuePath.toStdString() << std::endl;
     if (QDir().exists(tissuePath)) {
         loadTissue(tissuePath);
-        std::cout << "len of saved list: " << savedList.size() << "\n";
+        std::cout << "Length of saved list: " << savedList.size() << std::endl;
     }
 
     // check if tumor segmentation already exists, if yes import it and add to renderer
     QString tumorPath = projectFolderName + "/results/" + wsiPath.c_str() + "/" + wsiPath.c_str() + "_tumor_mask.png";
     tumorPath = tumorPath.replace("//", "/");  // FIXME: I doubt that this fix works for windows(?) / and \ used
     //tissuePath = "/home/andrep/test2.png";
-    std::cout << "\nCurrent path: " << tumorPath.toStdString() << "\n";
+    std::cout << "Current path: " << tumorPath.toStdString() << std::endl;
     if (QDir().exists(tumorPath)) {
         loadTumor(tumorPath);
-        std::cout << "len of saved list: " << savedList.size() << "\n";
+        std::cout << "Length of saved list: " << savedList.size() << std::endl;
     }
+	 */
 
     // update application name to contain current WSI
     //setTitle(applicationName + " - " + split(filename, "/").back());
@@ -2487,6 +2548,33 @@ void MainWindow::openProject() {
             // now make it possible to edit image in the View Widget
             createDynamicViewWidget("WSI", modelName);
 
+			// check if any results exists for current WSI, if there are load them
+			std::string wsiPath = split(split(filename, "/").back(), ".")[0];
+			auto currentResultPath = projectFolderName.toStdString() + "/results/" + wsiPath.c_str();
+
+			std::cout << "Current WSI used: " << fileName.toStdString() << std::endl;
+
+			QDirIterator iter(QString::fromStdString(currentResultPath));
+			std::cout << "Current result folder path: " << currentResultPath << std::endl;
+			while (iter.hasNext()) {
+				auto currentResult = iter.next().toStdString();
+				auto splits = split(split(currentResult.c_str(), "/").back(), ".");
+				std::cout << "Current result path: " << currentResult << std::endl;
+
+				auto str = splits.back();
+				if ((str == "png") || (str == "PNG")) {
+					//loadTissue(QString::fromStdString(currentResult));
+					// @TODO: this splitception will be handled better in the future :p
+					loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(split(split(split(currentResult, "/").back(), split(split(fileName.toStdString(), "/").back(), ".")[0] + "_").back(), ".")[0]));
+				} else if ((str == "h5") || (str == "hd5") || (str == "hdf5")) {
+					loadHeatmap(QString::fromStdString(currentResult), QString::fromStdString(split(split(split(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
+				} else {
+					std::cout << "Unable to load result (format is not supported): " << currentResultPath << std::endl;
+				}
+
+			}
+
+			/*
             // check if tissue segmentation already exists, if yes import it and add to renderer
             std::string wsiPath = split(split(filename, "/").back(), ".")[0];
             QString tissuePath = projectFolderName + "/results/" + wsiPath.c_str() + "/" + wsiPath.c_str() + "_tissue_mask.png";
@@ -2505,6 +2593,7 @@ void MainWindow::openProject() {
             if (QDir().exists(tumorPath)) {
                 loadTumor(tumorPath);
             }
+			 */
         }
         counter++;
 
@@ -2515,12 +2604,12 @@ void MainWindow::openProject() {
 
         // try to convert FAST Image -> QImage
         QImage image;
-        std::cout << "Path: " << fullPath.toStdString() << "\n";
+        std::cout << "Path: " << fullPath.toStdString() << std::endl;
         if (QDir().exists(fullPath)) {
-            std::cout << "\n Thumbnail exists! Load it project folder \n";
+            std::cout << "Thumbnail exists! Load it project folder" << std::endl;
             image.load(fullPath);
         } else {
-            std::cout << "\n Thumbnail does not exist! Creating one from the WSI \n";
+            std::cout << "Thumbnail does not exist! Creating one from the WSI" << std::endl;
             // get thumbnail image
             image = extractThumbnail();
         }
@@ -3385,12 +3474,137 @@ bool MainWindow::segmentTissue() {
 }
 
 
+void MainWindow::loadResultsForCurrentWSI() {
+	//QDirIterator it(projectFolderName, QDir::NoFilter);
+	//std::cout << "Current project path: " << projectFolderName.toStdS << std::endl;
+	1;
+}
+
+
+void MainWindow::loadHeatmap(QString tissuePath, QString name) {
+	if (!fileExists(tissuePath.toStdString()))
+		return;
+
+	auto someName = name.toStdString();
+	std::cout << "Heatmap someName var: " << someName << std::endl;
+
+	auto importer = HDF5TensorImporter::New();
+	importer->setFilename(tissuePath.toStdString()); //"tensor.h5");
+	importer->setDatasetName(someName);
+	auto resultTensor = importer->updateAndGetOutputData<Tensor>();
+	auto resultShape = resultTensor->getShape();
+	importer->update();
+
+	auto someRenderer = HeatmapRenderer::New();
+	//someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
+	someRenderer->setInputConnection(0, importer->getOutputPort());
+	//someRenderer->setInputData(someImage);
+	someRenderer->setMaxOpacity(0.6f);
+	someRenderer->setInterpolation(false);
+	//someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
+	someRenderer->update();
+
+	m_rendererTypeList[someName] = "HeatmapRenderer";
+	insertRenderer(someName, someRenderer);
+
+	//hideTissueMask(false);
+
+	// now make it possible to edit prediction in the View Widget
+	createDynamicViewWidget(someName, modelName);
+
+	std::cout << "Finished loading..." << std::endl;;
+	savedList.emplace_back(someName);
+}
+
+
+void MainWindow::loadSegmentation(QString tissuePath, QString name) {
+	//DeviceManager* deviceManager = DeviceManager::getInstance();
+	//OpenCLDevice::pointer device = deviceManager->getOneOpenCLDevice();
+
+	if (!fileExists(tissuePath.toStdString()))
+		return;
+
+	auto someName = name.toStdString();
+	std::cout << "someName var: " << someName << std::endl;
+
+	ImageImporter::pointer reader = ImageImporter::New();
+	reader->setGrayscale(false);
+	reader->setFilename(tissuePath.toStdString());
+	//reader->setMainDevice(device);
+	reader->setMainDevice(Host::getInstance());
+	DataChannel::pointer port = reader->getOutputPort();
+	reader->update();
+	Image::pointer someImage = port->getNextFrame<Image>();
+
+	//auto wsi = getInputData<ImagePyramid>();
+	auto access = m_image->getAccess(ACCESS_READ);
+	auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
+
+	std::cout << "Dimensions info: " << input->getHeight() << ", " << input->getWidth() << std::endl;
+	std::cout << "Dimensions info: " << m_image->getFullHeight() << ", " << m_image->getFullWidth() << std::endl;
+
+	someImage->setSpacing((float)m_image->getFullHeight() / (float)input->getHeight(), (float)m_image->getFullWidth() / (float)input->getWidth(), 1.0f);
+
+	/*
+	auto intensityScaler = ScaleImage::New();
+	intensityScaler->setInputData(m_tissue); //m_tissue);  // expects Image data type
+	intensityScaler->setLowestValue(0.0f);
+	intensityScaler->setHighestValue(1.0f);
+	//intensityScaler->update();
+	 */
+
+	 // /*
+	auto thresholder = BinaryThresholding::New();
+	thresholder->setLowerThreshold(0.5f);
+	thresholder->setInputData(someImage);
+	// */
+
+	auto output = Segmentation::New();
+	//output->createFromImage(input);
+	//output->createFromImage(someImage);  // is it initialized or converted?
+	output->create(someImage->getSize(), TYPE_UINT8, 3);
+	//output->getOpenCLImageAccess(someImage);
+
+	auto thresholder2 = BinaryThresholding::New();
+	thresholder2->setLowerThreshold(0.5f);
+	thresholder2->setInputData(output);
+
+	//output->getOpenCLImageAccess(reader->updateAndGetOutputData<Image>());
+
+	//m_tissue = reader->updateAndGetOutputData<Image>();
+
+	auto someRenderer = SegmentationRenderer::New();
+	someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
+	//someRenderer->setInputData(reader->updateAndGetOutputData<Image>());
+	//someRenderer->setInputData(output);  // someImage
+	someRenderer->setInputConnection(0, thresholder->getOutputPort());
+	//someRenderer->setInputData(someImage);
+	someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
+	someRenderer->update();
+
+	m_rendererTypeList[someName] = "SegmentationRenderer";
+	insertRenderer(someName, someRenderer);
+
+	//hideTissueMask(false);
+
+	// now make it possible to edit prediction in the View Widget
+	createDynamicViewWidget(someName, modelName);
+
+	std::cout << "Finished loading..." << std::endl;;
+	savedList.emplace_back(someName);
+}
+
+
 void MainWindow::loadTissue(QString tissuePath) {
     //DeviceManager* deviceManager = DeviceManager::getInstance();
     //OpenCLDevice::pointer device = deviceManager->getOneOpenCLDevice();
 
 	if (!fileExists(tissuePath.toStdString()))
 		return;
+
+	auto someName = split(split(tissuePath.toStdString(), "/").back(), ".")[0];
+
+	std::cout << "someName var: " << someName << std::endl;
 
     ImageImporter::pointer reader = ImageImporter::New();
     reader->setGrayscale(false);
@@ -3447,16 +3661,16 @@ void MainWindow::loadTissue(QString tissuePath) {
     someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
     someRenderer->update();
 
-    m_rendererTypeList["tissue"] = "SegmentationRenderer";
-    insertRenderer("tissue", someRenderer);
+    m_rendererTypeList[someName] = "SegmentationRenderer";
+    insertRenderer(someName, someRenderer);
 
     //hideTissueMask(false);
 
     // now make it possible to edit prediction in the View Widget
-    createDynamicViewWidget("tissue", modelName);
+    createDynamicViewWidget(someName, modelName);
 
-    std::cout << "\nfinished loading..." << std::endl;;
-    savedList.emplace_back("tissue");
+    std::cout << "Finished loading..." << std::endl;;
+    savedList.emplace_back(someName);
 }
 
 
@@ -3992,11 +4206,12 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
                 //const std::map<std::string, std::string> &testModelMetadata = modelMetadata;
 
+				auto currentHeatmapName = modelMetadata["name"];
+
                 // testing RunLambda in FAST for saving heatmaps
-                /*
                 auto lambda = RunLambdaOnLastFrame::New();
                 lambda->setInputConnection(stitcher->getOutputPort());
-                lambda->setLambda([this, modelMetadata](DataObject::pointer data) {
+                lambda->setLambda([this, currentHeatmapName](DataObject::pointer data) {
                     std::cout << "Last frame detected, processing..." << std::endl;
                     auto tensor = std::dynamic_pointer_cast<Tensor>(data);
                     // TODO do stuff with tensor here
@@ -4005,6 +4220,24 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
                     // TODO: Make modelMetadata accessible in current thread?
 
+					//std::cout << "current filename: " << filename << std::endl;
+
+					// check if folder for current WSI exists, if not, create one
+					QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0]).c_str();
+					wsiResultPath = wsiResultPath.replace("//", "/");
+					if (!QDir(wsiResultPath).exists()) {
+						QDir().mkdir(wsiResultPath);
+					}
+
+					//std::cout << "current filename: " << wsiResultPath.toStdString() << std::endl;
+
+					auto exporter = HDF5TensorExporter::New();
+					exporter->setFilename(wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + currentHeatmapName + ".h5"); //grade.h5");
+					exporter->setDatasetName(currentHeatmapName);
+					exporter->setInputData(tensor);
+					exporter->update();
+
+					/*
                     auto converter = TensorToSegmentation::New();
                     converter->setInputData(tensor);
                     //converter->setBackgroundLabel(200); //std::stoi(modelMetadata.at("nb_classes")) + 1); //200); // FIXME: This will not work in general, for instance if a model has the classes {0, 1, 3}, should set to a unique class
@@ -4027,16 +4260,6 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
                     auto finalRenderer = SegmentationRenderer::New();
                     finalRenderer->setOpacity(0.4);
-                    //tmpRenderer->setFillArea(true);
-                    //tmpRenderer->setColor(0, Color(255.0, 0.0f, 0.0f));
-                    //tmpRenderer->setColor(0, Color(0.0f, 0.0f, 255.0 / 255.0f));
-                    //tmpRenderer->setColor(1, Color(255.0 / 255.0f, 0.0f, 0.0f));
-                    //tmpRenderer->setColor(2, Color(255.0 / 255.0f, 127.0f, 90.0f));
-                    //tmpRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0 / 255.0f, 0.0f, 0.0f));
-                    //tmpRenderer->setColor(Segmentation::LABEL_BACKGROUND, Color(30.0f, 255.0f / 255.0f, 127.0f));
-                    //tmpRenderer->setColor(0, Color(1.0f, 0.0f, 0.0f));
-                    //tmpRenderer->setColor(1, Color(0.0f, 1.0f, 0.0f));
-                    //tmpRenderer->setColor(2, Color(0.0f, 0.0f, 1.0f));
                     //finalRenderer->setChannelHidden(0, false);
                     finalRenderer->setInterpolation(false); // false : no minecraft
                     finalRenderer->setInputData(currSegmentation);
@@ -4058,8 +4281,9 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                     // add final segmentation to result list to be accessible if wanted for exporting
                     //availableResults[modelMetadata.at("name") + "_final"] = currSegmentation;
                     //exportComboBox->addItem(tr((modelMetadata.at("name") + "_final").c_str()));
+					 */
                 });
-                 */
+                 //*/
 
                 auto port = stitcher->getOutputPort();
 
@@ -4067,7 +4291,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
                 auto someRenderer = HeatmapRenderer::New();
                 someRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
-                someRenderer->setInputConnection(stitcher->getOutputPort());
+                someRenderer->setInputConnection(lambda->getOutputPort());
                 //someRenderer->setInputConnection(lambda->getOutputPort());
                 someRenderer->setMaxOpacity(0.6f);
                 //heatmapRenderer->update();

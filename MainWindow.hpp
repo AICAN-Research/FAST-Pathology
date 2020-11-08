@@ -72,6 +72,7 @@ class MainWindow : public Window {
         void createWSIScrollAreaWidget();
         void saveThumbnail();
         void saveTissueSegmentation();
+		void saveHeatmap();
         void saveTumor();
         void saveGrade();
         void saveResults(std::string result);
@@ -120,9 +121,12 @@ class MainWindow : public Window {
         void customPipelineEditor();
         void selectFileInProject(int pos);  // int pos);
         int curr_pos = 0;
+		void loadSegmentation(QString path, QString wsi);
+		void loadHeatmap(QString path, QString wsi);
         void loadTissue(QString tissuePath);
         void loadTumor(QString tumorPath);
         void loadPipelines();
+		void loadResultsForCurrentWSI();
 
         QImage extractThumbnail();
 
