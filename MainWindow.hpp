@@ -165,6 +165,9 @@ class MainWindow : public Window {
         int mkdir(const char *path);
         int rmdir(const char *path);
 
+		std::string tmpDirPath;
+		std::string createRandomNumbers_(int n);
+
         uint channel_value;
 
         std::string applicationName;
