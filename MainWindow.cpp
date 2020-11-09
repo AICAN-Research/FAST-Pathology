@@ -3989,24 +3989,24 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
 	printf("\n%d\n", __LINE__);
 
+	// add current model name to map
+	modelNames[modelName] = modelName;
+
+	// set parameters yourself (only enabled if advanced mode is ON
+	if (advancedMode) {
+		modelMetadata = setParameterDialog(modelMetadata);
+		for (const auto &[k, v] : modelMetadata)
+			std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
+	}
+	if (stopFlag) { // if "Cancel" is selected in advanced mode in parameter selection, don't run analysis
+		return false;
+	}
+
 	auto counter = 0;
 	for (const auto& currWSI : currentWSIs) {
 
 		//if (!hasRenderer(modelMetadata["name"])) { // only run analysis if it has not been ran previously on current WSI
 		if (true) {
-
-			// add current model name to map
-			modelNames[modelName] = modelName;
-
-			// set parameters yourself (only enabled if advanced mode is ON
-			if (advancedMode) {
-				modelMetadata = setParameterDialog(modelMetadata);
-				for (const auto &[k, v] : modelMetadata)
-					std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
-			}
-			if (stopFlag) { // if "Cancel" is selected in advanced mode in parameter selection, don't run analysis
-				return false;
-			}
 
 			// segment tissue if not already ran, but hide it
 			/*
@@ -4295,10 +4295,15 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					auto currentHeatmapName = modelMetadata["name"];
 					printf("\n%d\n", __LINE__);
 
+					std::cout << "currentHeatmapName: " << currentHeatmapName << ", currWSI: " << currWSI << std::endl;
+
 					// testing RunLambda in FAST for saving heatmaps
 					auto lambda = RunLambdaOnLastFrame::New();
 					lambda->setInputConnection(stitcher->getOutputPort());
-					lambda->setLambda([this, currentHeatmapName](DataObject::pointer data) {
+					//lambda->setRunOnLastFrameOnly();
+					//lambda->setInputConnection(port); //stitcher->getOutputPort());
+					//lambda->setInputData(port->getNextFrame<Image>());
+					lambda->setLambda([this, currentHeatmapName, currWSI](DataObject::pointer data) {
 						std::cout << "Last frame detected, processing..." << std::endl;
 						auto tensor = std::dynamic_pointer_cast<Tensor>(data);
 						// TODO do stuff with tensor here
@@ -4307,10 +4312,10 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
 						// TODO: Make modelMetadata accessible in current thread?
 
-						//std::cout << "current filename: " << filename << std::endl;
+						std::cout << "current filename: " << currWSI << std::endl;
 
 						// check if folder for current WSI exists, if not, create one
-						QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0]).c_str();
+						QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(currWSI, "/").back(), ".")[0]).c_str();
 						wsiResultPath = wsiResultPath.replace("//", "/");
 						if (!QDir(wsiResultPath).exists()) {
 							QDir().mkdir(wsiResultPath);
@@ -4372,11 +4377,15 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					});
 					//*/
 
+					//auto port = stitcher->getOutputPort();
+					//auto port = lambda->getOutputPort();
+
+					//auto port = stitcher->getOutputPort();
+
 					printf("\n%d\n", __LINE__);
 
 					if (!m_runForProject) {
 						printf("\n%d\n", __LINE__);
-						auto port = stitcher->getOutputPort();
 
 						m_patchStitcherList[modelMetadata["name"]] = stitcher; // add stitcher to global list to be accessible later on
 
@@ -4399,6 +4408,27 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 						//m_neuralNetworkList[modelMetadata["name"]] = network;
 						printf("\n%d\n", __LINE__);
 					}
+
+					auto start = std::chrono::high_resolution_clock::now();
+					DataObject::pointer data;
+					do {
+						data = stitcher->updateAndGetOutputData<DataObject>();
+					} while (!data->isLastFrame());
+
+					// check if folder for current WSI exists, if not, create one
+					QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(currWSI, "/").back(), ".")[0]).c_str();
+					wsiResultPath = wsiResultPath.replace("//", "/");
+					if (!QDir(wsiResultPath).exists()) {
+						QDir().mkdir(wsiResultPath);
+					}
+
+					//std::cout << "current filename: " << wsiResultPath.toStdString() << std::endl;
+
+					auto exporter = HDF5TensorExporter::New();
+					exporter->setFilename(wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + currentHeatmapName + ".h5"); //grade.h5");
+					exporter->setDatasetName(currentHeatmapName);
+					exporter->setInputData(data);
+					exporter->update();
 
 				}
 				else if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
