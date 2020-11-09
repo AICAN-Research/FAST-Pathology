@@ -1928,6 +1928,8 @@ void MainWindow::selectFile() {
 	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
     progDialog.show();
 
+	auto currentPosition = curr_pos;
+
     int counter = 0;
     for (QString& fileName : fileNames) {
 
@@ -2022,11 +2024,12 @@ void MainWindow::selectFile() {
 
         auto listItem = new QListWidgetItem;
         listItem->setSizeHint(QSize(width_val, height_val));
-        QObject::connect(button, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, curr_pos));
+        QObject::connect(button, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, currentPosition));
         scrollList->addItem(listItem);
         scrollList->setItemWidget(listItem, button);
 
         //curr_pos++; // this should change if we render the first WSI when loading
+		currentPosition++;
 
         // TODO: Importing multiple WSIs, results in QMessageBox flickering... (2speedy)
         /*
@@ -2285,6 +2288,8 @@ void MainWindow::selectFileInProject(int pos) {
 	m_rendererList.clear();
 	m_rendererTypeList.clear();
 	clearLayout(stackedLayout);
+
+	// remove global segmentations
 
 
 	// kill all NN pipelines and clear holders
@@ -4030,12 +4035,15 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 			//importer->setFilename(currWSI);
 			//auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
 			//auto currImage = m_image;
-
-			//if (m_runForProject) {
+			
+			//WholeSlideImageImporter::pointer currImage = WholeSlideImageImporter::New();
 			auto importer = WholeSlideImageImporter::New();
 			importer->setFilename(currWSI);
 			auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
-			//}
+
+			if (!m_runForProject) {
+				currImage = m_image;
+			}
 
 			printf("\n%d\n", __LINE__);
 
@@ -4297,6 +4305,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
 					std::cout << "currentHeatmapName: " << currentHeatmapName << ", currWSI: " << currWSI << std::endl;
 
+					/*
 					// testing RunLambda in FAST for saving heatmaps
 					auto lambda = RunLambdaOnLastFrame::New();
 					lambda->setInputConnection(stitcher->getOutputPort());
@@ -4329,58 +4338,8 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 						exporter->setInputData(tensor);
 						exporter->update();
 
-						/*
-						auto converter = TensorToSegmentation::New();
-						converter->setInputData(tensor);
-						//converter->setBackgroundLabel(200); //std::stoi(modelMetadata.at("nb_classes")) + 1); //200); // FIXME: This will not work in general, for instance if a model has the classes {0, 1, 3}, should set to a unique class
-						//converter->setThreshold(0.333f); // FIXME: This should be possible to set, but modelMetadata is not accessible in this thread
-						printf("\n%d\n",__LINE__); // <- this is nice for debugging
-
-						//auto currModelMetadata = m_modelMetadataList[]
-
-						//auto port = intensityScaler->getOutputPort();
-						//intensityScaler->update();
-
-						//Image::pointer result = port->getNextFrame<Image>();
-						//m_gradeMap = port->getNextFrame<Image>();
-
-						//m_tumorHeatmap = converter->updateAndGetOutputData<Image>();
-						auto currSegmentation = converter->updateAndGetOutputData<Image>();
-						//m_gradeMap = intensityScaler->updateAndGetOutputData<Image>();
-
-						// attempt simple post-processing
-
-						auto finalRenderer = SegmentationRenderer::New();
-						finalRenderer->setOpacity(0.4);
-						//finalRenderer->setChannelHidden(0, false);
-						finalRenderer->setInterpolation(false); // false : no minecraft
-						finalRenderer->setInputData(currSegmentation);
-						//finalRenderer->setInputData(erosion->updateAndGetOutputData<Image>());
-						//finalRenderer->update();
-						//finalRenderer->setSynchronizedRendering(true);
-
-						for (const auto &[k, v] : modelMetadata)
-							std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
-
-						m_rendererTypeList[modelMetadata.at("name") + "_final"] = "SegmentationRenderer";
-						insertRenderer(modelMetadata.at("name") + "_final", finalRenderer);
-
-						//std::cout << "\nCount: " << modelMetadata.size() << std::endl;
-
-						// TODO: Creation of Qt-stuff outside main thread?
-						createDynamicViewWidget(modelMetadata.at("name") + "_final", modelMetadata.at("model_name"));
-
-						// add final segmentation to result list to be accessible if wanted for exporting
-						//availableResults[modelMetadata.at("name") + "_final"] = currSegmentation;
-						//exportComboBox->addItem(tr((modelMetadata.at("name") + "_final").c_str()));
-						 */
 					});
-					//*/
-
-					//auto port = stitcher->getOutputPort();
-					//auto port = lambda->getOutputPort();
-
-					//auto port = stitcher->getOutputPort();
+					 */
 
 					printf("\n%d\n", __LINE__);
 
@@ -4391,7 +4350,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
 						auto someRenderer = HeatmapRenderer::New();
 						someRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
-						someRenderer->setInputConnection(lambda->getOutputPort());
+						someRenderer->setInputConnection(stitcher->getOutputPort());
 						//someRenderer->setInputConnection(lambda->getOutputPort());
 						someRenderer->setMaxOpacity(0.6f);
 						//heatmapRenderer->update();
@@ -4409,26 +4368,35 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 						printf("\n%d\n", __LINE__);
 					}
 
-					auto start = std::chrono::high_resolution_clock::now();
-					DataObject::pointer data;
-					do {
-						data = stitcher->updateAndGetOutputData<DataObject>();
-					} while (!data->isLastFrame());
+					//auto port = stitcher->getOutputPort();
+					//auto port = lambda->getOutputPort();
 
-					// check if folder for current WSI exists, if not, create one
-					QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(currWSI, "/").back(), ".")[0]).c_str();
-					wsiResultPath = wsiResultPath.replace("//", "/");
-					if (!QDir(wsiResultPath).exists()) {
-						QDir().mkdir(wsiResultPath);
-					}
+					//auto port = stitcher->updateAndGetOutputData<tensor>();//getOutputPort();
 
-					//std::cout << "current filename: " << wsiResultPath.toStdString() << std::endl;
 
-					auto exporter = HDF5TensorExporter::New();
-					exporter->setFilename(wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + currentHeatmapName + ".h5"); //grade.h5");
-					exporter->setDatasetName(currentHeatmapName);
-					exporter->setInputData(data);
-					exporter->update();
+					if (m_runForProject) {
+
+						//auto start = std::chrono::high_resolution_clock::now();
+						DataObject::pointer data;
+						do {
+							data = stitcher->updateAndGetOutputData<Tensor>(); //DataObject>();
+
+						} while (!data->isLastFrame());
+							// check if folder for current WSI exists, if not, create one
+							QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(currWSI, "/").back(), ".")[0]).c_str();
+							wsiResultPath = wsiResultPath.replace("//", "/");
+							if (!QDir(wsiResultPath).exists()) {
+								QDir().mkdir(wsiResultPath);
+							}
+
+							//std::cout << "current filename: " << wsiResultPath.toStdString() << std::endl;
+
+							auto exporter = HDF5TensorExporter::New();
+							exporter->setFilename(wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + currentHeatmapName + ".h5"); //grade.h5");
+							exporter->setDatasetName(currentHeatmapName);
+							exporter->setInputData(data);
+							exporter->update();
+						}
 
 				}
 				else if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
@@ -4538,68 +4506,70 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 						insertRenderer(modelMetadata["name"], someRenderer);
 					}
 
-					// save result
-					// check if folder for current WSI exists, if not, create one
-					QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(currWSI, "/").back(), ".")[0]).c_str();
-					wsiResultPath = wsiResultPath.replace("//", "/");
-					if (!QDir(wsiResultPath).exists()) {
-						QDir().mkdir(wsiResultPath);
+					if (m_runForProject) {
+						// save result
+						// check if folder for current WSI exists, if not, create one
+						QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(currWSI, "/").back(), ".")[0]).c_str();
+						wsiResultPath = wsiResultPath.replace("//", "/");
+						if (!QDir(wsiResultPath).exists()) {
+							QDir().mkdir(wsiResultPath);
+						}
+
+						//std::cout << "current filename: " << wsiResultPath.toStdString() << std::endl;
+
+						/*
+						auto exporter = HDF5TensorExporter::New();
+						exporter->setFilename(wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + currentHeatmapName + ".h5"); //grade.h5");
+						exporter->setDatasetName(currentHeatmapName);
+						exporter->setInputData(tensor);
+						exporter->update();
+						 */
+
+						 /*
+						 auto intensityScaler = ScaleImage::New();
+						 intensityScaler->setInputData(m_tissue);
+						 intensityScaler->setLowestValue(0.0f);
+						 intensityScaler->setHighestValue(1.0f);
+						  */
+
+						  /*
+						  // use hdf5 writer instead of PNG (!)
+						  auto exporter = HDF5TensorExporter::New();
+						  exporter->setFilename(wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + modelMetadata["name"] + ".h5");
+						  //exporter->setInputData(tensor);
+						  exporter->update();
+						   */
+
+						   /*
+						   auto intensityScaler = ScaleImage::New();
+						   intensityScaler->setInputData(m_tissue);
+						   intensityScaler->setLowestValue(0.0f);
+						   intensityScaler->setHighestValue(1.0f);
+						   intensityScaler->update();
+							*/
+
+						auto intensityScaler = ScaleImage::New();
+						intensityScaler->setInputData(m_tumorMap);
+						intensityScaler->setLowestValue(0.0f);
+						intensityScaler->setHighestValue(1.0f);
+
+						auto thresholder = BinaryThresholding::New();
+						thresholder->setLowerThreshold(0.5f);
+						thresholder->setInputConnection(intensityScaler->getOutputPort());
+
+						auto exporter = ImageFileExporter::New();
+						exporter->setFilename(wsiResultPath.toStdString() + "/" + split(split(currWSI, "/").back(), ".")[0] + "_" + modelMetadata["name"] + ".png"); //split(wsiResultPath.toStdString(), "/").back() + "_" + modelMetadata["name"] + ".png");  //outFile.replace("//", "/").toStdString());
+						exporter->setInputData(thresholder->updateAndGetOutputData<Image>());
+						//exporter->setInputData(m_tumorMap);
+						exporter->update();
+
+						// should kill network to free memory when finished
+						//network->stopPipeline(); // TODO: Does nothing? Or at least I cannot see a different using "nvidia-smi"
+
+						// add final segmentation to result list to be accessible if wanted for exporting
+						//availableResults[modelMetadata["name"]] = m_tumorMap;
+						//exportComboBox->addItem(tr(modelMetadata["name"].c_str()));
 					}
-
-					//std::cout << "current filename: " << wsiResultPath.toStdString() << std::endl;
-
-					/*
-					auto exporter = HDF5TensorExporter::New();
-					exporter->setFilename(wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + currentHeatmapName + ".h5"); //grade.h5");
-					exporter->setDatasetName(currentHeatmapName);
-					exporter->setInputData(tensor);
-					exporter->update();
-					 */
-
-					 /*
-					 auto intensityScaler = ScaleImage::New();
-					 intensityScaler->setInputData(m_tissue);
-					 intensityScaler->setLowestValue(0.0f);
-					 intensityScaler->setHighestValue(1.0f);
-					  */
-
-					/*
-					// use hdf5 writer instead of PNG (!)
-					auto exporter = HDF5TensorExporter::New();
-					exporter->setFilename(wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + modelMetadata["name"] + ".h5");
-					//exporter->setInputData(tensor);
-					exporter->update();
-					 */
-
-					/*
-					auto intensityScaler = ScaleImage::New();
-					intensityScaler->setInputData(m_tissue);
-					intensityScaler->setLowestValue(0.0f);
-					intensityScaler->setHighestValue(1.0f);
-					intensityScaler->update();
-					 */
-
-					auto intensityScaler = ScaleImage::New();
-					intensityScaler->setInputData(m_tumorMap);
-					intensityScaler->setLowestValue(0.0f);
-					intensityScaler->setHighestValue(1.0f);
-
-					auto thresholder = BinaryThresholding::New();
-					thresholder->setLowerThreshold(0.5f);
-					thresholder->setInputConnection(intensityScaler->getOutputPort());
-
-					auto exporter = ImageFileExporter::New();
-					exporter->setFilename(wsiResultPath.toStdString() + "/" + split(split(currWSI, "/").back(), ".")[0] + "_" + modelMetadata["name"] + ".png"); //split(wsiResultPath.toStdString(), "/").back() + "_" + modelMetadata["name"] + ".png");  //outFile.replace("//", "/").toStdString());
-					exporter->setInputData(thresholder->updateAndGetOutputData<Image>());
-					//exporter->setInputData(m_tumorMap);
-					exporter->update();
-
-					// should kill network to free memory when finished
-					//network->stopPipeline(); // TODO: Does nothing? Or at least I cannot see a different using "nvidia-smi"
-
-					// add final segmentation to result list to be accessible if wanted for exporting
-					//availableResults[modelMetadata["name"]] = m_tumorMap;
-					//exportComboBox->addItem(tr(modelMetadata["name"].c_str()));
 				}
 
 				// now make it possible to edit prediction in the View Widget
