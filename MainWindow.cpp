@@ -2952,7 +2952,7 @@ void MainWindow::addModels() {
     QStringList ls = QFileDialog::getOpenFileNames(
             mWidget,
             tr("Select Model"), nullptr,
-            tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff)"),
+            tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff *.anchors"),
             nullptr, QFileDialog::DontUseNativeDialog
     ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
 
@@ -3001,7 +3001,7 @@ void MainWindow::addModels() {
         //QFile::copy(fileName, QString::fromStdString(newPath));
 
         // check which corresponding model files that exist, except from the one that is chosen
-        std::vector<std::string> allowedFileFormats{"txt", "pb", "h5", "mapping", "xml", "bin", "uff"};
+        std::vector<std::string> allowedFileFormats{"txt", "pb", "h5", "mapping", "xml", "bin", "uff", "anchors"};
 
         std::cout << "Copy test" << std::endl;
         foreach(std::string currExtension, allowedFileFormats) {
@@ -4413,17 +4413,20 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 				}
 				else if ((modelMetadata["problem"] == "object_detection") && (modelMetadata["resolution"] == "high")) {  // TODO: Perhaps use switch() instead of tons of if-statements?
 
-				 // FIXME: Currently, need to do special handling for object detection as setThreshold and setAnchors only exist for BBNetwork and not NeuralNetwork
+					// FIXME: Currently, need to do special handling for object detection as setThreshold and setAnchors only exist for BBNetwork and not NeuralNetwork
 					auto generator = PatchGenerator::New();
 					generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
 					generator->setPatchLevel(patch_lvl_model);
 					generator->setInputData(0, currImage);
-					generator->setInputData(1, m_tissue);
+					if (m_tissue)
+						generator->setInputData(1, m_tissue);
 					if (m_tumorMap)
 						generator->setInputData(1, m_tumorMap);
 
 					auto currNetwork = BoundingBoxNetwork::New();
 					currNetwork->setThreshold(0.1f); //0.01); // default: 0.5
+
+					std::cout << "Current anchor file path: " << cwd + "data/Models/" + modelName + ".anchors" << std::endl;
 
 					// read anchors from corresponding anchor file
 					std::vector<std::vector<Vector2f> > anchors;
@@ -4452,6 +4455,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					currNetwork->setInputConnection(generator->getOutputPort());
 
 					// FIXME: Bug when using NMS - ERROR [140237963507456] Terminated with unhandled exception: Size must be > 0, got: -49380162997889393559076864.000000 -96258.851562
+					// - Ubuntu only?
 					//auto nms = NonMaximumSuppression::New();
 					//nms->setThreshold(0);
 					//nms->setInputConnection(currNetwork->getOutputPort());
