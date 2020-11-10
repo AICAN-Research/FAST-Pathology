@@ -7,6 +7,10 @@ include_directories(.)
 find_package(FAST REQUIRED)
 include(${FAST_USE_FILE})
 
+#find_package(Qt5Network REQUIRED)
+#SET(QT_USE_QTNETWORK true)
+#INCLUDE_DIRECTORIES(${QT_QTNETWORK_INCLUDE_DIR})
+
 set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
 
 add_executable(fastpathology
@@ -17,7 +21,7 @@ add_executable(fastpathology
 		qtres.cpp)
 
 add_dependencies(fastpathology fast_copy)
-target_link_libraries(fastpathology ${FAST_LIBRARIES})
+target_link_libraries(fastpathology ${FAST_LIBRARIES}) #Qt5::Network)
 
 set_target_properties(fastpathology PROPERTIES
         CXX_STANDARD 17

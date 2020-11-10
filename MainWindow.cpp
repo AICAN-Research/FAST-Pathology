@@ -65,6 +65,8 @@
 #include <FAST/Algorithms/Morphology/Erosion.hpp>
 #include <QMimeData>
 #include <QDragEnterEvent>
+//#include <QtNetwork/5.14.0/QtNetwork/private/qnetworkrequest_p.h>
+//#include <QtNetwork/qnetworkrequest.h>  //<QNetworkRequest>
 //#include <jkqtplotter/graphs/jkqtpbarchart.h>
 
 using namespace std;
@@ -250,6 +252,98 @@ void MainWindow::helpUrl() {
 }
 
 
+void MainWindow::downloadAndAddTestData() {
+
+	// prompt
+	QMessageBox mBox;
+	mBox.setIcon(QMessageBox::Warning);
+	mBox.setText("This will download the test data, add the models, and open two WSIs.");
+	mBox.setInformativeText("Are you sure you want to continue?");
+	mBox.setDefaultButton(QMessageBox::Yes);
+	mBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+	int ret = mBox.exec();
+
+	switch (ret) {
+		case QMessageBox::Yes:
+			// toggle and update text on button to show current mode (also default)
+			break;
+		case QMessageBox::No:
+			// if "No", do nothing
+			return;
+		case QMessageBox::Cancel:
+			// if "Cancel", do nothing
+			return;
+		default:
+			break;
+	}
+
+	auto progDialog = QProgressDialog(mWidget);
+	progDialog.setRange(0, 0);
+	progDialog.setVisible(true);
+	progDialog.setModal(false);
+	progDialog.setLabelText("Downloading test data...");
+	//progDialog.setMinimumWidth(progDialog.labelText().count());
+	//int width = QFontMetrics(progDialog.font()).width(progDialog.labelText()) + 100;
+	//progDialog.resize(width, progDialog.height());
+	//QRect screenrect = mWidget->screen()[0].geometry();
+	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
+	progDialog.show();
+
+	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+
+	//QDir::setCurrent("(New-Object -ComObject Shell.Application).NameSpace('shell:Downloads').Self.Path");
+
+	QString downloadsFolder = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+	auto tmp = "cd " + downloadsFolder + "&& curl -o test_data.zip http://folk.ntnu.no/andpeder/FastPathology/test_data.zip && tar -xf test_data.zip";
+	system(tmp.toStdString().c_str());
+
+	//QNetworkRequest request(fileUrl);
+
+	progDialog.setValue(0);
+	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+
+	// OPTIONAL: Add Models to test if inference is working
+	QList<QString> fileNames;
+	QDirIterator it2(downloadsFolder + "/test_data/Models/", QDir::Files);
+	while (it2.hasNext()) {
+		auto tmp = it2.next();
+		fileNames.push_back(tmp);
+	}
+	addModelsDrag(fileNames);
+
+	QMessageBox mBox2;
+	mBox2.setIcon(QMessageBox::Warning);
+	mBox2.setText("Download is finished.");
+	mBox2.setInformativeText("Do you wish to open the test WSIs?");
+	mBox2.setDefaultButton(QMessageBox::No);
+	mBox2.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+	int ret2 = mBox2.exec();
+
+	switch (ret2) {
+	case QMessageBox::Yes:
+		// toggle and update text on button to show current mode
+		break;
+	case QMessageBox::No:
+		// if "No", do nothing (also default)
+		return;
+	case QMessageBox::Cancel:
+		// if "Cancel", do nothing
+		return;
+	default:
+		return;
+	}
+
+	// OPTIONAL: Add WSIs to project for visualization
+	fileNames.clear();
+	QDirIterator it(downloadsFolder + "/test_data/WSI/", QDir::Files);
+	while (it.hasNext()) {
+		auto tmp = it.next();
+		fileNames.push_back(tmp);
+	}
+	selectFileDrag(fileNames);
+}
+
+
 void MainWindow::aboutProgram() {
 
 	auto currLayout = new QVBoxLayout;
@@ -312,6 +406,7 @@ void MainWindow::createMenubar() {
     auto editMenu = topFiller->addMenu(tr("&Edit"));
     editMenu->addAction("Reset", this, &MainWindow::reset);
     editMenu->addAction("Change mode", this, &MainWindow::setApplicationMode);
+	editMenu->addAction("Download test data", this, &MainWindow::downloadAndAddTestData);
 
     auto pipelineMenu = topFiller->addMenu(tr("&Pipelines"));
     pipelineMenu->addAction("Import pipelines", this, &MainWindow::addPipelines);
@@ -1508,6 +1603,8 @@ void MainWindow::saveThumbnail() {
 	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
 	progDialog.show();
 
+	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+
 	auto counter = 0;
 	for (const auto& currWSI : currentWSIs) {
 
@@ -1601,6 +1698,8 @@ void MainWindow::saveTissueSegmentation() {
 	//QRect screenrect = mWidget->screen()[0].geometry();
 	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
 	progDialog.show();
+
+	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
 	auto counter = 0;
 	for (const auto& currWSI : currentWSIs) {
@@ -1928,6 +2027,8 @@ void MainWindow::selectFile() {
 	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
     progDialog.show();
 
+	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+
 	auto currentPosition = curr_pos;
 
     int counter = 0;
@@ -2107,6 +2208,8 @@ void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
     progDialog.move(mWidget->width() - progDialog.width() / 2, - mWidget->width() / 2 - progDialog.width() / 2);
     progDialog.show();
 
+	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+
     int counter = 0;
     for (const QString& fileName : fileNames) {
 
@@ -2114,7 +2217,7 @@ void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
             return;
         //filename = fileName.toStdString();
         auto currFileName = fileName.toStdString();
-        std::cout << "\nSelected file: " << currFileName << "\n";
+        std::cout << "Selected file: " << currFileName << std::endl;
         wsiList.push_back(currFileName);
 
         // Import image from file using the ImageFileImporter
@@ -2129,7 +2232,7 @@ void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
             filename = currFileName;
 
             m_image = currImage;
-            std::cout << "\n count:" << counter;
+            std::cout << "count:" << counter << std::endl;
             metadata = m_image->getMetadata(); // get metadata
 
             /*
@@ -2946,6 +3049,93 @@ void MainWindow::runForProject_apply(std::string method) {
 }
 
 
+void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
+
+	// if Models/ folder doesnt exist, create it
+	QDir().mkpath(QDir::homePath() + "/data/Models");
+
+	auto progDialog = QProgressDialog(mWidget);
+	//std::cout << "\nNum files: " << ls.count() << std::endl;
+	progDialog.setRange(0, fileNames.count() - 1);
+	progDialog.setVisible(true);
+	progDialog.setModal(false);
+	progDialog.setLabelText("Adding models...");
+	QRect screenrect = mWidget->screen()[0].geometry();
+	progDialog.move(mWidget->width() - progDialog.width() / 2, -mWidget->width() / 2 - progDialog.width() / 2);
+	progDialog.show();
+
+	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+
+	int counter = 0;
+	// now iterate over all selected files and add selected files and corresponding ones to Models/
+	for (QString fileName : fileNames) {
+		std::cout << fileName.toStdString() << std::endl;
+
+		if (fileName == "")
+			return;
+
+		std::string someFile = split(fileName.toStdString(), "/").back(); // TODO: Need to make this only split on last "/"
+		std::string oldLocation = split(fileName.toStdString(), someFile)[0];
+		std::string newLocation = cwd + "data/Models/";
+
+		std::vector<string> names = split(someFile, ".");
+		string fileNameNoFormat = names[0];
+		string formatName = names[1];
+
+		// copy selected file to Models folder
+		// check if file already exists in new folder, if yes, print warning, and continue to next one
+		string newPath = cwd + "data/Models/" + someFile;
+		if (fileExists(newPath)) {
+			std::cout << "file with the same name already exists in folder, didn't transfer... " << std::endl;
+			progDialog.setValue(counter);
+			counter++;
+			continue;
+		}
+		//QFile::copy(fileName, QString::fromStdString(newPath));
+
+		// check which corresponding model files that exist, except from the one that is chosen
+		std::vector<std::string> allowedFileFormats{ "txt", "pb", "h5", "mapping", "xml", "bin", "uff", "anchors" };
+
+		foreach(std::string currExtension, allowedFileFormats) {
+			std::string oldPath = oldLocation + fileNameNoFormat + "." + currExtension;
+			if (fileExists(oldPath)) {
+				QFile::copy(QString::fromStdString(oldPath), QString::fromStdString(cwd + "data/Models/" + fileNameNoFormat + "." + currExtension));
+			}
+		}
+
+		// when models are added, ProcessWidget should be updated by adding the new widget to ProcessWidget layout
+		// current model
+		modelName = fileNameNoFormat;
+
+		// get metadata of current model
+		std::map<std::string, std::string> metadata = getModelMetadata(modelName);
+
+		auto someButton = new QPushButton(mWidget);
+		someButton->setText(QString::fromStdString(metadata["task"]));
+		//predGradeButton->setFixedWidth(200);
+		someButton->setFixedHeight(50);
+		QObject::connect(someButton, &QPushButton::clicked,
+			std::bind(&MainWindow::pixelClassifier, this, modelName));
+		someButton->show();
+
+		processLayout->insertWidget(processLayout->count(), someButton);
+
+		//createMainMenuWidget();
+		//if (processLayout){
+		//    clearLayout(processLayout);
+		//}
+		//createProcessWidget();
+		//mainLayout->removeWidget(menuWidget); // this doesnt work...
+
+		progDialog.setValue(counter);
+		counter++;
+
+		// to render straight away (avoid waiting on all WSIs to be handled before rendering)
+		QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+	}
+}
+
+
 void MainWindow::addModels() {
 
     //QString fileName = QFileDialog::getOpenFileName(
@@ -2966,6 +3156,8 @@ void MainWindow::addModels() {
 	progDialog.move(mWidget->width() - progDialog.width() / 2, -mWidget->width() / 2 - progDialog.width() / 2);
 	progDialog.show();
 
+	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+
 	int counter = 0;
     // now iterate over all selected files and add selected files and corresponding ones to Models/
     for (QString& fileName : ls) {
@@ -2973,17 +3165,9 @@ void MainWindow::addModels() {
         if (fileName == "")
             return;
 
-        std::cout << "orig filename: " << fileName.toStdString() << std::endl;
-
-        //qDebug().nospace() << "abc" << qPrintable(fileName) << "\ndef";
-        std::string someFile = split(fileName.toStdString(),
-                                     "/").back(); // TODO: Need to make this only split on last "/"
-        std::cout << "Path: " << someFile << std::endl;
+        std::string someFile = split(fileName.toStdString(), "/").back(); // TODO: Need to make this only split on last "/"
         std::string oldLocation = split(fileName.toStdString(), someFile)[0];
-
         std::string newLocation = cwd + "data/Models/";
-
-        std::cout << "Old cwd: " << cwd << std::endl;
 
         std::vector<string> names = split(someFile, ".");
         string fileNameNoFormat = names[0];
@@ -2993,7 +3177,7 @@ void MainWindow::addModels() {
         // check if file already exists in new folder, if yes, print warning, and stop
         string newPath = cwd + "data/Models/" + someFile;
         if (fileExists(newPath)) {
-            std::cout << "file with same name already exists in folder, didn't transfer... " << std::endl;
+            std::cout << "file with the same name already exists in folder, didn't transfer... " << std::endl;
 			progDialog.setValue(counter);
 			counter++;
             continue;
@@ -3006,7 +3190,6 @@ void MainWindow::addModels() {
         std::cout << "Copy test" << std::endl;
         foreach(std::string currExtension, allowedFileFormats) {
             std::string oldPath = oldLocation + fileNameNoFormat + "." + currExtension;
-            std::cout << currExtension << oldPath << std::endl;
             if (fileExists(oldPath)) {
                 QFile::copy(QString::fromStdString(oldPath), QString::fromStdString(cwd + "data/Models/" + fileNameNoFormat + "." + currExtension));
             }
@@ -3725,6 +3908,8 @@ void MainWindow::runPipeline(std::string path) {
 	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
 	progDialog.show();
 
+	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+
 	auto counter = 0;
 	for (const auto& currWSI : currentWSIs) {
 
@@ -3991,6 +4176,8 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 	//QRect screenrect = mWidget->screen()[0].geometry();
 	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
 	progDialog.show();
+
+	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
 	printf("\n%d\n", __LINE__);
 

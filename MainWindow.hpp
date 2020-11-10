@@ -103,6 +103,7 @@ class MainWindow : public Window {
 		std::vector<std::string> m_runForProjectWsis;
 		void runForProject_apply(std::string method);
 
+		void downloadAndAddTestData();
         static void helpUrl();
         static void reportIssueUrl();
 		
@@ -112,6 +113,7 @@ class MainWindow : public Window {
         void selectFile();
         void selectFileDrag(const QList<QString> &fileNames);
         void addModels();
+		void addModelsDrag(const QList<QString> &fileNames);
         void addPipelines();
         void createProject();
         void openProject();
