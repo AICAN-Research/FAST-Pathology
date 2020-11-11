@@ -10,22 +10,22 @@ Install
 -----------------------------------
 Download an appropriate installer from the [release page](https://github.com/SINTEFMedtek/FAST-Pathology/releases/). Installers for Win10 and Ubuntu (18 and 20) are available.
 
-**NOTE:** FastPathology depends on OpenCL. Most Windows machines have OpenCL by default, whereas Ubuntu does not. Thus, for Ubuntu, OpenCL can be installed by installing either [NVIDIA CUDA Toolkit](https://developer.nvidia.com/cuda-10.1-download-archive-base) or [Intel OpenCL SDK](https://software.intel.com/content/www/us/en/develop/tools/opencl-sdk.html). CUDA is also needed if one want to run inference using GPU.
+**NOTE:** FastPathology depends on OpenCL. Most Windows machines have OpenCL by default, whereas Ubuntu does not. Thus, for Ubuntu, OpenCL can be installed by installing either [NVIDIA CUDA Toolkit](https://developer.nvidia.com/cuda-10.1-download-archive-base) or [Intel OpenCL SDK](https://software.intel.com/content/www/us/en/develop/tools/opencl-sdk.html). For both operating systems CUDA is required to run inference on a dedicated GPU.
 
 Test data
 -----------------------------------
-Data for testing the application can be downloaded from [here](http://folk.ntnu.no/andpeder/). It includes some pretrained models, two WSIs (x200, x400), and some example text pipelines.
+Data for testing the application can be downloaded from [here](http://folk.ntnu.no/andpeder/). It includes some pretrained models, two WSIs, and some example text pipelines.
 
 Features
 -----------------------------------
-The software is implemented in C++ based on FAST. A wide range of features has been added to the platform and FAST to make working with Whole Slide Images (WSIs) a piece of cake!
-* **Graphical User Interface -** User-friendly GUI for working with WSIs without any code iteraction
-* **Deep learning -** Deployment of a wide range of multi-input/output Convolutional Neural Networks (CNNs)
+The software is implemented in C++ based on FAST. A wide range of features have been added to the platform and FAST to make working with Whole Slide Images (WSIs) a piece of cake!
+* **Graphical User Interface -** User-friendly GUI for working with WSIs without any code interaction
+* **Deep learning -** Deployment and support for multi-input/output Convolutional Neural Networks (CNNs)
 * **Visualization -** Real-time streaming of predictions on top of the WSI with low memory cost
 * **Use cases -** Patch-wise classification, low and high-resolution segmentation, and object detection are supported
 * **Inference Engines -** FAST includes a variety of different inference engines, e.g. TensorFlow CUDA, TensorRT and OpenVINO.
 * **Text pipelines -** Possibility to create your own pipelines using the built-in script editor
-* **Formats -** Using OpenSlide FastPathology supports lots of WSI formats
+* **Formats -** Through OpenSlide FastPathology supports lots of WSI formats
 
 Demos
 -----------------------------------
