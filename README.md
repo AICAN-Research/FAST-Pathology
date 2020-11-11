@@ -9,7 +9,7 @@ Install
 -----------------------------------
 Download an appropriate installer from the [release page](https://github.com/SINTEFMedtek/FAST-Pathology/releases/). Installers for Win10 and Ubuntu (18 and 20) are available.
 
-**NOTE:** FastPathology depends on OpenCL. Most Windows machines have OpenCL by default, whereas Ubuntu does not. Thus, for Ubuntu, OpenCL can be installed by installing: [NVIDIA CUDA Toolkit](https://developer.nvidia.com/cuda-10.1-download-archive-base) or [Intel OpenCL SDK](https://software.intel.com/content/www/us/en/develop/tools/opencl-sdk.html).
+**NOTE:** FastPathology depends on OpenCL. Most Windows machines have OpenCL by default, whereas Ubuntu does not. Thus, for Ubuntu, OpenCL can be installed by installing either [NVIDIA CUDA Toolkit](https://developer.nvidia.com/cuda-10.1-download-archive-base) or [Intel OpenCL SDK](https://software.intel.com/content/www/us/en/develop/tools/opencl-sdk.html). CUDA is also needed if one want to run inference using GPU.
 
 Test data
 -----------------------------------
