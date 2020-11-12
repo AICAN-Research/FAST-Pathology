@@ -114,6 +114,7 @@ set(CPACK_PACKAGE_VENDOR "SINTEF and NTNU")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "fastpathology is an open-source platform for deep learning-based digital pathology created by SINTEF Medical Technology and the Norwegian University of Science and Technology (NTNU).")
 #set(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.md")
 set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE.md) # @TODO somehow concatenate all licences to this file..
+
 set(CPACK_PACKAGE_VERSION_MAJOR "0")
 set(CPACK_PACKAGE_VERSION_MINOR "1")
 set(CPACK_PACKAGE_VERSION_PATCH "0")

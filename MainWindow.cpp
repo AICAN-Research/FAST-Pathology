@@ -255,13 +255,13 @@ void MainWindow::helpUrl() {
 void MainWindow::downloadAndAddTestData() {
 
 	// prompt
-	QMessageBox mBox;
-	mBox.setIcon(QMessageBox::Warning);
-	mBox.setText("This will download the test data, add the models, and open two WSIs.");
-	mBox.setInformativeText("Are you sure you want to continue?");
-	mBox.setDefaultButton(QMessageBox::Yes);
-	mBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-	int ret = mBox.exec();
+	auto mBox = new QMessageBox(mWidget);
+	mBox->setIcon(QMessageBox::Warning);
+	mBox->setText("This will download the test data, add the models, and open two WSIs.");
+	mBox->setInformativeText("Are you sure you want to continue?");
+	mBox->setDefaultButton(QMessageBox::Yes);
+	mBox->setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+	int ret = mBox->exec();
 
 	switch (ret) {
 		case QMessageBox::Yes:
@@ -277,31 +277,60 @@ void MainWindow::downloadAndAddTestData() {
 			break;
 	}
 
-	auto progDialog = QProgressDialog(mWidget);
-	progDialog.setRange(0, 0);
-	progDialog.setVisible(true);
-	progDialog.setModal(false);
-	progDialog.setLabelText("Downloading test data...");
-	//progDialog.setMinimumWidth(progDialog.labelText().count());
-	//int width = QFontMetrics(progDialog.font()).width(progDialog.labelText()) + 100;
-	//progDialog.resize(width, progDialog.height());
-	//QRect screenrect = mWidget->screen()[0].geometry();
-	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
-	progDialog.show();
+	auto dialogLayout = new QVBoxLayout(mWidget);
 
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+	auto headerLabel = new QLabel(mWidget);
+	headerLabel->setText("Downloading test data...");
 
-	//QDir::setCurrent("(New-Object -ComObject Shell.Application).NameSpace('shell:Downloads').Self.Path");
+	auto someTextDisplay = new QPlainTextEdit(mWidget);
+	someTextDisplay->setReadOnly("true");
+	someTextDisplay->setMinimumWidth(600);
 
-	QString downloadsFolder = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-	auto tmp = "cd " + downloadsFolder + "&& curl -o test_data.zip http://folk.ntnu.no/andpeder/FastPathology/test_data.zip && tar -xf test_data.zip";
-	system(tmp.toStdString().c_str());
+	dialogLayout->addWidget(headerLabel);
+	dialogLayout->addWidget(someTextDisplay);
+
+	auto someDialog = new QDialog(mWidget);
+	someDialog->setStyleSheet(headerLabel->styleSheet());
+	someDialog->setLayout(dialogLayout);
+	Qt::WindowFlags flags = someDialog->windowFlags();
+	someDialog->setWindowFlags(flags | Qt::Tool);
+	someDialog->show();
+
+	//QString downloadsFolder = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+	QString downloadsFolder = QDir::homePath() + "/fastpathology/data";
+	auto tmp = "cd " + downloadsFolder + " && curl -o test_data.zip " + "http://folk.ntnu.no/andpeder/FastPathology/test_data.zip && tar -xf test_data.zip";
+	std::cout << tmp.toStdString() << std::endl;
+
+	QProcess process;
+	process.setProcessChannelMode(QProcess::MergedChannels);
+
+	auto currKernel = QSysInfo::kernelType();
+	if (currKernel == "linux") {
+		process.start("gnome-terminal", QStringList() << tmp);
+	} else if ((currKernel == "winnt") || (currKernel == "wince")) {
+		process.start("C:/windows/system32/cmd.exe", QStringList() << "/C" << tmp);
+	}
+
+	// Use resizable buffers, unlike the system.
+	//QByteArray stderr_;
+	//QByteArray stdout_;
+
+	// Give the child process some time to start.
+	process.waitForStarted();
+	do {
+		someTextDisplay->moveCursor(QTextCursor::End);
+		someTextDisplay->insertPlainText(process.readAllStandardOutput());
+		someTextDisplay->moveCursor(QTextCursor::End);
+		QApplication::processEvents();
+
+		//system("PAUSE");
+	} while (!process.waitForFinished(100)); // Wait 100 ms and keep looping if not finished.
+
+	// when finished, close dialog
+	someDialog->close();
 
 	//QNetworkRequest request(fileUrl);
-
-	progDialog.setValue(0);
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-
+	
 	// OPTIONAL: Add Models to test if inference is working
 	QList<QString> fileNames;
 	QDirIterator it2(downloadsFolder + "/test_data/Models/", QDir::Files);
@@ -310,14 +339,14 @@ void MainWindow::downloadAndAddTestData() {
 		fileNames.push_back(tmp);
 	}
 	addModelsDrag(fileNames);
-
-	QMessageBox mBox2;
-	mBox2.setIcon(QMessageBox::Warning);
-	mBox2.setText("Download is finished.");
-	mBox2.setInformativeText("Do you wish to open the test WSIs?");
-	mBox2.setDefaultButton(QMessageBox::No);
-	mBox2.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-	int ret2 = mBox2.exec();
+	
+	auto mBox2 = new QMessageBox(mWidget);
+	mBox2->setIcon(QMessageBox::Warning);
+	mBox2->setText("Download is finished.");
+	mBox2->setInformativeText("Do you wish to open the test WSIs?");
+	mBox2->setDefaultButton(QMessageBox::No);
+	mBox2->setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+	int ret2 = mBox2->exec();
 
 	switch (ret2) {
 	case QMessageBox::Yes:
@@ -341,6 +370,26 @@ void MainWindow::downloadAndAddTestData() {
 		fileNames.push_back(tmp);
 	}
 	selectFileDrag(fileNames);
+}
+
+
+static void subprocess(std::string str) {
+
+	// alternatively, run this:
+	//system(tmp.toStdString().c_str());
+
+	char   psBuffer[128];
+	FILE   *pPipe;
+
+	if ((pPipe = _popen(str.c_str(), "rt")) == NULL)
+		exit(1);
+
+	while (fgets(psBuffer, 128, pPipe)) {
+		printf(psBuffer);
+	}
+
+	if (feof(pPipe))
+		printf("\nProcess returned %d\n", _pclose(pPipe));
 }
 
 
@@ -370,7 +419,6 @@ void MainWindow::aboutProgram() {
 
 	currLayout->addWidget(label);
 	currLayout->addWidget(textBox);
-
 
 	auto dialog = new QDialog(mWidget);
 	dialog->setWindowTitle("About");
@@ -3052,7 +3100,7 @@ void MainWindow::runForProject_apply(std::string method) {
 void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
 
 	// if Models/ folder doesnt exist, create it
-	QDir().mkpath(QDir::homePath() + "/data/Models");
+	QDir().mkpath(QDir::homePath() + "fastpathology/data/Models");
 
 	auto progDialog = QProgressDialog(mWidget);
 	//std::cout << "\nNum files: " << ls.count() << std::endl;
@@ -3890,6 +3938,7 @@ void MainWindow::loadTissue(QString tissuePath) {
 
 void MainWindow::runPipeline(std::string path) {
 
+	/*
 	std::vector<std::string> currentWSIs;
 	if (m_runForProject) {
 		currentWSIs = m_runForProjectWsis;
@@ -3912,39 +3961,42 @@ void MainWindow::runPipeline(std::string path) {
 
 	auto counter = 0;
 	for (const auto& currWSI : currentWSIs) {
+	 */
 
-		// TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
-		// pipeline requires some user-defined inputs, e.g. which WSI to use (and which model?)
-		std::map<std::string, std::string> arguments;
-		arguments["filename"] = filename;
-		arguments["modelPath"] = path;
+	// TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
+	// pipeline requires some user-defined inputs, e.g. which WSI to use (and which model?)
+	std::map<std::string, std::string> arguments;
+	arguments["filename"] = filename;
+	arguments["modelPath"] = path;
 
-		// check if folder for current WSI exists, if not, create one
-		QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(currWSI, "/").back(), ".")[0] + "/").c_str();
-		wsiResultPath = wsiResultPath.replace("//", "/");
-		if (!QDir(wsiResultPath).exists()) {
-			QDir().mkdir(wsiResultPath);
-		}
-
-		QString outFile = (wsiResultPath.toStdString() + split(split(currWSI, "/").back(), ".")[0] + "_heatmap.h5").c_str();
-
-		arguments["outPath"] = outFile.replace("//", "/").toStdString();
-
-		// parse fpl-file, and run pipeline with correspodning input arguments
-		auto pipeline = Pipeline(path, arguments);
-		//pipeline.parsePipelineFile();
-
-		// add renderer
-		//insertRenderer("testPipeline", pipeline.getRenderers()[1]); // only render the NN-results (not the WSI)
-		//createDynamicViewWidget("testPipeline", "testPipeline"); // modelMetadata["name"], modelName);
-
-		// update progress bar
-		progDialog.setValue(counter);
-		counter++;
-
-		// to render straight away (avoid waiting on all WSIs to be handled before rendering)
-		QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+	// check if folder for current WSI exists, if not, create one
+	QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0] + "/").c_str();
+	wsiResultPath = wsiResultPath.replace("//", "/");
+	if (!QDir(wsiResultPath).exists()) {
+		QDir().mkdir(wsiResultPath);
 	}
+
+	QString outFile = (wsiResultPath.toStdString() + split(split(filename, "/").back(), ".")[0] + "_heatmap.h5").c_str();
+
+	arguments["outPath"] = outFile.replace("//", "/").toStdString();
+
+	// parse fpl-file, and run pipeline with correspodning input arguments
+	auto pipeline = Pipeline(path, arguments);
+	//pipeline.parsePipelineFile();
+
+	// add renderer
+	//insertRenderer("testPipeline", pipeline.getRenderers()[1]); // only render the NN-results (not the WSI)
+	//createDynamicViewWidget("testPipeline", "testPipeline"); // modelMetadata["name"], modelName);
+
+	/*
+	// update progress bar
+	progDialog.setValue(counter);
+	counter++;
+
+	// to render straight away (avoid waiting on all WSIs to be handled before rendering)
+	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+	}
+	*/
 }
 
 
@@ -4380,54 +4432,60 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 				// TODO: Need to handle if model is in Models/, but inference engine is not available
 				//Config::getLibraryPath();
 
-				// If model has CPU flag only, need to check if TensorFlowCPU is available, else run on OpenVINO, else use best available
-				if (std::stoi(modelMetadata["cpu"]) == 1) {
-					if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "TensorFlowCPU") != IEsList.end()) {
-						network->setInferenceEngine("TensorFlowCPU");
-					}
-					else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end()) {
-						network->setInferenceEngine("OpenVINO");
-						network->getInferenceEngine()->setDeviceType(InferenceDeviceType::CPU);
-					}
-					else {
-						std::cout << "CPU only was selected, but was not able to find any CPU devices..." << std::endl;
-					}
-					// else continue -> will use default one (one that is available)
-				}
 
-				//network->setInferenceEngine("TensorFlowCPU");
-				//network->setInferenceEngine("TensorFlowCUDA");
-				//network->setInferenceEngine("OpenVINO"); // default
-				const auto engine = network->getInferenceEngine()->getName();
-				// IEs like TF and TensorRT need to be handled differently than IEs like OpenVINO
-				if (engine.substr(0, 10) == "TensorFlow") {
-					// apparently this is needed if model has unspecified input size
-					network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
-						{ 1, std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]),
-						 std::stoi(modelMetadata["nb_channels"]) })); //{1, size, size, 3}
-				// TensorFlow needs to know what the output node is called
-					if (modelMetadata["problem"] == "classification") {
-						network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
-							TensorShape({ 1, std::stoi(modelMetadata["nb_classes"]) }));
-					}
-					else if (modelMetadata["problem"] == "segmentation") {
-						network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
-							TensorShape({ 1, std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]),
-										 std::stoi(modelMetadata["nb_classes"]) }));
-					}
-					else if (modelMetadata["problem"] == "object_detection") {
-						// FIXME: This is outdated for YoloV3, as it has multiple output nodes -> need a way of handling this!
-						network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
-							TensorShape({ 1, std::stoi(modelMetadata["nb_classes"]) }));
-					}
+				if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
+					network->setInferenceEngine("OpenVINO");
 				}
-				else if (engine == "TensorRT") {
-					// TensorRT needs to know everything about the input and output nodes
-					network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
-						{ 1, std::stoi(modelMetadata["nb_channels"]), std::stoi(modelMetadata["input_img_size_y"]),
-						 std::stoi(modelMetadata["input_img_size_y"]) })); //{1, size, size, 3}
-					network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
-						TensorShape({ 1, std::stoi(modelMetadata["nb_classes"]) }));
+				else {
+					// If model has CPU flag only, need to check if TensorFlowCPU is available, else run on OpenVINO, else use best available
+					if (std::stoi(modelMetadata["cpu"]) == 1) {
+						if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "TensorFlowCPU") != IEsList.end()) {
+							network->setInferenceEngine("TensorFlowCPU");
+						}
+						else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end()) {
+							network->setInferenceEngine("OpenVINO");
+							network->getInferenceEngine()->setDeviceType(InferenceDeviceType::CPU);
+						}
+						else {
+							std::cout << "CPU only was selected, but was not able to find any CPU devices..." << std::endl;
+						}
+						// else continue -> will use default one (one that is available)
+					}
+
+					//network->setInferenceEngine("TensorFlowCPU");
+					//network->setInferenceEngine("TensorFlowCUDA");
+					//network->setInferenceEngine("OpenVINO"); // default
+					const auto engine = network->getInferenceEngine()->getName();
+					// IEs like TF and TensorRT need to be handled differently than IEs like OpenVINO
+					if (engine.substr(0, 10) == "TensorFlow") {
+						// apparently this is needed if model has unspecified input size
+						network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
+							{ 1, std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]),
+							 std::stoi(modelMetadata["nb_channels"]) })); //{1, size, size, 3}
+					// TensorFlow needs to know what the output node is called
+						if (modelMetadata["problem"] == "classification") {
+							network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
+								TensorShape({ 1, std::stoi(modelMetadata["nb_classes"]) }));
+						}
+						else if (modelMetadata["problem"] == "segmentation") {
+							network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
+								TensorShape({ 1, std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]),
+											 std::stoi(modelMetadata["nb_classes"]) }));
+						}
+						else if (modelMetadata["problem"] == "object_detection") {
+							// FIXME: This is outdated for YoloV3, as it has multiple output nodes -> need a way of handling this!
+							network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
+								TensorShape({ 1, std::stoi(modelMetadata["nb_classes"]) }));
+						}
+					}
+					else if (engine == "TensorRT") {
+						// TensorRT needs to know everything about the input and output nodes
+						network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
+							{ 1, std::stoi(modelMetadata["nb_channels"]), std::stoi(modelMetadata["input_img_size_y"]),
+							 std::stoi(modelMetadata["input_img_size_y"]) })); //{1, size, size, 3}
+						network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
+							TensorShape({ 1, std::stoi(modelMetadata["nb_classes"]) }));
+					}
 				}
 
 				//network->setInferenceEngine("OpenVINO"); // force it to use a specific IE -> only for testing
@@ -4642,7 +4700,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					currNetwork->setInputConnection(generator->getOutputPort());
 
 					// FIXME: Bug when using NMS - ERROR [140237963507456] Terminated with unhandled exception: Size must be > 0, got: -49380162997889393559076864.000000 -96258.851562
-					// - Ubuntu only?
+					// - Windows only?
 					//auto nms = NonMaximumSuppression::New();
 					//nms->setThreshold(0);
 					//nms->setInputConnection(currNetwork->getOutputPort());
