@@ -85,9 +85,7 @@ class MainWindow : public Window {
         bool toggleRenderer(std::string name);
         bool pixelClassifier(std::string modelName);
         std::map<std::string, std::string> setParameterDialog(std::map<std::string, std::string> modelMetadata);
-        bool lowresSegmenter();
 		void MTL_test();
-		void Mask_RCN_test();
         //bool imageSegmenter(std::string modelName);
         bool showHeatmap();
         bool hideTissueMask(bool flag);
@@ -239,7 +237,7 @@ class MainWindow : public Window {
          * Removes a named renderer from the view
          * @param name
          */
-        void removeRendererObject(std::string name);
+        //void removeRendererObject(std::string name);
         /**
          * Insert a renderer into the view with a given name.
          * If a renderer with that name already exist, replace it.
