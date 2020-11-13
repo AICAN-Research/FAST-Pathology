@@ -86,6 +86,8 @@ class MainWindow : public Window {
         bool pixelClassifier(std::string modelName);
         std::map<std::string, std::string> setParameterDialog(std::map<std::string, std::string> modelMetadata);
         bool lowresSegmenter();
+		void MTL_test();
+		void Mask_RCN_test();
         //bool imageSegmenter(std::string modelName);
         bool showHeatmap();
         bool hideTissueMask(bool flag);
@@ -128,7 +130,6 @@ class MainWindow : public Window {
         void loadTissue(QString tissuePath);
         void loadTumor(QString tumorPath);
         void loadPipelines();
-		void loadResultsForCurrentWSI();
 
         QImage extractThumbnail();
 

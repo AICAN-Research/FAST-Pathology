@@ -306,7 +306,7 @@ void MainWindow::downloadAndAddTestData() {
 
 	auto currKernel = QSysInfo::kernelType();
 	if (currKernel == "linux") {
-		process.start("gnome-terminal", QStringList() << tmp);
+		process.start("/usr/bin/gnome-terminal", QStringList() << tmp);
 	} else if ((currKernel == "winnt") || (currKernel == "wince")) {
 		process.start("C:/windows/system32/cmd.exe", QStringList() << "/C" << tmp);
 	}
@@ -482,6 +482,7 @@ void MainWindow::createMenubar() {
     deployMenu->addAction("Predict Tumor");
     deployMenu->addAction("Classify Grade");
     deployMenu->addAction("Lowres Tumor Segment", this, &MainWindow::lowresSegmenter);
+	deployMenu->addAction("MTL nuclei seg/detect"); //, this, &MainWindow::MTL_test);
     deployMenu->addSeparator();
 
     auto helpMenu = topFiller->addMenu(tr("&Help"));
@@ -3339,26 +3340,9 @@ bool MainWindow::segmentTissue() {
         return false;
     } else {
 
-        // Patch wise classification -> heatmap
+		// basic thresholding (with morph. post-proc.) based on euclidean distance from the color white
         auto tissueSegmentation = TissueSegmentation::New();
         tissueSegmentation->setInputData(m_image);
-        //tissueSegmentation->setThreshold(85);
-        //tissueSegmentation->setErode(9);
-        //tissueSegmentation->setDilate(9);
-
-        // need custom slider
-        /*
-        QSlider *slider(new QSlider);
-        slider->setRange(0,100);
-        slider->show();
-
-        QObject::connect(slider, &QSlider::valueChanged, slider, [slider](int value){
-            const int step = 2;
-            int offset = value % step;
-            if( offset != 0)
-                slider->setValue(value - offset);
-        });
-         */
 
         stopFlag = false;
         if (advancedMode) { // FIXME: Turned off for testing. Something wrong
@@ -3390,7 +3374,6 @@ bool MainWindow::segmentTissue() {
             sliderLayout->addWidget(currValue);
 
 			QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue) {
-				std::cout << "\n" << newValue << "\n";
 				const int step = 2;
 				threshSlider->setValue(newValue);
 				tissueSegmentation->setThreshold(newValue);
@@ -3444,7 +3427,6 @@ bool MainWindow::segmentTissue() {
             dilateSlider->setSingleStep(2);
             //QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue){tissueSegmentation->setDilate(newValue);});
             QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue) {
-                std::cout << "\n" << newValue << "\n";
                 const int step = 2;
 				bool checkFlag = false;
                 if (newValue < 3) {
@@ -3480,18 +3462,6 @@ bool MainWindow::segmentTissue() {
 						getView(0)->removeRenderer(someRenderer);
 						m_rendererList.erase(tempTissueName);
 
-						//auto renderer = m_rendererList[tempTissueName];
-						//getView(0)->removeRenderer(renderer);  // FIXME: This crashed. Can you remove renderer that is still computing?
-						//auto renderer = m_rendererList["WSI"];
-						//std::cout << "\nView: " << getView(0) << "\n";
-						//getView(0)->removeRenderer(renderer);
-						//view->removeRenderer(renderer);
-						//m_rendererList.erase(tempTissueName); // I added this, as it seemed like it should have been done
-
-						//removeRenderer(tempTissueName);
-						//m_rendererList.erase(tempTissueName);
-						//m_rendererTypeList.erase(tempTissueName);
-						//m_rendererList.erase(tempTissueName);
 					}
 					//m_rendererTypeList[tempTissueName] = "SegmentationRenderer";
 					insertRenderer(tempTissueName, someRenderer);
@@ -3518,7 +3488,6 @@ bool MainWindow::segmentTissue() {
             erodeSlider->setSingleStep(2);
             //QObject::connect(erodeSlider, &QSlider::valueChanged, [=](int newValue){tissueSegmentation->setErode(newValue);});
             QObject::connect(erodeSlider, &QSlider::valueChanged, [=](int newValue) {
-                std::cout << "\n" << newValue << "\n";
                 bool checkFlag = false;
                 if (newValue < 3) {
                     erodeSlider->setValue(0);
@@ -3551,19 +3520,6 @@ bool MainWindow::segmentTissue() {
 						auto someRenderer = m_rendererList[tempTissueName];
 						getView(0)->removeRenderer(someRenderer);
 						m_rendererList.erase(tempTissueName);
-
-                        //auto renderer = m_rendererList[tempTissueName];
-                        //getView(0)->removeRenderer(renderer);  // FIXME: This crashed. Can you remove renderer that is still computing?
-                        //auto renderer = m_rendererList["WSI"];
-                        //std::cout << "\nView: " << getView(0) << "\n";
-                        //getView(0)->removeRenderer(renderer);
-                        //view->removeRenderer(renderer);
-                        //m_rendererList.erase(tempTissueName); // I added this, as it seemed like it should have been done
-
-                        //removeRenderer(tempTissueName);
-                        //m_rendererList.erase(tempTissueName);
-                        //m_rendererTypeList.erase(tempTissueName);
-                        //m_rendererList.erase(tempTissueName);
                     }
                     //m_rendererTypeList[tempTissueName] = "SegmentationRenderer";
                     insertRenderer(tempTissueName, someRenderer);
@@ -3635,7 +3591,7 @@ bool MainWindow::segmentTissue() {
             std::cout << "Value chosen: " << ret << std::endl;
             switch (ret) {
                 case 1:
-                    std::cout << "\nOK was pressed, should have updated params!\n";
+                    std::cout << "OK was pressed, should have updated params!" << std::endl;
                     //tissueSegmentation->setThreshold(fields.takeFirst()->value());
                     //tissueSegmentation->setDilate(fields.takeFirst()->value());
                     //tissueSegmentation->setErode(fields.takeFirst()->value());
@@ -3646,12 +3602,12 @@ bool MainWindow::segmentTissue() {
                      */
                     break;
                 case 0:
-                    std::cout << "\nCancel was pressed.\n";
+                    std::cout << "Cancel was pressed." << std::endl;
                     stopFlag = true;
-                    break;
+                    return false;
                 default:
-                    std::cout << "\nDefault was pressed.\n";
-                    break;
+                    std::cout << "Default was pressed." << std::endl;
+                    return false;
             }
 
 			/*
@@ -3662,16 +3618,6 @@ bool MainWindow::segmentTissue() {
 			 */
 
         }
-
-
-
-		// update ViewWidget
-		/*
-		for (auto const&[key, val] : ) {
-			createDynamicViewWidget("WSI", modelName);
-			pageComboBox->removeItem();
-		}
-		 */
 
 		std::cout << "Current stopFlag: " << stopFlag << std::endl;
 
@@ -3716,13 +3662,6 @@ bool MainWindow::segmentTissue() {
 
         return true;
     }
-}
-
-
-void MainWindow::loadResultsForCurrentWSI() {
-	//QDirIterator it(projectFolderName, QDir::NoFilter);
-	//std::cout << "Current project path: " << projectFolderName.toStdS << std::endl;
-	1;
 }
 
 
@@ -3970,6 +3909,7 @@ void MainWindow::runPipeline(std::string path) {
 	arguments["modelPath"] = path;
 
 	// check if folder for current WSI exists, if not, create one
+	/*
 	QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0] + "/").c_str();
 	wsiResultPath = wsiResultPath.replace("//", "/");
 	if (!QDir(wsiResultPath).exists()) {
@@ -3979,14 +3919,25 @@ void MainWindow::runPipeline(std::string path) {
 	QString outFile = (wsiResultPath.toStdString() + split(split(filename, "/").back(), ".")[0] + "_heatmap.h5").c_str();
 
 	arguments["outPath"] = outFile.replace("//", "/").toStdString();
+	 */
 
 	// parse fpl-file, and run pipeline with correspodning input arguments
 	auto pipeline = Pipeline(path, arguments);
 	//pipeline.parsePipelineFile();
 
-	// add renderer
-	//insertRenderer("testPipeline", pipeline.getRenderers()[1]); // only render the NN-results (not the WSI)
-	//createDynamicViewWidget("testPipeline", "testPipeline"); // modelMetadata["name"], modelName);
+	//m_rendererTypeList["WSI"] == "ImagePyramidRenderer";
+	m_rendererTypeList["nuclei_seg"] == "SegmentationPyramidRenderer";
+	//m_rendererTypeList["nuclei_detect"] == "HeatmapRenderer";
+
+	// add renderer(s)
+	//insertRenderer("WSI", pipeline.getRenderers()[0]); // only render the NN-results (not the WSI)
+	//createDynamicViewWidget("wsi", "wsi"); // modelMetadata["name"], modelName);
+
+	insertRenderer("nuclei_seg", pipeline.getRenderers()[1]); // only render the NN-results (not the WSI)
+	createDynamicViewWidget("nuclei_seg", "nuclei_seg"); // modelMetadata["name"], modelName);
+
+	//insertRenderer("nuclei_detect", pipeline.getRenderers()[2]); // only render the NN-results (not the WSI)
+	//createDynamicViewWidget("nuclei_detect", "nuclei_detect"); // modelMetadata["name"], modelName);
 
 	/*
 	// update progress bar
@@ -4191,6 +4142,85 @@ std::map<std::string, std::string> MainWindow::setParameterDialog(std::map<std::
 }
 
 
+void MainWindow::MTL_test() {
+
+	std::string modelName = "model_nuclei_seg_detection_multitask";
+
+	printf("\n%d\n", __LINE__);
+	// read model metadata (txtfile)
+	std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
+	printf("\n%d\n", __LINE__);
+
+	int patch_lvl_model = (int)(std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) / std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
+
+	if (!hasRenderer("tissue")) {
+		segmentTissue();
+		hideTissueMask(true);
+	}
+	printf("\n%d\n", __LINE__);
+
+	auto generator = PatchGenerator::New();
+	generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
+	generator->setPatchLevel(patch_lvl_model);
+	generator->setInputData(0, m_image);
+	if (m_tissue)
+		generator->setInputData(1, m_tissue);
+	if (m_tumorMap)
+		generator->setInputData(1, m_tumorMap);
+
+	printf("\n%d\n", __LINE__);
+	auto network = NeuralNetwork::New();
+	network->setInferenceEngine("TensorFlowCPU");
+	// apparently this is needed if model has unspecified input size
+	network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
+		{ 1, 256, 256, 3 })); //{1, size, size, 3}
+
+	network->setOutputNode(0, "conv2d_26/truediv", NodeType::TENSOR,
+		TensorShape({ 1, 256, 256, 3}));
+	network->setOutputNode(1, "dense_1/Softmax", NodeType::TENSOR,
+		TensorShape({ 1, 2 }));
+
+	printf("\n%d\n", __LINE__);
+	network->load(cwd + "data/Models/" + modelName + "." + network->getInferenceEngine()->getDefaultFileExtension()); //".uff");
+	network->setInputConnection(generator->getOutputPort());
+	vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
+	network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
+
+	printf("\n%d\n", __LINE__);
+	auto converter = TensorToSegmentation::New();
+	converter->setInputConnection(network->getOutputPort(0));
+
+	auto stitcher1 = PatchStitcher::New();
+	stitcher1->setInputConnection(converter->getOutputPort(0));
+
+	auto stitcher2 = PatchStitcher::New();
+	stitcher2->setInputConnection(network->getOutputPort(1));
+
+	auto someRenderer1 = SegmentationPyramidRenderer::New();
+	someRenderer1->setOpacity(0.7f);
+	//someRenderer->setColor(Segmentation::LABEL_BACKGROUND, Color(0.0f, 255.0f / 255.0f, 0.0f));
+	//someRenderer1->setInputData(m_tumorMap);
+	someRenderer1->setInputConnection(stitcher1->getOutputPort());
+
+	auto someRenderer2 = HeatmapRenderer::New();
+	//someRenderer2->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
+	someRenderer2->setInputConnection(stitcher2->getOutputPort());
+	//someRenderer2->setMaxOpacity(0.6f);
+
+	//someRenderer2->setSynchronizedRendering(false);
+	//someRenderer2->update();
+
+	m_rendererTypeList["nuclei_seg"] = "SegmentationPyramidRenderer";
+	insertRenderer("nuclei_seg", someRenderer1);
+
+	m_rendererTypeList["nuclei_detect"] = "HeatmapRenderer";
+	insertRenderer("nuclei_detect", someRenderer2);
+
+	createDynamicViewWidget("nuclei_seg", modelName);
+	createDynamicViewWidget("nuclei_detect", modelName);
+}
+
+
 // TODO: Integrate SegmentationClassifier inside this or make functions for each task?
 //  perhaps make a new class instead?
 bool MainWindow::pixelClassifier(std::string modelName) {
@@ -4219,6 +4249,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 	printf("\n%d\n", __LINE__);
 
 	// progress bar for run-for-project
+	/*
 	auto progDialog = QProgressDialog(mWidget);
 	progDialog.setRange(0, (int)currentWSIs.size() - 1);
 	//progDialog.setContentsMargins(0, 0, 0, 0);
@@ -4230,6 +4261,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 	progDialog.show();
 
 	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+	 */
 
 	printf("\n%d\n", __LINE__);
 
@@ -4435,8 +4467,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
 				if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
 					network->setInferenceEngine("OpenVINO");
-				}
-				else {
+				} else {
 					// If model has CPU flag only, need to check if TensorFlowCPU is available, else run on OpenVINO, else use best available
 					if (std::stoi(modelMetadata["cpu"]) == 1) {
 						if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "TensorFlowCPU") != IEsList.end()) {
@@ -4452,9 +4483,15 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 						// else continue -> will use default one (one that is available)
 					}
 
-					//network->setInferenceEngine("TensorFlowCPU");
-					//network->setInferenceEngine("TensorFlowCUDA");
-					//network->setInferenceEngine("OpenVINO"); // default
+
+					// @TODO: Need to fix something. So currently, only runs on OpenVINO CPU (!)
+					network->setInferenceEngine("OpenVINO");
+
+					if (!((modelMetadata.count("IE") == 0) || modelMetadata["IE"] == "none")) {
+						std::cout << "Preselected IE was used: " << modelMetadata["IE"] << std::endl;
+						network->setInferenceEngine(modelMetadata["IE"]);
+					}
+
 					const auto engine = network->getInferenceEngine()->getName();
 					// IEs like TF and TensorRT need to be handled differently than IEs like OpenVINO
 					if (engine.substr(0, 10) == "TensorFlow") {
@@ -4508,9 +4545,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					auto generator = PatchGenerator::New();
 					generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
 					generator->setPatchLevel(patch_lvl_model);
-					printf("\n%d\n", __LINE__);
 					generator->setInputData(0, currImage);
-					printf("\n%d\n", __LINE__);
 					if (m_tissue) {
 						generator->setInputData(1, m_tissue); //erosion->updateAndGetOutputData<Image>());
 					}
@@ -4546,7 +4581,6 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					//const std::map<std::string, std::string> &testModelMetadata = modelMetadata;
 
 					auto currentHeatmapName = modelMetadata["name"];
-					printf("\n%d\n", __LINE__);
 
 					std::cout << "currentHeatmapName: " << currentHeatmapName << ", currWSI: " << currWSI << std::endl;
 
@@ -4586,10 +4620,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					});
 					 */
 
-					printf("\n%d\n", __LINE__);
-
 					if (!m_runForProject) {
-						printf("\n%d\n", __LINE__);
 
 						m_patchStitcherList[modelMetadata["name"]] = stitcher; // add stitcher to global list to be accessible later on
 
@@ -4610,14 +4641,11 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 						m_rendererTypeList[modelMetadata["name"]] = "HeatmapRenderer";
 						insertRenderer(modelMetadata["name"], someRenderer);
 						//m_neuralNetworkList[modelMetadata["name"]] = network;
-						printf("\n%d\n", __LINE__);
 					}
 
 					//auto port = stitcher->getOutputPort();
 					//auto port = lambda->getOutputPort();
-
 					//auto port = stitcher->updateAndGetOutputData<tensor>();//getOutputPort();
-
 
 					if (m_runForProject) {
 
@@ -4657,7 +4685,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					insertRenderer(modelMetadata["name"], someRenderer);
 				}
 				else if ((modelMetadata["problem"] == "object_detection") && (modelMetadata["resolution"] == "high")) {  // TODO: Perhaps use switch() instead of tons of if-statements?
-
+					
 					// FIXME: Currently, need to do special handling for object detection as setThreshold and setAnchors only exist for BBNetwork and not NeuralNetwork
 					auto generator = PatchGenerator::New();
 					generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
@@ -4892,13 +4920,13 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 			}
 		}
 
-		counter++;
+		//counter++;
 
 		// update progress bar
-		progDialog.setValue(counter);
+		//progDialog.setValue(counter);
 
 		// to render straight away (avoid waiting on all WSIs to be handled before rendering)
-		QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+		//|QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
     }
 	printf("\n%d\n", __LINE__);
 	return true;
@@ -5251,7 +5279,7 @@ void MainWindow::removeRendererObject(std::string name) {
 void MainWindow::insertRenderer(std::string name, std::shared_ptr<Renderer> renderer) {
     std::cout << "calling insert renderer" << std::endl;
     if(!hasRenderer(name)) {
-        renderer->setSynchronizedRendering(false);
+        //renderer->setSynchronizedRendering(false);
         // Doesn't exist
         getView(0)->addRenderer(renderer);
         //view->addRenderer(renderer);
