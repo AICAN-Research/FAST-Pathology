@@ -14,7 +14,7 @@ Download an appropriate installer from the [release page](https://github.com/SIN
 
 Test data
 -----------------------------------
-Data for testing the application can be downloaded from [here](http://folk.ntnu.no/andpeder/). It includes some pretrained models, two WSIs, and some example text pipelines.
+Data for testing the application can be downloaded from [here](http://folk.ntnu.no/andpeder/). It includes some pretrained models, two WSIs, and some example text pipelines. If [curl](https://curl.se/) and [tar](https://wiki.haskell.org/How_to_unpack_a_tar_file_in_Windows) is installed on the machine (works for both Ubuntu and Windows), it is now possible to download the data directly from the GUI (go to the menu bar -> Edit -> Download test data -> click "Yes" -> when finished, click "Yes" again to visualize the WSIs straight away).
 
 Features
 -----------------------------------
