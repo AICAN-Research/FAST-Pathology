@@ -298,16 +298,16 @@ void MainWindow::downloadAndAddTestData() {
 
 	//QString downloadsFolder = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
 	QString downloadsFolder = QDir::homePath() + "/fastpathology/data";
-	auto tmp = "cd " + downloadsFolder + " && curl -o test_data.zip " + "http://folk.ntnu.no/andpeder/FastPathology/test_data.zip && tar -xf test_data.zip";
-	std::cout << tmp.toStdString() << std::endl;
 
 	QProcess process;
 	process.setProcessChannelMode(QProcess::MergedChannels);
 
 	auto currKernel = QSysInfo::kernelType();
 	if (currKernel == "linux") {
-		process.start("/usr/bin/gnome-terminal", QStringList() << tmp);
+        auto tmp = "cd " + downloadsFolder + " && curl -o test_data.zip " + "http://folk.ntnu.no/andpeder/FastPathology/test_data.zip && unzip test_data.zip";
+		process.start("/bin/sh", QStringList() << "-c" << tmp);
 	} else if ((currKernel == "winnt") || (currKernel == "wince")) {
+        auto tmp = "cd " + downloadsFolder + " && curl -o test_data.zip " + "http://folk.ntnu.no/andpeder/FastPathology/test_data.zip && tar -xf test_data.zip";
 		process.start("C:/windows/system32/cmd.exe", QStringList() << "/C" << tmp);
 	}
 
@@ -344,7 +344,7 @@ void MainWindow::downloadAndAddTestData() {
 	mBox2->setIcon(QMessageBox::Warning);
 	mBox2->setText("Download is finished.");
 	mBox2->setInformativeText("Do you wish to open the test WSIs?");
-	mBox2->setDefaultButton(QMessageBox::No);
+	mBox2->setDefaultButton(QMessageBox::Yes);
 	mBox2->setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
 	int ret2 = mBox2->exec();
 
@@ -359,7 +359,7 @@ void MainWindow::downloadAndAddTestData() {
 		// if "Cancel", do nothing
 		return;
 	default:
-		return;
+		break;
 	}
 
 	// OPTIONAL: Add WSIs to project for visualization
@@ -5028,7 +5028,6 @@ void MainWindow::deleteViewObject(std::string someName) {
 	}
 	m_rendererList.erase(someName);
 	pageComboBox->removeItem(pageComboBox->findData(QString::fromStdString(someName))); //pageComboBox->currentIndex());
-
 
 	for (auto const& [key, val] : m_rendererList) {
 		std::cout << "after: " << key << ": " << val << std::endl;
