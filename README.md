@@ -4,10 +4,12 @@ FastPathology
 
 FastPathology is an open-source platform for deep learning-based research and decision support in digital pathology, created by SINTEF Medical Technology and the Norwegian University of Science and Technology (NTNU).
 
+**A paper presenting the software and some benchmarks has been submitted to IEEE Access. A preprint has been made available on [arXiv](https://arxiv.org/abs/2011.06033). The PDF can also be accessed more directly from this [link](https://arxiv.org/pdf/2011.06033.pdf).**
+
 ![alt-text](data/Videos/pw_predictions.gif)
 
 Install
------------------------------------
+-----------------------------------, 
 Download an appropriate installer from the [release page](https://github.com/SINTEFMedtek/FAST-Pathology/releases/). Installers for Win10 and Ubuntu (18 and 20) are available.
 
 **NOTE:** FastPathology depends on OpenCL. Most Windows machines have OpenCL by default, whereas Ubuntu does not. Thus, for Ubuntu, OpenCL can be installed by installing either [NVIDIA CUDA Toolkit](https://developer.nvidia.com/cuda-10.1-download-archive-base) or [Intel OpenCL SDK](https://software.intel.com/content/www/us/en/develop/tools/opencl-sdk.html). For both operating systems CUDA is required to run inference on a dedicated GPU.
