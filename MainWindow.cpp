@@ -304,7 +304,7 @@ void MainWindow::downloadAndAddTestData() {
 
 	auto currKernel = QSysInfo::kernelType();
 	if (currKernel == "linux") {
-        auto tmp = "cd " + downloadsFolder + " && curl -o test_data.zip " + "http://folk.ntnu.no/andpeder/FastPathology/test_data.zip && unzip test_data.zip";
+        auto tmp = "cd " + downloadsFolder + " && curl -o test_data.zip " + "http://folk.ntnu.no/andpeder/FastPathology/test_data.zip && unzip -y test_data.zip";
 		process.start("/bin/sh", QStringList() << "-c" << tmp);
 	} else if ((currKernel == "winnt") || (currKernel == "wince")) {
         auto tmp = "cd " + downloadsFolder + " && curl -o test_data.zip " + "http://folk.ntnu.no/andpeder/FastPathology/test_data.zip && tar -xf test_data.zip";
@@ -314,6 +314,9 @@ void MainWindow::downloadAndAddTestData() {
 	// Use resizable buffers, unlike the system.
 	//QByteArray stderr_;
 	//QByteArray stdout_;
+
+	// @TODO: Should check if any errors have been produced in the process. If yes, should prompt a warning for the
+	//   user that something went wrong (check if curl and tar/unzip is installed
 
 	// Give the child process some time to start.
 	process.waitForStarted();
@@ -328,6 +331,7 @@ void MainWindow::downloadAndAddTestData() {
 
 	// when finished, close dialog
 	someDialog->close();
+	process.close();
 
 	//QNetworkRequest request(fileUrl);
 	
@@ -3095,7 +3099,7 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
 
 	int counter = 0;
 	// now iterate over all selected files and add selected files and corresponding ones to Models/
-	for (QString fileName : fileNames) {
+	for (const QString& fileName : fileNames) {
 		std::cout << fileName.toStdString() << std::endl;
 
 		if (fileName == "")
@@ -3116,49 +3120,51 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
 			std::cout << "file with the same name already exists in folder, didn't transfer... " << std::endl;
 			progDialog.setValue(counter);
 			counter++;
-			continue;
-		}
-		//QFile::copy(fileName, QString::fromStdString(newPath));
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+		} else {
+            //QFile::copy(fileName, QString::fromStdString(newPath));
 
-		// check which corresponding model files that exist, except from the one that is chosen
-		std::vector<std::string> allowedFileFormats{ "txt", "pb", "h5", "mapping", "xml", "bin", "uff", "anchors" };
+            // check which corresponding model files that exist, except from the one that is chosen
+            std::vector<std::string> allowedFileFormats{"txt", "pb", "h5", "mapping", "xml", "bin", "uff", "anchors"};
 
-		foreach(std::string currExtension, allowedFileFormats) {
-			std::string oldPath = oldLocation + fileNameNoFormat + "." + currExtension;
-			if (fileExists(oldPath)) {
-				QFile::copy(QString::fromStdString(oldPath), QString::fromStdString(cwd + "data/Models/" + fileNameNoFormat + "." + currExtension));
-			}
-		}
+            foreach(std::string currExtension, allowedFileFormats) {
+                std::string oldPath = oldLocation + fileNameNoFormat + "." + currExtension;
+                if (fileExists(oldPath)) {
+                    QFile::copy(QString::fromStdString(oldPath), QString::fromStdString(
+                            cwd + "data/Models/" + fileNameNoFormat + "." + currExtension));
+                }
+            }
 
-		// when models are added, ProcessWidget should be updated by adding the new widget to ProcessWidget layout
-		// current model
-		modelName = fileNameNoFormat;
+            // when models are added, ProcessWidget should be updated by adding the new widget to ProcessWidget layout
+            // current model
+            modelName = fileNameNoFormat;
 
-		// get metadata of current model
-		std::map<std::string, std::string> metadata = getModelMetadata(modelName);
+            // get metadata of current model
+            std::map<std::string, std::string> currMetadata = getModelMetadata(modelName);
 
-		auto someButton = new QPushButton(mWidget);
-		someButton->setText(QString::fromStdString(metadata["task"]));
-		//predGradeButton->setFixedWidth(200);
-		someButton->setFixedHeight(50);
-		QObject::connect(someButton, &QPushButton::clicked,
-			std::bind(&MainWindow::pixelClassifier, this, modelName));
-		someButton->show();
+            auto someButton = new QPushButton(mWidget);
+            someButton->setText(QString::fromStdString(currMetadata["task"]));
+            //predGradeButton->setFixedWidth(200);
+            someButton->setFixedHeight(50);
+            QObject::connect(someButton, &QPushButton::clicked,
+                             std::bind(&MainWindow::pixelClassifier, this, modelName));
+            someButton->show();
 
-		processLayout->insertWidget(processLayout->count(), someButton);
+            processLayout->insertWidget(processLayout->count(), someButton);
 
-		//createMainMenuWidget();
-		//if (processLayout){
-		//    clearLayout(processLayout);
-		//}
-		//createProcessWidget();
-		//mainLayout->removeWidget(menuWidget); // this doesnt work...
+            //createMainMenuWidget();
+            //if (processLayout){
+            //    clearLayout(processLayout);
+            //}
+            //createProcessWidget();
+            //mainLayout->removeWidget(menuWidget); // this doesnt work...
 
-		progDialog.setValue(counter);
-		counter++;
+            progDialog.setValue(counter);
+            counter++;
 
-		// to render straight away (avoid waiting on all WSIs to be handled before rendering)
-		QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+            // to render straight away (avoid waiting on all WSIs to be handled before rendering)
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+        }
 	}
 }
 
