@@ -4,7 +4,7 @@ FastPathology
 
 FastPathology is an open-source platform for deep learning-based research and decision support in digital pathology, created by SINTEF Medical Technology and the Norwegian University of Science and Technology (NTNU).
 
-**A paper presenting the software and some benchmarks has been submitted to IEEE Access. A preprint has been made available on [arXiv](https://arxiv.org/abs/2011.06033). The PDF can also be accessed more directly from this [link](https://arxiv.org/pdf/2011.06033.pdf).**
+**A paper presenting the software and some benchmarks has been submitted to IEEE Access. A preprint has been made available on [arXiv](https://arxiv.org/abs/2011.06033). The PDF can also be accessed more directly from this [link](https://arxiv.org/pdf/2011.06033.pdf). Corresponding supplementary material can be found on [research gate](https://www.researchgate.net/publication/345804898_Supplementary_material_for_FastPathology_An_open-source_platform_for_deep_learning-based_research_and_decision_support_in_digital_pathology).**
 
 ![alt-text](data/Videos/pw_predictions.gif)
 
