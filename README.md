@@ -31,8 +31,7 @@ The software is implemented in C++ based on FAST. A wide range of features have 
 
 Demos
 -----------------------------------
-Very simple demonstrations of the platforms can be found on [Youtube](https://www.youtube.com/channel/UC4GM2KW54-vEZ0M1kH5-oig).
-Tutorials and more in-depth demonstrations will be added in the future.
+Very simple demonstrations of the platforms can be found on [Youtube](https://www.youtube.com/channel/UC4GM2KW54-vEZ0M1kH5-oig). More in-depth demonstrations will be added in the future. However, some wikis and tutorials can be found in the [wiki](https://github.com/SINTEFMedtek/FAST-Pathology/wiki). More information can be found from the **pages** section on the right in the wiki home.
 
 Development setup
 -----------------------------------
