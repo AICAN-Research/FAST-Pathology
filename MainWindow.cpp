@@ -65,8 +65,9 @@
 #include <FAST/Algorithms/Morphology/Erosion.hpp>
 #include <QMimeData>
 #include <QDragEnterEvent>
-//#include <QtNetwork/5.14.0/QtNetwork/private/qnetworkrequest_p.h>
-//#include <QtNetwork/qnetworkrequest.h>  //<QNetworkRequest>
+#include <QtNetwork>
+#include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkAccessManager>
 //#include <jkqtplotter/graphs/jkqtpbarchart.h>
 
 using namespace std;
@@ -253,7 +254,6 @@ void MainWindow::helpUrl() {
 
 
 void MainWindow::downloadAndAddTestData() {
-
 	// prompt
 	auto mBox = new QMessageBox(mWidget);
 	mBox->setIcon(QMessageBox::Warning);
@@ -264,18 +264,100 @@ void MainWindow::downloadAndAddTestData() {
 	int ret = mBox->exec();
 
 	switch (ret) {
-		case QMessageBox::Yes:
-			// toggle and update text on button to show current mode (also default)
-			break;
-		case QMessageBox::No:
-			// if "No", do nothing
-			return;
-		case QMessageBox::Cancel:
-			// if "Cancel", do nothing
-			return;
-		default:
-			break;
+	case QMessageBox::Yes:
+		// toggle and update text on button to show current mode (also default)
+		break;
+	case QMessageBox::No:
+		// if "No", do nothing
+		return;
+	case QMessageBox::Cancel:
+		// if "Cancel", do nothing
+		return;
+	default:
+		break;
 	}
+
+	// progress bar
+	auto progDialog = new QProgressDialog(mWidget);
+	progDialog->setRange(0, 0);
+	progDialog->setValue(0);
+	progDialog->setVisible(true);
+	progDialog->setModal(false);
+	progDialog->setLabelText("Downloading test data...");
+	progDialog->move(mWidget->width() - progDialog->width() * 1.1, progDialog->height() * 0.1);
+	//m_pBar.show();
+
+	QUrl url = "http://folk.ntnu.no/andpeder/FastPathology/test_data.zip";
+
+	QNetworkAccessManager* m_NetworkMngr = new QNetworkAccessManager(this);
+	QNetworkReply *reply = m_NetworkMngr->get(QNetworkRequest(QUrl(url)));
+	QEventLoop loop;
+
+	QObject::connect(reply, &QNetworkReply::downloadProgress, [=](qint64 ist, qint64 max_) { //[=](qint64 ist, qint64 max) {
+		progDialog->setRange(0, max_);
+		progDialog->setValue(ist);
+		//if (max < 0) hideProgress();
+	});
+	QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+
+	loop.exec();
+	QUrl aUrl(url);
+	QFileInfo fileInfo = aUrl.path();
+
+	QString downloadsFolder = QDir::homePath() + "/fastpathology/data";
+	QFile file(downloadsFolder + "/" + fileInfo.fileName());
+	file.open(QIODevice::WriteOnly);
+	file.write(reply->readAll());
+	file.close();
+	delete reply;
+
+	// unzip @TODO: Is there something wrong with the unclude/import of this function? Might be a problem later on.
+	extractZipFile((downloadsFolder + "/" + fileInfo.fileName()).toStdString(), downloadsFolder.toStdString());
+
+	// OPTIONAL: Add Models to test if inference is working
+	QList<QString> fileNames;
+	QDirIterator it2(downloadsFolder + "/test_data/Models/", QDir::Files);
+	while (it2.hasNext()) {
+		auto tmp = it2.next();
+		fileNames.push_back(tmp);
+	}
+	addModelsDrag(fileNames);
+
+	auto mBox2 = new QMessageBox(mWidget);
+	mBox2->setIcon(QMessageBox::Warning);
+	mBox2->setText("Download is finished.");
+	mBox2->setInformativeText("Do you wish to open the test WSIs?");
+	mBox2->setDefaultButton(QMessageBox::Yes);
+	mBox2->setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+	int ret2 = mBox2->exec();
+
+	switch (ret2) {
+	case QMessageBox::Yes:
+		// toggle and update text on button to show current mode
+		break;
+	case QMessageBox::No:
+		// if "No", do nothing (also default)
+		return;
+	case QMessageBox::Cancel:
+		// if "Cancel", do nothing
+		return;
+	default:
+		break;
+	}
+
+	// OPTIONAL: Add WSIs to project for visualization
+	fileNames.clear();
+	QDirIterator it(downloadsFolder + "/test_data/WSI/", QDir::Files);
+	while (it.hasNext()) {
+		auto tmp = it.next();
+		fileNames.push_back(tmp);
+	}
+	selectFileDrag(fileNames);
+}
+
+
+/*
+void MainWindow::down loadAndAddTestData_old() {
 
 	auto dialogLayout = new QVBoxLayout(mWidget);
 
@@ -332,49 +414,8 @@ void MainWindow::downloadAndAddTestData() {
 	// when finished, close dialog
 	someDialog->close();
 	process.close();
-
-	//QNetworkRequest request(fileUrl);
-	
-	// OPTIONAL: Add Models to test if inference is working
-	QList<QString> fileNames;
-	QDirIterator it2(downloadsFolder + "/test_data/Models/", QDir::Files);
-	while (it2.hasNext()) {
-		auto tmp = it2.next();
-		fileNames.push_back(tmp);
-	}
-	addModelsDrag(fileNames);
-	
-	auto mBox2 = new QMessageBox(mWidget);
-	mBox2->setIcon(QMessageBox::Warning);
-	mBox2->setText("Download is finished.");
-	mBox2->setInformativeText("Do you wish to open the test WSIs?");
-	mBox2->setDefaultButton(QMessageBox::Yes);
-	mBox2->setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-	int ret2 = mBox2->exec();
-
-	switch (ret2) {
-	case QMessageBox::Yes:
-		// toggle and update text on button to show current mode
-		break;
-	case QMessageBox::No:
-		// if "No", do nothing (also default)
-		return;
-	case QMessageBox::Cancel:
-		// if "Cancel", do nothing
-		return;
-	default:
-		break;
-	}
-
-	// OPTIONAL: Add WSIs to project for visualization
-	fileNames.clear();
-	QDirIterator it(downloadsFolder + "/test_data/WSI/", QDir::Files);
-	while (it.hasNext()) {
-		auto tmp = it.next();
-		fileNames.push_back(tmp);
-	}
-	selectFileDrag(fileNames);
 }
+ */
 
 
 void MainWindow::aboutProgram() {
@@ -2478,7 +2519,8 @@ void MainWindow::selectFileInProject(int pos) {
 		std::cout << "Current result path: " << currentResult << std::endl;
 
 		auto str = splits.back();
-		if ((str == "png") || (str == "PNG")) {
+		transform(str.begin(), str.end(), str.begin(), ::tolower);
+		if (str == "png") {
 			loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(split(split(split(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
 		} else if ((str == "h5") || (str == "hd5") || (str == "hdf5")) {
 			std::cout << "heatmap chosen: " << str << std::endl;
@@ -2710,7 +2752,8 @@ void MainWindow::openProject() {
 				std::cout << "Current result path: " << currentResult << std::endl;
 
 				auto str = splits.back();
-				if ((str == "png") || (str == "PNG")) {
+				transform(str.begin(), str.end(), str.begin(), ::tolower);
+				if (str == "png") {
 					//loadTissue(QString::fromStdString(currentResult));
 					// @TODO: this splitception will be handled better in the future :p
 					loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(split(split(split(currentResult, "/").back(), split(split(fileName.toStdString(), "/").back(), ".")[0] + "_").back(), ".")[0]));
@@ -4399,10 +4442,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 						// else continue -> will use default one (one that is available)
 					}
 
-
-					// @TODO: Need to fix something. So currently, only runs on OpenVINO CPU (!)
-					network->setInferenceEngine("OpenVINO");
-
+					// if stated in the model txt file, use the specified inference engine
 					if (!((modelMetadata.count("IE") == 0) || modelMetadata["IE"] == "none")) {
 						std::cout << "Preselected IE was used: " << modelMetadata["IE"] << std::endl;
 						network->setInferenceEngine(modelMetadata["IE"]);

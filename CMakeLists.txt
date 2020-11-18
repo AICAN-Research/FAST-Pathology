@@ -6,11 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 include_directories(.)
 find_package(FAST REQUIRED)
 include(${FAST_USE_FILE})
-
-#find_package(Qt5Network REQUIRED)
-#SET(QT_USE_QTNETWORK true)
-#INCLUDE_DIRECTORIES(${QT_QTNETWORK_INCLUDE_DIR})
-
+include_directories(${FAST_BINARY_DIR}/../include/QtNetwork)
 set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
 
 add_executable(fastpathology

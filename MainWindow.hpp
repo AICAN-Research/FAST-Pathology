@@ -7,6 +7,8 @@
 #include <QDialog>
 #include <QObject>
 #include <QWidget>
+#include <QNetworkReply>
+#include <QProgressDialog>
 
 //#include "FAST/ProcessObject.hpp"
 
@@ -256,11 +258,8 @@ class MainWindow : public Window {
         bool hasRenderer(std::string name);
         std::shared_ptr<Renderer> getRenderer(std::string name);
 
-    //signals:
-    //    void my_signal(int, const std::string&);
-
-    //signals:
-    //    void valueChanged(int newValue);
+	//signals:
+		//void valueChanged(int newValue);
 
     private:
         std::map<std::string, std::shared_ptr<Renderer>> m_rendererList;
@@ -283,8 +282,6 @@ class MainWindow : public Window {
         std::shared_ptr<Tensor> m_bachMap;
         std::string filename;
         QString projectFolderName;
-
-
 
     private slots:
         void updateChannelValue (int index);
