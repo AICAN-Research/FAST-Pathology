@@ -16,6 +16,7 @@ add_executable(fastpathology
 		qtres.qrc  # is this needed if qtres.cpp is added?
 		qtres.cpp)
 
+add_definitions(-D_USE_MATH_DEFINES)
 add_dependencies(fastpathology fast_copy)
 target_link_libraries(fastpathology ${FAST_LIBRARIES}) #Qt5::Network)
 

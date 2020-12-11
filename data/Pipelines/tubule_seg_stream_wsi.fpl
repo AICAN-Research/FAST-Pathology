@@ -1,0 +1,43 @@
+PipelineName "Neural network high-res WSI segmentation"
+PipelineDescription "asd"
+
+### Processing chain
+
+ProcessObject importer WholeSlideImageImporter
+#Attribute filename $TEST_DATA_PATH$/WSI/A05.svs
+Attribute filename "C:\Users\andrp\workspace\henrik_file_and_model/15202_delta.ndpi"
+
+ProcessObject tissueSeg TissueSegmentation
+Input 0 importer 0
+
+ProcessObject patch PatchGenerator
+Attribute patch-size 128 128
+Attribute patch-level 0
+Input 0 importer 0
+Input 1 tissueSeg 0
+
+ProcessObject network SegmentationNetwork
+#Attribute output-names "conv2d_26/truediv"
+Attribute scale-factor 1.0
+Attribute inference-engine TensorRT
+Attribute model "C:\Users\andrp\workspace\henrik_file_and_model/unet128pixelclassifier_net_checkpoint__91580__2020_10_20__06_38_39.onnx"
+Input 0 patch 0
+
+ProcessObject stitcher PatchStitcher
+Input 0 network 0
+
+### Renderers
+
+Renderer imgRenderer ImagePyramidRenderer
+Input 0 importer 0
+
+Renderer segRenderer SegmentationPyramidRenderer
+Attribute opacity 0.5
+Input 0 stitcher 0
+
+### Views
+
+View view1 imgRenderer segRenderer
+Attribute 2Dmode true
+Attribute background-color white
+ 

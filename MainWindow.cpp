@@ -3168,7 +3168,7 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
             //QFile::copy(fileName, QString::fromStdString(newPath));
 
             // check which corresponding model files that exist, except from the one that is chosen
-            std::vector<std::string> allowedFileFormats{"txt", "pb", "h5", "mapping", "xml", "bin", "uff", "anchors"};
+            std::vector<std::string> allowedFileFormats{"txt", "pb", "h5", "mapping", "xml", "bin", "uff", "anchors", "onnx"};
 
             foreach(std::string currExtension, allowedFileFormats) {
                 std::string oldPath = oldLocation + fileNameNoFormat + "." + currExtension;
@@ -3218,7 +3218,7 @@ void MainWindow::addModels() {
     QStringList ls = QFileDialog::getOpenFileNames(
             mWidget,
             tr("Select Model"), nullptr,
-            tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff *.anchors"),
+            tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff *.anchors" "onnx"),
             nullptr, QFileDialog::DontUseNativeDialog
     ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
 
@@ -3261,7 +3261,7 @@ void MainWindow::addModels() {
         //QFile::copy(fileName, QString::fromStdString(newPath));
 
         // check which corresponding model files that exist, except from the one that is chosen
-        std::vector<std::string> allowedFileFormats{"txt", "pb", "h5", "mapping", "xml", "bin", "uff", "anchors"};
+        std::vector<std::string> allowedFileFormats{"txt", "pb", "h5", "mapping", "xml", "bin", "uff", "anchors", "onnx"};
 
         std::cout << "Copy test" << std::endl;
         foreach(std::string currExtension, allowedFileFormats) {
@@ -4242,6 +4242,8 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 		//if (!hasRenderer(modelMetadata["name"])) { // only run analysis if it has not been ran previously on current WSI
 		if (true) {
 
+			std::string finalIE = "";
+
 			// segment tissue if not already ran, but hide it
 			/*
 			if (!hasRenderer("tissue")) {
@@ -4380,12 +4382,20 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 				std::cout << elem << ", ";
 			}
 
+			std::string chosenIE = "";
+
 			// /*
 			// Now select best available IE based on which extensions exist for chosen model
 			// TODO: Current optimization profile is: 0. Please ensure there are no enqueued operations pending in this context prior to switching profiles
 			if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".uff") != acceptedModels.end()) && (std::find(IEsList.begin(), IEsList.end(), "TensorRT") != IEsList.end())) {
 				std::cout << "TensorRT selected" << std::endl;
 				network->setInferenceEngine("TensorRT");
+				chosenIE = "uff";
+			}
+			else if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".onnx") != acceptedModels.end()) && (std::find(IEsList.begin(), IEsList.end(), "TensorRT") != IEsList.end())) {
+				std::cout << "TensorRT (using ONNX) selected" << std::endl;
+				network->setInferenceEngine("TensorRT");
+				chosenIE = "onnx";
 			}
 			else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "TensorFlowCUDA") != IEsList.end()) {
 				std::cout << "TensorFlowCUDA selected" << std::endl;
@@ -4423,10 +4433,10 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 				//Config::getLibraryPath();
 
 
-				if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
-					network->setInferenceEngine("OpenVINO");
-				}
-				else {
+				//if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
+				//	network->setInferenceEngine("OpenVINO");
+				//}
+				if (true) {
 					// If model has CPU flag only, need to check if TensorFlowCPU is available, else run on OpenVINO, else use best available
 					if (std::stoi(modelMetadata["cpu"]) == 1) {
 						if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "TensorFlowCPU") != IEsList.end()) {
@@ -4446,6 +4456,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					if (!((modelMetadata.count("IE") == 0) || modelMetadata["IE"] == "none")) {
 						std::cout << "Preselected IE was used: " << modelMetadata["IE"] << std::endl;
 						network->setInferenceEngine(modelMetadata["IE"]);
+						std::cout << network->getInferenceEngine() << std::endl;
 					}
 
 					const auto engine = network->getInferenceEngine()->getName();
@@ -4479,11 +4490,19 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 						network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
 							TensorShape({ 1, std::stoi(modelMetadata["nb_classes"]) }));
 					}
+
+					std::cout << "Chosen IE extension: " << network->getInferenceEngine()->getDefaultFileExtension() << std::endl;
+
+					if (engine != "TensorRT") {
+						network->load(cwd + "data/Models/" + modelName + "." + network->getInferenceEngine()->getDefaultFileExtension()); //".uff");
+					}
+					else {
+						network->load(cwd + "data/Models/" + modelName + "." + chosenIE);
+					}
 				}
 
 				//network->setInferenceEngine("OpenVINO"); // force it to use a specific IE -> only for testing
 				//network->setInferenceEngine("TensorRT");
-				network->load(cwd + "data/Models/" + modelName + "." + network->getInferenceEngine()->getDefaultFileExtension()); //".uff");
 
 				if (modelMetadata["resolution"] == "low") { // special case handling for low_res NN inference
 					auto port = resizer->getOutputPort();
