@@ -25,7 +25,7 @@ The software is implemented in C++ based on FAST. A wide range of features have 
 * **Deep learning -** Deployment and support for multi-input/output Convolutional Neural Networks (CNNs)
 * **Visualization -** Real-time streaming of predictions on top of the WSI with low memory cost
 * **Use cases -** Patch-wise classification, low and high-resolution segmentation, and object detection are supported
-* **Inference Engines -** FAST includes a variety of different inference engines, e.g. TensorFlow CUDA, TensorRT and OpenVINO.
+* **Inference Engines -** FAST includes a variety of different inference engines, i.e. TensorFlow CPU/CUDA (support both TF v1 and v2 models), TensorRT (UFF and ONNX) and OpenVINO (CPU/GPU/VPU).
 * **Text pipelines -** Possibility to create your own pipelines using the built-in script editor
 * **Formats -** Through OpenSlide FastPathology supports lots of WSI formats
 
