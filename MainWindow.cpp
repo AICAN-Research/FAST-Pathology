@@ -287,7 +287,7 @@ void MainWindow::downloadAndAddTestData() {
 	progDialog->move(mWidget->width() - progDialog->width() * 1.1, progDialog->height() * 0.1);
 	//m_pBar.show();
 
-	QUrl url = "http://folk.ntnu.no/andpeder/FastPathology/test_data.zip";
+	QUrl url{"http://folk.ntnu.no/andpeder/FastPathology/test_data.zip"};  // @TODO: Why does not this work: QUrl url = "something" anymore
 
 	QNetworkAccessManager* m_NetworkMngr = new QNetworkAccessManager(this);
 	QNetworkReply *reply = m_NetworkMngr->get(QNetworkRequest(QUrl(url)));
