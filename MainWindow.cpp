@@ -3904,7 +3904,6 @@ void MainWindow::loadTissue(QString tissuePath) {
 
 void MainWindow::runPipeline(std::string path) {
 
-	/*
 	std::vector<std::string> currentWSIs;
 	if (m_runForProject) {
 		currentWSIs = m_runForProjectWsis;
@@ -3918,7 +3917,7 @@ void MainWindow::runPipeline(std::string path) {
 	//progDialog.setContentsMargins(0, 0, 0, 0);
 	progDialog.setVisible(true);
 	progDialog.setModal(false);
-	progDialog.setLabelText("Saving grade heatmaps...");
+	progDialog.setLabelText("Running pipeline across WSIs in project...");
 	//QRect screenrect = mWidget->screen()[0].geometry();
 	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
 	progDialog.show();
@@ -3927,54 +3926,51 @@ void MainWindow::runPipeline(std::string path) {
 
 	auto counter = 0;
 	for (const auto& currWSI : currentWSIs) {
-	 */
 
-	// TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
-	// pipeline requires some user-defined inputs, e.g. which WSI to use (and which model?)
-	std::map<std::string, std::string> arguments;
-	arguments["filename"] = filename;
-	arguments["modelPath"] = path;
+		// TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
+		// pipeline requires some user-defined inputs, e.g. which WSI to use (and which model?)
+		std::map<std::string, std::string> arguments;
+		arguments["filename"] = filename;
+		arguments["modelPath"] = path;
 
-	// check if folder for current WSI exists, if not, create one
-	/*
-	QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0] + "/").c_str();
-	wsiResultPath = wsiResultPath.replace("//", "/");
-	if (!QDir(wsiResultPath).exists()) {
-		QDir().mkdir(wsiResultPath);
+		// check if folder for current WSI exists, if not, create one
+		/*
+		QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0] + "/").c_str();
+		wsiResultPath = wsiResultPath.replace("//", "/");
+		if (!QDir(wsiResultPath).exists()) {
+			QDir().mkdir(wsiResultPath);
+		}
+
+		QString outFile = (wsiResultPath.toStdString() + split(split(filename, "/").back(), ".")[0] + "_heatmap.h5").c_str();
+
+		arguments["outPath"] = outFile.replace("//", "/").toStdString();
+		 */
+
+		// parse fpl-file, and run pipeline with correspodning input arguments
+		auto pipeline = Pipeline(path, arguments);
+		//pipeline.parsePipelineFile();
+
+		//m_rendererTypeList["WSI"] == "ImagePyramidRenderer";
+		m_rendererTypeList["nuclei_seg"] == "SegmentationPyramidRenderer";
+		//m_rendererTypeList["nuclei_detect"] == "HeatmapRenderer";
+
+		// add renderer(s)
+		//insertRenderer("WSI", pipeline.getRenderers()[0]); // only render the NN-results (not the WSI)
+		//createDynamicViewWidget("wsi", "wsi"); // modelMetadata["name"], modelName);
+
+		insertRenderer("nuclei_seg", pipeline.getRenderers()[1]); // only render the NN-results (not the WSI)
+		createDynamicViewWidget("nuclei_seg", "nuclei_seg"); // modelMetadata["name"], modelName);
+
+		//insertRenderer("nuclei_detect", pipeline.getRenderers()[2]); // only render the NN-results (not the WSI)
+		//createDynamicViewWidget("nuclei_detect", "nuclei_detect"); // modelMetadata["name"], modelName);
+
+		// update progress bar
+		progDialog.setValue(counter);
+		counter++;
+
+		// to render straight away (avoid waiting on all WSIs to be handled before rendering)
+		QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 	}
-
-	QString outFile = (wsiResultPath.toStdString() + split(split(filename, "/").back(), ".")[0] + "_heatmap.h5").c_str();
-
-	arguments["outPath"] = outFile.replace("//", "/").toStdString();
-	 */
-
-	// parse fpl-file, and run pipeline with correspodning input arguments
-	auto pipeline = Pipeline(path, arguments);
-	//pipeline.parsePipelineFile();
-
-	//m_rendererTypeList["WSI"] == "ImagePyramidRenderer";
-	m_rendererTypeList["nuclei_seg"] == "SegmentationPyramidRenderer";
-	//m_rendererTypeList["nuclei_detect"] == "HeatmapRenderer";
-
-	// add renderer(s)
-	//insertRenderer("WSI", pipeline.getRenderers()[0]); // only render the NN-results (not the WSI)
-	//createDynamicViewWidget("wsi", "wsi"); // modelMetadata["name"], modelName);
-
-	insertRenderer("nuclei_seg", pipeline.getRenderers()[1]); // only render the NN-results (not the WSI)
-	createDynamicViewWidget("nuclei_seg", "nuclei_seg"); // modelMetadata["name"], modelName);
-
-	//insertRenderer("nuclei_detect", pipeline.getRenderers()[2]); // only render the NN-results (not the WSI)
-	//createDynamicViewWidget("nuclei_detect", "nuclei_detect"); // modelMetadata["name"], modelName);
-
-	/*
-	// update progress bar
-	progDialog.setValue(counter);
-	counter++;
-
-	// to render straight away (avoid waiting on all WSIs to be handled before rendering)
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-	}
-	*/
 }
 
 
@@ -4022,12 +4018,7 @@ void MainWindow::loadTumor(QString tumorPath) {
     thresholder2->setInputData(output);
 
     //output->getOpenCLImageAccess(reader->updateAndGetOutputData<Image>());
-
-    std::cout << "\nLoading tumor mask... \n";
-
     //m_tissue = reader->updateAndGetOutputData<Image>();
-
-    std::cout << "\nupdate... \n";
 
     auto someRenderer = SegmentationRenderer::New();
     someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(0.0f, 0.0f, 255.0f/255.0f));
