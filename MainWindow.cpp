@@ -52,6 +52,8 @@
 #include <FAST/Exporters/ImageFileExporter.hpp>
 #include <FAST/Importers/HDF5TensorImporter.hpp>
 #include <FAST/Exporters/HDF5TensorExporter.hpp>
+#include <FAST/Importers/ImagePyramidPatchImporter.hpp>
+#include <FAST/Exporters/ImagePyramidPatchExporter.hpp>
 #include <FAST/Algorithms/ScaleImage/ScaleImage.hpp>
 #include <FAST/Data/Access/ImagePyramidAccess.hpp>
 #include <QShortcut>
@@ -505,7 +507,8 @@ void MainWindow::createMenubar() {
     deployMenu->addAction("Segment Tissue");
     deployMenu->addAction("Predict Tumor");
     deployMenu->addAction("Classify Grade");
-	deployMenu->addAction("MTL nuclei seg/detect"); //, this, &MainWindow::MTL_test);
+	deployMenu->addAction("MTL nuclei seg/detect", this, &MainWindow::MTL_test);
+    deployMenu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
     deployMenu->addSeparator();
 
     auto helpMenu = topFiller->addMenu(tr("&Help"));
@@ -1842,7 +1845,7 @@ void MainWindow::saveTissueSegmentation() {
 		QTimer::singleShot(3000, mBox, SLOT(accept()));
 		 */
 
-		 // update progress bar
+		// update progress bar
 		progDialog.setValue(counter);
 		counter++;
 
@@ -2748,20 +2751,34 @@ void MainWindow::openProject() {
 			std::cout << "Current result folder path: " << currentResultPath << std::endl;
 			while (iter.hasNext()) {
 				auto currentResult = iter.next().toStdString();
-				auto splits = split(split(currentResult.c_str(), "/").back(), ".");
-				std::cout << "Current result path: " << currentResult << std::endl;
 
-				auto str = splits.back();
-				transform(str.begin(), str.end(), str.begin(), ::tolower);
-				if (str == "png") {
-					//loadTissue(QString::fromStdString(currentResult));
-					// @TODO: this splitception will be handled better in the future :p
-					loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(split(split(split(currentResult, "/").back(), split(split(fileName.toStdString(), "/").back(), ".")[0] + "_").back(), ".")[0]));
-				} else if ((str == "h5") || (str == "hd5") || (str == "hdf5")) {
-					loadHeatmap(QString::fromStdString(currentResult), QString::fromStdString(split(split(split(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
-				} else {
-					std::cout << "Unable to load result (format is not supported): " << currentResultPath << std::endl;
-				}
+				std::cout << "current file: " << currentResult << std::endl;
+
+				auto tmp = split(currentResult, "/").back();
+
+				if ((tmp == ".") || (tmp == ".."))
+				    continue;
+
+				// check if current "file" is a directory, if directly, it will assume that there exists some high-res seg results to render, else do other stuff
+                QFileInfo pathFileInfo(currentResult.c_str());
+                if (pathFileInfo.isDir()){
+                    loadHighres(QString::fromStdString(currentResult), QString::fromStdString(split(split(currentResult, "/").back(), wsiPath + "_").back()));
+                } else {
+                    auto splits = split(split(currentResult.c_str(), "/").back(), ".");
+                    std::cout << "Current result path: " << currentResult << std::endl;
+
+                    auto str = splits.back();
+                    transform(str.begin(), str.end(), str.begin(), ::tolower);
+                    if (str == "png") {
+                        //loadTissue(QString::fromStdString(currentResult));
+                        // @TODO: this splitception will be handled better in the future :p
+                        loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(split(split(split(currentResult, "/").back(), split(split(fileName.toStdString(), "/").back(), ".")[0] + "_").back(), ".")[0]));
+                    } else if ((str == "h5") || (str == "hd5") || (str == "hdf5")) {
+                        loadHeatmap(QString::fromStdString(currentResult), QString::fromStdString(split(split(split(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
+                    } else {
+                        std::cout << "Unable to load result (format is not supported): " << currentResultPath << std::endl;
+                    }
+                }
 
 			}
 
@@ -3692,6 +3709,48 @@ bool MainWindow::segmentTissue() {
 }
 
 
+void MainWindow::loadHighres(QString path, QString name) {
+    if (!fileExists(path.toStdString()))
+        return;
+
+    auto someName = name.toStdString();
+    std::cout << "High-res someName var: " << someName << std::endl;
+    std::cout << "path: " << path.toStdString() + "/" << std::endl;
+
+    auto someImporter = ImagePyramidPatchImporter::New();
+    someImporter->setPath("/home/andrep/workspace/FP_projects/project2/results/15202_delta_test_plane_0_cm_LZW_jpeg_Q_85/15202_delta_test_plane_0_cm_LZW_jpeg_Q_85_TubuleSegNetFinal/"); //path.toStdString() + "/");
+
+    auto someRenderer = SegmentationPyramidRenderer::New();
+    someRenderer->setOpacity(0.5f);
+    someRenderer->setInputConnection(someImporter->getOutputPort()); //setInputConnection(importer->getOutputPort());
+    //someImporter->update();
+
+    std::cout << "done iter." << std::endl;
+
+    m_rendererTypeList[someName] = "SegmentationPyramidRenderer";
+    insertRenderer(someName, someRenderer);
+
+    // now make it possible to edit prediction in the View Widget
+    createDynamicViewWidget(someName, modelName);
+
+    std::cout << "Finished loading..." << std::endl;;
+    savedList.emplace_back(someName);
+
+
+    /*
+    DataObject::pointer data;
+    do {
+        std::cout << "iter high-res..." << std::endl;
+        //data = importer->updateAndGetOutputData<ImagePyramid>(); //DataObject>();
+        //importer->update();
+        data = importer->updateAndGetOutputData<ImagePyramid>();
+        //someRenderer->setInputData(data);
+        std::cout << "done iter high-res..." << std::endl;
+    } while (!data->isLastFrame());
+     */
+}
+
+
 void MainWindow::loadHeatmap(QString tissuePath, QString name) {
 	if (!fileExists(tissuePath.toStdString()))
 		return;
@@ -4099,6 +4158,91 @@ std::map<std::string, std::string> MainWindow::setParameterDialog(std::map<std::
 }
 
 
+void MainWindow::MIL_test() {
+
+    std::string modelName = "custom_mil_model";
+
+    // read model metadata (txtfile)
+    std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
+
+    int patch_lvl_model = (int)(std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) / std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
+
+    if (!hasRenderer("tissue")) {
+        segmentTissue();
+        hideTissueMask(true);
+    }
+
+    auto generator = PatchGenerator::New();
+    generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
+    generator->setPatchLevel(patch_lvl_model);
+    generator->setInputData(0, m_image);
+    if (m_tissue)
+        generator->setInputData(1, m_tissue);
+    //if (m_tumorMap)
+    //    generator->setInputData(1, m_tumorMap);
+
+    //auto batchgen = ImageToBatchGenerator::New();  // TODO: Can't use this with TensorRT (!)
+    //batchgen->setInputConnection(generator->getOutputPort());
+    //batchgen->setMaxBatchSize(1);
+    //batchgen->setMaxBatchSize(std::stoi(modelMetadata["batch_process"])); // set 256 for testing stuff (tumor -> annotation, then grade from tumor segment)
+
+    auto network = NeuralNetwork::New();
+    network->setInferenceEngine("OpenVINO");
+    // apparently this is needed if model has unspecified input size
+    /*
+    network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
+            { 1, 256, 256, 3 })); //{1, size, size, 3}
+
+    network->setOutputNode(0, "conv2d_26/truediv", NodeType::TENSOR,
+                           TensorShape({ 1, 256, 256, 3}));
+    network->setOutputNode(1, "dense_1/Softmax", NodeType::TENSOR,
+                           TensorShape({ 1, 2 }));
+     */
+
+    std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
+
+    network->load(cwd + "data/Models/" + modelName + ".onnx");
+    //network->load(cwd + "data/Models/" + modelName + "." + getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat())); //".uff");
+    std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
+
+    network->setInputConnection(generator->getOutputPort()); //generator->getOutputPort());
+    vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
+    network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
+
+    auto stitcher1 = PatchStitcher::New();
+    stitcher1->setInputConnection(network->getOutputPort(1));
+
+    auto stitcher2 = PatchStitcher::New();
+    stitcher2->setInputConnection(network->getOutputPort(0));
+
+    auto someRenderer1 = HeatmapRenderer::New();
+    someRenderer1->setMinConfidence(0.8);
+    someRenderer1->setInterpolation(false);
+    //someRenderer->setColor(Segmentation::LABEL_BACKGROUND, Color(0.0f, 255.0f / 255.0f, 0.0f));
+    //someRenderer1->setInputData(m_tumorMap);
+    someRenderer1->setInputConnection(stitcher1->getOutputPort());
+
+    auto someRenderer2 = HeatmapRenderer::New();
+    //someRenderer2->setMinConfidence(0.5);
+    //someRenderer2->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
+    someRenderer2->setInterpolation(false);
+    someRenderer2->setInputConnection(stitcher2->getOutputPort());
+    //someRenderer2->setMaxOpacity(0.6f);
+
+    //someRenderer2->setSynchronizedRendering(false);
+    //someRenderer2->update();
+
+    m_rendererTypeList["mil_grade"] = "HeatmapRenderer";
+    insertRenderer("mil_grade", someRenderer1);
+
+    m_rendererTypeList["mil_attention"] = "HeatmapRenderer";
+    insertRenderer("mil_attention", someRenderer2);
+
+    createDynamicViewWidget("mil_grade", modelName);
+    createDynamicViewWidget("mil_attention", modelName);
+}
+
+
 void MainWindow::MTL_test() {
 
 	std::string modelName = "model_nuclei_seg_detection_multitask";
@@ -4123,7 +4267,7 @@ void MainWindow::MTL_test() {
 		generator->setInputData(1, m_tumorMap);
 
 	auto network = NeuralNetwork::New();
-	network->setInferenceEngine("TensorFlowCPU");
+	network->setInferenceEngine("TensorFlow");
 	// apparently this is needed if model has unspecified input size
 	network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
 		{ 1, 256, 256, 3 })); //{1, size, size, 3}
@@ -4133,7 +4277,11 @@ void MainWindow::MTL_test() {
 	network->setOutputNode(1, "dense_1/Softmax", NodeType::TENSOR,
 		TensorShape({ 1, 2 }));
 
-	network->load(cwd + "data/Models/" + modelName + "." + network->getInferenceEngine()->getDefaultFileExtension()); //".uff");
+	std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
+
+	network->load(cwd + "data/Models/" + modelName + "." + getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat())); //".uff");
+    std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
+
 	network->setInputConnection(generator->getOutputPort());
 	vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
 	network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
@@ -4216,6 +4364,20 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
 	// add current model name to map
 	modelNames[modelName] = modelName;
+
+
+    auto progDialog = QProgressDialog(mWidget);
+    progDialog.setRange(0, (int)currentWSIs.size() - 1);
+    //progDialog.setContentsMargins(0, 0, 0, 0);
+    progDialog.setVisible(true);
+    progDialog.setModal(false);
+    progDialog.setLabelText("Saving tissue segmentations...");
+    //QRect screenrect = mWidget->screen()[0].geometry();
+    progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
+    progDialog.show();
+
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+
 
 	// set parameters yourself (only enabled if advanced mode is ON
 	if (advancedMode) {
@@ -4435,7 +4597,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 						}
 						else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end()) {
 							network->setInferenceEngine("OpenVINO");
-							network->getInferenceEngine()->setDeviceType(InferenceDeviceType::CPU);
+							//network->getInferenceEngine()->setDeviceType(InferenceDeviceType::CPU);
 						}
 						else {
 							std::cout << "CPU only was selected, but was not able to find any CPU devices..." << std::endl;
@@ -4482,10 +4644,11 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 							TensorShape({ 1, std::stoi(modelMetadata["nb_classes"]) }));
 					}
 
-					std::cout << "Chosen IE extension: " << network->getInferenceEngine()->getDefaultFileExtension() << std::endl;
+					std::cout << "Chosen IE extension: " << getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat()) << std::endl;
+
 
 					if (engine != "TensorRT") {
-						network->load(cwd + "data/Models/" + modelName + "." + network->getInferenceEngine()->getDefaultFileExtension()); //".uff");
+						network->load(cwd + "data/Models/" + modelName + "." + getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat())); //".uff");
 					}
 					else {
 						network->load(cwd + "data/Models/" + modelName + "." + chosenIE);
@@ -4511,6 +4674,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					auto generator = PatchGenerator::New();
 					generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
 					generator->setPatchLevel(patch_lvl_model);
+					generator->setOverlap(0);
 					generator->setInputData(0, currImage);
 					if (m_tissue) {
 						generator->setInputData(1, m_tissue); //erosion->updateAndGetOutputData<Image>());
@@ -4639,16 +4803,59 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
 				}
 				else if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
-					auto stitcher = PatchStitcher::New();
-					stitcher->setInputConnection(network->getOutputPort());
-					auto port = stitcher->getOutputPort();
+				    if (!m_runForProject) {
+                        auto stitcher = PatchStitcher::New();
+                        stitcher->setInputConnection(network->getOutputPort());
+                        auto port = stitcher->getOutputPort();
 
-					auto someRenderer = SegmentationPyramidRenderer::New();
-					someRenderer->setOpacity(0.7f);
-					someRenderer->setInputConnection(stitcher->getOutputPort());
+                        auto someRenderer = SegmentationPyramidRenderer::New();
+                        someRenderer->setOpacity(0.7f);
+                        someRenderer->setInputConnection(stitcher->getOutputPort());
 
-					m_rendererTypeList[modelMetadata["name"]] = "SegmentationPyramidRenderer";
-					insertRenderer(modelMetadata["name"], someRenderer);
+                        m_rendererTypeList[modelMetadata["name"]] = "SegmentationPyramidRenderer";
+                        insertRenderer(modelMetadata["name"], someRenderer);
+				    } else {
+                        // check if folder for current WSI exists, if not, create one
+                        QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(currWSI, "/").back(), ".")[0]).c_str();
+                        wsiResultPath = wsiResultPath.replace("//", "/");
+                        if (!QDir(wsiResultPath).exists()) {
+                            QDir().mkdir(wsiResultPath);
+                        }
+                        auto currPath = wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + modelMetadata["name"] + "/";
+                        std::cout << "current high-res result path: " << currPath << std::endl;
+
+                        auto stitcher = PatchStitcher::New();
+                        stitcher->setInputConnection(network->getOutputPort());
+                        auto port = stitcher->getOutputPort();
+
+                        auto exporter = ImagePyramidPatchExporter::New();
+                        exporter->setInputConnection(network->getOutputPort());
+                        exporter->setPath(currPath);
+                        exporter->setLevel(patch_lvl_model);
+                        exporter->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
+                        //exporter->setLevel(modelMetadata["level"])
+                        //exporter->update();
+
+                        DataObject::pointer data;
+                        do {
+                            exporter->update();
+                            data = stitcher->updateAndGetOutputData<ImagePyramid>(); //DataObject>();
+
+                        } while (!data->isLastFrame());
+
+                        /*
+                        auto stitcher = PatchStitcher::New();
+                        stitcher->setInputConnection(network->getOutputPort());
+                        auto port = stitcher->getOutputPort();
+
+                        auto someRenderer = SegmentationPyramidRenderer::New();
+                        someRenderer->setOpacity(0.7f);
+                        someRenderer->setInputConnection(stitcher->getOutputPort());
+
+                        m_rendererTypeList[modelMetadata["name"]] = "SegmentationPyramidRenderer";
+                        insertRenderer(modelMetadata["name"], someRenderer);
+                         */
+					}
 				}
 				else if ((modelMetadata["problem"] == "object_detection") && (modelMetadata["resolution"] == "high")) {  // TODO: Perhaps use switch() instead of tons of if-statements?
 
@@ -4690,7 +4897,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
 					currNetwork->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
 					currNetwork->setInferenceEngine("OpenVINO"); // FIXME: OpenVINO only currently, as I haven't generalized multiple output nodes case
-					currNetwork->load(cwd + "data/Models/" + modelName + "." + currNetwork->getInferenceEngine()->getDefaultFileExtension()); //".uff");
+					currNetwork->load(cwd + "data/Models/" + modelName + "." + getModelFileExtension(currNetwork->getInferenceEngine()->getPreferredModelFormat())); //".uff");
 					currNetwork->setInputConnection(generator->getOutputPort());
 
 					// FIXME: Bug when using NMS - ERROR [140237963507456] Terminated with unhandled exception: Size must be > 0, got: -49380162997889393559076864.000000 -96258.851562
@@ -4754,6 +4961,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 						// check if folder for current WSI exists, if not, create one
 						QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(currWSI, "/").back(), ".")[0]).c_str();
 						wsiResultPath = wsiResultPath.replace("//", "/");
+						std::cout << "current result path: " << wsiResultPath.toStdString() << std::endl;
 						if (!QDir(wsiResultPath).exists()) {
 							QDir().mkdir(wsiResultPath);
 						}
@@ -4822,6 +5030,13 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 		}
 
 		//counter++;
+
+        // update progress bar
+        progDialog.setValue(counter);
+        counter++;
+
+        // to render straight away (avoid waiting on all WSIs to be handled before rendering)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
 		// update progress bar
 		//progDialog.setValue(counter);
