@@ -1,7 +1,6 @@
 #pragma once
 
 #include <FAST/Visualization/Window.hpp>
-
 #include <QPushButton>
 #include <QMainWindow>
 #include <QDialog>
@@ -9,8 +8,6 @@
 #include <QWidget>
 #include <QNetworkReply>
 #include <QProgressDialog>
-
-//#include "FAST/ProcessObject.hpp"
 
 
 QT_BEGIN_NAMESPACE
@@ -30,12 +27,9 @@ class QComboBox;
 class QStackedLayout;
 class QSplitter;
 class QPlainTextEdit;
-class QStatusbar;
 class QString;
 class QScrollArea;
 class QListWidget;
-class QDragEnterEvent;
-class QDropEvent;
 QT_END_NAMESPACE
 
 namespace fast {
@@ -44,8 +38,6 @@ namespace fast {
     class PatchStitcher;
     class SegmentationRenderer;
     class SegmentationPyramidRenderer;
-    //class ImagePyramidRenderer;
-    //class HeatmapRenderer;
     class TissueSegmentation;
     class WholeSlideImageImporter;
     class ImagePyramid;
@@ -53,14 +45,11 @@ namespace fast {
     class Image;
     class Tensor;
     class View;
-    //class segTumorRenderer;
 
 class MainWindow : public Window {
     FAST_OBJECT(MainWindow);
     Q_OBJECT
     public:
-        void drawHist();
-        void createActions();
         void createMenubar();
         void createMainMenuWidget();
         void createFileWidget();
@@ -79,7 +68,6 @@ class MainWindow : public Window {
         void saveGrade();
         void saveResults(std::string result);
         void displayMessage(QString message);
-        void killInference(std::string someName);
         void deleteViewObject(std::string someName);
 
         bool hideChannel(const std::string &someName); //, uint channel_value);
@@ -89,16 +77,8 @@ class MainWindow : public Window {
         std::map<std::string, std::string> setParameterDialog(std::map<std::string, std::string> modelMetadata);
 		void MTL_test();
 		void MIL_test();
-        //bool imageSegmenter(std::string modelName);
-        bool showHeatmap();
         bool hideTissueMask(bool flag);
-        bool toggleTissueMask();
-        bool opacityTissue(int value);
-        bool opacityHeatmap(int value);
-        bool opacityTumor(int value);
-        bool exportSeg();
-        bool calcTissueHist();
-        bool showImage();
+        const bool calcTissueHist();
         bool segmentTissue();
         bool stopFlag;
 		
@@ -137,7 +117,6 @@ class MainWindow : public Window {
 
 		// script editor related functions
         QDialog *scriptEditorWidget;
-        //QWidget *scriptEditorWidget;
         QVBoxLayout *scriptLayout;
         QPlainTextEdit *scriptEditor;
         void createActionsScript();
@@ -145,7 +124,6 @@ class MainWindow : public Window {
         void loadFileScript(const QString &fileName);
         void setCurrentFileScript(const QString &fileName);
         void newFileScript();
-        void createStatusBarScript();
         bool saveAsScript();
         bool saveScript();
         bool maybeSaveScript();
@@ -156,23 +134,9 @@ class MainWindow : public Window {
         void createOpenGLWindow();
         View *view;
 
-        bool showTumorMask();
-        bool hideBackgroundClass(std::string someName);
-        bool fixImage();
-        bool showBachMap();
-        bool fixTumorSegment();
-        bool saveTumorPred();
-        bool background_flag = false; // = false;
-        bool tissue_flag = false;
-        void get_cwd();
-        void create_tmp_folder_file();
-        float getDownsamplingAtLevel(int value);
+        bool background_flag = false;
         float getMagnificationLevel();
         float magn_lvl;
-        float getDownsamplingAtLevel();
-
-        int mkdir(const char *path);
-        int rmdir(const char *path);
 
 		std::string tmpDirPath;
 		std::string createRandomNumbers_(int n);
@@ -183,13 +147,10 @@ class MainWindow : public Window {
         std::string modelName;
 		std::map<std::string, std::string> modelNames;
         bool advancedMode = false;
-        std::string getWsiFormat();
         std::string wsiFormat;
         std::string cwd;
         std::map<std::string, std::string>getModelMetadata(std::string modelName);
-        //std::map<std::string, std::any> availableResults; // <- doesn't work // TODO: Fix thisinsert
         std::vector<std::vector<Vector2f>>getAnchorMetadata(std::string anchorFileName);
-        std::vector<float> getDownsamplingLevels();
         std::vector<std::string> split (std::string s, std::string delimiter);
 
         void setApplicationMode();
@@ -212,14 +173,12 @@ class MainWindow : public Window {
         QVBoxLayout *viewLayout;
         QVBoxLayout *statsLayout;
         QVBoxLayout *exportLayout;
-        QVBoxLayout *dockLayout;
         QVBoxLayout *dynamicViewLayout;
         QWidget *dynamicViewWidget;
         QComboBox *pageComboBox;
         QComboBox *exportComboBox;
         QStackedLayout *stackedLayout;
         QStackedLayout *exportStackedLayout;
-        //QSplitter *mainSplitter;
         QPushButton *setModeButton;
 
         QMenu *runPipelineMenu;
@@ -260,20 +219,14 @@ class MainWindow : public Window {
         bool hasRenderer(std::string name);
         std::shared_ptr<Renderer> getRenderer(std::string name);
 
-	//signals:
-		//void valueChanged(int newValue);
-
     private:
+        MainWindow();
         std::map<std::string, std::shared_ptr<Renderer>> m_rendererList;
         std::map<std::string, std::string> m_rendererTypeList;
         std::map<std::string, std::shared_ptr<NeuralNetwork>> m_neuralNetworkList;
         std::map<std::string, std::shared_ptr<PatchStitcher>> m_patchStitcherList;
         std::map<std::string, std::map<std::string, std::string>> m_modelMetadataList;
         std::map<std::string, std::shared_ptr<Image>> availableResults;
-        MainWindow();
-        //std::map<std::string, std::future<std::shared_ptr<Tensor>>> m_futureData;
-        //std::future<std::shared_ptr<Tensor>> m_futureData;
-        //std::shared_ptr<TissueSegmentation> tissueSegmentation;
         std::shared_ptr<WholeSlideImageImporter> importer;
         std::shared_ptr<ImagePyramid> m_image;
         std::shared_ptr<Image> m_tissue;
@@ -287,8 +240,6 @@ class MainWindow : public Window {
 
     private slots:
         void updateChannelValue (int index);
-        //void receiveFileList(QList<QString> &names);
-        //void itemClicked(QListWidgetItem *item);
 
 
 };
