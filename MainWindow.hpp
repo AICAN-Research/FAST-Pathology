@@ -77,6 +77,7 @@ class MainWindow : public Window {
         std::map<std::string, std::string> setParameterDialog(std::map<std::string, std::string> modelMetadata);
 		void MTL_test();
 		void MIL_test();
+		void test_loadHighres();
         bool hideTissueMask(bool flag);
         const bool calcTissueHist();
         bool segmentTissue();
@@ -84,7 +85,6 @@ class MainWindow : public Window {
 		
 		bool m_runForProject = false;
 		std::vector<std::string> m_runForProjectWsis;
-		void runForProject_apply(std::string method);
 
 		void downloadAndAddTestData();
         static void helpUrl();
@@ -102,7 +102,6 @@ class MainWindow : public Window {
         void openProject();
         void saveProject();
 		void runForProject();
-        void createPipeline();
         void customPipelineEditor();
         void selectFileInProject(int pos);  // int pos);
         int curr_pos = 0;

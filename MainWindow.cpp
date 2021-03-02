@@ -509,6 +509,7 @@ void MainWindow::createMenubar() {
     deployMenu->addAction("Classify Grade");
 	deployMenu->addAction("MTL nuclei seg/detect", this, &MainWindow::MTL_test);
     deployMenu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
+    deployMenu->addAction("load high-res test", this, &MainWindow::test_loadHighres);
     deployMenu->addSeparator();
 
     auto helpMenu = topFiller->addMenu(tr("&Help"));
@@ -577,7 +578,6 @@ void MainWindow::reset() {
 
 
 void MainWindow::createMainMenuWidget() {
-
     // create widgets for Menu layout
     createFileWidget();
     createProcessWidget();
@@ -663,7 +663,7 @@ void MainWindow::createMenuWidget() {
 		
     //auto toolBar = new QToolBar;
     QPixmap openPix(QString::fromStdString(":/data/Icons/import_icon_new_cropped_resized.png"));
-	QPixmap processPix(QStringLiteral(":/data/Icons/import_icon_new_cropped_resized.png"));
+	QPixmap processPix(QString::fromStdString(":/data/Icons/process_icon_new_cropped_resized.png"));
     QPixmap viewPix(QString::fromStdString(":/data/Icons/visualize_icon_new_cropped_resized.png"));
     QPixmap resultPix(QString::fromStdString(":/data/Icons/statistics_icon_new_cropped_resized.png"));
     QPixmap savePix(QString::fromStdString(":/data/Icons/export_icon_new_cropped_resized.png"));
@@ -1617,6 +1617,7 @@ void MainWindow::saveTissueSegmentation() {
 	auto progDialog = QProgressDialog(mWidget);
 	progDialog.setRange(0, (int)currentWSIs.size() - 1);
 	//progDialog.setContentsMargins(0, 0, 0, 0);
+    progDialog.setValue(0);
 	progDialog.setVisible(true);
 	progDialog.setModal(false);
 	progDialog.setLabelText("Saving tissue segmentations...");
@@ -1636,21 +1637,18 @@ void MainWindow::saveTissueSegmentation() {
 			QDir().mkdir(wsiResultPath);
 		}
 
-		if (m_runForProject) {
-			auto importer = WholeSlideImageImporter::New();
-			importer->setFilename(currWSI);
-			auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
+        auto someImporter = WholeSlideImageImporter::New();
+        someImporter->setFilename(currWSI);
+        auto currImage = someImporter->updateAndGetOutputData<ImagePyramid>();
 
-			auto tissueSegmentation = TissueSegmentation::New();
-			tissueSegmentation->setInputData(currImage);
-			m_tissue = tissueSegmentation->updateAndGetOutputData<Image>();
-		}
+        auto tissueSegmentation = TissueSegmentation::New();
+        tissueSegmentation->setInputData(currImage);
 
-		QString outFile = (wsiResultPath.toStdString() + split(split(currWSI, "/").back(), ".")[0] + "_tissue.png").c_str();
-		auto exporter = ImageFileExporter::New();
-		exporter->setFilename(outFile.replace("//", "/").toStdString());
-		exporter->setInputData(m_tissue);
-		exporter->update();
+        QString outFile = (wsiResultPath.toStdString() + split(split(currWSI, "/").back(), ".")[0] + "_tissue.png").c_str();
+        ImageExporter::pointer exporter = ImageExporter::New();
+        exporter->setFilename(outFile.replace("//", "/").toStdString());
+        exporter->setInputData(tissueSegmentation->updateAndGetOutputData<Image>());
+        exporter->update();
 
 		// update progress bar
 		progDialog.setValue(counter);
@@ -1749,6 +1747,7 @@ void MainWindow::saveTumor() {
 
     // attempt to save tissue mask to disk as .png
     QString outFile = (wsiResultPath.toStdString() + split(split(filename, "/").back(), ".")[0] + "_tumor_mask.png").c_str();
+
     ImageExporter::pointer exporter = ImageExporter::New();
     exporter->setFilename(outFile.replace("//", "/").toStdString());
     //exporter->setInputData(intensityScaler->updateAndGetOutputData<Image>());
@@ -2480,7 +2479,6 @@ void MainWindow::openProject() {
             auto renderer = ImagePyramidRenderer::New();
             renderer->setInputData(m_image);
 
-            // TODO: Something here results in me not being able to run analysis on new images (after the first)
             removeAllRenderers();
             m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
             insertRenderer("WSI", renderer);
@@ -2498,6 +2496,13 @@ void MainWindow::openProject() {
 			// check if any results exists for current WSI, if there are load them
 			std::string wsiPath = split(split(filename, "/").back(), ".")[0];
 			auto currentResultPath = projectFolderName.toStdString() + "/results/" + wsiPath.c_str();
+
+			// update title to include name of current file
+            if (advancedMode) {
+                setTitle(applicationName + " (Research mode)" + " - " + split(filename, "/").back());
+            } else {
+                setTitle(applicationName + " - " + split(filename, "/").back());
+            }
 
 			std::cout << "Current WSI used: " << fileName.toStdString() << std::endl;
 
@@ -2533,12 +2538,6 @@ void MainWindow::openProject() {
                         std::cout << "Unable to load result (format is not supported): " << currentResultPath << std::endl;
                     }
                 }
-
-            if (advancedMode) {
-                setTitle(applicationName + " (Research mode)" + " - " + split(filename, "/").back());
-            } else {
-                setTitle(applicationName + " - " + split(filename, "/").back());
-            }
 			}
         }
         counter++;
@@ -2781,7 +2780,6 @@ void MainWindow::runForProject() {
 	QObject::connect(cancelButton, &QPushButton::clicked, [=]() {
 		std::cout << "Cancel was clicked." << std::endl;
 		projectDialog->close();
-		return;
 	});
 
 	QObject::connect(applyButton, &QPushButton::clicked, [=]() {
@@ -2791,7 +2789,6 @@ void MainWindow::runForProject() {
 			m_runForProjectWsis.push_back(selectedFilesWidget->item(row)->text().toStdString());
 		}
 		projectDialog->accept();
-		return;
 	});
 
 	QObject::connect(enableToggle, &QPushButton::clicked, [=]() {
@@ -2806,11 +2803,7 @@ void MainWindow::runForProject() {
 		}
 		std::cout << "Run for project was " << enableToggle->text().toStdString() << std::endl;
 	});
-
 	projectDialog->exec();
-
-	// in dialog, should be able to select which WSIs to use, and then if apply is selected,
-	// when selecting method in Process Widget it will run it for the selected WSIs sequentially
 }
 
 
@@ -2850,16 +2843,6 @@ void MainWindow::addPipelines() {
         //auto currentAction = runPipelineMenu->addAction(currentFpl); //QString::fromStdString(split(split(currentFpl.toStdString(), "/")[-1], ".")[0]));
         //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, cwd + "data/Pipelines/" + currentFpl.toStdString()));
     }
-}
-
-
-void MainWindow::createPipeline() {
-    1;
-}
-
-
-void MainWindow::runForProject_apply(std::string method) {
-	1;
 }
 
 
@@ -2935,13 +2918,6 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
 
             processLayout->insertWidget(processLayout->count(), someButton);
 
-            //createMainMenuWidget();
-            //if (processLayout){
-            //    clearLayout(processLayout);
-            //}
-            //createProcessWidget();
-            //mainLayout->removeWidget(menuWidget); // this doesnt work...
-
             progDialog.setValue(counter);
             counter++;
 
@@ -2998,7 +2974,6 @@ void MainWindow::addModels() {
 			counter++;
             continue;
         }
-        //QFile::copy(fileName, QString::fromStdString(newPath));
 
         // check which corresponding model files that exist, except from the one that is chosen
         std::vector<std::string> allowedFileFormats{"txt", "pb", "h5", "mapping", "xml", "bin", "uff", "anchors", "onnx"};
@@ -3027,13 +3002,6 @@ void MainWindow::addModels() {
         someButton->show();
 
         processLayout->insertWidget(processLayout->count(), someButton);
-
-        //createMainMenuWidget();
-        //if (processLayout){
-        //    clearLayout(processLayout);
-        //}
-        //createProcessWidget();
-        //mainLayout->removeWidget(menuWidget); // this doesnt work...
 
 		progDialog.setValue(counter);
 		counter++;
@@ -3064,7 +3032,6 @@ float MainWindow::getMagnificationLevel() {
         auto resolution = 1;  // needed to initialize outside of if statement -> set some silly dummy value
         //auto resolution = std::stof(m_image->getMetadata("tiff.XResolution")); //(int)stof(metadata["tiff.XResolution"]);
 
-        std::cout << "\ntesting" << wsiFormat << "\n\n";
         if (wsiFormat == "generic-tiff") {
             resolution = std::stof(m_image->getMetadata("tiff.XResolution")); //(int)stof(metadata["tiff.XResolution"]);
         } else if ((wsiFormat == "phillips") || (wsiFormat == "ventata")) {
@@ -3086,7 +3053,7 @@ float MainWindow::getMagnificationLevel() {
         magnification_lvl = std::stof(metadata["openslide.objective-power"]);
 		std::cout << "Magn lvl: " << magnification_lvl << std::endl;
     } else {  //"TODO: Make this more general, test different image formats to see how the magn_lvl metadata vary"
-        std::cout << "\n aperio test" << metadata["aperio.AppMag"] << "\n apps";
+        std::cout << "WSI format not set, uses default format: " << metadata["aperio.AppMag"] << std::endl;
         magnification_lvl = std::stof(metadata["aperio.AppMag"]);
     }
     return magnification_lvl;
@@ -3432,6 +3399,37 @@ bool MainWindow::segmentTissue() {
 }
 
 
+void MainWindow::test_loadHighres() {
+    QString somePath = "/home/andrep/workspace/FP_projects/project2/results/15202_delta_test_plane_0_cm_LZW_jpeg_Q_85/15202_delta_test_plane_0_cm_LZW_jpeg_Q_85_TubuleSegNetFinal/";
+    std::string someName = "TubuleSegNetFinal";
+
+    auto someImporter = ImagePyramidPatchImporter::New();
+    someImporter->setPath(somePath.toStdString());
+    //auto result = someImporter->updateAndGetOutputData<ImagePyramid>();
+    //someImporter->update();
+    //someImporter->setModified(true);
+
+    //addProcessObject(someImporter);
+
+    auto someRenderer = SegmentationPyramidRenderer::New();
+    someRenderer->setOpacity(0.5f);
+    someRenderer->setInputConnection(someImporter->getOutputPort());
+    //someRenderer->setInputData(result);
+    someRenderer->update();
+
+    m_rendererTypeList[someName] = "SegmentationPyramidRenderer";
+    insertRenderer(someName, someRenderer);
+
+    // now make it possible to edit prediction in the View Widget
+    createDynamicViewWidget(someName, modelName);
+
+    std::cout << "Finished loading..." << std::endl;;
+    savedList.emplace_back(someName);
+
+    //addProcessObject(someImporter);
+}
+
+
 void MainWindow::loadHighres(QString path, QString name) {
     if (!fileExists(path.toStdString()))
         return;
@@ -3442,11 +3440,14 @@ void MainWindow::loadHighres(QString path, QString name) {
 
     auto someImporter = ImagePyramidPatchImporter::New();
     someImporter->setPath(path.toStdString() + "/");
+    //someImporter->update();
+    auto result = someImporter->updateAndGetOutputData<ImagePyramid>();
 
     auto someRenderer = SegmentationPyramidRenderer::New();
     someRenderer->setOpacity(0.5f);
-    someRenderer->setInputConnection(someImporter->getOutputPort()); //setInputConnection(importer->getOutputPort());
-    //someRenderer->setInputData(someImage);
+    //someRenderer->setInputConnection(someImporter->getOutputPort()); //setInputConnection(importer->getOutputPort());
+    someRenderer->setInputData(result);
+    someRenderer->update();
 
     std::cout << "done iter." << std::endl;
 
@@ -3485,7 +3486,8 @@ void MainWindow::loadHeatmap(QString tissuePath, QString name) {
 	importer->setDatasetName(someName);
 	auto resultTensor = importer->updateAndGetOutputData<Tensor>();
 	auto resultShape = resultTensor->getShape();
-	importer->update();
+	//importer->update();
+	//addProcessObject(importer);
 
 	std::cout << "importer shape: " << std::endl;
 	std::cout << resultShape.toString() << std::endl;
@@ -4042,8 +4044,6 @@ void MainWindow::MTL_test() {
 }
 
 
-// TODO: Integrate SegmentationClassifier inside this or make functions for each task?
-//  perhaps make a new class instead?
 bool MainWindow::pixelClassifier(std::string modelName) {
 
 	// if no WSI is currently being rendered, 
@@ -4064,42 +4064,23 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 	if (m_runForProject) {
 		currentWSIs = m_runForProjectWsis;
 	} else {
-		currentWSIs.push_back(filename); //wsiList[curr_pos]);
+		currentWSIs.push_back(filename);
 	}
-
-	// progress bar for run-for-project
-	/*
-	auto progDialog = QProgressDialog(mWidget);
-	progDialog.setRange(0, (int)currentWSIs.size() - 1);
-	//progDialog.setContentsMargins(0, 0, 0, 0);
-	progDialog.setVisible(true);
-	progDialog.setModal(false);
-	progDialog.setLabelText("Running inference...");
-	//QRect screenrect = mWidget->screen()[0].geometry();
-	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
-	progDialog.show();
-
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-	 */
-
-	printf("\n%d\n", __LINE__);
 
 	// add current model name to map
 	modelNames[modelName] = modelName;
-
 
     auto progDialog = QProgressDialog(mWidget);
     progDialog.setRange(0, (int)currentWSIs.size() - 1);
     //progDialog.setContentsMargins(0, 0, 0, 0);
     progDialog.setVisible(true);
     progDialog.setModal(false);
-    progDialog.setLabelText("Saving tissue segmentations...");
+    progDialog.setLabelText("Running inference...");
     //QRect screenrect = mWidget->screen()[0].geometry();
     progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
     progDialog.show();
 
     QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-
 
 	// set parameters yourself (only enabled if advanced mode is ON
 	if (advancedMode) {
@@ -4127,38 +4108,27 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 			}
 			 */
 
-			 //auto tmpRenderer = getRenderer(metadata["name"]);
-
-			 // based on predicted magnification level of WSI, set magnificiation level for optimal input to model based on predicted resolution of WSI
+			// based on predicted magnification level of WSI, set magnificiation level for optimal input to model based on predicted resolution of WSI
 			int patch_lvl_model = (int)(std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) / std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
 
 			std::cout << "Curr patch level: " << patch_lvl_model << std::endl;
 
 			// read current wsi
-			printf("\n%d\n", __LINE__);
-			//auto importer = WholeSlideImageImporter::New();
 			std::cout << "current WSI: " << currWSI << std::endl;
-			//importer->setFilename(currWSI);
-			//auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
-			//auto currImage = m_image;
-
-			//WholeSlideImageImporter::pointer currImage = WholeSlideImageImporter::New();
-			auto importer = WholeSlideImageImporter::New();
-			importer->setFilename(currWSI);
-			auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
+			auto someImporter = WholeSlideImageImporter::New();
+            someImporter->setFilename(currWSI);
+			auto currImage = someImporter->updateAndGetOutputData<ImagePyramid>();
 
 			if (!m_runForProject) {
 				currImage = m_image;
 			}
 
-			printf("\n%d\n", __LINE__);
+            auto access = currImage->getAccess(ACCESS_READ);
 
 			ImageResizer::pointer resizer = ImageResizer::New();
 			int currLvl;
 			if (modelMetadata["resolution"] == "low") {
-				printf("\n%d\n", __LINE__);
-				auto access = currImage->getAccess(ACCESS_READ);
-				printf("\n%d\n", __LINE__);
+				//auto access = currImage->getAccess(ACCESS_READ);
 				// TODO: Should automatically find best suitable magn.lvl. (NOTE: 2x the image size as for selecting lvl!)
 
 				int levelCount = std::stoi(metadata["openslide.level-count"]);
@@ -4436,42 +4406,6 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
 					std::cout << "currentHeatmapName: " << currentHeatmapName << ", currWSI: " << currWSI << std::endl;
 
-					/*
-					// testing RunLambda in FAST for saving heatmaps
-					auto lambda = RunLambdaOnLastFrame::New();
-					lambda->setInputConnection(stitcher->getOutputPort());
-					//lambda->setRunOnLastFrameOnly();
-					//lambda->setInputConnection(port); //stitcher->getOutputPort());
-					//lambda->setInputData(port->getNextFrame<Image>());
-					lambda->setLambda([this, currentHeatmapName, currWSI](DataObject::pointer data) {
-						std::cout << "Last frame detected, processing..." << std::endl;
-						auto tensor = std::dynamic_pointer_cast<Tensor>(data);
-						// TODO do stuff with tensor here
-						// need to get metadata again, as its happening on another thread
-						//std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName); // TODO: Then edits in advanced mode is lost...
-
-						// TODO: Make modelMetadata accessible in current thread?
-
-						std::cout << "current filename: " << currWSI << std::endl;
-
-						// check if folder for current WSI exists, if not, create one
-						QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(currWSI, "/").back(), ".")[0]).c_str();
-						wsiResultPath = wsiResultPath.replace("//", "/");
-						if (!QDir(wsiResultPath).exists()) {
-							QDir().mkdir(wsiResultPath);
-						}
-
-						//std::cout << "current filename: " << wsiResultPath.toStdString() << std::endl;
-
-						auto exporter = HDF5TensorExporter::New();
-						exporter->setFilename(wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + currentHeatmapName + ".h5"); //grade.h5");
-						exporter->setDatasetName(currentHeatmapName);
-						exporter->setInputData(tensor);
-						exporter->update();
-
-					});
-					 */
-
 					if (!m_runForProject) {
 
 						m_patchStitcherList[modelMetadata["name"]] = stitcher; // add stitcher to global list to be accessible later on
@@ -4492,12 +4426,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
 						m_rendererTypeList[modelMetadata["name"]] = "HeatmapRenderer";
 						insertRenderer(modelMetadata["name"], someRenderer);
-						//m_neuralNetworkList[modelMetadata["name"]] = network;
 					}
-
-					//auto port = stitcher->getOutputPort();
-					//auto port = lambda->getOutputPort();
-					//auto port = stitcher->updateAndGetOutputData<tensor>();//getOutputPort();
 
 					if (m_runForProject) {
 
@@ -4513,8 +4442,6 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 						if (!QDir(wsiResultPath).exists()) {
 							QDir().mkdir(wsiResultPath);
 						}
-
-						//std::cout << "current filename: " << wsiResultPath.toStdString() << std::endl;
 
 						auto exporter = HDF5TensorExporter::New();
 						exporter->setFilename(wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + currentHeatmapName + ".h5"); //grade.h5");
@@ -4546,53 +4473,28 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                         auto currPath = wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + modelMetadata["name"] + "/";
                         std::cout << "current high-res result path: " << currPath << std::endl;
 
+                        /*
                         auto stitcher = PatchStitcher::New();
                         stitcher->setInputConnection(network->getOutputPort());
                         auto port = stitcher->getOutputPort();
+
+                        addProcessObject(stitcher);
+                         */
 
                         auto exporter = ImagePyramidPatchExporter::New();
                         exporter->setInputConnection(network->getOutputPort());
                         exporter->setPath(currPath);
+                        exporter->update();
 
                         addProcessObject(exporter);
 
-
+                        /*
                         DataObject::pointer data;
                         do {
                             data = stitcher->updateAndGetOutputData<ImagePyramid>(); //DataObject>();
                             exporter->update();
 
                         } while (!data->isLastFrame());
-
-
-                        //exporter->setLevel(patch_lvl_model);
-                        //exporter->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
-                        //exporter->setLevel(modelMetadata["level"])
-                        //exporter->update();
-
-                        //addProcessObject(stitcher);
-                        //addProcessObject(exporter);
-
-                        /*
-                        DataObject::pointer data;
-                        do {
-                            exporter->update();
-                            data = stitcher->updateAndGetOutputData<ImagePyramid>(); //DataObject>();
-
-                        } while (!data->isLastFrame());
-                         */
-
-                        /*
-                        auto stitcher = PatchStitcher::New();
-                        stitcher->setInputConnection(network->getOutputPort());
-                        auto port = stitcher->getOutputPort();
-
-                        auto someRenderer = SegmentationPyramidRenderer::New();
-                        someRenderer->setOpacity(0.7f);
-                        someRenderer->setInputConnection(stitcher->getOutputPort());
-
-                        m_rendererTypeList[modelMetadata["name"]] = "SegmentationPyramidRenderer";
-                        insertRenderer(modelMetadata["name"], someRenderer);
                          */
 					}
 				}
@@ -4642,7 +4544,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					// FIXME: Bug when using NMS - ERROR [140237963507456] Terminated with unhandled exception: Size must be > 0, got: -49380162997889393559076864.000000 -96258.851562
 					// - Windows only?
 					//auto nms = NonMaximumSuppression::New();
-					//nms->setThreshold(0);
+					//nms->setThreshold(0.5);
 					//nms->setInputConnection(currNetwork->getOutputPort());
 
 					auto boxAccum = BoundingBoxSetAccumulator::New();
@@ -4661,7 +4563,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					//converter->setInputConnection(network->getOutputPort());
 
 					// resize back
-					auto access = currImage->getAccess(ACCESS_READ);
+					//auto access = currImage->getAccess(ACCESS_READ);
 					auto input = access->getLevelAsImage(currLvl);
 
 					ImageResizer::pointer resizer2 = ImageResizer::New();
@@ -4669,13 +4571,21 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					resizer2->setInputConnection(network->getOutputPort());
 					resizer2->setWidth(input->getWidth());
 					resizer2->setHeight(input->getHeight());
+
+
 					auto port2 = resizer2->getOutputPort();
+                    //m_tumorMap = port2->getNextFrame<Image>();
 					resizer2->update();
 
-					m_tumorMap = port2->getNextFrame<Image>();
-					m_tumorMap->setSpacing((float)currImage->getFullHeight() / (float)input->getHeight(), (float)currImage->getFullWidth() / (float)input->getWidth(), 1.0f);
+                    auto currMap = port2->getNextFrame<Image>();
+                    m_tumorMap = currMap;
+                    //auto currMap = m_tumorMap;
 
 					if (!m_runForProject) {
+                        //m_tumorMap = currMap;
+
+                        currMap->setSpacing((float)currImage->getFullWidth() / (float)input->getWidth(), (float)currImage->getFullHeight() / (float)input->getHeight(), 1.0f);
+
 						auto someRenderer = SegmentationRenderer::New();
 						someRenderer->setOpacity(0.4f);
 						vector<string> colors = split(modelMetadata["class_colors"], ";");
@@ -4687,15 +4597,13 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 						}
 
 						//someRenderer->setColor(Segmentation::LABEL_BACKGROUND, Color(0.0f, 255.0f / 255.0f, 0.0f));
-						someRenderer->setInputData(m_tumorMap);
+						someRenderer->setInputData(currMap);
 						//someRenderer->setInterpolation(false);
 						someRenderer->update();
 
 						m_rendererTypeList[modelMetadata["name"]] = "SegmentationRenderer";
 						insertRenderer(modelMetadata["name"], someRenderer);
-					}
-
-					if (m_runForProject) {
+					} else {
 						// save result
 						// check if folder for current WSI exists, if not, create one
 						QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(currWSI, "/").back(), ".")[0]).c_str();
@@ -4705,60 +4613,25 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 							QDir().mkdir(wsiResultPath);
 						}
 
-						//std::cout << "current filename: " << wsiResultPath.toStdString() << std::endl;
-
 						/*
-						auto exporter = HDF5TensorExporter::New();
-						exporter->setFilename(wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + currentHeatmapName + ".h5"); //grade.h5");
-						exporter->setDatasetName(currentHeatmapName);
-						exporter->setInputData(tensor);
-						exporter->update();
-						 */
-
-						 /*
-						 auto intensityScaler = ScaleImage::New();
-						 intensityScaler->setInputData(m_tissue);
-						 intensityScaler->setLowestValue(0.0f);
-						 intensityScaler->setHighestValue(1.0f);
-						  */
-
-						  /*
-						  // use hdf5 writer instead of PNG (!)
-						  auto exporter = HDF5TensorExporter::New();
-						  exporter->setFilename(wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + modelMetadata["name"] + ".h5");
-						  //exporter->setInputData(tensor);
-						  exporter->update();
-						   */
-
-						   /*
-						   auto intensityScaler = ScaleImage::New();
-						   intensityScaler->setInputData(m_tissue);
-						   intensityScaler->setLowestValue(0.0f);
-						   intensityScaler->setHighestValue(1.0f);
-						   intensityScaler->update();
-							*/
-
 						auto intensityScaler = ScaleImage::New();
-						intensityScaler->setInputData(m_tumorMap);
+						intensityScaler->setInputData(currMap);
 						intensityScaler->setLowestValue(0.0f);
 						intensityScaler->setHighestValue(1.0f);
 
 						auto thresholder = BinaryThresholding::New();
 						thresholder->setLowerThreshold(0.5f);
 						thresholder->setInputConnection(intensityScaler->getOutputPort());
+						 */
+
+                        currMap->setSpacing(1.0f, 1.0f, 1.0f);
 
 						auto exporter = ImageFileExporter::New();
-						exporter->setFilename(wsiResultPath.toStdString() + "/" + split(split(currWSI, "/").back(), ".")[0] + "_" + modelMetadata["name"] + ".png"); //split(wsiResultPath.toStdString(), "/").back() + "_" + modelMetadata["name"] + ".png");  //outFile.replace("//", "/").toStdString());
-						exporter->setInputData(thresholder->updateAndGetOutputData<Image>());
-						//exporter->setInputData(m_tumorMap);
+						exporter->setFilename(wsiResultPath.toStdString() + "/" + split(split(currWSI, "/").back(), ".")[0] + "_" + modelMetadata["name"] + ".png");
+						exporter->setInputData(currMap);
+						//exporter->setInputData(thresholder->updateAndGetOutputData<Image>());
+						//exporter->setInputData(resizer2->updateAndGetOutputData<Image>());
 						exporter->update();
-
-						// should kill network to free memory when finished
-						//network->stopPipeline(); // TODO: Does nothing? Or at least I cannot see a different using "nvidia-smi"
-
-						// add final segmentation to result list to be accessible if wanted for exporting
-						//availableResults[modelMetadata["name"]] = m_tumorMap;
-						//exportComboBox->addItem(tr(modelMetadata["name"].c_str()));
 					}
 				}
 
@@ -4767,8 +4640,6 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					createDynamicViewWidget(modelMetadata["name"], modelName);
 			}
 		}
-
-		//counter++;
 
         // update progress bar
         progDialog.setValue(counter);
