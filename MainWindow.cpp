@@ -1399,8 +1399,8 @@ void MainWindow::setCurrentFileScript(const QString &fileName) {
 }
 
 
-void MainWindow::updateChannelValue(uint index) {
-    channel_value = index;
+void MainWindow::updateChannelValue(int index) {
+    channel_value = (uint) index;
 }
 
 
@@ -1639,43 +1639,6 @@ void MainWindow::saveTissueSegmentation() {
 }
 
 
-void MainWindow::displayMessage(QString message) {
-    auto mBox = new QMessageBox(mWidget);
-    mBox->setText(message);
-    mBox->setIcon(QMessageBox::Information);
-    mBox->setModal(false);
-    //mBox->show();
-    QRect screenrect = mWidget->screen()[0].geometry();
-    mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
-    mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
-    QTimer::singleShot(3000, mBox, SLOT(accept()));
-}
-
-
-void MainWindow::saveResults(std::string result) {
-    // check if folder for current WSI exists, if not, create one
-    QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0] + "/").c_str();
-    wsiResultPath = wsiResultPath.replace("//", "/");
-    if (!QDir(wsiResultPath).exists()) {
-        QDir().mkdir(wsiResultPath);
-    }
-
-    if (std::find(savedList.begin(), savedList.end(), result) != savedList.end()) {
-        displayMessage("Result has already previously been saved.");
-        return;
-    }
-    savedList.emplace_back(result);
-
-    // attempt to save tissue mask to disk as .pngfileN
-    QString outFile = (wsiResultPath.toStdString() + split(split(filename, "/").back(), ".")[0] + "_tumor_mask.png").c_str();
-    ImageExporter::pointer exporter = ImageExporter::New();
-    exporter->setFilename(outFile.replace("//", "/").toStdString());
-    //exporter->setInputData(intensityScaler->updateAndGetOutputData<Image>());
-    exporter->setInputData(m_tumorMap);
-    exporter->update();
-}
-
-
 void MainWindow::saveHeatmap() {
 
 	// check if folder for current WSI exists, if not, create one
@@ -1689,16 +1652,6 @@ void MainWindow::saveHeatmap() {
 	exporter->setFilename(wsiResultPath.toStdString() + "tensor.h5");
 	//exporter->setInputData(tensor);
 	exporter->update();
-
-	auto mBox = new QMessageBox(mWidget);
-	mBox->setText("Heatmap has been saved.");
-	mBox->setIcon(QMessageBox::Information);
-	mBox->setModal(false);
-	//mBox->show();
-	QRect screenrect = mWidget->screen()[0].geometry();
-	mBox->move(mWidget->width() - mBox->width() / 2, -mWidget->width() / 2 - mBox->width() / 2);
-	mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
-	QTimer::singleShot(3000, mBox, SLOT(accept()));
 }
 
 
