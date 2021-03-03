@@ -65,7 +65,6 @@ class MainWindow : public Window {
         void saveTissueSegmentation();
 		void saveHeatmap();
         void saveTumor();
-        void saveGrade();
         void saveResults(std::string result);
         void displayMessage(QString message);
         void deleteViewObject(std::string someName);
@@ -230,7 +229,7 @@ class MainWindow : public Window {
         QString projectFolderName;
 
     private slots:
-        void updateChannelValue (int index);
+        void updateChannelValue (uint index);
 
 
 };

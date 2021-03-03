@@ -1399,10 +1399,8 @@ void MainWindow::setCurrentFileScript(const QString &fileName) {
 }
 
 
-
-void MainWindow::updateChannelValue(int index) {
-    std::cout << "We updated the channel value!" << std::endl;
-    channel_value = (uint) index;
+void MainWindow::updateChannelValue(uint index) {
+    channel_value = index;
 }
 
 
@@ -2395,6 +2393,18 @@ void MainWindow::openProject() {
         QTimer::singleShot(3000, mBox, SLOT(accept()));
     }
 
+    auto progDialog = QProgressDialog(mWidget);
+    progDialog.setRange(0, fileNames.count()-1);
+    //progDialog.setContentsMargins(0, 0, 0, 0);
+    progDialog.setVisible(true);
+    progDialog.setModal(false);
+    progDialog.setLabelText("Loading WSIs...");
+    //QRect screenrect = mWidget->screen()[0].geometry();
+    progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
+    progDialog.show();
+
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+
     int counter = 0;
     for (QString &fileName : fileNames) {
 
@@ -2521,15 +2531,11 @@ void MainWindow::openProject() {
 
         curr_pos++;
 
-        auto mBox = new QMessageBox(mWidget);
-        std::string path = "Finished reading: " + split(fileName.toStdString(), "/").back();
-        mBox->setText(path.c_str());
-        mBox->setIcon(QMessageBox::Information);
-        mBox->setModal(false);
-        QRect screenrect = mWidget->screen()[0].geometry();
-        mBox->move(mWidget->width() - mBox->width() / 2, -mWidget->width() / 2 - mBox->width() / 2);
-        mBox->show();
-        QTimer::singleShot(3000, mBox, SLOT(accept()));
+        // update progress bar
+        progDialog.setValue(counter);
+
+        // to render straight away (avoid waiting on all WSIs to be handled before rendering)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
     }
 }
 
