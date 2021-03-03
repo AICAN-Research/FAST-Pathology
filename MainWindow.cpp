@@ -507,9 +507,8 @@ void MainWindow::createMenubar() {
     deployMenu->addAction("Segment Tissue");
     deployMenu->addAction("Predict Tumor");
     deployMenu->addAction("Classify Grade");
-	deployMenu->addAction("MTL nuclei seg/detect", this, &MainWindow::MTL_test);
-    deployMenu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
-    deployMenu->addAction("load high-res test", this, &MainWindow::test_loadHighres);
+	//deployMenu->addAction("MTL nuclei seg/detect", this, &MainWindow::MTL_test);
+    //deployMenu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
     deployMenu->addSeparator();
 
     auto helpMenu = topFiller->addMenu(tr("&Help"));
@@ -1189,14 +1188,6 @@ void MainWindow::customPipelineEditor() {
 }
 
 
-QColor MainWindow::changeColor() {
-	auto colorSetWidget = new QColorDialog(mWidget);
-	colorSetWidget->setOption(QColorDialog::DontUseNativeDialog, true);
-	QColor color = colorSetWidget->getColor();
-	return color;
-}
-
-
 void MainWindow::createActionsScript() {
 
     auto menuBar = new QMenuBar(scriptEditorWidget);
@@ -1517,11 +1508,6 @@ void MainWindow::createExportWidget() {
     saveTumorButton->setFixedHeight(50);
     QObject::connect(saveTumorButton, &QPushButton::clicked, std::bind(&MainWindow::saveTumor, this));
 
-    auto saveGradeButton = new QPushButton(mWidget);
-    saveGradeButton->setText("Save grade heatmap");
-    saveGradeButton->setFixedHeight(50);
-    //QObject::connect(saveGradeButton, &QPushButton::clicked, std::bind(&MainWindow::saveGrade, this));
-
     auto imageNameTexts = new QLabel(mWidget);
     imageNameTexts->setText("Results: ");
     imageNameTexts->setFixedWidth(75);
@@ -1537,7 +1523,6 @@ void MainWindow::createExportWidget() {
     exportLayout->addWidget(saveThumbnailButton);
     exportLayout->addWidget(saveTissueButton);
     exportLayout->addWidget(saveTumorButton);
-    exportLayout->addWidget(saveGradeButton);
 }
 
 
@@ -1574,25 +1559,21 @@ void MainWindow::saveThumbnail() {
 		auto access = m_image->getAccess(ACCESS_READ);
 		auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
 		if (m_runForProject) {
-			auto importer = WholeSlideImageImporter::New();
-			importer->setFilename(currWSI);
-			auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
+			auto someImporter = WholeSlideImageImporter::New();
+            someImporter->setFilename(currWSI);
+			auto currImage = someImporter->updateAndGetOutputData<ImagePyramid>();
 
 			access = currImage->getAccess(ACCESS_READ);
 			input = access->getLevelAsImage(currImage->getNrOfLevels() - 1);
 		}
 
-		auto intensityScaler = ScaleImage::New();
-		intensityScaler->setInputData(input); //m_tissue);  // expects Image data type
-		intensityScaler->setLowestValue(0.0f);
-		intensityScaler->setHighestValue(1.0f);
-		//intensityScaler->update();
+		// @TODO: if only large image planes exist, should downsample the resulting thumbnails before export
 
 		// attempt to save thumbnail to disk as .png
 		ImageExporter::pointer exporter = ImageExporter::New();
 		exporter->setFilename(projectFolderName.toStdString() + "/thumbnails/" + split(split(currWSI, "/").back(), ".")[0] + ".png");
 		std::cout << "Name: " << projectFolderName.toStdString() + "/thumbnails/" + split(split(currWSI, "/").back(), ".")[0] + ".png" << std::endl;
-		exporter->setInputData(intensityScaler->updateAndGetOutputData<Image>());
+		exporter->setInputData(input);
 		exporter->update();
 
 		// update progress bar
@@ -1756,36 +1737,6 @@ void MainWindow::saveTumor() {
 
     auto mBox = new QMessageBox(mWidget);
     mBox->setText("Tumor segmentation has been saved.");
-    mBox->setIcon(QMessageBox::Information);
-    mBox->setModal(false);
-    //mBox->show();
-    QRect screenrect = mWidget->screen()[0].geometry();
-    mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
-    mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
-    QTimer::singleShot(3000, mBox, SLOT(accept()));
-}
-
-
-void MainWindow::saveGrade() {
-    // check if folder for current WSI exists, if not, create one
-    QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0] + "/").c_str();
-    wsiResultPath = wsiResultPath.replace("//", "/");
-    if (!QDir(wsiResultPath).exists()) {
-        QDir().mkdir(wsiResultPath);
-    }
-
-    savedList.emplace_back("grade");
-
-    // attempt to save tissue mask to disk as .png
-    QString outFile = (wsiResultPath.toStdString() + split(split(filename, "/").back(), ".")[0] + "_grade_mask.png").c_str();
-    ImageExporter::pointer exporter = ImageExporter::New();
-    exporter->setFilename(outFile.replace("//", "/").toStdString());
-    //exporter->setInputData(intensityScaler->updateAndGetOutputData<Image>());
-    exporter->setInputData(m_gradeMap);
-    exporter->update();
-
-    auto mBox = new QMessageBox(mWidget);
-    mBox->setText("Grade heatmap has been saved.");
     mBox->setIcon(QMessageBox::Information);
     mBox->setModal(false);
     //mBox->show();
@@ -2252,8 +2203,6 @@ void MainWindow::selectFileInProject(int pos) {
 	insertRenderer("WSI", renderer);
 	getView(0)->reinitialize(); // Must call this after removing all renderers
 
-	//startComputationThread();
-
 	// get WSI format
 	wsiFormat = metadata["openslide.vendor"];
 
@@ -2271,44 +2220,33 @@ void MainWindow::selectFileInProject(int pos) {
 	std::cout << "Current result folder path: " << currentResultPath << std::endl;
 	while (iter.hasNext()) {
 		auto currentResult = iter.next().toStdString();
-		auto splits = split(split(currentResult.c_str(), "/").back(), ".");
-		std::cout << "Current result path: " << currentResult << std::endl;
 
-		auto str = splits.back();
-		transform(str.begin(), str.end(), str.begin(), ::tolower);
-		if (str == "png") {
-			loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(split(split(split(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
-		} else if ((str == "h5") || (str == "hd5") || (str == "hdf5")) {
-			std::cout << "heatmap chosen: " << str << std::endl;
-			loadHeatmap(QString::fromStdString(currentResult), QString::fromStdString(split(split(split(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
-		} else {
-			std::cout << "Unable to load result (format is not supported): " << currentResultPath << std::endl;
-		}
+        auto tmp = split(currentResult, "/").back();
+        if ((tmp == ".") || (tmp == ".."))
+            continue;
 
+        // check if current "file" is a directory, if directly, it will assume that there exists some high-res seg results to render, else do other stuff
+        QFileInfo pathFileInfo(currentResult.c_str());
+        if (pathFileInfo.isDir()){
+            loadHighres(QString::fromStdString(currentResult), QString::fromStdString(split(split(currentResult, "/").back(), wsiPath + "_").back()));
+        } else {
+            auto splits = split(split(currentResult.c_str(), "/").back(), ".");
+            std::cout << "Current result path: " << currentResult << std::endl;
+
+            auto str = splits.back();
+            transform(str.begin(), str.end(), str.begin(), ::tolower);
+            if (str == "png") {
+                loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(
+                        split(split(split(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
+            } else if ((str == "h5") || (str == "hd5") || (str == "hdf5")) {
+                std::cout << "heatmap chosen: " << str << std::endl;
+                loadHeatmap(QString::fromStdString(currentResult), QString::fromStdString(
+                        split(split(split(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
+            } else {
+                std::cout << "Unable to load result (format is not supported): " << currentResultPath << std::endl;
+            }
+        }
 	}
-
-	/*
-    // check if tissue segmentation already exists, if yes import it and add to renderer
-    std::string wsiPath = split(split(filename, "/").back(), ".")[0];
-    QString tissuePath = projectFolderName + "/results/" + wsiPath.c_str() + "/" + wsiPath.c_str() + "_tissue_mask.png";
-    tissuePath = tissuePath.replace("//", "/");  // FIXME: I doubt that this fix works for windows(?) / and \ used
-    //tissuePath = "/home/andrep/test2.png";
-    std::cout << "Current path: " << tissuePath.toStdString() << std::endl;
-    if (QDir().exists(tissuePath)) {
-        loadTissue(tissuePath);
-        std::cout << "Length of saved list: " << savedList.size() << std::endl;
-    }
-
-    // check if tumor segmentation already exists, if yes import it and add to renderer
-    QString tumorPath = projectFolderName + "/results/" + wsiPath.c_str() + "/" + wsiPath.c_str() + "_tumor_mask.png";
-    tumorPath = tumorPath.replace("//", "/");  // FIXME: I doubt that this fix works for windows(?) / and \ used
-    //tissuePath = "/home/andrep/test2.png";
-    std::cout << "Current path: " << tumorPath.toStdString() << std::endl;
-    if (QDir().exists(tumorPath)) {
-        loadTumor(tumorPath);
-        std::cout << "Length of saved list: " << savedList.size() << std::endl;
-    }
-	 */
 
     // update application name to contain current WSI
     //setTitle(applicationName + " - " + split(filename, "/").back());
@@ -2529,7 +2467,6 @@ void MainWindow::openProject() {
                     auto str = splits.back();
                     transform(str.begin(), str.end(), str.begin(), ::tolower);
                     if (str == "png") {
-                        //loadTissue(QString::fromStdString(currentResult));
                         // @TODO: this splitception will be handled better in the future :p
                         loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(split(split(split(currentResult, "/").back(), split(split(fileName.toStdString(), "/").back(), ".")[0] + "_").back(), ".")[0]));
                     } else if ((str == "h5") || (str == "hd5") || (str == "hdf5")) {
@@ -3399,37 +3336,6 @@ bool MainWindow::segmentTissue() {
 }
 
 
-void MainWindow::test_loadHighres() {
-    QString somePath = "/home/andrep/workspace/FP_projects/project2/results/15202_delta_test_plane_0_cm_LZW_jpeg_Q_85/15202_delta_test_plane_0_cm_LZW_jpeg_Q_85_TubuleSegNetFinal/";
-    std::string someName = "TubuleSegNetFinal";
-
-    auto someImporter = ImagePyramidPatchImporter::New();
-    someImporter->setPath(somePath.toStdString());
-    //auto result = someImporter->updateAndGetOutputData<ImagePyramid>();
-    //someImporter->update();
-    //someImporter->setModified(true);
-
-    //addProcessObject(someImporter);
-
-    auto someRenderer = SegmentationPyramidRenderer::New();
-    someRenderer->setOpacity(0.5f);
-    someRenderer->setInputConnection(someImporter->getOutputPort());
-    //someRenderer->setInputData(result);
-    someRenderer->update();
-
-    m_rendererTypeList[someName] = "SegmentationPyramidRenderer";
-    insertRenderer(someName, someRenderer);
-
-    // now make it possible to edit prediction in the View Widget
-    createDynamicViewWidget(someName, modelName);
-
-    std::cout << "Finished loading..." << std::endl;;
-    savedList.emplace_back(someName);
-
-    //addProcessObject(someImporter);
-}
-
-
 void MainWindow::loadHighres(QString path, QString name) {
     if (!fileExists(path.toStdString()))
         return;
@@ -3606,85 +3512,6 @@ void MainWindow::loadSegmentation(QString tissuePath, QString name) {
 }
 
 
-void MainWindow::loadTissue(QString tissuePath) {
-    //DeviceManager* deviceManager = DeviceManager::getInstance();
-    //OpenCLDevice::pointer device = deviceManager->getOneOpenCLDevice();
-
-	if (!fileExists(tissuePath.toStdString()))
-		return;
-
-	auto someName = split(split(tissuePath.toStdString(), "/").back(), ".")[0];
-
-	std::cout << "someName var: " << someName << std::endl;
-
-    ImageImporter::pointer reader = ImageImporter::New();
-    reader->setGrayscale(false);
-    reader->setFilename(tissuePath.toStdString());
-    //reader->setMainDevice(device);
-    reader->setMainDevice(Host::getInstance());
-    DataChannel::pointer port = reader->getOutputPort();
-    reader->update();
-    Image::pointer someImage = port->getNextFrame<Image>();
-
-    //auto wsi = getInputData<ImagePyramid>();
-    auto access = m_image->getAccess(ACCESS_READ);
-    auto input = access->getLevelAsImage(m_image->getNrOfLevels()-1);
-
-    std::cout << "Dimensions info: " << input->getHeight() << ", " << input->getWidth() << std::endl;
-    std::cout << "Dimensions info: " << m_image->getFullHeight() << ", " << m_image->getFullWidth() << std::endl;
-
-    someImage->setSpacing((float) m_image->getFullHeight() / (float) input->getHeight(), (float) m_image->getFullWidth() / (float) input->getWidth(), 1.0f);
-
-    /*
-    auto intensityScaler = ScaleImage::New();
-    intensityScaler->setInputData(m_tissue); //m_tissue);  // expects Image data type
-    intensityScaler->setLowestValue(0.0f);
-    intensityScaler->setHighestValue(1.0f);
-    //intensityScaler->update();
-     */
-
-    // /*
-    auto thresholder = BinaryThresholding::New();
-    thresholder->setLowerThreshold(0.5f);
-    thresholder->setInputData(someImage);
-    // */
-
-    auto output = Segmentation::New();
-    //output->createFromImage(input);
-    //output->createFromImage(someImage);  // is it initialized or converted?
-    output->create(someImage->getSize(), TYPE_UINT8, 3);
-    //output->getOpenCLImageAccess(someImage);
-
-    auto thresholder2 = BinaryThresholding::New();
-    thresholder2->setLowerThreshold(0.5f);
-    thresholder2->setInputData(output);
-
-    //output->getOpenCLImageAccess(reader->updateAndGetOutputData<Image>());
-
-    //m_tissue = reader->updateAndGetOutputData<Image>();
-
-    auto someRenderer = SegmentationRenderer::New();
-    someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
-    //someRenderer->setInputData(reader->updateAndGetOutputData<Image>());
-    //someRenderer->setInputData(output);  // someImage
-    someRenderer->setInputConnection(0, thresholder->getOutputPort());
-    //someRenderer->setInputData(someImage);
-    someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
-    someRenderer->update();
-
-    m_rendererTypeList[someName] = "SegmentationRenderer";
-    insertRenderer(someName, someRenderer);
-
-    //hideTissueMask(false);
-
-    // now make it possible to edit prediction in the View Widget
-    createDynamicViewWidget(someName, modelName);
-
-    std::cout << "Finished loading..." << std::endl;;
-    savedList.emplace_back(someName);
-}
-
-
 void MainWindow::runPipeline(std::string path) {
 
 	std::vector<std::string> currentWSIs;
@@ -3754,74 +3581,6 @@ void MainWindow::runPipeline(std::string path) {
 		// to render straight away (avoid waiting on all WSIs to be handled before rendering)
 		QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 	}
-}
-
-
-void MainWindow::loadTumor(QString tumorPath) {
-    //DeviceManager* deviceManager = DeviceManager::getInstance();
-    //OpenCLDevice::pointer device = deviceManager->getOneOpenCLDevice();
-
-    ImageImporter::pointer reader = ImageImporter::New();
-    reader->setGrayscale(false);
-    reader->setFilename(tumorPath.toStdString());
-    //reader->setMainDevice(device);
-    reader->setMainDevice(Host::getInstance());
-    DataChannel::pointer port = reader->getOutputPort();
-    reader->update();
-    Image::pointer someImage = port->getNextFrame<Image>();
-
-    //auto wsi = getInputData<ImagePyramid>();
-    auto access = m_image->getAccess(ACCESS_READ);
-    auto input = access->getLevelAsImage(5); //m_image->getNrOfLevels()-1);
-
-    someImage->setSpacing((float) m_image->getFullHeight() / (float) input->getHeight(), (float) m_image->getFullWidth() / (float) input->getWidth(), 1.0f);
-
-    /*
-    auto intensityScaler = ScaleImage::New();
-    intensityScaler->setInputData(m_tissue); //m_tissue);  // expects Image data type
-    intensityScaler->setLowestValue(0.0f);
-    intensityScaler->setHighestValue(1.0f);
-    //intensityScaler->update();
-     */
-
-    // /*
-    auto thresholder = BinaryThresholding::New();
-    thresholder->setLowerThreshold(0.5f);
-    thresholder->setInputData(someImage);
-    // */
-
-    auto output = Segmentation::New();
-    //output->createFromImage(input);
-    //output->createFromImage(someImage);  // is it initialized or converted?
-    output->create(someImage->getSize(), TYPE_UINT8, 3);
-    //output->getOpenCLImageAccess(someImage);
-
-    auto thresholder2 = BinaryThresholding::New();
-    thresholder2->setLowerThreshold(0.5f);
-    thresholder2->setInputData(output);
-
-    //output->getOpenCLImageAccess(reader->updateAndGetOutputData<Image>());
-    //m_tissue = reader->updateAndGetOutputData<Image>();
-
-    auto someRenderer = SegmentationRenderer::New();
-    someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(0.0f, 0.0f, 255.0f/255.0f));
-    //someRenderer->setInputData(reader->updateAndGetOutputData<Image>());
-    //someRenderer->setInputData(output);  // someImage
-    someRenderer->setInputConnection(0, thresholder->getOutputPort());
-    //someRenderer->setInputData(someImage);
-    someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
-    someRenderer->update();
-
-    m_rendererTypeList["tumorSeg_lr"] = "SegmentationRenderer";
-    insertRenderer("tumorSeg_lr", someRenderer);
-
-    //hideTissueMask(false);
-
-    // now make it possible to edit prediction in the View Widget
-    createDynamicViewWidget("tumorSeg_lr", modelName);
-
-    std::cout << "finished loading..." << std::endl;;
-    savedList.emplace_back("tumorSeg_lr");
 }
 
 
@@ -4350,6 +4109,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 				//network->setInferenceEngine("OpenVINO"); // force it to use a specific IE -> only for testing
 				//network->setInferenceEngine("TensorRT");
 
+                auto generator = PatchGenerator::New();
 				if (modelMetadata["resolution"] == "low") { // special case handling for low_res NN inference
 					auto port = resizer->getOutputPort();
 					resizer->update();
@@ -4363,7 +4123,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					erosion->setStructuringElementSize(9);
 					 */
 
-					auto generator = PatchGenerator::New();
+					//auto generator = PatchGenerator::New();
 					generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
 					generator->setPatchLevel(patch_lvl_model);
 					generator->setOverlap(0);
@@ -4473,29 +4233,12 @@ bool MainWindow::pixelClassifier(std::string modelName) {
                         auto currPath = wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + modelMetadata["name"] + "/";
                         std::cout << "current high-res result path: " << currPath << std::endl;
 
-                        /*
-                        auto stitcher = PatchStitcher::New();
-                        stitcher->setInputConnection(network->getOutputPort());
-                        auto port = stitcher->getOutputPort();
-
-                        addProcessObject(stitcher);
-                         */
-
                         auto exporter = ImagePyramidPatchExporter::New();
                         exporter->setInputConnection(network->getOutputPort());
                         exporter->setPath(currPath);
                         exporter->update();
 
                         addProcessObject(exporter);
-
-                        /*
-                        DataObject::pointer data;
-                        do {
-                            data = stitcher->updateAndGetOutputData<ImagePyramid>(); //DataObject>();
-                            exporter->update();
-
-                        } while (!data->isLastFrame());
-                         */
 					}
 				}
 				else if ((modelMetadata["problem"] == "object_detection") && (modelMetadata["resolution"] == "high")) {  // TODO: Perhaps use switch() instead of tons of if-statements?

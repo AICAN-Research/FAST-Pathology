@@ -77,7 +77,6 @@ class MainWindow : public Window {
         std::map<std::string, std::string> setParameterDialog(std::map<std::string, std::string> modelMetadata);
 		void MTL_test();
 		void MIL_test();
-		void test_loadHighres();
         bool hideTissueMask(bool flag);
         const bool calcTissueHist();
         bool segmentTissue();
@@ -91,7 +90,6 @@ class MainWindow : public Window {
         static void reportIssueUrl();
 		
 		void aboutProgram();
-		QColor changeColor();
 
         void selectFile();
         void selectFileDrag(const QList<QString> &fileNames);
@@ -108,8 +106,6 @@ class MainWindow : public Window {
 		void loadSegmentation(QString path, QString wsi);
 		void loadHeatmap(QString path, QString wsi);
 		void loadHighres(QString path, QString name);
-        void loadTissue(QString tissuePath);
-        void loadTumor(QString tumorPath);
         void loadPipelines();
 
         QImage extractThumbnail();
@@ -229,11 +225,7 @@ class MainWindow : public Window {
         std::shared_ptr<WholeSlideImageImporter> importer;
         std::shared_ptr<ImagePyramid> m_image;
         std::shared_ptr<Image> m_tissue;
-        std::shared_ptr<Image> m_gradeMap;
-        std::shared_ptr<Image> m_tumorHeatmap;
-        std::shared_ptr<Tensor> m_tumorMap_tensor;
         std::shared_ptr<Image> m_tumorMap;
-        std::shared_ptr<Tensor> m_bachMap;
         std::string filename;
         QString projectFolderName;
 
