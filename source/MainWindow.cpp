@@ -282,7 +282,7 @@ void MainWindow::downloadAndAddTestData() {
 	progDialog->move(mWidget->width() - progDialog->width() * 1.1, progDialog->height() * 0.1);
 	//m_pBar.show();
 
-	QUrl url{"http://folk.ntnu.no/andpeder/FastPathology/test_data.zip"};  // @TODO: Why does not this work: QUrl url = "something" anymore
+	QUrl url{"http://folk.ntnu.no/andpeder/FastPathology/test_data.zip"};
 
 	QNetworkAccessManager* m_NetworkMngr = new QNetworkAccessManager(this);
 	QNetworkReply *reply = m_NetworkMngr->get(QNetworkRequest(QUrl(url)));
@@ -306,7 +306,7 @@ void MainWindow::downloadAndAddTestData() {
 	file.close();
 	delete reply;
 
-	// unzip @TODO: Is there something wrong with the unclude/import of this function? Might be a problem later on.
+	// unzip TODO: Is there something wrong with the include/import of this function? Might be a problem later on.
 	extractZipFile((downloadsFolder + "/" + fileInfo.fileName()).toStdString(), downloadsFolder.toStdString());
 
 	// OPTIONAL: Add Models to test if inference is working
@@ -391,7 +391,7 @@ void MainWindow::down loadAndAddTestData_old() {
 	//QByteArray stderr_;
 	//QByteArray stdout_;
 
-	// @TODO: Should check if any errors have been produced in the process. If yes, should prompt a warning for the
+	// TODO: Should check if any errors have been produced in the process. If yes, should prompt a warning for the
 	//   user that something went wrong (check if curl and tar/unzip is installed
 
 	// Give the child process some time to start.
@@ -1011,7 +1011,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 	} else if(m_rendererTypeList[someName] == "SegmentationRenderer") {
 		// clear vector first
 		currentClassesInUse.clear();
-		for (const auto & i : { 1 }) { //{ 0, 1 }) {  // @TODO: Supports only binary images (where class of interest = 1)
+		for (const auto & i : { 1 }) { //{ 0, 1 }) {  // TODO: Supports only binary images (where class of interest = 1)
 			currentClassesInUse.append(QString::number(i));
 		}
 		currComboBox->clear();
@@ -1026,10 +1026,10 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 			//std::cout << "window: " << someRenderer->updateAndGetOutputData<Image>() << std::endl;
 			//auto vals = someRenderer->getIntensityWindow();
 
-			// @TODO: Supports only binary images (where class of interest = 1)
+			// TODO: Supports only binary images (where class of interest = 1)
 			someRenderer->setColor(currComboBox->currentIndex() + 1, Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
 		});
-	// @TODO: Need to add proper options in SegmentationPyramidRenderer and SegmnetationRenderer for toggling and setting which classest to show, do to this properly...
+	// TODO: Need to add proper options in SegmentationPyramidRenderer and SegmentationRenderer for toggling and setting which classes to show, do to this properly...
 	} else if (m_rendererTypeList[someName] == "SegmentationPyramidRenderer") {
 		// get metadata of current model
 		std::map<std::string, std::string> metadata = getModelMetadata(modelName);
@@ -1046,6 +1046,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 		QObject::connect(colorButton, &QPushButton::clicked, [=]() {
 			auto rgb = colorSetWidget->getColor().toRgb();
 			auto someRenderer = std::dynamic_pointer_cast<SegmentationPyramidRenderer>(m_rendererList[someName]);
+            someRenderer->setColor(currComboBox->currentIndex() + 1, Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
 			//someRenderer->setChannelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
 		});
 	} else if (m_rendererTypeList[someName] == "BoundingBoxRenderer") {
@@ -1103,8 +1104,8 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 		toggleShowButton->setDisabled(true);
 	} else if (m_rendererTypeList[someName] == "SegmentationPyramidRenderer") {
 		toggleShowButton->setDisabled(true);
-		colorSetWidget->setDisabled(true);
-		biggerTextBoxWidget_imageName->setDisabled(true);
+		//colorSetWidget->setDisabled(true);
+		//biggerTextBoxWidget_imageName->setDisabled(true);
 	} else if (m_rendererTypeList[someName] == "BoundingBoxRenderer") {
 		1;
 	} else {
@@ -1530,7 +1531,7 @@ void MainWindow::saveThumbnail() {
 			input = access->getLevelAsImage(currImage->getNrOfLevels() - 1);
 		}
 
-		// @TODO: if only large image planes exist, should downsample the resulting thumbnails before export
+		// TODO: if only large image planes exist, should downsample the resulting thumbnails before export
 
 		// attempt to save thumbnail to disk as .png
 		ImageExporter::pointer exporter = ImageExporter::New();
@@ -1772,7 +1773,7 @@ void MainWindow::selectFile() {
         }
         counter ++;
 
-        // @TODO: This is a little bit slow. Possible to speed it up? Bottleneck is probably the creation of thumbnails
+        // TODO: This is a little bit slow. Possible to speed it up? Bottleneck is probably the creation of thumbnails
         auto access = currImage->getAccess(ACCESS_READ);
         auto input = access->getLevelAsImage(currImage->getNrOfLevels() - 1);
 
@@ -1927,7 +1928,7 @@ void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
         }
         counter ++;
 
-        // @TODO: This is a little bit slow. Possible to speed it up? Bottleneck is probably the creation of thumbnails
+        // TODO: This is a little bit slow. Possible to speed it up? Bottleneck is probably the creation of thumbnails
         auto access = currImage->getAccess(ACCESS_READ);
         auto input = access->getLevelAsImage(currImage->getNrOfLevels() - 1);
 
@@ -2059,7 +2060,6 @@ void MainWindow::selectFileInProject(int pos) {
 	auto renderer = ImagePyramidRenderer::New();
 	renderer->setInputData(m_image);
 
-	// TODO: Something here results in me not being able to run analyzis on new images (after the first)
 	removeAllRenderers();
 	m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
 	insertRenderer("WSI", renderer);
@@ -2866,7 +2866,7 @@ bool MainWindow::segmentTissue() {
         tissueSegmentation->setInputData(m_image);
 
         stopFlag = false;
-        if (advancedMode) { // FIXME: Turned off for testing. Something wrong
+        if (advancedMode) {
             // option for setting parameters
             QDialog paramDialog;
             paramDialog.setStyleSheet(mWidget->styleSheet()); // transfer style sheet from parent
@@ -3793,7 +3793,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 											 std::stoi(modelMetadata["nb_classes"]) }));
 						}
 						else if (modelMetadata["problem"] == "object_detection") {
-							// FIXME: This is outdated for YoloV3, as it has multiple output nodes -> need a way of handling this!
+							// FIXME: This is outdated for YOLOv3, as it has multiple output nodes -> need a way of handling this!
 							network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
 								TensorShape({ 1, std::stoi(modelMetadata["nb_classes"]) }));
 						}
@@ -3828,18 +3828,17 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					network->setInputData(port->getNextFrame<Image>());
 				}
 				else {
-
                     // whether or not to run tissue segmentation
-                    if (modelMetadata["tissue_threshold"].empty()) {
-                        throw Exception("The tissue_threshold has not been properly defined in the model config file.");
-                        return false;
-                    } else if (modelMetadata["tissue_threshold"] != "none") {
+                    if (modelMetadata["tissue_threshold"] == "none") {
+                        std::cout << "No tissue segmentation filtering will be applied before this analysis." << std::endl;
+                    } else if ((modelMetadata["tissue_threshold"] != "none") && !modelMetadata["tissue_threshold"].empty()) {
                         auto tissueSegmentation = TissueSegmentation::New();
                         tissueSegmentation->setInputData(m_image);
                         tissueSegmentation->setThreshold(std::stoi(modelMetadata["tissue_threshold"]));
 
                         generator->setInputConnection(tissueSegmentation->getOutputPort());
                     } else {
+                        std::cout << "The tissue_threshold has not been properly defined in the model config file, and thus the method will use any existing segmentation masks as filtering." << std::endl;
                         // TODO: This should be handled more generically. For pipelines that allow the user to use
                         //   an already existing segmentation as mask for another method, they should be able to
                         //   set this method themselves from the GUI (at least in advanced mode), or perhaps where
@@ -3934,6 +3933,13 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
                         auto someRenderer = SegmentationPyramidRenderer::New();
                         someRenderer->setOpacity(0.7f);
+                        vector<string> colors = split(modelMetadata["class_colors"], ";");
+                        for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
+                            vector<string> rgb = split(colors[i], ",");
+                            someRenderer->setColor(i, Color((float)std::stoi(rgb[0]) / 255.0f,
+                                                            (float)std::stoi(rgb[1]) / 255.0f,
+                                                            (float)std::stoi(rgb[2]) / 255.0f));
+                        }
                         someRenderer->setInputConnection(stitcher->getOutputPort());
 
                         m_rendererTypeList[modelMetadata["name"]] = "SegmentationPyramidRenderer";
@@ -3993,7 +3999,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					}
 					currNetwork->setAnchors(anchors); // finally set anchors
 
-					vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
+					auto scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
 					currNetwork->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
 					currNetwork->setInferenceEngine("OpenVINO"); // FIXME: OpenVINO only currently, as I haven't generalized multiple output nodes case
 					currNetwork->load(cwd + "data/Models/" + modelName + "." + getModelFileExtension(currNetwork->getInferenceEngine()->getPreferredModelFormat())); //".uff");
@@ -4258,7 +4264,7 @@ const bool MainWindow::calcTissueHist() {
     smallTextWindowStats->show();
     smallTextWindowStats->setFixedHeight(smallTextWindowStats->document()->size().toSize().height() + 3);
 
-    statsLayout->insertWidget(1, smallTextWindowStats); // FIXME: AlignTop doesn't work for setting element under hist? -> pushed to the bottom...
+    statsLayout->insertWidget(1, smallTextWindowStats);
 	
 	return true;
 }
@@ -4294,11 +4300,9 @@ bool MainWindow::opacityRenderer(int value, const std::string& someName) {
         if (m_rendererTypeList[someName] == "SegmentationRenderer") {
             auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(getRenderer(someName));
             someRenderer->setOpacity((float) value / 20.0f);
-            someRenderer->setModified(true);
         } else if (m_rendererTypeList[someName] == "SegmentationPyramidRenderer") { // FIXME: Apparently, this doesn't change opacity
             auto someRenderer = std::dynamic_pointer_cast<SegmentationPyramidRenderer>(getRenderer(someName));
             someRenderer->setOpacity((float) value / 20.0f);
-            someRenderer->setModified(true);
         } else {
             auto someRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(getRenderer(someName));
             someRenderer->setMaxOpacity((float) value / 20.0f);
