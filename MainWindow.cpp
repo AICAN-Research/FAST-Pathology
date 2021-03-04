@@ -1862,20 +1862,6 @@ void MainWindow::selectFile() {
         //curr_pos++; // this should change if we render the first WSI when loading
 		currentPosition++;
 
-        // TODO: Importing multiple WSIs, results in QMessageBox flickering... (2speedy)
-        /*
-        auto mBox = new QMessageBox(mWidget);
-        std::string path = "Finished reading: " + split(fileName.toStdString(), "/").back();
-        mBox->setText(path.c_str());
-        mBox->close();
-        mBox->setIcon(QMessageBox::Information);
-        mBox->setModal(false);
-        QRect screenrect = mWidget->screen()[0].geometry();
-        mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
-        mBox->show();
-        QTimer::singleShot(3000, mBox, SLOT(accept()));
-         */
-
         // update progress bar
         progDialog.setValue(counter);
 
@@ -2039,28 +2025,9 @@ void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
 
         curr_pos++; // this should change if we render the first WSI when loading
 
-        // TODO: Importing multiple WSIs, results in QMessageBox flickering... (2speedy)
-        /*
-        auto mBox = new QMessageBox(mWidget);
-        std::string path = "Finished reading: " + split(fileName.toStdString(), "/").back();
-        mBox->setText(path.c_str());
-        mBox->close();
-        mBox->setIcon(QMessageBox::Information);
-        mBox->setModal(false);
-        QRect screenrect = mWidget->screen()[0].geometry();
-        mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
-        mBox->show();
-        QTimer::singleShot(3000, mBox, SLOT(accept()));
-         */
-
-        // update progress bar
         progDialog.setValue(counter);
-
-        // to render straight away (avoid waiting on all WSIs to be handled before rendering)
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
     }
-
-    // in the end, report when all WSIs are loaded in
 }
 
 
@@ -2095,7 +2062,7 @@ void MainWindow::selectFileInProject(int pos) {
 		switch (ret) {
 		case QMessageBox::Yes:
 			std::cout << "Yes was pressed." << std::endl;
-			saveTissueSegmentation(); // TODO: Need to generalize this. Check which results exists, and save all sequentially
+			saveTissueSegmentation(); // TODO: Need to generalize this. Check which results exists, and save all sequentially. Yes, should have a save current results method
 			break;
 		case QMessageBox::No:
 			std::cout << "No was pressed." << std::endl;
@@ -2122,7 +2089,8 @@ void MainWindow::selectFileInProject(int pos) {
 	m_rendererTypeList.clear();
 	clearLayout(stackedLayout);
 
-	// remove global segmentations
+	// TODO: remove global segmentations. What to do about global variables/results that are stored for
+	//  the current WSI, which are not relevant for the next WSI?
 
 
 	// kill all NN pipelines and clear holders
@@ -2200,7 +2168,6 @@ void MainWindow::selectFileInProject(int pos) {
 	}
 
     // update application name to contain current WSI
-    //setTitle(applicationName + " - " + split(filename, "/").back());
     if (advancedMode) {
         setTitle(applicationName + " (Research mode)" + " - " + split(filename, "/").back());
     } else {
@@ -2486,8 +2453,6 @@ void MainWindow::openProject() {
 
         // update progress bar
         progDialog.setValue(counter);
-
-        // to render straight away (avoid waiting on all WSIs to be handled before rendering)
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
     }
 }
@@ -2748,7 +2713,6 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
 	QDir().mkpath(QDir::homePath() + "fastpathology/data/Models");
 
 	auto progDialog = QProgressDialog(mWidget);
-	//std::cout << "\nNum files: " << ls.count() << std::endl;
 	progDialog.setRange(0, fileNames.count() - 1);
 	progDialog.setVisible(true);
 	progDialog.setModal(false);
@@ -2815,10 +2779,8 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
             processLayout->insertWidget(processLayout->count(), someButton);
 
             progDialog.setValue(counter);
-            counter++;
-
-            // to render straight away (avoid waiting on all WSIs to be handled before rendering)
             QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+            counter++;
         }
 	}
 }
@@ -2900,10 +2862,8 @@ void MainWindow::addModels() {
         processLayout->insertWidget(processLayout->count(), someButton);
 
 		progDialog.setValue(counter);
-		counter++;
-
-		// to render straight away (avoid waiting on all WSIs to be handled before rendering)
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+		counter++;
     }
 }
 
@@ -2958,7 +2918,6 @@ float MainWindow::getMagnificationLevel() {
 
 bool MainWindow::segmentTissue() {
 
-	// if no WSI is currently being rendered, 
 	if (wsiList.empty()) {
 		std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
 		return false;
@@ -3003,6 +2962,8 @@ bool MainWindow::segmentTissue() {
             sliderLayout->addWidget(threshSlider);
             sliderLayout->addWidget(currValue);
 
+            std::string tempTissueName = "temporaryTissue";
+
 			QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue) {
 				const int step = 2;
 				threshSlider->setValue(newValue);
@@ -3019,31 +2980,15 @@ bool MainWindow::segmentTissue() {
 					auto someRenderer = SegmentationRenderer::New();
 					someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
 					someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
-					someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
+					someRenderer->setOpacity(0.4f);
 					someRenderer->update();
 
-					std::string tempTissueName = "temporaryTissue";
 					if (hasRenderer(tempTissueName)) {
-						1;
 
-						auto someRenderer = m_rendererList[tempTissueName];
-						getView(0)->removeRenderer(someRenderer);
+						auto currRenderer = m_rendererList[tempTissueName];
+						getView(0)->removeRenderer(currRenderer);
 						m_rendererList.erase(tempTissueName);
-
-						//auto renderer = m_rendererList[tempTissueName];
-						//getView(0)->removeRenderer(renderer);  // FIXME: This crashed. Can you remove renderer that is still computing?
-						//auto renderer = m_rendererList["WSI"];
-						//std::cout << "\nView: " << getView(0) << "\n";
-						//getView(0)->removeRenderer(renderer);
-						//view->removeRenderer(renderer);
-						//m_rendererList.erase(tempTissueName); // I added this, as it seemed like it should have been done
-
-						//removeRenderer(tempTissueName);
-						//m_rendererList.erase(tempTissueName);
-						//m_rendererTypeList.erase(tempTissueName);
-						//m_rendererList.erase(tempTissueName);
 					}
-					//m_rendererTypeList[tempTissueName] = "SegmentationRenderer";
 					insertRenderer(tempTissueName, someRenderer);
 				}
 			});
@@ -3055,7 +3000,6 @@ bool MainWindow::segmentTissue() {
             dilateSlider->setMaximum(28);
             dilateSlider->setValue(tissueSegmentation->getDilate());
             dilateSlider->setSingleStep(2);
-            //QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue){tissueSegmentation->setDilate(newValue);});
             QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue) {
                 const int step = 2;
 				bool checkFlag = false;
@@ -3081,19 +3025,17 @@ bool MainWindow::segmentTissue() {
 					auto someRenderer = SegmentationRenderer::New();
 					someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
 					someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
-					someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
+					someRenderer->setOpacity(0.4f);
 					someRenderer->update();
 
-					std::string tempTissueName = "temporaryTissue";
 					if (hasRenderer(tempTissueName)) {
 						1;
 
-						auto someRenderer = m_rendererList[tempTissueName];
-						getView(0)->removeRenderer(someRenderer);
+						auto currRenderer = m_rendererList[tempTissueName];
+						getView(0)->removeRenderer(currRenderer);
 						m_rendererList.erase(tempTissueName);
 
 					}
-					//m_rendererTypeList[tempTissueName] = "SegmentationRenderer";
 					insertRenderer(tempTissueName, someRenderer);
 				}
             });
@@ -3116,7 +3058,6 @@ bool MainWindow::segmentTissue() {
             erodeSlider->setMaximum(28);
             erodeSlider->setValue(tissueSegmentation->getErode());
             erodeSlider->setSingleStep(2);
-            //QObject::connect(erodeSlider, &QSlider::valueChanged, [=](int newValue){tissueSegmentation->setErode(newValue);});
             QObject::connect(erodeSlider, &QSlider::valueChanged, [=](int newValue) {
                 bool checkFlag = false;
                 if (newValue < 3) {
@@ -3144,11 +3085,10 @@ bool MainWindow::segmentTissue() {
                     someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
                     someRenderer->update();
 
-                    std::string tempTissueName = "temporaryTissue";
                     if (hasRenderer(tempTissueName)) {
 
-						auto someRenderer = m_rendererList[tempTissueName];
-						getView(0)->removeRenderer(someRenderer);
+						auto currRenderer = m_rendererList[tempTissueName];
+						getView(0)->removeRenderer(currRenderer);
 						m_rendererList.erase(tempTissueName);
                     }
                     //m_rendererTypeList[tempTissueName] = "SegmentationRenderer";
@@ -3181,33 +3121,6 @@ bool MainWindow::segmentTissue() {
             form.addRow(labelErode, erodeWidget);
             fields << erodeSlider;
 
-            /*
-            //QList<QLineEdit *> fields;
-            //QList<QVariant *> fields;
-            //QVariant<T> fields;
-            QList<QSlider *> fields;
-            //auto lineEdit = new QLineEdit(&paramDialog);
-            //lineEdit->setText(QString::number(tissueSegmentation->thresh()));
-            QString label = "Threshold";
-            //form.addRow(label, lineEdit);
-            form.addRow(label, sliderWidget);
-            fields << threshSlider; //lineEdit;
-             */
-
-            /*
-            auto lineEdit2 = new QLineEdit(&paramDialog);
-            lineEdit2->setText(QString::number(tissueSegmentation->dilate()));
-            label = "Dilation";
-            form.addRow(label, lineEdit2);
-            fields << lineEdit2;
-
-            auto lineEdit3 = new QLineEdit(&paramDialog);
-            lineEdit3->setText(QString::number(tissueSegmentation->erode()));
-            label = "Erosion";
-            form.addRow(label, lineEdit3);
-            fields << lineEdit3;
-             */
-
             // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
             QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
                     Qt::Horizontal, &paramDialog);
@@ -3218,18 +3131,16 @@ bool MainWindow::segmentTissue() {
 
             // Show the dialog as modal
             int ret = paramDialog.exec();
+
+            // should delete temporary segmentation when selecting is finished or cancelled
+            auto currRenderer = m_rendererList[tempTissueName];
+            getView(0)->removeRenderer(currRenderer);
+            m_rendererList.erase(tempTissueName);
+
             std::cout << "Value chosen: " << ret << std::endl;
             switch (ret) {
                 case 1:
                     std::cout << "OK was pressed, should have updated params!" << std::endl;
-                    //tissueSegmentation->setThreshold(fields.takeFirst()->value());
-                    //tissueSegmentation->setDilate(fields.takeFirst()->value());
-                    //tissueSegmentation->setErode(fields.takeFirst()->value());
-                    /*
-                    tissueSegmentation->setThreshold(std::stoi(fields.takeFirst()->text().toStdString()));
-                    tissueSegmentation->setDilate(std::stoi(fields.takeFirst()->text().toStdString()));
-                    tissueSegmentation->setErode(std::stoi(fields.takeFirst()->text().toStdString()));
-                     */
                     break;
                 case 0:
                     std::cout << "Cancel was pressed." << std::endl;
@@ -3239,38 +3150,25 @@ bool MainWindow::segmentTissue() {
                     std::cout << "Default was pressed." << std::endl;
                     return false;
             }
-
-			/*
-			std::string tempTissueName = "temporaryTissue";
-			auto someRenderer = m_rendererList[tempTissueName];
-			getView(0)->removeRenderer(someRenderer);
-			m_rendererList.erase(tempTissueName);
-			 */
-
         }
-
-		std::cout << "Current stopFlag: " << stopFlag << std::endl;
-
-        //if (stopFlag)
-        //    return false;
 
         std::cout << "Thresh: " << tissueSegmentation->getThreshold() << std::endl;
         std::cout << "Dilate: " << tissueSegmentation->getDilate() << std::endl;
         std::cout << "Erode:  " << tissueSegmentation->getErode() << std::endl;
 
-        //m_tissue = tissueSegmentation->updateAndGetOutputData<Image>();
         // finally get resulting tissueMap to be used later on
         m_tissue = tissueSegmentation->updateAndGetOutputData<Image>();
 
         auto someRenderer = SegmentationRenderer::New();
         someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
         someRenderer->setInputData(m_tissue);
-        //someRenderer->setInputData(tissueSegmentation->updateAndGetOutputData<Image>());
         someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
-        //someRenderer->setBackgroundLabel(5);
         someRenderer->update();
 
 		std::string currSegment = "tissue";
+
+		// TODO: should append some unique ID next to "tissue" (also really for all other results) such that multiple
+		//  runs with different hyperparamters may be ran, visualized and stored
 		/*
         std::string origSegment = "tissue";
         auto iter = 2;
@@ -3284,11 +3182,8 @@ bool MainWindow::segmentTissue() {
         createDynamicViewWidget(currSegment, modelName);
         insertRenderer(currSegment, someRenderer);
 
-        // add final segmentation to result list to be accessible if wanted for exporting
         availableResults[currSegment] = m_tissue;
         exportComboBox->addItem(tr(currSegment.c_str()));
-
-		std::cout << "TissueSegmenter adds result using dynamic view widget" << std::endl;
 
         return true;
     }
@@ -3314,28 +3209,10 @@ void MainWindow::loadHighres(QString path, QString name) {
     someRenderer->setInputData(result);
     someRenderer->update();
 
-    std::cout << "done iter." << std::endl;
-
     m_rendererTypeList[someName] = "SegmentationPyramidRenderer";
     insertRenderer(someName, someRenderer);
-
-    // now make it possible to edit prediction in the View Widget
     createDynamicViewWidget(someName, modelName);
-
-    std::cout << "Finished loading..." << std::endl;;
     savedList.emplace_back(someName);
-
-    /*
-    DataObject::pointer data;
-    do {
-        std::cout << "iter high-res..." << std::endl;
-        //data = importer->updateAndGetOutputData<ImagePyramid>(); //DataObject>();
-        //importer->update();
-        data = importer->updateAndGetOutputData<ImagePyramid>();
-        //someRenderer->setInputData(data);
-        std::cout << "done iter high-res..." << std::endl;
-    } while (!data->isLastFrame());
-     */
 }
 
 
@@ -3383,90 +3260,43 @@ void MainWindow::loadHeatmap(QString tissuePath, QString name) {
 
 
 void MainWindow::loadSegmentation(QString tissuePath, QString name) {
-	//DeviceManager* deviceManager = DeviceManager::getInstance();
-	//OpenCLDevice::pointer device = deviceManager->getOneOpenCLDevice();
 
 	if (!fileExists(tissuePath.toStdString()))
 		return;
 
 	auto someName = name.toStdString();
-	std::cout << "someName var: " << someName << std::endl;
 
-	//ImageImporter::pointer reader = ImageImporter::New();
 	auto reader = ImageFileImporter::New();
-	//reader->setGrayscale(false);
 	reader->setFilename(tissuePath.toStdString());
-	//reader->setMainDevice(device);
 	reader->setMainDevice(Host::getInstance());
-	DataChannel::pointer port = reader->getOutputPort();
+	auto port = reader->getOutputPort();
 	reader->update();
-	Image::pointer someImage = port->getNextFrame<Image>();
+	auto someImage = port->getNextFrame<Image>();
 
 	//auto wsi = getInputData<ImagePyramid>();
 	auto access = m_image->getAccess(ACCESS_READ);
 	auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
-	
-	//someImage->getSize();
 	auto currShape = someImage->getSize();
 
 	std::cout << "Dimensions info (current): " << currShape[1] << ", " << currShape[0] << std::endl;
 	std::cout << "Dimensions info (lowest): " << input->getHeight() << ", " << input->getWidth() << std::endl;
 	std::cout << "Dimensions info (WSI): " << m_image->getFullHeight() << ", " << m_image->getFullWidth() << std::endl;
 
+    // TODO: should store the corresponding model config files that contain all the information relevant for rendering
+    //  and interaction with the software, e.g. number of classes, class names, class colors, etc...
+
 	//someImage->setSpacing((float)m_image->getFullHeight() / (float)input->getHeight(), (float)m_image->getFullWidth() / (float)input->getWidth(), 1.0f);
 	someImage->setSpacing((float)m_image->getFullHeight() / (float)currShape[1], (float)m_image->getFullWidth() / (float)currShape[0], 1.0f);
 
-	/*
-	auto intensityScaler = ScaleImage::New();
-	intensityScaler->setInputData(someImage); //m_tissue);  // expects Image data type
-	intensityScaler->setLowestValue(0.0f);
-	intensityScaler->setHighestValue(1.0f);
-	//intensityScaler->update();
-	*/
-
-	/*
-	auto thresholder = BinaryThresholding::New();
-	thresholder->setLowerThreshold(0.5f);
-	thresholder->setInputData(intensityScaler->updateAndGetOutputData<Image>());
-	*/
-
-	/*
-	auto output = Segmentation::New();
-	//output->createFromImage(input);
-	//output->createFromImage(someImage);  // is it initialized or converted?
-	//output->create(someImage->getSize(), TYPE_UINT8, 3);
-	output->createFromImage(someImage);
-	//output->getOpenCLImageAccess(someImage);
-	 */
-
-	/*
-	auto thresholder2 = BinaryThresholding::New();
-	thresholder2->setLowerThreshold(0.5f);
-	thresholder2->setInputData(output);
-	 */
-
-	//output->getOpenCLImageAccess(reader->updateAndGetOutputData<Image>());
-
-	//m_tissue = reader->updateAndGetOutputData<Image>();
-
 	auto someRenderer = SegmentationRenderer::New();
 	someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
-	//someRenderer->setInputData(reader->updateAndGetOutputData<Image>());
-	//someRenderer->setInputData(output);  // someImage
-	//someRenderer->setInputConnection(0, thresholder->getOutputPort());  // best
 	someRenderer->setInputData(someImage);
-	someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
+	someRenderer->setOpacity(0.4f);
 	someRenderer->update();
 
 	m_rendererTypeList[someName] = "SegmentationRenderer";
 	insertRenderer(someName, someRenderer);
-
-	//hideTissueMask(false);
-
-	// now make it possible to edit prediction in the View Widget
 	createDynamicViewWidget(someName, modelName);
-
-	std::cout << "Finished loading..." << std::endl;;
 	savedList.emplace_back(someName);
 }
 
@@ -3818,7 +3648,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
 			std::string finalIE = "";
 
-			// segment tissue if not already ran, but hide it
+            // segment tissue if not already ran, but hide it
 			/*
 			if (!hasRenderer("tissue")) {
 				segmentTissue();
@@ -4082,25 +3912,31 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					erosion->setStructuringElementSize(9);
 					 */
 
+                    // whether or not to run tissue segmentation
+                    if (modelMetadata["tissue_threshold"] != "none") {
+                        auto tissueSegmentation = TissueSegmentation::New();
+                        tissueSegmentation->setInputData(m_image);
+                        tissueSegmentation->setThreshold(std::stoi(modelMetadata["tissue_threshold"]));
+
+                        generator->setInputConnection(tissueSegmentation->getOutputPort());
+                    } else {
+                        // TODO: This should be handled more generically. For pipelines that allow the user to use
+                        //   an already existing segmentation as mask for another method, they should be able to
+                        //   set this method themselves from the GUI (at least in advanced mode), or perhaps where
+                        //   results from previous runs may be used if available (instead through hard-coded variable
+                        //   names such as m_tissue and m_tumorMap.
+                        if (m_tissue) {
+                            generator->setInputData(1, m_tissue);
+                        } else if (m_tumorMap) {
+                            generator->setInputData(1, m_tumorMap);
+                        }
+                    }
+
 					//auto generator = PatchGenerator::New();
 					generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
 					generator->setPatchLevel(patch_lvl_model);
 					generator->setOverlap(0);
 					generator->setInputData(0, currImage);
-					if (m_tissue) {
-						generator->setInputData(1, m_tissue); //erosion->updateAndGetOutputData<Image>());
-					}
-					if (m_tumorMap) {
-						/*
-						// dilate tumorMap a little to reduce risk of loosing nuclei within the area of interest
-						auto dilation = Dilation::New(); // first two, initial closing (instead of opening) to increase sensitivity in detection
-						dilation->setInputData(m_tumorMap);
-						dilation->setStructuringElementSize(25);
-
-						generator->setInputData(1, dilation->updateAndGetOutputData<Image>());
-						 */
-						generator->setInputData(1, m_tumorMap);
-					}
 
 					//auto batchgen = ImageToBatchGenerator::New();  // TODO: Can't use this with TensorRT (!)
 					//batchgen->setInputConnection(generator->getOutputPort());
