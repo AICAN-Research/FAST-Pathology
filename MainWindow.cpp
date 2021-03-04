@@ -1274,11 +1274,11 @@ void MainWindow::createActionsScript() {
 
 
 bool MainWindow::saveScript() {
-    std::cout << "\nSaving...: " << currScript.toStdString() << "\n";
+    std::cout << "Saving...: " << currScript.toStdString() << std::endl;
     if (currScript.isEmpty()) {
         return saveAsScript();
     } else {
-        std::cout << "\nWe are saving, not save as...\n";
+        std::cout << "We are saving, not save as..." << std::endl;
         return saveFileScript(currScript);
     }
 }
@@ -1786,13 +1786,6 @@ void MainWindow::selectFile() {
             std::cout << "count:" << counter << std::endl;
             metadata = m_image->getMetadata(); // get metadata
 
-            /*
-            std::cout << "\nPrinting metadata: " << std::endl;
-            for (auto elem : metadata) {
-                std::cout << elem.first << " " << elem.second << "\n";
-            }
-             */
-
             auto renderer = ImagePyramidRenderer::New();
             renderer->setInputData(m_image);
 
@@ -1889,16 +1882,16 @@ void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
 
         switch (ret) {
             case QMessageBox::Save:
-                std::cout << "\n Results not saved yet. Just cancelled the switch! \n";
+                std::cout << "Results not saved yet. Just cancelled the switch!" << std::endl;
                 // Save was clicked
                 return;
             case QMessageBox::Discard:
                 // Don't Save was clicked
-                std::cout << "\n Discarded! \n";
+                std::cout << "Discarded!" << std::endl;
                 break;
             case QMessageBox::Cancel:
                 // Cancel was clicked
-                std::cout << "\n Cancelled! \n";
+                std::cout << "Cancelled!" << std::endl;
                 return;
             default:
                 // should never be reached
@@ -1950,13 +1943,6 @@ void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
             m_image = currImage;
             std::cout << "count:" << counter << std::endl;
             metadata = m_image->getMetadata(); // get metadata
-
-            /*
-            std::cout << "\nPrinting metadata: " << std::endl;
-            for (auto elem : metadata) {
-                std::cout << elem.first << " " << elem.second << "\n";
-            }
-             */
 
             auto renderer = ImagePyramidRenderer::New();
             renderer->setInputData(m_image);
@@ -2106,7 +2092,7 @@ void MainWindow::selectFileInProject(int pos) {
 	//stopComputationThread();
 	// Import image from file using the ImageFileImporter
 	importer = WholeSlideImageImporter::New();
-	std::cout << "\nCurrent filename: " << filename << std::endl;
+	std::cout << "Current filename: " << filename << std::endl;
 	importer->setFilename(filename);
 	m_image = importer->updateAndGetOutputData<ImagePyramid>();
 
@@ -2216,11 +2202,11 @@ void MainWindow::createProject() {
 
         switch (ret) {
             case QMessageBox::Yes:
-                std::cout << "\n Saved! \n";
+                std::cout << "Saved!" << std::endl;
                 saveProject();
                 break;
             case QMessageBox::No:
-                std::cout << "\n Removing WSIs from QListWidget! \n";
+                std::cout << "Removing WSIs from QListWidget!" << std::endl;
                 scrollList->clear();
                 break;
             default:
@@ -2797,7 +2783,6 @@ void MainWindow::addModels() {
     ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
 
 	auto progDialog = QProgressDialog(mWidget);
-	//std::cout << "\nNum files: " << ls.count() << std::endl;
 	progDialog.setRange(0, ls.count() - 1);
 	progDialog.setVisible(true);
 	progDialog.setModal(false);
@@ -3380,7 +3365,7 @@ std::map<std::string, std::string> MainWindow::setParameterDialog(std::map<std::
     QFormLayout form(&paramDialog);
     form.addRow(new QLabel("Please, set the parameters for this analysis: "));
 
-    std::cout << "\nBefore update: " << std::endl;
+    std::cout << "Before update: " << std::endl;
     for (const auto &[k, v] : modelMetadata)
         std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
 
@@ -3753,7 +3738,7 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 			}
 			else if ((modelMetadata["problem"] == "object_detection") && (modelMetadata["resolution"] == "high")) {
 				1;
-				//network = BoundingBoxNetwork::New();  // FIXME: This cannot be done, because the stuff right below is not available in NeuralNetwork
+				//network = BoundingBoxNetwork::New();  // TODO: This cannot be done, because the stuff right below is unavailable in NeuralNetwork. BoundingBoxNetwork should be a part of the NeuralNetwork class similarly to the other NN classes.
 				//network->loadAttributes();
 				//network->setThreshold(0.3); // default value: 0.3
 				//network->setAnchors(getAnchorMetadata("tiny_yolo_anchors_pannuke"));
@@ -3808,13 +3793,12 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 				network->setInferenceEngine("TensorFlowCPU");
 			}
 			/* else {
-				std::cout << "\nModel does not exist in Models/ folder. Please add it using AddModels(). "
+				std::cout << "Model does not exist in Models/ folder. Please add it using AddModels(). "
 							 "It might also be that the model exists, but the Inference Engine does not. "
 							 "Available IEs are: ";
 				foreach(std::string elem, IEsList) {
 					std::cout << elem << ", ";
 				}
-				std::cout << "\n";
 				checkFlag = false;
 			}
 			 */
@@ -3905,15 +3889,12 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					network->setInputData(port->getNextFrame<Image>());
 				}
 				else {
-					// for tissue, apply erosion to filter some of the tissue
-					/*
-					auto erosion = Erosion::New();
-					erosion->setInputData(m_tissue);
-					erosion->setStructuringElementSize(9);
-					 */
 
                     // whether or not to run tissue segmentation
-                    if (modelMetadata["tissue_threshold"] != "none") {
+                    if (modelMetadata["tissue_threshold"].empty()) {
+                        throw Exception("The tissue_threshold has not been properly defined in the model config file.");
+                        return false;
+                    } else if (modelMetadata["tissue_threshold"] != "none") {
                         auto tissueSegmentation = TissueSegmentation::New();
                         tissueSegmentation->setInputData(m_image);
                         tissueSegmentation->setThreshold(std::stoi(modelMetadata["tissue_threshold"]));
@@ -4079,7 +4060,8 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 					currNetwork->load(cwd + "data/Models/" + modelName + "." + getModelFileExtension(currNetwork->getInferenceEngine()->getPreferredModelFormat())); //".uff");
 					currNetwork->setInputConnection(generator->getOutputPort());
 
-					// FIXME: Bug when using NMS - ERROR [140237963507456] Terminated with unhandled exception: Size must be > 0, got: -49380162997889393559076864.000000 -96258.851562
+					// FIXME: Bug when using NMS - ERROR [140237963507456] Terminated with unhandled exception:
+					//  Size must be > 0, got: -49380162997889393559076864.000000 -96258.851562
 					// - Windows only?
 					//auto nms = NonMaximumSuppression::New();
 					//nms->setThreshold(0.5);
@@ -4151,24 +4133,11 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 							QDir().mkdir(wsiResultPath);
 						}
 
-						/*
-						auto intensityScaler = ScaleImage::New();
-						intensityScaler->setInputData(currMap);
-						intensityScaler->setLowestValue(0.0f);
-						intensityScaler->setHighestValue(1.0f);
-
-						auto thresholder = BinaryThresholding::New();
-						thresholder->setLowerThreshold(0.5f);
-						thresholder->setInputConnection(intensityScaler->getOutputPort());
-						 */
-
                         currMap->setSpacing(1.0f, 1.0f, 1.0f);
 
 						auto exporter = ImageFileExporter::New();
 						exporter->setFilename(wsiResultPath.toStdString() + "/" + split(split(currWSI, "/").back(), ".")[0] + "_" + modelMetadata["name"] + ".png");
 						exporter->setInputData(currMap);
-						//exporter->setInputData(thresholder->updateAndGetOutputData<Image>());
-						//exporter->setInputData(resizer2->updateAndGetOutputData<Image>());
 						exporter->update();
 					}
 				}
@@ -4181,16 +4150,8 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 
         // update progress bar
         progDialog.setValue(counter);
-        counter++;
-
-        // to render straight away (avoid waiting on all WSIs to be handled before rendering)
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-
-		// update progress bar
-		//progDialog.setValue(counter);
-
-		// to render straight away (avoid waiting on all WSIs to be handled before rendering)
-		//QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+        counter++;
     }
 	return true;
 }
@@ -4272,7 +4233,7 @@ const bool MainWindow::calcTissueHist() {
     painters->setPen(QColor(140, 140, 210));
 
     for (int i = 0; i < len; i++) {
-        std::cout<<std::to_string(i)<<"\n\n\n";
+        std::cout << std::to_string(i) << std::endl;
         qreal h = y_vec[i] * maxHeight;
         // draw level
         painters->fillRect(drawMinWidth / 2 + (double)(i + 1) * (double)(newWidth) / (double)(len + 1) - (double)((double)(barWidth)/(double)(2)),
@@ -4465,10 +4426,9 @@ void MainWindow::deleteViewObject(std::string someName) {
 		createDynamicViewWidget(key, modelName);
 	}
 
-	// TODO TOMORROW ANDREEE:
-	//@TODO: Should store QComboBox based on name, perhaps setTooltip instead, such that I dont need to think about indeces.
-	//	but this requires that all results have unique names. Perhaps introduce this "make random unique name" for every object
-	//	that is rendered?
+	// TODO: Should store QComboBox based on name, perhaps setTooltip instead, such that I dont need to think about indices.
+	//	 But this requires that all results have unique names. Perhaps introduce this "make random unique name" for every object
+	//	 that is rendered?
 
 	// perhaps need to handle case when there is only one element left in the renderer
 	std::cout << pageComboBox->count() << std::endl;
@@ -4481,7 +4441,7 @@ void MainWindow::deleteViewObject(std::string someName) {
 
 void MainWindow::insertRenderer(std::string name, std::shared_ptr<Renderer> renderer) {
     std::cout << "calling insert renderer" << std::endl;
-    if(!hasRenderer(name)) {
+    if (!hasRenderer(name)) {
         // Doesn't exist
         getView(0)->addRenderer(renderer);
         m_rendererList[name] = renderer;
@@ -4502,7 +4462,7 @@ bool MainWindow::hasRenderer(std::string name) {
 
 
 std::shared_ptr<Renderer> MainWindow::getRenderer(std::string name) {
-    if(!hasRenderer(name))
+    if (!hasRenderer(name))
         throw Exception("Renderer with name " + name + " does not exist");
     return m_rendererList[name];
 }
