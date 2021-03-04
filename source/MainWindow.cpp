@@ -156,7 +156,6 @@ MainWindow::MainWindow() {
     createOpenGLWindow();   // create OpenGL window
 }
 
-
 std::string MainWindow::createRandomNumbers_(int n) {
 	std::string out = "";
 	for (int i = 0; i < n; i++) {
@@ -165,11 +164,9 @@ std::string MainWindow::createRandomNumbers_(int n) {
 	return out;
 }
 
-
 void MainWindow::receiveFileList(const QList<QString> &names) {
     selectFileDrag(names);
 }
-
 
 void MainWindow::createOpenGLWindow() {
 	float OpenGL_background_color = 0.0f; //0.0f; //200.0f / 255.0f;
@@ -204,7 +201,6 @@ void MainWindow::createOpenGLWindow() {
 
     mainLayout->addWidget(mainSplitter);
 }
-
 
 void MainWindow::setApplicationMode() {
     // prompt
@@ -244,16 +240,13 @@ void MainWindow::setApplicationMode() {
     }
 }
 
-
 void MainWindow::reportIssueUrl() {
     QDesktopServices::openUrl(QUrl("https://github.com/SINTEFMedtek/FAST-Pathology/issues", QUrl::TolerantMode));
 }
 
-
 void MainWindow::helpUrl() {
     QDesktopServices::openUrl(QUrl("https://github.com/SINTEFMedtek/FAST-Pathology", QUrl::TolerantMode));
 }
-
 
 void MainWindow::downloadAndAddTestData() {
 	// prompt
@@ -357,7 +350,6 @@ void MainWindow::downloadAndAddTestData() {
 	selectFileDrag(fileNames);
 }
 
-
 /*
 void MainWindow::down loadAndAddTestData_old() {
 
@@ -419,7 +411,6 @@ void MainWindow::down loadAndAddTestData_old() {
 }
  */
 
-
 void MainWindow::aboutProgram() {
 
 	auto currLayout = new QVBoxLayout;
@@ -454,7 +445,6 @@ void MainWindow::aboutProgram() {
 
 	dialog->show();
 }
-
 
 void MainWindow::createMenubar() {
 
@@ -523,7 +513,6 @@ void MainWindow::createMenubar() {
     superLayout->insertWidget(0, topFiller);
 }
 
-
 void MainWindow::loadPipelines() {
     QStringList pipelines = QDir(QString::fromStdString(cwd) + "data/Pipelines").entryList(QStringList() << "*.fpl" << "*.FPL",QDir::Files);
     foreach(QString currentFpl, pipelines) {
@@ -535,7 +524,6 @@ void MainWindow::loadPipelines() {
         //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, someFile));
     }
 }
-
 
 void MainWindow::reset() {
     //first prompt warning, that it will delete all unsaved results, etc...
@@ -575,7 +563,6 @@ void MainWindow::reset() {
 
 }
 
-
 void MainWindow::createMainMenuWidget() {
     // create widgets for Menu layout
     createFileWidget();
@@ -588,7 +575,6 @@ void MainWindow::createMainMenuWidget() {
     // add widgets to meny layout
     //mainLayout->insertWidget(0, menuWidget);
 }
-
 
 // TODO: Don't remember if this actually worked, or if I ended up using it
 void clearLayout(QLayout *layout) {
@@ -604,7 +590,6 @@ void clearLayout(QLayout *layout) {
         delete item;
     }
 }
-
 
 void MainWindow::createMenuWidget() {
     stackedWidget = new QStackedWidget(mWidget);
@@ -762,7 +747,6 @@ void MainWindow::createMenuWidget() {
     dockLayout->addWidget(setModeButton);
 }
 
-
 void MainWindow::createWSIScrollAreaWidget() {
     //auto scrollAreaDialog = new QDialog();
     //scrollAreaDialog->setGeometry(100, 100, 260, 260);
@@ -814,7 +798,6 @@ void MainWindow::createWSIScrollAreaWidget() {
 
     //scrollAreaDialog->show();
 }
-
 
 void MainWindow::createFileWidget() {
 
@@ -885,7 +868,6 @@ void MainWindow::createFileWidget() {
 
 }
 
-
 void MainWindow::createViewWidget() {
 
     viewLayout = new QVBoxLayout;
@@ -931,7 +913,6 @@ void MainWindow::createViewWidget() {
     viewLayout->insertWidget(1, stackedWidget);
 
 }
-
 
 void MainWindow::createDynamicViewWidget(const std::string& someName, std::string modelName) {
 
@@ -1158,7 +1139,6 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     stackedLayout->addWidget(dynamicViewWidget);
 }
 
-
 void MainWindow::customPipelineEditor() {
 
     auto backgroundLayout = new QVBoxLayout;
@@ -1186,7 +1166,6 @@ void MainWindow::customPipelineEditor() {
     createActionsScript();
     scriptEditorWidget->show();
 }
-
 
 void MainWindow::createActionsScript() {
 
@@ -1272,7 +1251,6 @@ void MainWindow::createActionsScript() {
 #endif // !QT_NO_CLIPBOARD
 }
 
-
 bool MainWindow::saveScript() {
     std::cout << "Saving...: " << currScript.toStdString() << std::endl;
     if (currScript.isEmpty()) {
@@ -1282,7 +1260,6 @@ bool MainWindow::saveScript() {
         return saveFileScript(currScript);
     }
 }
-
 
 bool MainWindow::saveAsScript() {
     QFileDialog dialog(scriptEditorWidget);
@@ -1294,7 +1271,6 @@ bool MainWindow::saveAsScript() {
         return false;
     return saveFileScript(dialog.selectedFiles().first());
 }
-
 
 bool MainWindow::saveFileScript(const QString &fileName) {
     QString errorMessage;
@@ -1323,7 +1299,6 @@ bool MainWindow::saveFileScript(const QString &fileName) {
     return true;
 }
 
-
 bool MainWindow::maybeSaveScript() {
     if (!scriptEditor->document()->isModified())
         return true;
@@ -1342,14 +1317,12 @@ bool MainWindow::maybeSaveScript() {
     return true;
 }
 
-
 void MainWindow::newFileScript() {
     if (maybeSaveScript()) {
         scriptEditor->clear();
         setCurrentFileScript(QString());
     }
 }
-
 
 void MainWindow::openScript() {
     if (maybeSaveScript()) {
@@ -1362,7 +1335,6 @@ void MainWindow::openScript() {
             loadFileScript(fileName);
     }
 }
-
 
 void MainWindow::loadFileScript(const QString &fileName) {
     QFile file(fileName);
@@ -1385,7 +1357,6 @@ void MainWindow::loadFileScript(const QString &fileName) {
     setCurrentFileScript(fileName);
 }
 
-
 void MainWindow::setCurrentFileScript(const QString &fileName) {
 
     currScript = fileName;
@@ -1398,11 +1369,9 @@ void MainWindow::setCurrentFileScript(const QString &fileName) {
     scriptEditor->setWindowFilePath(shownName);
 }
 
-
 void MainWindow::updateChannelValue(int index) {
     channel_value = (uint) index;
 }
-
 
 void MainWindow::createProcessWidget() {
 
@@ -1448,7 +1417,6 @@ void MainWindow::createProcessWidget() {
     std::vector<string> modelPaths;
 }
 
-
 void MainWindow::createStatsWidget() {
 
     statsLayout = new QVBoxLayout;
@@ -1465,7 +1433,6 @@ void MainWindow::createStatsWidget() {
 
     statsLayout->insertWidget(0, calcTissueHistButton);
 }
-
 
 void MainWindow::createExportWidget() {
 
@@ -1523,11 +1490,9 @@ void MainWindow::createExportWidget() {
     exportLayout->addWidget(saveTumorButton);
 }
 
-
 void MainWindow::createDynamicExportWidget(const std::string& someName) {
     1;
 }
-
 
 void MainWindow::saveThumbnail() {
 
@@ -1583,7 +1548,6 @@ void MainWindow::saveThumbnail() {
 	}
 }
 
-
 void MainWindow::saveTissueSegmentation() {
 
 	std::vector<std::string> currentWSIs;
@@ -1638,7 +1602,6 @@ void MainWindow::saveTissueSegmentation() {
 	}
 }
 
-
 void MainWindow::saveHeatmap() {
 
 	// check if folder for current WSI exists, if not, create one
@@ -1653,7 +1616,6 @@ void MainWindow::saveHeatmap() {
 	//exporter->setInputData(tensor);
 	exporter->update();
 }
-
 
 void MainWindow::saveTumor() {
     // check if folder for current WSI exists, if not, create one
@@ -1696,7 +1658,6 @@ void MainWindow::saveTumor() {
     mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
     QTimer::singleShot(3000, mBox, SLOT(accept()));
 }
-
 
 void MainWindow::selectFile() {
 
@@ -1861,10 +1822,7 @@ void MainWindow::selectFile() {
         // to render straight away (avoid waiting on all WSIs to be handled before rendering)
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
     }
-
-    // in the end, report when all WSIs are loaded in
 }
-
 
 void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
 
@@ -2016,7 +1974,6 @@ void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
     }
 }
 
-
 void MainWindow::selectFileInProject(int pos) {
 
     // if you select a WSI and it's already open, do nothing
@@ -2161,7 +2118,6 @@ void MainWindow::selectFileInProject(int pos) {
     }
 }
 
-
 void MainWindow::createProject() {
 
     // start by selecting where to create folder and give project name
@@ -2214,7 +2170,6 @@ void MainWindow::createProject() {
         }
     }
 }
-
 
 void MainWindow::openProject() {
 
@@ -2320,9 +2275,9 @@ void MainWindow::openProject() {
         wsiList.push_back(filename);
 
         // Import image from file using the ImageFileImporter
-        auto importer = WholeSlideImageImporter::New();
-        importer->setFilename(fileName.toStdString());
-        m_image = importer->updateAndGetOutputData<ImagePyramid>();
+        auto someImporter = WholeSlideImageImporter::New();
+        someImporter->setFilename(fileName.toStdString());
+        m_image = someImporter->updateAndGetOutputData<ImagePyramid>();
 
         // for reading of multiple WSIs, only render last one
         if (counter == fileNames.count() - 1) {
@@ -2443,7 +2398,6 @@ void MainWindow::openProject() {
     }
 }
 
-
 QImage MainWindow::extractThumbnail() {
         auto access = m_image->getAccess(ACCESS_READ);
         auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
@@ -2473,7 +2427,6 @@ QImage MainWindow::extractThumbnail() {
         return image;
 };
 
-
 void MainWindow::saveProject() {
     // create file for saving which WSIs exist in folder
     QString projectFileName = "/project.txt";
@@ -2487,7 +2440,6 @@ void MainWindow::saveProject() {
         }
     }
 }
-
 
 void MainWindow::runForProject() {
 
@@ -2653,7 +2605,6 @@ void MainWindow::runForProject() {
 	projectDialog->exec();
 }
 
-
 void MainWindow::addPipelines() {
 
     QStringList ls = QFileDialog::getOpenFileNames(
@@ -2691,7 +2642,6 @@ void MainWindow::addPipelines() {
         //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, cwd + "data/Pipelines/" + currentFpl.toStdString()));
     }
 }
-
 
 void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
 
@@ -2770,7 +2720,6 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
         }
 	}
 }
-
 
 void MainWindow::addModels() {
 
@@ -2852,7 +2801,6 @@ void MainWindow::addModels() {
     }
 }
 
-
 float MainWindow::getMagnificationLevel() {
 
     float magnification_lvl = 0.0f;
@@ -2899,7 +2847,6 @@ float MainWindow::getMagnificationLevel() {
     }
     return magnification_lvl;
 }
-
 
 bool MainWindow::segmentTissue() {
 
@@ -3174,7 +3121,6 @@ bool MainWindow::segmentTissue() {
     }
 }
 
-
 void MainWindow::loadHighres(QString path, QString name) {
     if (!fileExists(path.toStdString()))
         return;
@@ -3199,7 +3145,6 @@ void MainWindow::loadHighres(QString path, QString name) {
     createDynamicViewWidget(someName, modelName);
     savedList.emplace_back(someName);
 }
-
 
 void MainWindow::loadHeatmap(QString tissuePath, QString name) {
 	if (!fileExists(tissuePath.toStdString()))
@@ -3243,7 +3188,6 @@ void MainWindow::loadHeatmap(QString tissuePath, QString name) {
 	savedList.emplace_back(someName);
 }
 
-
 void MainWindow::loadSegmentation(QString tissuePath, QString name) {
 
 	if (!fileExists(tissuePath.toStdString()))
@@ -3284,7 +3228,6 @@ void MainWindow::loadSegmentation(QString tissuePath, QString name) {
 	createDynamicViewWidget(someName, modelName);
 	savedList.emplace_back(someName);
 }
-
 
 void MainWindow::runPipeline(std::string path) {
 
@@ -3357,7 +3300,6 @@ void MainWindow::runPipeline(std::string path) {
 	}
 }
 
-
 // Setting parameters for different methods
 std::map<std::string, std::string> MainWindow::setParameterDialog(std::map<std::string, std::string> modelMetadata) {
     QDialog paramDialog;
@@ -3413,7 +3355,6 @@ std::map<std::string, std::string> MainWindow::setParameterDialog(std::map<std::
 
     return modelMetadata;
 }
-
 
 void MainWindow::MIL_test() {
 
@@ -3499,7 +3440,6 @@ void MainWindow::MIL_test() {
     createDynamicViewWidget("mil_attention", modelName);
 }
 
-
 void MainWindow::MTL_test() {
 
 	std::string modelName = "model_nuclei_seg_detection_multitask";
@@ -3575,7 +3515,6 @@ void MainWindow::MTL_test() {
 	createDynamicViewWidget("nuclei_seg", modelName);
 	createDynamicViewWidget("nuclei_detect", modelName);
 }
-
 
 bool MainWindow::pixelClassifier(std::string modelName) {
 
@@ -4156,7 +4095,6 @@ bool MainWindow::pixelClassifier(std::string modelName) {
 	return true;
 }
 
-
 std::map<std::string, std::string> MainWindow::getModelMetadata(std::string modelName) {
     // parse corresponding txt file for relevant information regarding model
     std::ifstream infile(cwd + "data/Models/" + modelName + ".txt");
@@ -4187,7 +4125,6 @@ std::vector<std::vector<Vector2f> > MainWindow::getAnchorMetadata(std::string an
     }
     return currMetadata;
 }
-
 
 // for string delimiter
 vector<string> MainWindow::split (string s, string delimiter) {
@@ -4326,7 +4263,6 @@ const bool MainWindow::calcTissueHist() {
 	return true;
 }
 
-
 bool MainWindow::toggleRenderer(std::string name) {
 	std::cout << "Current name: " << name << std::endl;
     if (!hasRenderer(name)) {
@@ -4338,7 +4274,6 @@ bool MainWindow::toggleRenderer(std::string name) {
     }
 }
 
-
 bool MainWindow::hideTissueMask(bool flag) {
     if (!hasRenderer("tissue")){
         return false;
@@ -4348,7 +4283,6 @@ bool MainWindow::hideTissueMask(bool flag) {
         return true;
     }
 }
-
 
 bool MainWindow::opacityRenderer(int value, const std::string& someName) {
     if (m_rendererTypeList[someName] == "ImagePyramidRenderer") {
@@ -4374,7 +4308,6 @@ bool MainWindow::opacityRenderer(int value, const std::string& someName) {
     }
 }
 
-
 bool MainWindow::hideChannel(const std::string& someName) {
     if (m_rendererTypeList[someName] != "HeatmapRenderer") {
         return false;
@@ -4388,7 +4321,6 @@ bool MainWindow::hideChannel(const std::string& someName) {
         return true;
     }
 }
-
 
 void MainWindow::deleteViewObject(std::string someName) {
 	if (m_rendererList.count(someName) == 0)
@@ -4438,7 +4370,6 @@ void MainWindow::deleteViewObject(std::string someName) {
 	pageComboBox->update();
 }
 
-
 void MainWindow::insertRenderer(std::string name, std::shared_ptr<Renderer> renderer) {
     std::cout << "calling insert renderer" << std::endl;
     if (!hasRenderer(name)) {
@@ -4449,24 +4380,19 @@ void MainWindow::insertRenderer(std::string name, std::shared_ptr<Renderer> rend
     }
 }
 
-
 void MainWindow::removeAllRenderers() {
     m_rendererList.clear();
     getView(0)->removeAllRenderers();
 }
 
-
 bool MainWindow::hasRenderer(std::string name) {
     return m_rendererList.count(name) > 0;
 }
-
 
 std::shared_ptr<Renderer> MainWindow::getRenderer(std::string name) {
     if (!hasRenderer(name))
         throw Exception("Renderer with name " + name + " does not exist");
     return m_rendererList[name];
 }
-
-
 
 }
