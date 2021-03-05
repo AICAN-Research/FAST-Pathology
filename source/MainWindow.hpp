@@ -73,7 +73,7 @@ class MainWindow : public Window {
         bool hideChannel(const std::string &someName); //, uint channel_value);
         bool opacityRenderer(int value, const std::string& someName);
         bool toggleRenderer(std::string name);
-        bool pixelClassifier(std::string modelName);
+        void pixelClassifier(std::string someModelName);
         std::map<std::string, std::string> setParameterDialog(std::map<std::string, std::string> modelMetadata);
 		void MTL_test();
 		void MIL_test();
