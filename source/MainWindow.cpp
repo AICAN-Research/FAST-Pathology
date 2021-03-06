@@ -4211,7 +4211,14 @@ void MainWindow::pixelClassifier(std::string someModelName) {
         emit inferenceFinished(someModelName);
         std::cout << "Inference thread is finished..." << std::endl;
     } catch (const std::exception& e){
-        std::cout << "Something went wrong during inference..." << std::endl;
+        auto mBox = new QMessageBox(mWidget);
+        mBox->setText("Something went wrong during inference...");
+        mBox->setIcon(QMessageBox::Information);
+        mBox->setModal(false);
+        QRect screenrect = mWidget->screen()[0].geometry();
+        mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
+        mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
+        QTimer::singleShot(3000, mBox, SLOT(accept()));
     };
 }
 
