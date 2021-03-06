@@ -35,103 +35,160 @@ QT_END_NAMESPACE
 namespace fast {
 
     class NeuralNetwork;
+
     class PatchStitcher;
+
     class SegmentationRenderer;
+
     class SegmentationPyramidRenderer;
+
     class TissueSegmentation;
+
     class WholeSlideImageImporter;
+
     class ImagePyramid;
+
     class Segmentation;
+
     class Image;
+
     class Tensor;
+
     class View;
 
-class MainWindow : public Window {
+    class MainWindow : public Window {
     FAST_OBJECT(MainWindow);
     Q_OBJECT
     public:
         // GUI RELATED STUFF
         void createMenubar();
+
         void createMainMenuWidget();
+
         void createFileWidget();
+
         void createProcessWidget();
+
         void createViewWidget();
+
         void createExportWidget();
+
         void createStatsWidget();
+
         void createMenuWidget();
-        void createDynamicViewWidget(const std::string& someName, std::string modelName);
-        void createDynamicExportWidget(const std::string& someName);
+
+        void createDynamicViewWidget(const std::string &someName, std::string modelName);
+
+        void createDynamicExportWidget(const std::string &someName);
+
         void createWSIScrollAreaWidget();
 
         // EXPORT RELATED STUFF
         void saveThumbnail();
+
         void saveTissueSegmentation();
-		void saveHeatmap();
+
+        void saveHeatmap();
+
         void saveTumor();
+
         void deleteViewObject(std::string someName);
 
         bool hideChannel(const std::string &someName); //, uint channel_value);
-        bool opacityRenderer(int value, const std::string& someName);
+        bool opacityRenderer(int value, const std::string &someName);
+
         bool toggleRenderer(std::string name);
+
         void pixelClassifier(std::string someModelName);
+
+        void pixelClassifier_wrapper(std::string someModelName);
+
         std::map<std::string, std::string> setParameterDialog(std::map<std::string, std::string> modelMetadata);
-		void MTL_test();
-		void MIL_test();
+
+        void MTL_test();
+
+        void MIL_test();
+
         bool hideTissueMask(bool flag);
+
         const bool calcTissueHist();
+
         bool segmentTissue();
+
         bool stopFlag;
-		
-		bool m_runForProject = false;
-		std::vector<std::string> m_runForProjectWsis;
+
+        bool m_runForProject = false;
+        std::vector<std::string> m_runForProjectWsis;
 
         void customPipelineEditor();
+
         void selectFileInProject(int pos);  // int pos);
         int curr_pos = 0;
-		void loadSegmentation(QString path, QString wsi);
-		void loadHeatmap(QString path, QString wsi);
-		void loadHighres(QString path, QString name);
+
+        void loadSegmentation(QString path, QString wsi);
+
+        void loadHeatmap(QString path, QString wsi);
+
+        void loadHighres(QString path, QString name);
+
         void loadPipelines();
 
         QImage extractThumbnail();
 
-		// script editor related functions
+        // script editor related functions
         QDialog *scriptEditorWidget;
         QVBoxLayout *scriptLayout;
         QPlainTextEdit *scriptEditor;
+
         void createActionsScript();
+
         void openScript();
+
         void loadFileScript(const QString &fileName);
+
         void setCurrentFileScript(const QString &fileName);
+
         void newFileScript();
+
         bool saveAsScript();
+
         bool saveScript();
+
         bool maybeSaveScript();
+
         bool saveFileScript(const QString &fileName);
+
         QString currScript;
         QStatusBar *statusBar;
 
         void createOpenGLWindow();
+
         View *view;
 
         bool background_flag = false;
+
         float getMagnificationLevel();
+
         float magn_lvl;
 
-		std::string tmpDirPath;
-		std::string createRandomNumbers_(int n);
+        std::string tmpDirPath;
+
+        std::string createRandomNumbers_(int n);
 
         uint channel_value;
 
         std::string applicationName;
         std::string modelName;
-		std::map<std::string, std::string> modelNames;
+        std::map<std::string, std::string> modelNames;
         bool advancedMode = false;
         std::string wsiFormat;
         std::string cwd;
-        std::map<std::string, std::string>getModelMetadata(std::string modelName);
-        std::vector<std::vector<Vector2f>>getAnchorMetadata(std::string anchorFileName);
-        std::vector<std::string> split (std::string s, std::string delimiter);
+
+        std::map<std::string, std::string> getModelMetadata(std::string modelName);
+
+        std::vector<std::vector<Vector2f>> getAnchorMetadata(std::string anchorFileName);
+
+        std::vector<std::string> split(std::string s, std::string delimiter);
 
         void setApplicationMode();
 
@@ -162,6 +219,7 @@ class MainWindow : public Window {
         QPushButton *setModeButton;
 
         QMenu *runPipelineMenu;
+
         void runPipeline(std::string path);
 
         void receiveFileList(const QList<QString> &names); // FIXME: silly stuff
@@ -275,11 +333,13 @@ class MainWindow : public Window {
          */
 
         void insertRenderer(std::string name, std::shared_ptr<Renderer> renderer);
+
         /**
          * Remove all current renderers
          */
 
         void removeAllRenderers();
+
         /**
          * Checks if a named renderer exists
          * @param name
@@ -291,6 +351,7 @@ class MainWindow : public Window {
 
     private:
         MainWindow();
+
         std::map<std::string, std::shared_ptr<Renderer>> m_rendererList;
         std::map<std::string, std::string> m_rendererTypeList;
         std::map<std::string, std::shared_ptr<NeuralNetwork>> m_neuralNetworkList;
@@ -304,12 +365,12 @@ class MainWindow : public Window {
         std::string filename;
         QString projectFolderName;
 
+    signals:
+        void inferenceFinished(std::string name);
+
     private slots:
-        void updateChannelValue (int index);
+        void updateChannelValue(int index);
 
-
-};
-
-
+    };
 
 }
