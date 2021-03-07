@@ -166,6 +166,11 @@ namespace fast {
          * @return
          */
         const bool calcTissueHist();
+        /**
+         * Shows simple QMessageBox informing the usage about something.
+         * @param str
+         */
+        void simpleInfoPrompt(const QString& str);
 
         // MISC
         /**

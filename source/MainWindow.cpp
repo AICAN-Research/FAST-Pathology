@@ -1626,15 +1626,7 @@ void MainWindow::saveTumor() {
     }
 
     if (std::find(savedList.begin(), savedList.end(), "tumorSeg_lr") != savedList.end()) {
-        auto mBox = new QMessageBox(mWidget);
-        mBox->setText("Result has already previously been saved.");
-        mBox->setIcon(QMessageBox::Information);
-        mBox->setModal(false);
-        //mBox->show();
-        QRect screenrect = mWidget->screen()[0].geometry();
-        mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
-        mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
-        QTimer::singleShot(3000, mBox, SLOT(accept()));
+        simpleInfoPrompt("Result has already previously been saved.");
         return;
     }
     savedList.emplace_back("tumorSeg_lr");
@@ -1648,15 +1640,7 @@ void MainWindow::saveTumor() {
     exporter->setInputData(m_tumorMap);
     exporter->update();
 
-    auto mBox = new QMessageBox(mWidget);
-    mBox->setText("Tumor segmentation has been saved.");
-    mBox->setIcon(QMessageBox::Information);
-    mBox->setModal(false);
-    //mBox->show();
-    QRect screenrect = mWidget->screen()[0].geometry();
-    mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
-    mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
-    QTimer::singleShot(3000, mBox, SLOT(accept()));
+    simpleInfoPrompt("Tumor segmentation has been saved.");
 }
 
 void MainWindow::selectFile() {
@@ -1980,14 +1964,7 @@ void MainWindow::selectFileInProject(int pos) {
     std::cout << "CurrentPos: " << pos << std::endl;
     std::cout << "Length of wsiList: " << std::to_string(wsiList.size()) << std::endl;
     if (filename == wsiList[pos]) {
-        auto mBox = new QMessageBox(mWidget);
-        mBox->setText("WSI is already open.");
-        mBox->setIcon(QMessageBox::Information);
-        mBox->setModal(false);
-        QRect screenrect = mWidget->screen()[0].geometry();
-        mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
-		mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
-		QTimer::singleShot(3000, mBox, SLOT(accept()));
+        simpleInfoPrompt("WSI is already open");
 		return;
 	}
 
@@ -2088,7 +2065,11 @@ void MainWindow::selectFileInProject(int pos) {
         // check if current "file" is a directory, if directly, it will assume that there exists some high-res seg results to render, else do other stuff
         QFileInfo pathFileInfo(currentResult.c_str());
         if (pathFileInfo.isDir()){
-            loadHighres(QString::fromStdString(currentResult), QString::fromStdString(split(split(currentResult, "/").back(), wsiPath + "_").back()));
+            if (QDir(currentResult.c_str()).isEmpty()) {
+                loadHighres(QString::fromStdString(currentResult), QString::fromStdString(split(split(currentResult, "/").back(), wsiPath + "_").back()));
+            } else {
+                simpleInfoPrompt("Project directory containing high-resolution result was empty.");
+            }
         } else {
             auto splits = split(split(currentResult.c_str(), "/").back(), ".");
             std::cout << "Current result path: " << currentResult << std::endl;
@@ -2242,14 +2223,7 @@ void MainWindow::openProject() {
 
     if (fileNames.empty()) {
         // prompt if no valid WSI was found in project-file
-        auto mBox = new QMessageBox(mWidget);
-        mBox->setText("There was found no valid WSIs in the project-file.");
-        mBox->setIcon(QMessageBox::Information);
-        mBox->setModal(false);
-        QRect screenrect = mWidget->screen()[0].geometry();
-        mBox->move(mWidget->width() - mBox->width() / 2, -mWidget->width() / 2 - mBox->width() / 2);
-        mBox->show();
-        QTimer::singleShot(3000, mBox, SLOT(accept()));
+        simpleInfoPrompt("There was found no valid WSI in the project file.");
     }
 
     auto progDialog = QProgressDialog(mWidget);
@@ -2328,7 +2302,11 @@ void MainWindow::openProject() {
 				// check if current "file" is a directory, if directly, it will assume that there exists some high-res seg results to render, else do other stuff
                 QFileInfo pathFileInfo(currentResult.c_str());
                 if (pathFileInfo.isDir()){
-                    loadHighres(QString::fromStdString(currentResult), QString::fromStdString(split(split(currentResult, "/").back(), wsiPath + "_").back()));
+                    if (QDir(currentResult.c_str()).isEmpty()) {
+                        loadHighres(QString::fromStdString(currentResult), QString::fromStdString(split(split(currentResult, "/").back(), wsiPath + "_").back()));
+                    } else {
+                        simpleInfoPrompt("Project directory containing high-resolution result was empty.");
+                    }
                 } else {
                     auto splits = split(split(currentResult.c_str(), "/").back(), ".");
                     std::cout << "Current result path: " << currentResult << std::endl;
@@ -2394,6 +2372,18 @@ void MainWindow::openProject() {
         progDialog.setValue(counter);
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
     }
+}
+
+void MainWindow::simpleInfoPrompt(const QString& str) {
+    // prompt if no valid WSI was found in project-file
+    auto mBox = new QMessageBox(mWidget);
+    mBox->setText(str);
+    mBox->setIcon(QMessageBox::Information);
+    mBox->setModal(false);
+    QRect screenrect = mWidget->screen()[0].geometry();
+    mBox->move(mWidget->width() - mBox->width() / 2, -mWidget->width() / 2 - mBox->width() / 2);
+    mBox->show();
+    QTimer::singleShot(3000, mBox, SLOT(accept()));
 }
 
 QImage MainWindow::extractThumbnail() {
@@ -4211,14 +4201,7 @@ void MainWindow::pixelClassifier(std::string someModelName) {
         emit inferenceFinished(someModelName);
         std::cout << "Inference thread is finished..." << std::endl;
     } catch (const std::exception& e){
-        auto mBox = new QMessageBox(mWidget);
-        mBox->setText("Something went wrong during inference...");
-        mBox->setIcon(QMessageBox::Information);
-        mBox->setModal(false);
-        QRect screenrect = mWidget->screen()[0].geometry();
-        mBox->move(mWidget->width() - mBox->width() / 2, - mWidget->width() / 2 - mBox->width() / 2);
-        mBox->show(); // Don't ask why I do multiple show()s here. I just do, and it works
-        QTimer::singleShot(3000, mBox, SLOT(accept()));
+        simpleInfoPrompt("Something went wrong during inference.");
     };
 }
 
