@@ -2725,7 +2725,7 @@ void MainWindow::addModels() {
     QStringList ls = QFileDialog::getOpenFileNames(
             mWidget,
             tr("Select Model"), nullptr,
-            tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff *.anchors" "onnx"),
+            tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff *.anchors" ".onnx"),
             nullptr, QFileDialog::DontUseNativeDialog
     ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
 
