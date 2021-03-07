@@ -158,9 +158,9 @@ MainWindow::MainWindow() {
 }
 
 std::string MainWindow::createRandomNumbers_(int n) {
-	std::string out = "";
+	std::string out;
 	for (int i = 0; i < n; i++) {
-		out = out + std::to_string(i);
+		out.append(std::to_string(i));
 	}
 	return out;
 }
@@ -4411,21 +4411,21 @@ bool MainWindow::hideTissueMask(bool flag) {
     }
 }
 
-bool MainWindow::opacityRenderer(int value, const std::string& someName) {
-    if (m_rendererTypeList[someName] == "ImagePyramidRenderer") {
+bool MainWindow::opacityRenderer(int value, const std::string& name) {
+    if (m_rendererTypeList[name] == "ImagePyramidRenderer") {
         return false;
     }
-    if (!hasRenderer(someName)) {
+    if (!hasRenderer(name)) {
         return false;
     }else{
-        if (m_rendererTypeList[someName] == "SegmentationRenderer") {
-            auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(getRenderer(someName));
+        if (m_rendererTypeList[name] == "SegmentationRenderer") {
+            auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(getRenderer(name));
             someRenderer->setOpacity((float) value / 20.0f);
-        } else if (m_rendererTypeList[someName] == "SegmentationPyramidRenderer") { // FIXME: Apparently, this doesn't change opacity
-            auto someRenderer = std::dynamic_pointer_cast<SegmentationPyramidRenderer>(getRenderer(someName));
+        } else if (m_rendererTypeList[name] == "SegmentationPyramidRenderer") { // FIXME: Apparently, this doesn't change opacity
+            auto someRenderer = std::dynamic_pointer_cast<SegmentationPyramidRenderer>(getRenderer(name));
             someRenderer->setOpacity((float) value / 20.0f);
         } else {
-            auto someRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(getRenderer(someName));
+            auto someRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(getRenderer(name));
             someRenderer->setMaxOpacity((float) value / 20.0f);
             //someRenderer->setMinConfidence(0.9);
         }
@@ -4433,38 +4433,38 @@ bool MainWindow::opacityRenderer(int value, const std::string& someName) {
     }
 }
 
-bool MainWindow::hideChannel(const std::string& someName) {
-    if (m_rendererTypeList[someName] != "HeatmapRenderer") {
+bool MainWindow::hideChannel(const std::string& name) {
+    if (m_rendererTypeList[name] != "HeatmapRenderer") {
         return false;
     }
-    if (!hasRenderer(someName)) {
+    if (!hasRenderer(name)) {
         return false;
     }else{
         background_flag = !background_flag;
-        auto someRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(getRenderer(someName));
+        auto someRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(getRenderer(name));
         someRenderer->setChannelHidden(channel_value, background_flag);
         return true;
     }
 }
 
-void MainWindow::deleteViewObject(std::string someName) {
-	if (m_rendererList.count(someName) == 0)
+void MainWindow::deleteViewObject(std::string name) {
+	if (m_rendererList.count(name) == 0)
 		return;
     // need to remove from QComboBox, remove from renderer, remove potential saved results in project (need to check
     // if project is made first), and in the end, need to update ViewWidget
     //
 
-	std::cout << "Current renderer: " << someName << " , " << m_rendererList[someName] << std::endl;
+	std::cout << "Current renderer: " << name << " , " << m_rendererList[name] << std::endl;
 
-	//view->removeRenderer(m_rendererList[someName]); //->resetRenderers();
+	//view->removeRenderer(m_rendererList[name]); //->resetRenderers();
 
-	auto someRenderer = m_rendererList[someName];
+	auto someRenderer = m_rendererList[name];
 	getView(0)->removeRenderer(someRenderer);
 	for (auto const&[key, val] : m_rendererList) {
 		std::cout << "before: " << key << ": " << val << std::endl;
 	}
-	m_rendererList.erase(someName);
-	pageComboBox->removeItem(pageComboBox->findData(QString::fromStdString(someName))); //pageComboBox->currentIndex());
+	m_rendererList.erase(name);
+	pageComboBox->removeItem(pageComboBox->findData(QString::fromStdString(name))); //pageComboBox->currentIndex());
 
 	for (auto const& [key, val] : m_rendererList) {
 		std::cout << "after: " << key << ": " << val << std::endl;
