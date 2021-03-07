@@ -35,37 +35,21 @@ QT_END_NAMESPACE
 namespace fast {
 
     class NeuralNetwork;
-
     class PatchStitcher;
-
     class SegmentationRenderer;
-
     class SegmentationPyramidRenderer;
-
     class TissueSegmentation;
-
     class WholeSlideImageImporter;
-
     class ImagePyramid;
-
     class Segmentation;
-
     class Image;
-
     class Tensor;
-
     class View;
 
-    class MainWindow : public Window {
+class MainWindow : public Window {
     FAST_OBJECT(MainWindow);
     Q_OBJECT
     public:
-
-        // EXPERIMENTAL METHODS FOR TESTING CUSTOM STUFF (Not relevant for the final program)
-        void MTL_test();
-        void MIL_test();
-
-        // flags (booleans)
         bool stopFlag;
         bool m_runForProject = false;
         bool background_flag = false;
@@ -126,6 +110,10 @@ namespace fast {
         QStackedLayout *stackedLayout;
         QStackedLayout *exportStackedLayout;
 
+        // EXPERIMENTAL METHODS FOR TESTING CUSTOM STUFF (Not relevant for the final program)
+        void MTL_test();
+        void MIL_test();
+
         // STATIC METHODS, TODO THAT PROBABLY SHOULD BE ADDED TO A UTILS OR SOMETHING SIMILAR
         /**
          * Simple Pythonic split() method for splitting a string into sub-strings based on a delimiter. The results
@@ -166,11 +154,6 @@ namespace fast {
          * @return
          */
         const bool calcTissueHist();
-        /**
-         * Shows simple QMessageBox informing the usage about something.
-         * @param str
-         */
-        void simpleInfoPrompt(const QString& str);
 
         // MISC
         /**
@@ -195,6 +178,11 @@ namespace fast {
          * @param pos
          */
         void selectFileInProject(int pos);
+        /**
+         * Shows simple QMessageBox informing the usage about something.
+         * @param str
+         */
+        void simpleInfoPrompt(const QString& str);
 
         // GUI RELATED STUFF
         /**
@@ -417,7 +405,7 @@ namespace fast {
          */
         bool hideTissueMask(bool flag);
         /**
-         * Removes a named renderer from the view
+         * Removes a named renderer from the view.
          * @param name
          */
         //void removeRendererObject(std::string name);
@@ -428,15 +416,21 @@ namespace fast {
          */
         void insertRenderer(std::string name, std::shared_ptr<Renderer> renderer);
         /**
-         * Remove all current renderers
+         * Remove all current renderers.
          */
         void removeAllRenderers();
         /**
-         * Checks if a named renderer exists
+         * Checks if a named renderer exists.
          * @param name
          * @return boolean
          */
         bool hasRenderer(std::string name);
+        /**
+         * Get renderer from container given an ID.
+         * @param name
+         * @return
+         */
+        std::shared_ptr<Renderer> getRenderer(std::string name);
 
         // EXPORT RELATED STUFF
         /**
@@ -460,24 +454,24 @@ namespace fast {
 
         // SCRIPT EDITOR RELATED STUFF
         /**
-         * Defines and creates the script editor widget
+         * Defines and creates the script editor widget.
          */
         void customPipelineEditor();
         /**
-         * Defined and created the menubar related to the script editor
+         * Defined and created the menubar related to the script editor.
          */
         void createActionsScript();
         /**
-         * Opens file explorer to select which script to use in the script editor
+         * Opens file explorer to select which script to use in the script editor.
          */
         void openScript();
         /**
-         * Loads the script file from disk, relevant for the script editor
+         * Loads the script file from disk, relevant for the script editor.
          * @param fileName
          */
         void loadFileScript(const QString &fileName);
         /**
-         * Sets the title of the script editor widget to the current file name
+         * Sets the title of the script editor widget to the current file name.
          * @param fileName
          */
         void setCurrentFileScript(const QString &fileName);
@@ -502,16 +496,17 @@ namespace fast {
          */
         bool maybeSaveScript();
         /**
-         * Actually saves document in script editor, given a save/saveAs event
+         * Actually saves document in script editor, given a save/saveAs event.
          * @param fileName
          * @return
          */
         bool saveFileScript(const QString &fileName);
 
-        std::shared_ptr<Renderer> getRenderer(std::string name);
-
     private:
         MainWindow();
+
+        std::string filename;
+        QString projectFolderName;
 
         std::map<std::string, std::shared_ptr<Renderer>> m_rendererList;
         std::map<std::string, std::string> m_rendererTypeList;
@@ -519,12 +514,11 @@ namespace fast {
         std::map<std::string, std::shared_ptr<PatchStitcher>> m_patchStitcherList;
         std::map<std::string, std::map<std::string, std::string>> m_modelMetadataList;
         std::map<std::string, std::shared_ptr<Image>> availableResults;
+        
         std::shared_ptr<WholeSlideImageImporter> importer;
         std::shared_ptr<ImagePyramid> m_image;
         std::shared_ptr<Image> m_tissue;
         std::shared_ptr<Image> m_tumorMap;
-        std::string filename;
-        QString projectFolderName;
 
     signals:
         void inferenceFinished(std::string name);
