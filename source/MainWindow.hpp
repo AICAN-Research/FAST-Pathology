@@ -116,19 +116,11 @@ class MainWindow : public Window {
 
         // STATIC METHODS, TODO THAT PROBABLY SHOULD BE ADDED TO A UTILS OR SOMETHING SIMILAR
         /**
-         * Simple Pythonic split() method for splitting a string into sub-strings based on a delimiter. The results
-         * are stored as a vector.
-         * @param s
-         * @param delimiter
-         * @return
-         */
-        std::vector<std::string> split(std::string s, std::string delimiter);
-        /**
          * Creates a string of random numbers of length n.
          * @param n
          * @return
          */
-        std::string createRandomNumbers_(int n);
+        static std::string createRandomNumbers_(int n);
         /**
          * Reads the model configuration metadata from the model config file on disk and stores them in a container.
          * @param modelName
@@ -320,8 +312,9 @@ class MainWindow : public Window {
          * background thread and will not render any results. Otherwise the rendered results will be streamed on the
          * fly, but no results will be stored (relevant for simple demonstrations).
          * @param someModelName
+         * @param modelMetadata
          */
-        void pixelClassifier(std::string someModelName);
+        void pixelClassifier(std::string someModelName, std::map<std::string, std::string> modelMetadata);
         /**
          * Simple wrapper of the inference method, pixelClassifier. If ran with Projects enabled, it will be ran in a
          * non-blocking background thread and will not render any results. Otherwise the rendered results will be
@@ -514,7 +507,7 @@ class MainWindow : public Window {
         std::map<std::string, std::shared_ptr<PatchStitcher>> m_patchStitcherList;
         std::map<std::string, std::map<std::string, std::string>> m_modelMetadataList;
         std::map<std::string, std::shared_ptr<Image>> availableResults;
-        
+
         std::shared_ptr<WholeSlideImageImporter> importer;
         std::shared_ptr<ImagePyramid> m_image;
         std::shared_ptr<Image> m_tissue;

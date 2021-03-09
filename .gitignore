@@ -3,6 +3,7 @@
 cmake-build*
 *.tiff
 *.tif
+*.ndpi
 *.svs
 *.vsi
 *.pb

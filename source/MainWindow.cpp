@@ -2065,7 +2065,7 @@ void MainWindow::selectFileInProject(int pos) {
         // check if current "file" is a directory, if directly, it will assume that there exists some high-res seg results to render, else do other stuff
         QFileInfo pathFileInfo(currentResult.c_str());
         if (pathFileInfo.isDir()){
-            if (QDir(currentResult.c_str()).isEmpty()) {
+            if (!QDir(currentResult.c_str()).isEmpty()) {
                 loadHighres(QString::fromStdString(currentResult), QString::fromStdString(split(split(currentResult, "/").back(), wsiPath + "_").back()));
             } else {
                 simpleInfoPrompt("Project directory containing high-resolution result was empty.");
@@ -2302,7 +2302,7 @@ void MainWindow::openProject() {
 				// check if current "file" is a directory, if directly, it will assume that there exists some high-res seg results to render, else do other stuff
                 QFileInfo pathFileInfo(currentResult.c_str());
                 if (pathFileInfo.isDir()){
-                    if (QDir(currentResult.c_str()).isEmpty()) {
+                    if (!QDir(currentResult.c_str()).isEmpty()) {
                         loadHighres(QString::fromStdString(currentResult), QString::fromStdString(split(split(currentResult, "/").back(), wsiPath + "_").back()));
                     } else {
                         simpleInfoPrompt("Project directory containing high-resolution result was empty.");
@@ -3510,29 +3510,46 @@ void MainWindow::pixelClassifier_wrapper(std::string someModelName) {
 
     //connect(currComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateChannelValue(int)));
 
+    // read model metadata (.txt file)
+    std::map<std::string, std::string> modelMetadata = getModelMetadata(someModelName);
+
+    // set parameters yourself (only enabled if advanced mode is ON)
+    if (advancedMode) {
+        modelMetadata = setParameterDialog(modelMetadata);
+        for (const auto &[k, v] : modelMetadata)
+            std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
+    }
+
+    std::cout << "Final model metadata config sent to pixelClassifier:" << std::endl;
+    for (const auto &[k, v] : modelMetadata)
+        std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
+
     // if run for project is enabled, run the inference-export pipeline in a background thread, else don't
     if (m_runForProject) {
         std::atomic_bool stopped(false);
-        std::thread inferenceThread([&, someModelName]() {
-            pixelClassifier(someModelName);
+        std::thread inferenceThread([&, someModelName, modelMetadata]() {
+            pixelClassifier(someModelName, modelMetadata);
         });
         inferenceThread.detach();
     } else {
-        pixelClassifier(someModelName);
+        pixelClassifier(someModelName, modelMetadata);
 
         // now make it possible to edit prediction in the View Widget
-        std::map<std::string, std::string> modelMetadata = getModelMetadata(someModelName);
+        //std::map<std::string, std::string> modelMetadata = getModelMetadata(someModelName);
         createDynamicViewWidget(modelMetadata["name"], someModelName);
     }
 }
 
-void MainWindow::pixelClassifier(std::string someModelName) {
+void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string, std::string> modelMetadata) {
 
     //modelName = std::move(someModelName);
     //someModelName = std::move(modelName);
 
-    try {
+    std::cout << "Final model metadata config WITHIN to pixelClassifier:" << std::endl;
+    for (const auto &[k, v] : modelMetadata)
+        std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
 
+    try {
         // if no WSI is currently being rendered,
         if (wsiList.empty()) {
             std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
@@ -3540,9 +3557,6 @@ void MainWindow::pixelClassifier(std::string someModelName) {
         }
 
         std::cout << "Current model: " << someModelName << std::endl;
-
-        // read model metadata (txtfile)
-        std::map<std::string, std::string> modelMetadata = getModelMetadata(someModelName);
 
         stopFlag = false;
 
@@ -3557,12 +3571,6 @@ void MainWindow::pixelClassifier(std::string someModelName) {
         // add current model name to map
         modelNames[someModelName] = someModelName;
 
-        // set parameters yourself (only enabled if advanced mode is ON
-        if (advancedMode) {
-            modelMetadata = setParameterDialog(modelMetadata);
-            for (const auto &[k, v] : modelMetadata)
-                std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
-        }
         if (stopFlag) { // if "Cancel" is selected in advanced mode in parameter selection, don't run analysis
             return;
         }
@@ -3579,8 +3587,6 @@ void MainWindow::pixelClassifier(std::string someModelName) {
         progDialog.show();
 
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-
-        std::cout << "we actually made it yo..." << std::endl;
 
         auto counter = 1;
         for (const auto &currWSI : currentWSIs) {
@@ -3599,9 +3605,14 @@ void MainWindow::pixelClassifier(std::string someModelName) {
                  */
 
                 // based on predicted magnification level of WSI, set magnificiation level for optimal input to model based on predicted resolution of WSI
-                int patch_lvl_model = (int) (
-                        std::log(magn_lvl / (float) std::stoi(modelMetadata["magnification_level"])) /
-                        std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
+                int patch_lvl_model = 0; // defaults to 0
+                if (!modelMetadata["magnification_level"].empty()) {
+                    patch_lvl_model = (int) (
+                            std::log(magn_lvl / (float) std::stoi(modelMetadata["magnification_level"])) /
+                            std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
+                } else {
+                    std::cout << "magnification_level was not properly defined in the model config file. Defaults to using image plane 0." << std::endl;
+                }
 
                 std::cout << "Curr patch level: " << patch_lvl_model << std::endl;
 
@@ -3733,7 +3744,7 @@ void MainWindow::pixelClassifier(std::string someModelName) {
                         std::cout << elem << ", ";
                     }
 
-                std::string chosenIE = "";
+                std::string chosenIE;
 
                 // /*
                 // Now select best available IE based on which extensions exist for chosen model
@@ -3872,8 +3883,7 @@ void MainWindow::pixelClassifier(std::string someModelName) {
                     //network->setInferenceEngine("TensorRT");
 
                     auto generator = PatchGenerator::New();
-                    if (modelMetadata["resolution"] ==
-                        "low") { // special case handling for low_res NN inference
+                    if (modelMetadata["resolution"] == "low") { // special case handling for low_res NN inference
                         auto port = resizer->getOutputPort();
                         resizer->update();
                         network->setInputData(port->getNextFrame<Image>());
@@ -3883,13 +3893,14 @@ void MainWindow::pixelClassifier(std::string someModelName) {
                             std::cout
                                     << "No tissue segmentation filtering will be applied before this analysis."
                                     << std::endl;
-                        } else if ((modelMetadata["tissue_threshold"] != "none") &&
-                                   !modelMetadata["tissue_threshold"].empty()) {
+                        } else if (!modelMetadata["tissue_threshold"].empty()) {
                             auto tissueSegmentation = TissueSegmentation::New();
                             tissueSegmentation->setInputData(m_image);
                             tissueSegmentation->setThreshold(std::stoi(modelMetadata["tissue_threshold"]));
 
-                            generator->setInputConnection(tissueSegmentation->getOutputPort());
+                            generator->setInputConnection(1, tissueSegmentation->getOutputPort());
+
+                            std::cout << "tissue_threshold was defined, so is performing thresholding as preprocessing step." << std::endl;
                         } else {
                             std::cout
                                     << "The tissue_threshold has not been properly defined in the model config file, and thus the method will use any existing segmentation masks as filtering."
@@ -3910,7 +3921,16 @@ void MainWindow::pixelClassifier(std::string someModelName) {
                         generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]),
                                                 std::stoi(modelMetadata["input_img_size_x"]));
                         generator->setPatchLevel(patch_lvl_model);
-                        generator->setOverlap(0);
+                        if (modelMetadata["mask_threshold"].empty()) {
+                            std::cout << "No mask_threshold variable exists. Defaults to 0.5." << std::endl;
+                        } else {
+                            generator->setMaskThreshold(std::stof(modelMetadata["mask_threshold"]));
+                        }
+                        if (modelMetadata["patch_overlap"].empty()) {
+                            std::cout << "No patch_overlap variable exists. Defaults to 0." << std::endl;
+                        } else {
+                            generator->setOverlap(std::stof(modelMetadata["patch_overlap"]));
+                        }
                         generator->setInputData(0, currImage);
 
                         //auto batchgen = ImageToBatchGenerator::New();  // TODO: Can't use this with TensorRT (!)
@@ -3919,38 +3939,30 @@ void MainWindow::pixelClassifier(std::string someModelName) {
 
                         network->setInputConnection(generator->getOutputPort());
                     }
-                    vector scale_factor = split(modelMetadata["scale_factor"],
-                                                "/"); // get scale factor from metadata
-                    network->setScaleFactor(
-                            (float) std::stoi(scale_factor[0]) /
-                            (float) std::stoi(scale_factor[1]));   // 1.0f/255.0f
+                    if (modelMetadata["scale_factor"].empty()) {
+                        std::cout << "scale_factor not defined. Defaults to using using no intensity normalization/scaling in preprocessing." << std::endl;
+                    } else {
+                        vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
+                        network->setScaleFactor(
+                                (float) std::stoi(scale_factor[0]) /
+                                (float) std::stoi(scale_factor[1]));   // 1.0f/255.0f
+                    }
 
                     // define renderer from metadata
-                    if ((modelMetadata["problem"] == "classification") &&
-                        (modelMetadata["resolution"] == "high")) {
+                    if ((modelMetadata["problem"] == "classification") && (modelMetadata["resolution"] == "high")) {
                         auto stitcher = PatchStitcher::New();
                         stitcher->setInputConnection(network->getOutputPort());
 
-                        // add model to metadata list
-                        //m_modelMetadataList[modelMetadata["name"]] = modelMetadata;
-
-                        //const std::map<std::string, std::string> &testModelMetadata = modelMetadata;
-
                         auto currentHeatmapName = modelMetadata["name"];
-
-                        std::cout << "currentHeatmapName: " << currentHeatmapName << ", currWSI: " << currWSI
-                                  << std::endl;
+                        std::cout << "currentHeatmapName: " << currentHeatmapName << ", currWSI: " << currWSI << std::endl;
 
                         if (!m_runForProject) {
-
-                            m_patchStitcherList[modelMetadata["name"]] = stitcher; // add stitcher to global list to be accessible later on
+                            m_patchStitcherList[modelMetadata["name"]] = stitcher;
 
                             auto someRenderer = HeatmapRenderer::New();
-                            someRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
+                            someRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"]));
                             someRenderer->setInputConnection(stitcher->getOutputPort());
-                            //someRenderer->setInputConnection(lambda->getOutputPort());
                             someRenderer->setMaxOpacity(0.6f);
-                            //heatmapRenderer->update();
                             vector<string> colors = split(modelMetadata["class_colors"], ";");
                             for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
                                 vector<string> rgb = split(colors[i], ",");
@@ -3980,17 +3992,13 @@ void MainWindow::pixelClassifier(std::string someModelName) {
                             }
 
                             auto exporter = HDF5TensorExporter::New();
-                            exporter->setFilename(
-                                    wsiResultPath.toStdString() + "/" +
-                                    split(wsiResultPath.toStdString(), "/").back() +
-                                    "_" + currentHeatmapName + ".h5"); //grade.h5");
+                            exporter->setFilename(wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + currentHeatmapName + ".h5");
                             exporter->setDatasetName(currentHeatmapName);
                             exporter->setInputData(data);
                             exporter->update();
                         }
 
-                    } else if ((modelMetadata["problem"] == "segmentation") &&
-                               (modelMetadata["resolution"] == "high")) {
+                    } else if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
                         if (!m_runForProject) {
                             auto stitcher = PatchStitcher::New();
                             stitcher->setInputConnection(network->getOutputPort());
@@ -4036,17 +4044,8 @@ void MainWindow::pixelClassifier(std::string someModelName) {
                                 exporter->update();
                                 data = port->getNextFrame<DataObject>();
                             } while (!data->isLastFrame());
-
-                            /*
-                            DataObject::pointer data;
-                            do {
-                                data = network->updateAndGetOutputData<Image>();
-                            } while (!data->isLastFrame());
-                             */
                         }
-                    } else if ((modelMetadata["problem"] == "object_detection") &&
-                               (modelMetadata["resolution"] ==
-                                "high")) {  // TODO: Perhaps use switch() instead of tons of if-statements?
+                    } else if ((modelMetadata["problem"] == "object_detection") && (modelMetadata["resolution"] == "high")) {  // TODO: Perhaps use switch() instead of tons of if-statements?
 
                         // FIXME: Currently, need to do special handling for object detection as setThreshold and setAnchors only exist for BBNetwork and not NeuralNetwork
                         auto generator = PatchGenerator::New();
@@ -4155,8 +4154,6 @@ void MainWindow::pixelClassifier(std::string someModelName) {
                                                                 (float) std::stoi(rgb[1]) / 255.0f,
                                                                 (float) std::stoi(rgb[2]) / 255.0f));
                             }
-
-                            //someRenderer->setColor(Segmentation::LABEL_BACKGROUND, Color(0.0f, 255.0f / 255.0f, 0.0f));
                             someRenderer->setInputData(currMap);
                             //someRenderer->setInterpolation(false);
                             someRenderer->update();
@@ -4165,7 +4162,6 @@ void MainWindow::pixelClassifier(std::string someModelName) {
                             insertRenderer(modelMetadata["name"], someRenderer);
                         } else {
                             // save result
-                            // check if folder for current WSI exists, if not, create one
                             QString wsiResultPath = (projectFolderName.toStdString() + "/results/" +
                                                      split(split(currWSI, "/").back(), ".")[0]).c_str();
                             wsiResultPath = wsiResultPath.replace("//", "/");
@@ -4173,7 +4169,6 @@ void MainWindow::pixelClassifier(std::string someModelName) {
                             if (!QDir(wsiResultPath).exists()) {
                                 QDir().mkdir(wsiResultPath);
                             }
-
                             currMap->setSpacing(1.0f, 1.0f, 1.0f);
 
                             auto exporter = ImageFileExporter::New();
@@ -4194,11 +4189,7 @@ void MainWindow::pixelClassifier(std::string someModelName) {
             counter++;
         }
 
-        // now make it possible to edit prediction in the View Widget
-        //if (!m_runForProject)
-        //    createDynamicViewWidget(modelMetadata["name"], someModelName);
-
-        emit inferenceFinished(someModelName);
+        //emit inferenceFinished(someModelName);
         std::cout << "Inference thread is finished..." << std::endl;
     } catch (const std::exception& e){
         simpleInfoPrompt("Something went wrong during inference.");
@@ -4214,9 +4205,10 @@ std::map<std::string, std::string> MainWindow::getModelMetadata(std::string mode
     while (std::getline(infile, str))
     {
         vector<string> v = split (str, delimiter);
-        key = v[0];
-        value = v[1];
-        metadata[key] = value;
+        //key = v[0];
+        //value = v[1];
+        //metadata[key] = value;
+        metadata.emplace(std::move(v[0]), std::move(v[1]));
     }
     return metadata;
 }
@@ -4237,7 +4229,7 @@ std::vector<std::vector<Vector2f> > MainWindow::getAnchorMetadata(std::string an
 }
 
 // for string delimiter
-vector<string> MainWindow::split (string s, string delimiter) {
+std::vector<std::string> split(const std::string& s, const std::string& delimiter) {
     size_t pos_start = 0, pos_end, delim_len = delimiter.length();
     string token;
     vector<string> res;
