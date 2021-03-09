@@ -3289,7 +3289,7 @@ void MainWindow::runPipeline(std::string path) {
 }
 
 // Setting parameters for different methods
-std::map<std::string, std::string> MainWindow::setParameterDialog(std::map<std::string, std::string> modelMetadata) {
+std::map<std::string, std::string> MainWindow::setParameterDialog(std::map<std::string, std::string> modelMetadata, int *successFlag) {
     QDialog paramDialog;
     paramDialog.setStyleSheet(mWidget->styleSheet()); // transfer style sheet from parent
     QFormLayout form(&paramDialog);
@@ -3320,22 +3320,20 @@ std::map<std::string, std::string> MainWindow::setParameterDialog(std::map<std::
 
     // Show the dialog as modal
     int ret = paramDialog.exec();
+	*successFlag = ret;
     std::cout << "Ret value: " << ret << std::endl;
-    switch (ret) {
-        case 1: //QMessageBox::Ok:
-            std::cout << "OK was pressed: " << std::endl;
-            for (auto const& [key, val] : modelMetadata) {
-                modelMetadata[key] = fields.takeFirst()->text().toStdString(); //fields.takeAt(cnt)->text().toStdString();
-            }
-            break;
-        case 0: //QMessageBox::Cancel:
-            std::cout << "CANCEL was pressed: " << std::endl;
-            stopFlag = true;
-            break;
-        default:
-            std::cout << "Default..." << std::endl;
-            break;
-    }
+	switch (ret) {
+	case 1: //QMessageBox::Ok:
+		std::cout << "OK was pressed: " << std::endl;
+		for (auto const&[key, val] : modelMetadata) {
+			modelMetadata[key] = fields.takeFirst()->text().toStdString(); //fields.takeAt(cnt)->text().toStdString();
+		}
+	case 0: //QMessageBox::Cancel:
+		std::cout << "CANCEL was pressed: " << std::endl;
+		stopFlag = true;
+	default:
+		std::cout << "Default..." << std::endl;
+	}
 
     std::cout << "After update: " << std::endl;
     for (const auto &[k, v] : modelMetadata)
@@ -3515,7 +3513,10 @@ void MainWindow::pixelClassifier_wrapper(std::string someModelName) {
 
     // set parameters yourself (only enabled if advanced mode is ON)
     if (advancedMode) {
-        modelMetadata = setParameterDialog(modelMetadata);
+		auto successFlag = 1;
+        modelMetadata = setParameterDialog(modelMetadata, &successFlag);
+		if (successFlag != 1)
+			return;
         for (const auto &[k, v] : modelMetadata)
             std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
     }

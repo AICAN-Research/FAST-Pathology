@@ -138,9 +138,10 @@ class MainWindow : public Window {
          * Opens dialog for setting the parameters for a selected inference pipeline (available in advanced mode).
          * Essentially updates the model metadata variable depdendent on the adjustments made.
          * @param modelMetadata
+		 * @pointer *successFlag
          * @return
          */
-        std::map<std::string, std::string> setParameterDialog(std::map<std::string, std::string> modelMetadata);
+        std::map<std::string, std::string> setParameterDialog(std::map<std::string, std::string> modelMetadata, int *successFlag);
         /**
          * Shows a proof-of-concept that a histogram widget can be made using Qt. However, it was quite time-consuming.
          * @return
