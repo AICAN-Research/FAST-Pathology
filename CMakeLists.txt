@@ -18,7 +18,7 @@ add_executable(fastpathology
 
 add_definitions(-D_USE_MATH_DEFINES)
 add_dependencies(fastpathology fast_copy)
-target_link_libraries(fastpathology ${FAST_LIBRARIES} pthread)
+target_link_libraries(fastpathology ${FAST_LIBRARIES})
 
 set_target_properties(fastpathology PROPERTIES
         CXX_STANDARD 17
