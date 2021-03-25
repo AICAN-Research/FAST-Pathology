@@ -3794,12 +3794,12 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 
 				std::cout << "Current available IEs: " << std::endl;
 				foreach(std::string elem, IEsList) {
-					std::cout << elem << ", ";
+					std::cout << elem << ", " << std::endl;
 				}
 
 				std::cout << "Which model formats are available and that there exists an IE for: " << std::endl;
 				foreach(std::string elem, acceptedModels) {
-					std::cout << elem << ", ";
+					std::cout << elem << ", " << std::endl;
 				}
 
 				std::string chosenIE;
