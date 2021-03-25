@@ -499,7 +499,8 @@ void MainWindow::createMenubar() {
     deployMenu->addAction("Predict Tumor");
     deployMenu->addAction("Classify Grade");
 	//deployMenu->addAction("MTL nuclei seg/detect", this, &MainWindow::MTL_test);
-    //deployMenu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
+    deployMenu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
+    deployMenu->addAction("Deep KMeans MTL", this, &MainWindow::Kmeans_MTL_test);
     deployMenu->addSeparator();
 
     auto helpMenu = topFiller->addMenu(tr("&Help"));
@@ -3426,6 +3427,56 @@ void MainWindow::MIL_test() {
     createDynamicViewWidget("mil_attention", modelName);
 }
 
+void MainWindow::Kmeans_MTL_test() {
+    std::string modelName = "feature_kmeans_model";
+
+    // read model metadata (txtfile)
+    std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
+
+    int patch_lvl_model = (int)(std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) / std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
+
+    auto generator = PatchGenerator::New();
+    generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
+    generator->setPatchLevel(patch_lvl_model);
+    generator->setInputData(0, m_image);
+
+    auto tissueSegmentation = TissueSegmentation::New();
+    tissueSegmentation->setInputData(m_image);
+    tissueSegmentation->setThreshold(std::stoi(modelMetadata["tissue_threshold"]));
+
+    generator->setInputConnection(1, tissueSegmentation->getOutputPort());
+
+    auto network = NeuralNetwork::New();
+    network->setInferenceEngine("TensorFlow");
+    // apparently this is needed if model has unspecified input size
+    network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
+            { 1, 256, 256, 3 }));
+
+    network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
+                           TensorShape({ 1, 8 }));
+
+    std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
+
+    network->load(cwd + "data/Models/" + modelName + "." + getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat())); //".uff");
+    std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
+
+    network->setInputConnection(generator->getOutputPort());
+    vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
+    network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
+
+    auto stitcher1 = PatchStitcher::New();
+    stitcher1->setInputConnection(network->getOutputPort(0));
+
+    auto heatmap1 = HeatmapRenderer::New();
+    heatmap1->setInterpolation(std::stoi(modelMetadata["interpolation"]));
+    heatmap1->setInputConnection(stitcher1->getOutputPort());
+
+    m_rendererTypeList["cluster_pw"] = "HeatmapRenderer";
+    insertRenderer("cluster_pw", heatmap1);
+
+    createDynamicViewWidget("cluster_pw", modelName);
+}
+
 void MainWindow::MTL_test() {
 
 	std::string modelName = "model_nuclei_seg_detection_multitask";
@@ -3578,7 +3629,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 		}
 
 		auto progDialog = QProgressDialog();
-		progDialog.setRange(0, currentWSIs.size() - 1);
+		progDialog.setRange(0, currentWSIs.size());
 		//progDialog.setContentsMargins(0, 0, 0, 0);
 		progDialog.setValue(0);
 		progDialog.setVisible(true);

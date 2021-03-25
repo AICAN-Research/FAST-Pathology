@@ -113,6 +113,7 @@ class MainWindow : public Window {
         // EXPERIMENTAL METHODS FOR TESTING CUSTOM STUFF (Not relevant for the final program)
         void MTL_test();
         void MIL_test();
+        void Kmeans_MTL_test();
 
         // STATIC METHODS, TODO THAT PROBABLY SHOULD BE ADDED TO A UTILS OR SOMETHING SIMILAR
         /**
