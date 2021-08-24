@@ -1683,15 +1683,21 @@ void MainWindow::selectFile() {
     }
      */
 
-    pageComboBox->clear();
-    exportComboBox->clear();
-
     // TODO: Unable to read .zvi and .scn (Zeiss and Leica). I'm wondering if they are stored in some unexpected way (not image pyramids)
     auto fileNames = QFileDialog::getOpenFileNames(
         mWidget,
         tr("Select File(s)"), nullptr, tr("WSI Files (*.tiff *.tif *.svs *.ndpi *.bif *vms)"),  //*.zvi *.scn)"),
         nullptr, QFileDialog::DontUseNativeDialog
     );
+	
+	// return if the file dialog was cancelled without any files being selected
+	if (fileNames.count() == 0) {
+		return;
+	}
+
+	// for a new selection of wsi(s), should reset and update these QWidgets
+	pageComboBox->clear();
+	exportComboBox->clear();
 
     auto progDialog = QProgressDialog(mWidget);
     progDialog.setRange(0, fileNames.count()-1);
@@ -1706,7 +1712,6 @@ void MainWindow::selectFile() {
 	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
 	auto currentPosition = curr_pos;
-
     int counter = 0;
     for (QString& fileName : fileNames) {
 
