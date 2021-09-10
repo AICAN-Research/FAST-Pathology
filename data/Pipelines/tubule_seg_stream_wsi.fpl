@@ -12,14 +12,15 @@ Input 0 importer 0
 
 ProcessObject patch PatchGenerator
 Attribute patch-size 128 128
-Attribute patch-level 0
+Attribute patch-level 1
 Input 0 importer 0
 Input 1 tissueSeg 0
 
 ProcessObject network SegmentationNetwork
 #Attribute output-names "conv2d_26/truediv"
 Attribute scale-factor 1.0
-Attribute inference-engine TensorRT
+#Attribute inference-engine TensorRT
+Attribute inference-engine OpenVINO
 Attribute model "C:\Users\andrp\workspace\henrik_file_and_model/unet128pixelclassifier_net_checkpoint__91580__2020_10_20__06_38_39.onnx"
 Input 0 patch 0
 
@@ -31,7 +32,7 @@ Input 0 network 0
 Renderer imgRenderer ImagePyramidRenderer
 Input 0 importer 0
 
-Renderer segRenderer SegmentationPyramidRenderer
+Renderer segRenderer SegmentationRenderer
 Attribute opacity 0.5
 Input 0 stitcher 0
 

@@ -9,7 +9,6 @@
 #include <QNetworkReply>
 #include <QProgressDialog>
 
-
 QT_BEGIN_NAMESPACE
 class QAction;
 class QDialogButtonBox;
@@ -37,7 +36,7 @@ namespace fast {
     class NeuralNetwork;
     class PatchStitcher;
     class SegmentationRenderer;
-    class SegmentationPyramidRenderer;
+    //class SegmentationPyramidRenderer;
     class TissueSegmentation;
     class WholeSlideImageImporter;
     class ImagePyramid;
@@ -114,6 +113,9 @@ class MainWindow : public Window {
         void MTL_test();
         void MIL_test();
         void Kmeans_MTL_test();
+
+        // custom split
+        std::vector<std::string> splitCustom(const std::string& s, const std::string& delimiter);
 
         // STATIC METHODS, TODO THAT PROBABLY SHOULD BE ADDED TO A UTILS OR SOMETHING SIMILAR
         /**

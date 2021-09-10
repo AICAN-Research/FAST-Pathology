@@ -15,12 +15,10 @@
 #include <FAST/Visualization/HeatmapRenderer/HeatmapRenderer.hpp>
 #include <FAST/Algorithms/ImagePatch/ImageToBatchGenerator.hpp>
 #include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
-#include <FAST/Visualization/SegmentationPyramidRenderer/SegmentationPyramidRenderer.hpp>
 #include <FAST/Algorithms/NeuralNetwork/TensorToSegmentation.hpp>
 #include <FAST/Algorithms/NeuralNetwork/BoundingBoxNetwork.hpp>
 #include <FAST/Visualization/BoundingBoxRenderer/BoundingBoxRenderer.hpp>
 #include <FAST/Algorithms/Lambda/RunLambda.hpp>
-#include <FAST/Algorithms/ScaleImage/ScaleImage.hpp>
 #include <FAST/Data/BoundingBox.hpp>
 #include <string>
 #include <QtWidgets>
@@ -55,7 +53,6 @@
 #include <FAST/Exporters/HDF5TensorExporter.hpp>
 #include <FAST/Importers/ImagePyramidPatchImporter.hpp>
 #include <FAST/Exporters/ImagePyramidPatchExporter.hpp>
-#include <FAST/Algorithms/ScaleImage/ScaleImage.hpp>
 #include <FAST/Data/Access/ImagePyramidAccess.hpp>
 #include <QShortcut>
 #include <FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp>
@@ -71,11 +68,8 @@
 #include <QtNetwork>
 #include <QtNetwork/QNetworkReply>
 #include <QtNetwork/QNetworkAccessManager>
-//#include <jkqtplotter/graphs/jkqtpbarchart.h>
 
 using namespace std;
-
-//inline void initMyResource() { Q_INIT_RESOURCE(qtres); }
 
 namespace fast {
 
@@ -228,13 +222,13 @@ void MainWindow::setApplicationMode() {
             }
             // also update title
             if (advancedMode) {
-                setTitle(applicationName + " (Research mode)" + " - " + split(filename, "/").back());
+                setTitle(applicationName + " (Research mode)" + " - " + splitCustom(filename, "/").back());
             } else {
-                setTitle(applicationName + " - " + split(filename, "/").back());
+                setTitle(applicationName + " - " + splitCustom(filename, "/").back());
             }
             break;
         case QMessageBox::No:
-            1; // if "No", do nothing (also default)
+            1; // if "No", do nothing
             break;
         default:
             break;
@@ -351,67 +345,6 @@ void MainWindow::downloadAndAddTestData() {
 	selectFileDrag(fileNames);
 }
 
-/*
-void MainWindow::down loadAndAddTestData_old() {
-
-	auto dialogLayout = new QVBoxLayout(mWidget);
-
-	auto headerLabel = new QLabel(mWidget);
-	headerLabel->setText("Downloading test data...");
-
-	auto someTextDisplay = new QPlainTextEdit(mWidget);
-	someTextDisplay->setReadOnly("true");
-	someTextDisplay->setMinimumWidth(600);
-
-	dialogLayout->addWidget(headerLabel);
-	dialogLayout->addWidget(someTextDisplay);
-
-	auto someDialog = new QDialog(mWidget);
-	someDialog->setStyleSheet(headerLabel->styleSheet());
-	someDialog->setLayout(dialogLayout);
-	Qt::WindowFlags flags = someDialog->windowFlags();
-	someDialog->setWindowFlags(flags | Qt::Tool);
-	someDialog->show();
-
-	//QString downloadsFolder = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-	QString downloadsFolder = QDir::homePath() + "/fastpathology/data";
-
-	QProcess process;
-	process.setProcessChannelMode(QProcess::MergedChannels);
-
-	auto currKernel = QSysInfo::kernelType();
-	if (currKernel == "linux") {
-        auto tmp = "cd " + downloadsFolder + " && curl -o test_data.zip " + "http://folk.ntnu.no/andpeder/FastPathology/test_data.zip && unzip -y test_data.zip";
-		process.start("/bin/sh", QStringList() << "-c" << tmp);
-	} else if ((currKernel == "winnt") || (currKernel == "wince")) {
-        auto tmp = "cd " + downloadsFolder + " && curl -o test_data.zip " + "http://folk.ntnu.no/andpeder/FastPathology/test_data.zip && tar -xf test_data.zip";
-		process.start("C:/windows/system32/cmd.exe", QStringList() << "/C" << tmp);
-	}
-
-	// Use resizable buffers, unlike the system.
-	//QByteArray stderr_;
-	//QByteArray stdout_;
-
-	// TODO: Should check if any errors have been produced in the process. If yes, should prompt a warning for the
-	//   user that something went wrong (check if curl and tar/unzip is installed
-
-	// Give the child process some time to start.
-	process.waitForStarted();
-	do {
-		someTextDisplay->moveCursor(QTextCursor::End);
-		someTextDisplay->insertPlainText(process.readAllStandardOutput());
-		someTextDisplay->moveCursor(QTextCursor::End);
-		QApplication::processEvents();
-
-		//system("PAUSE");
-	} while (!process.waitForFinished(100)); // Wait 100 ms and keep looping if not finished.
-
-	// when finished, close dialog
-	someDialog->close();
-	process.close();
-}
- */
-
 void MainWindow::aboutProgram() {
 
 	auto currLayout = new QVBoxLayout;
@@ -431,7 +364,7 @@ void MainWindow::aboutProgram() {
 	textBox->append("");
 	textBox->append("");
 	textBox->setAlignment(Qt::AlignCenter);
-	textBox->append("Author: André Pedersen"); // + QStringLiteral("�") + " Pedersen");
+	textBox->append("Author: André Pedersen");
 	textBox->setAlignment(Qt::AlignCenter);
 	textBox->setStyleSheet("QTextEdit { border: none }");
 	//textBox->setBaseSize(150, 200);
@@ -518,11 +451,11 @@ void MainWindow::createMenubar() {
 void MainWindow::loadPipelines() {
     QStringList pipelines = QDir(QString::fromStdString(cwd) + "data/Pipelines").entryList(QStringList() << "*.fpl" << "*.FPL",QDir::Files);
     foreach(QString currentFpl, pipelines) {
-        //runPipelineMenu->addAction(QString::fromStdString(split(currentFpl.toStdString(), ".")[0]), this, &MainWindow::lowresSegmenter);
-        auto currentAction = runPipelineMenu->addAction(currentFpl); //QString::fromStdString(split(split(currentFpl.toStdString(), "/")[-1], ".")[0]));
+        //runPipelineMenu->addAction(QString::fromStdString(splitCustom(currentFpl.toStdString(), ".")[0]), this, &MainWindow::lowresSegmenter);
+        auto currentAction = runPipelineMenu->addAction(currentFpl); //QString::fromStdString(splitCustom(splitCustom(currentFpl.toStdString(), "/")[-1], ".")[0]));
         QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, cwd + "data/Pipelines/" + currentFpl.toStdString()));
 
-        //auto currentAction = runPipelineMenu->addAction(QString::fromStdString(split(someFile, ".")[0]));
+        //auto currentAction = runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]));
         //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, someFile));
     }
 }
@@ -994,7 +927,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     if (m_rendererTypeList[someName] == "HeatmapRenderer") {
         // get metadata of current model
         std::map<std::string, std::string> metadata = getModelMetadata(modelName);
-        std::vector someVector = split(metadata["class_names"], ";");
+        std::vector someVector = splitCustom(metadata["class_names"], ";");
         // clear vector first
         currentClassesInUse.clear();
         for (const auto & i : someVector){
@@ -1035,7 +968,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 	} else if (m_rendererTypeList[someName] == "SegmentationPyramidRenderer") {
 		// get metadata of current model
 		std::map<std::string, std::string> metadata = getModelMetadata(modelName);
-		std::vector someVector = split(metadata["class_names"], ";");
+		std::vector someVector = splitCustom(metadata["class_names"], ";");
 		// clear vector first
 		currentClassesInUse.clear();
 		for (const auto & i : someVector) {
@@ -1047,14 +980,14 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 
 		QObject::connect(colorButton, &QPushButton::clicked, [=]() {
 			auto rgb = colorSetWidget->getColor().toRgb();
-			auto someRenderer = std::dynamic_pointer_cast<SegmentationPyramidRenderer>(m_rendererList[someName]);
+			auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(m_rendererList[someName]);
             someRenderer->setColor(currComboBox->currentIndex() + 1, Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
 			//someRenderer->setChannelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
 		});
 	} else if (m_rendererTypeList[someName] == "BoundingBoxRenderer") {
 		// get metadata of current model
 		std::map<std::string, std::string> metadata = getModelMetadata(modelName);
-		std::vector someVector = split(metadata["class_names"], ";");
+		std::vector someVector = splitCustom(metadata["class_names"], ";");
 		// clear vector first
 		currentClassesInUse.clear();
 		for (const auto & i : someVector) {
@@ -1067,7 +1000,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 		QObject::connect(colorButton, &QPushButton::clicked, [=]() {
 			auto rgb = colorSetWidget->getColor().toRgb();
 			auto someRenderer = std::dynamic_pointer_cast<BoundingBoxRenderer>(m_rendererList[someName]);
-			someRenderer->setLabelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
+			//someRenderer->setLabelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
 		});
 	} else {
 		std::cout << "Invalid renderer used..." << std::endl;
@@ -1400,7 +1333,7 @@ void MainWindow::createProcessWidget() {
     foreach(QString currFile, paths) {
 
         // current model
-        modelName = split(currFile.toStdString(), ".")[0];
+        modelName = splitCustom(currFile.toStdString(), ".")[0];
 
         // get metadata of current model
         std::map<std::string, std::string> metadata = getModelMetadata(modelName);
@@ -1537,8 +1470,8 @@ void MainWindow::saveThumbnail() {
 
 		// attempt to save thumbnail to disk as .png
 		ImageExporter::pointer exporter = ImageExporter::New();
-		exporter->setFilename(projectFolderName.toStdString() + "/thumbnails/" + split(split(currWSI, "/").back(), ".")[0] + ".png");
-		std::cout << "Name: " << projectFolderName.toStdString() + "/thumbnails/" + split(split(currWSI, "/").back(), ".")[0] + ".png" << std::endl;
+		exporter->setFilename(projectFolderName.toStdString() + "/thumbnails/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0] + ".png");
+		std::cout << "Name: " << projectFolderName.toStdString() + "/thumbnails/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0] + ".png" << std::endl;
 		exporter->setInputData(input);
 		exporter->update();
 
@@ -1575,7 +1508,7 @@ void MainWindow::saveTissueSegmentation() {
 	for (const auto& currWSI : currentWSIs) {
 
 		// check if folder for current WSI exists, if not, create one
-		QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(currWSI, "/").back(), ".")[0] + "/").c_str();
+		QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0] + "/").c_str();
 		wsiResultPath = wsiResultPath.replace("//", "/");
 		if (!QDir(wsiResultPath).exists()) {
 			QDir().mkdir(wsiResultPath);
@@ -1588,7 +1521,7 @@ void MainWindow::saveTissueSegmentation() {
         auto tissueSegmentation = TissueSegmentation::New();
         tissueSegmentation->setInputData(currImage);
 
-        QString outFile = (wsiResultPath.toStdString() + split(split(currWSI, "/").back(), ".")[0] + "_tissue.png").c_str();
+        QString outFile = (wsiResultPath.toStdString() + splitCustom(splitCustom(currWSI, "/").back(), ".")[0] + "_tissue.png").c_str();
         ImageExporter::pointer exporter = ImageExporter::New();
         exporter->setFilename(outFile.replace("//", "/").toStdString());
         exporter->setInputData(tissueSegmentation->updateAndGetOutputData<Image>());
@@ -1606,7 +1539,7 @@ void MainWindow::saveTissueSegmentation() {
 void MainWindow::saveHeatmap() {
 
 	// check if folder for current WSI exists, if not, create one
-	QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0] + "/").c_str();
+	QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "/").c_str();
 	wsiResultPath = wsiResultPath.replace("//", "/");
 	if (!QDir(wsiResultPath).exists()) {
 		QDir().mkdir(wsiResultPath);
@@ -1620,7 +1553,7 @@ void MainWindow::saveHeatmap() {
 
 void MainWindow::saveTumor() {
     // check if folder for current WSI exists, if not, create one
-    QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0] + "/").c_str();
+    QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "/").c_str();
     wsiResultPath = wsiResultPath.replace("//", "/");
     if (!QDir(wsiResultPath).exists()) {
         QDir().mkdir(wsiResultPath);
@@ -1633,7 +1566,7 @@ void MainWindow::saveTumor() {
     savedList.emplace_back("tumorSeg_lr");
 
     // attempt to save tissue mask to disk as .png
-    QString outFile = (wsiResultPath.toStdString() + split(split(filename, "/").back(), ".")[0] + "_tumor_mask.png").c_str();
+    QString outFile = (wsiResultPath.toStdString() + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "_tumor_mask.png").c_str();
 
     ImageExporter::pointer exporter = ImageExporter::New();
     exporter->setFilename(outFile.replace("//", "/").toStdString());
@@ -1753,11 +1686,11 @@ void MainWindow::selectFile() {
             createDynamicViewWidget("WSI", modelName);
 
             // update application name to contain current WSI
-            //setTitle(applicationName + " - " + split(filename, "/").back());
+            //setTitle(applicationName + " - " + splitCustom(filename, "/").back());
             if (advancedMode) {
-                setTitle(applicationName + " (Research mode)" + " - " + split(currFileName, "/").back());
+                setTitle(applicationName + " (Research mode)" + " - " + splitCustom(currFileName, "/").back());
             } else {
-                setTitle(applicationName + " - " + split(currFileName, "/").back());
+                setTitle(applicationName + " - " + splitCustom(currFileName, "/").back());
             }
         }
         counter ++;
@@ -1795,7 +1728,7 @@ void MainWindow::selectFile() {
         int width_val = 100;
         int height_val = 150;
         button->setIconSize(QSize((int) std::round(0.9 * (float) image.width() * (float) height_val / (float) image.height()), (int) std::round(0.9f * (float) height_val)));
-		button->setToolTip(QString::fromStdString(split(currFileName, "/").back()));
+		button->setToolTip(QString::fromStdString(splitCustom(currFileName, "/").back()));
 
         auto listItem = new QListWidgetItem;
         listItem->setSizeHint(QSize(width_val, height_val));
@@ -1908,11 +1841,11 @@ void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
             createDynamicViewWidget("WSI", modelName);
 
             // update application name to contain current WSI
-            //setTitle(applicationName + " - " + split(filename, "/").back());
+            //setTitle(applicationName + " - " + splitCustom(filename, "/").back());
             if (advancedMode) {
-                setTitle(applicationName + " (Research mode)" + " - " + split(currFileName, "/").back());
+                setTitle(applicationName + " (Research mode)" + " - " + splitCustom(currFileName, "/").back());
             } else {
-                setTitle(applicationName + " - " + split(currFileName, "/").back());
+                setTitle(applicationName + " - " + splitCustom(currFileName, "/").back());
             }
         }
         counter ++;
@@ -2056,7 +1989,7 @@ void MainWindow::selectFileInProject(int pos) {
 	createDynamicViewWidget("WSI", modelName);
 
 	// check if any results exists for current WSI, if there are load them
-	std::string wsiPath = split(split(filename, "/").back(), ".")[0];
+	std::string wsiPath = splitCustom(splitCustom(filename, "/").back(), ".")[0];
 	auto currentResultPath = projectFolderName.toStdString() + "/results/" + wsiPath.c_str();
 
 	QDirIterator iter(QString::fromStdString(currentResultPath));
@@ -2064,7 +1997,7 @@ void MainWindow::selectFileInProject(int pos) {
 	while (iter.hasNext()) {
 		auto currentResult = iter.next().toStdString();
 
-        auto tmp = split(currentResult, "/").back();
+        auto tmp = splitCustom(currentResult, "/").back();
         if ((tmp == ".") || (tmp == ".."))
             continue;
 
@@ -2072,23 +2005,23 @@ void MainWindow::selectFileInProject(int pos) {
         QFileInfo pathFileInfo(currentResult.c_str());
         if (pathFileInfo.isDir()){
             if (!QDir(currentResult.c_str()).isEmpty()) {
-                loadHighres(QString::fromStdString(currentResult), QString::fromStdString(split(split(currentResult, "/").back(), wsiPath + "_").back()));
+                loadHighres(QString::fromStdString(currentResult), QString::fromStdString(splitCustom(splitCustom(currentResult, "/").back(), wsiPath + "_").back()));
             } else {
                 simpleInfoPrompt("Project directory containing high-resolution result was empty.");
             }
         } else {
-            auto splits = split(split(currentResult.c_str(), "/").back(), ".");
+            auto splits = splitCustom(splitCustom(currentResult.c_str(), "/").back(), ".");
             std::cout << "Current result path: " << currentResult << std::endl;
 
             auto str = splits.back();
             transform(str.begin(), str.end(), str.begin(), ::tolower);
             if (str == "png") {
                 loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(
-                        split(split(split(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
+                        splitCustom(splitCustom(splitCustom(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
             } else if ((str == "h5") || (str == "hd5") || (str == "hdf5")) {
                 std::cout << "heatmap chosen: " << str << std::endl;
                 loadHeatmap(QString::fromStdString(currentResult), QString::fromStdString(
-                        split(split(split(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
+                        splitCustom(splitCustom(splitCustom(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
             } else {
                 std::cout << "Unable to load result (format is not supported): " << currentResultPath << std::endl;
             }
@@ -2097,9 +2030,9 @@ void MainWindow::selectFileInProject(int pos) {
 
     // update application name to contain current WSI
     if (advancedMode) {
-        setTitle(applicationName + " (Research mode)" + " - " + split(filename, "/").back());
+        setTitle(applicationName + " (Research mode)" + " - " + splitCustom(filename, "/").back());
     } else {
-        setTitle(applicationName + " - " + split(filename, "/").back());
+        setTitle(applicationName + " - " + splitCustom(filename, "/").back());
     }
 }
 
@@ -2198,7 +2131,7 @@ void MainWindow::openProject() {
     );
 
     std::cout << projectPath.toStdString() << std::endl;
-    projectFolderName = split(projectPath.toStdString(), "project.txt")[0].c_str();
+    projectFolderName = splitCustom(projectPath.toStdString(), "project.txt")[0].c_str();
     std::cout << projectFolderName.toStdString() << std::endl;
 
     // check if all relevant files and folders are in selected folder directory
@@ -2281,14 +2214,14 @@ void MainWindow::openProject() {
             createDynamicViewWidget("WSI", modelName);
 
 			// check if any results exists for current WSI, if there are load them
-			std::string wsiPath = split(split(filename, "/").back(), ".")[0];
+			std::string wsiPath = splitCustom(splitCustom(filename, "/").back(), ".")[0];
 			auto currentResultPath = projectFolderName.toStdString() + "/results/" + wsiPath.c_str();
 
 			// update title to include name of current file
             if (advancedMode) {
-                setTitle(applicationName + " (Research mode)" + " - " + split(filename, "/").back());
+                setTitle(applicationName + " (Research mode)" + " - " + splitCustom(filename, "/").back());
             } else {
-                setTitle(applicationName + " - " + split(filename, "/").back());
+                setTitle(applicationName + " - " + splitCustom(filename, "/").back());
             }
 
 			std::cout << "Current WSI used: " << fileName.toStdString() << std::endl;
@@ -2300,7 +2233,7 @@ void MainWindow::openProject() {
 
 				std::cout << "current file: " << currentResult << std::endl;
 
-				auto tmp = split(currentResult, "/").back();
+				auto tmp = splitCustom(currentResult, "/").back();
 
 				if ((tmp == ".") || (tmp == ".."))
 				    continue;
@@ -2309,21 +2242,21 @@ void MainWindow::openProject() {
                 QFileInfo pathFileInfo(currentResult.c_str());
                 if (pathFileInfo.isDir()){
                     if (!QDir(currentResult.c_str()).isEmpty()) {
-                        loadHighres(QString::fromStdString(currentResult), QString::fromStdString(split(split(currentResult, "/").back(), wsiPath + "_").back()));
+                        loadHighres(QString::fromStdString(currentResult), QString::fromStdString(splitCustom(splitCustom(currentResult, "/").back(), wsiPath + "_").back()));
                     } else {
                         simpleInfoPrompt("Project directory containing high-resolution result was empty.");
                     }
                 } else {
-                    auto splits = split(split(currentResult.c_str(), "/").back(), ".");
+                    auto splits = splitCustom(splitCustom(currentResult.c_str(), "/").back(), ".");
                     std::cout << "Current result path: " << currentResult << std::endl;
 
                     auto str = splits.back();
                     transform(str.begin(), str.end(), str.begin(), ::tolower);
                     if (str == "png") {
                         // @TODO: this splitception will be handled better in the future :p
-                        loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(split(split(split(currentResult, "/").back(), split(split(fileName.toStdString(), "/").back(), ".")[0] + "_").back(), ".")[0]));
+                        loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(splitCustom(splitCustom(splitCustom(currentResult, "/").back(), splitCustom(splitCustom(fileName.toStdString(), "/").back(), ".")[0] + "_").back(), ".")[0]));
                     } else if ((str == "h5") || (str == "hd5") || (str == "hdf5")) {
-                        loadHeatmap(QString::fromStdString(currentResult), QString::fromStdString(split(split(split(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
+                        loadHeatmap(QString::fromStdString(currentResult), QString::fromStdString(splitCustom(splitCustom(splitCustom(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
                     } else {
                         std::cout << "Unable to load result (format is not supported): " << currentResultPath << std::endl;
                     }
@@ -2333,7 +2266,7 @@ void MainWindow::openProject() {
         counter++;
 
         // check if thumbnail image exists for current WSI, if yes load it, else extract one
-        std::string wsiPath = split(split(filename, "/").back(), ".")[0];
+        std::string wsiPath = splitCustom(splitCustom(filename, "/").back(), ".")[0];
         QString fullPath = projectFolderName + "/thumbnails/" + wsiPath.c_str();
         fullPath = fullPath.replace("//", "/") + ".png";
 
@@ -2614,8 +2547,8 @@ void MainWindow::addPipelines() {
         if (fileName == "")
             continue;
 
-        std::string someFile = split(fileName.toStdString(), "/").back();
-        std::string oldLocation = split(fileName.toStdString(), someFile)[0];
+        std::string someFile = splitCustom(fileName.toStdString(), "/").back();
+        std::string oldLocation = splitCustom(fileName.toStdString(), someFile)[0];
         std::string newLocation = cwd + "data/Pipelines/";
         std::string newPath = cwd + "data/Pipelines/" + someFile;
         if (fileExists(newPath)) {
@@ -2627,12 +2560,12 @@ void MainWindow::addPipelines() {
             }
         }
         // should update runPipelineMenu as new pipelines are being added
-        //runPipelineMenu->addAction(QString::fromStdString(split(someFile, ".")[0]), this, &MainWindow::runPipeline);
-        //auto currentAction = new QAction(QString::fromStdString(split(someFile, ".")[0]));
-        auto currentAction = runPipelineMenu->addAction(QString::fromStdString(split(someFile, ".")[0]));
+        //runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]), this, &MainWindow::runPipeline);
+        //auto currentAction = new QAction(QString::fromStdString(splitCustom(someFile, ".")[0]));
+        auto currentAction = runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]));
         QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, someFile));
 
-        //auto currentAction = runPipelineMenu->addAction(currentFpl); //QString::fromStdString(split(split(currentFpl.toStdString(), "/")[-1], ".")[0]));
+        //auto currentAction = runPipelineMenu->addAction(currentFpl); //QString::fromStdString(splitCustom(splitCustom(currentFpl.toStdString(), "/")[-1], ".")[0]));
         //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, cwd + "data/Pipelines/" + currentFpl.toStdString()));
     }
 }
@@ -2661,11 +2594,11 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
 		if (fileName == "")
 			return;
 
-		std::string someFile = split(fileName.toStdString(), "/").back(); // TODO: Need to make this only split on last "/"
-		std::string oldLocation = split(fileName.toStdString(), someFile)[0];
+		std::string someFile = splitCustom(fileName.toStdString(), "/").back(); // TODO: Need to make this only split on last "/"
+		std::string oldLocation = splitCustom(fileName.toStdString(), someFile)[0];
 		std::string newLocation = cwd + "data/Models/";
 
-		std::vector<string> names = split(someFile, ".");
+		std::vector<string> names = splitCustom(someFile, ".");
 		string fileNameNoFormat = names[0];
 		string formatName = names[1];
 
@@ -2743,11 +2676,11 @@ void MainWindow::addModels() {
         if (fileName == "")
             return;
 
-        std::string someFile = split(fileName.toStdString(), "/").back(); // TODO: Need to make this only split on last "/"
-        std::string oldLocation = split(fileName.toStdString(), someFile)[0];
+        std::string someFile = splitCustom(fileName.toStdString(), "/").back(); // TODO: Need to make this only split on last "/"
+        std::string oldLocation = splitCustom(fileName.toStdString(), someFile)[0];
         std::string newLocation = cwd + "data/Models/";
 
-        std::vector<string> names = split(someFile, ".");
+        std::vector<string> names = splitCustom(someFile, ".");
         string fileNameNoFormat = names[0];
         string formatName = names[1];
 
@@ -2904,7 +2837,7 @@ bool MainWindow::segmentTissue() {
 					temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
 
 					auto someRenderer = SegmentationRenderer::New();
-					someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
+					someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
 					someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
 					someRenderer->setOpacity(0.4f);
 					someRenderer->update();
@@ -2949,7 +2882,7 @@ bool MainWindow::segmentTissue() {
 					temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
 
 					auto someRenderer = SegmentationRenderer::New();
-					someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
+					someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
 					someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
 					someRenderer->setOpacity(0.4f);
 					someRenderer->update();
@@ -3006,7 +2939,7 @@ bool MainWindow::segmentTissue() {
                     temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
 
                     auto someRenderer = SegmentationRenderer::New();
-                    someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
+                    someRenderer->setColor(1, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
                     someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
                     someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
                     someRenderer->update();
@@ -3086,7 +3019,7 @@ bool MainWindow::segmentTissue() {
         m_tissue = tissueSegmentation->updateAndGetOutputData<Image>();
 
         auto someRenderer = SegmentationRenderer::New();
-        someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
+        someRenderer->setColor(1, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
         someRenderer->setInputData(m_tissue);
         someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
         someRenderer->update();
@@ -3128,13 +3061,13 @@ void MainWindow::loadHighres(QString path, QString name) {
     //someImporter->update();
     auto result = someImporter->updateAndGetOutputData<ImagePyramid>();
 
-    auto someRenderer = SegmentationPyramidRenderer::New();
+    auto someRenderer = SegmentationRenderer::New();
     someRenderer->setOpacity(0.5f);
     //someRenderer->setInputConnection(someImporter->getOutputPort()); //setInputConnection(importer->getOutputPort());
     someRenderer->setInputData(result);
     someRenderer->update();
 
-    m_rendererTypeList[someName] = "SegmentationPyramidRenderer";
+    m_rendererTypeList[someName] = "SegmentationRenderer";
     insertRenderer(someName, someRenderer);
     createDynamicViewWidget(someName, modelName);
     savedList.emplace_back(someName);
@@ -3162,7 +3095,7 @@ void MainWindow::loadHeatmap(QString tissuePath, QString name) {
 
 	auto someRenderer = HeatmapRenderer::New();
 	//someRenderer->glPolygonOffset(512.0f, 512.0f);
-	//someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
+	//someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
 	someRenderer->setInputConnection(0, importer->getOutputPort());
 	//someRenderer->setInputData(someImage);
 	someRenderer->setMaxOpacity(0.6f);
@@ -3212,7 +3145,7 @@ void MainWindow::loadSegmentation(QString tissuePath, QString name) {
 	someImage->setSpacing((float)m_image->getFullHeight() / (float)currShape[1], (float)m_image->getFullWidth() / (float)currShape[0], 1.0f);
 
 	auto someRenderer = SegmentationRenderer::New();
-	someRenderer->setColor(Segmentation::LABEL_FOREGROUND, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
+	someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
 	someRenderer->setInputData(someImage);
 	someRenderer->setOpacity(0.4f);
 	someRenderer->update();
@@ -3256,13 +3189,13 @@ void MainWindow::runPipeline(std::string path) {
 
 		// check if folder for current WSI exists, if not, create one
 		/*
-		QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + split(split(filename, "/").back(), ".")[0] + "/").c_str();
+		QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "/").c_str();
 		wsiResultPath = wsiResultPath.replace("//", "/");
 		if (!QDir(wsiResultPath).exists()) {
 			QDir().mkdir(wsiResultPath);
 		}
 
-		QString outFile = (wsiResultPath.toStdString() + split(split(filename, "/").back(), ".")[0] + "_heatmap.h5").c_str();
+		QString outFile = (wsiResultPath.toStdString() + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "_heatmap.h5").c_str();
 
 		arguments["outPath"] = outFile.replace("//", "/").toStdString();
 		 */
@@ -3272,7 +3205,7 @@ void MainWindow::runPipeline(std::string path) {
 		//pipeline.parsePipelineFile();
 
 		//m_rendererTypeList["WSI"] == "ImagePyramidRenderer";
-		m_rendererTypeList["nuclei_seg"] == "SegmentationPyramidRenderer";
+		m_rendererTypeList["nuclei_seg"] == "SegmentationRenderer";
 		//m_rendererTypeList["nuclei_detect"] == "HeatmapRenderer";
 
 		// add renderer(s)
@@ -3362,6 +3295,7 @@ void MainWindow::MIL_test() {
         hideTissueMask(true);
     }
 
+    //auto generator = PatchGenerator::create(std::stoi(modelMetadata["input_img_size_x"]), std::stoi(modelMetadata["input_img_size_y"]), 1, patch_lvl_model, 0, );
     auto generator = PatchGenerator::New();
     generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
     generator->setPatchLevel(patch_lvl_model);
@@ -3396,7 +3330,7 @@ void MainWindow::MIL_test() {
     std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
 
     network->setInputConnection(generator->getOutputPort()); //generator->getOutputPort());
-    vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
+    vector scale_factor = splitCustom(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
     network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
 
     auto stitcher1 = PatchStitcher::New();
@@ -3408,7 +3342,7 @@ void MainWindow::MIL_test() {
     auto someRenderer1 = HeatmapRenderer::New();
     someRenderer1->setMinConfidence(0.8);
     someRenderer1->setInterpolation(false);
-    //someRenderer->setColor(Segmentation::LABEL_BACKGROUND, Color(0.0f, 255.0f / 255.0f, 0.0f));
+    //someRenderer->setColor(0, Color(0.0f, 255.0f / 255.0f, 0.0f));
     //someRenderer1->setInputData(m_tumorMap);
     someRenderer1->setInputConnection(stitcher1->getOutputPort());
 
@@ -3466,7 +3400,7 @@ void MainWindow::Kmeans_MTL_test() {
     std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
 
     network->setInputConnection(generator->getOutputPort());
-    vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
+    vector scale_factor = splitCustom(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
     network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
 
     auto stitcher1 = PatchStitcher::New();
@@ -3522,7 +3456,7 @@ void MainWindow::MTL_test() {
     std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
 
 	network->setInputConnection(generator->getOutputPort());
-	vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
+	vector scale_factor = splitCustom(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
 	network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
 
 	auto converter = TensorToSegmentation::New();
@@ -3534,9 +3468,9 @@ void MainWindow::MTL_test() {
 	auto stitcher2 = PatchStitcher::New();
 	stitcher2->setInputConnection(network->getOutputPort(1));
 
-	auto someRenderer1 = SegmentationPyramidRenderer::New();
+	auto someRenderer1 = SegmentationRenderer::New();
 	someRenderer1->setOpacity(0.7f);
-	//someRenderer->setColor(Segmentation::LABEL_BACKGROUND, Color(0.0f, 255.0f / 255.0f, 0.0f));
+	//someRenderer->setColor(0, Color(0.0f, 255.0f / 255.0f, 0.0f));
 	//someRenderer1->setInputData(m_tumorMap);
 	someRenderer1->setInputConnection(stitcher1->getOutputPort());
 
@@ -3548,7 +3482,7 @@ void MainWindow::MTL_test() {
 	//someRenderer2->setSynchronizedRendering(false);
 	//someRenderer2->update();
 
-	m_rendererTypeList["nuclei_seg"] = "SegmentationPyramidRenderer";
+	m_rendererTypeList["nuclei_seg"] = "SegmentationRenderer";
 	insertRenderer("nuclei_seg", someRenderer1);
 
 	m_rendererTypeList["nuclei_detect"] = "HeatmapRenderer";
@@ -3740,7 +3674,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 					foreach(QString filePath, tmpPaths) {
 						if (filePath.toStdString().find("libInferenceEngine") != std::string::npos) {
 							IEsList.push_back(
-								split(split(filePath.toStdString(), "libInferenceEngine").back(),
+								splitCustom(splitCustom(filePath.toStdString(), "libInferenceEngine").back(),
 									".so")[0]);
 						}
 					}
@@ -3749,7 +3683,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 					foreach(QString filePath, tmpPaths) {
 						if (filePath.toStdString().find("InferenceEngine") != std::string::npos) {
 							IEsList.push_back(
-								split(split(filePath.toStdString(), "InferenceEngine").back(),
+								splitCustom(splitCustom(filePath.toStdString(), "InferenceEngine").back(),
 									".dll")[0]);
 						}
 					}
@@ -3768,10 +3702,10 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 				foreach(QString currentModel, models) {
 					if (currentModel.toStdString().find(someModelName) != std::string::npos) {
 						acceptedModels.push_back(
-							"." + split(currentModel.toStdString(), someModelName + ".").back());
+							"." + splitCustom(currentModel.toStdString(), someModelName + ".").back());
 						std::cout
 							<< "accepted models: ." +
-							split(currentModel.toStdString(), someModelName + ".").back()
+							splitCustom(currentModel.toStdString(), someModelName + ".").back()
 							<< std::endl;
 					}
 				}
@@ -4022,7 +3956,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 						std::cout << "scale_factor not defined. Defaults to using using no intensity normalization/scaling in preprocessing." << std::endl;
 					}
 					else {
-						vector scale_factor = split(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
+						vector scale_factor = splitCustom(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
 						network->setScaleFactor(
 							(float)std::stoi(scale_factor[0]) /
 							(float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
@@ -4043,9 +3977,9 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 							someRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"]));
 							someRenderer->setInputConnection(stitcher->getOutputPort());
 							someRenderer->setMaxOpacity(0.6f);
-							vector<string> colors = split(modelMetadata["class_colors"], ";");
+							vector<string> colors = splitCustom(modelMetadata["class_colors"], ";");
 							for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
-								vector<string> rgb = split(colors[i], ",");
+								vector<string> rgb = splitCustom(colors[i], ",");
 								someRenderer->setChannelColor(i, Color((float)std::stoi(rgb[0]) / 255.0f,
 									(float)std::stoi(rgb[1]) / 255.0f,
 									(float)std::stoi(rgb[2]) / 255.0f));
@@ -4065,14 +3999,14 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 							} while (!data->isLastFrame());
 							// check if folder for current WSI exists, if not, create one
 							QString wsiResultPath = (projectFolderName.toStdString() + "/results/" +
-								split(split(currWSI, "/").back(), ".")[0]).c_str();
+								splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
 							wsiResultPath = wsiResultPath.replace("//", "/");
 							if (!QDir(wsiResultPath).exists()) {
 								QDir().mkdir(wsiResultPath);
 							}
 
 							auto exporter = HDF5TensorExporter::New();
-							exporter->setFilename(wsiResultPath.toStdString() + "/" + split(wsiResultPath.toStdString(), "/").back() + "_" + currentHeatmapName + ".h5");
+							exporter->setFilename(wsiResultPath.toStdString() + "/" + splitCustom(wsiResultPath.toStdString(), "/").back() + "_" + currentHeatmapName + ".h5");
 							exporter->setDatasetName(currentHeatmapName);
 							exporter->setInputData(data);
 							exporter->update();
@@ -4085,31 +4019,31 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 							stitcher->setInputConnection(network->getOutputPort());
 							auto port = stitcher->getOutputPort();
 
-							auto someRenderer = SegmentationPyramidRenderer::New();
+							auto someRenderer = SegmentationRenderer::New();
 							someRenderer->setOpacity(0.7f);
-							vector<string> colors = split(modelMetadata["class_colors"], ";");
+							vector<string> colors = splitCustom(modelMetadata["class_colors"], ";");
 							for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
-								vector<string> rgb = split(colors[i], ",");
+								vector<string> rgb = splitCustom(colors[i], ",");
 								someRenderer->setColor(i, Color((float)std::stoi(rgb[0]) / 255.0f,
 									(float)std::stoi(rgb[1]) / 255.0f,
 									(float)std::stoi(rgb[2]) / 255.0f));
 							}
 							someRenderer->setInputConnection(stitcher->getOutputPort());
 
-							m_rendererTypeList[modelMetadata["name"]] = "SegmentationPyramidRenderer";
+							m_rendererTypeList[modelMetadata["name"]] = "SegmentationRenderer";
 							insertRenderer(modelMetadata["name"], someRenderer);
 						}
 						else {
 							// check if folder for current WSI exists, if not, create one
 							QString wsiResultPath = (projectFolderName.toStdString() + "/results/" +
-								split(split(currWSI, "/").back(), ".")[0]).c_str();
+								splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
 							wsiResultPath = wsiResultPath.replace("//", "/");
 							if (!QDir(wsiResultPath).exists()) {
 								QDir().mkdir(wsiResultPath);
 							}
 							auto currPath =
 								wsiResultPath.toStdString() + "/" +
-								split(wsiResultPath.toStdString(), "/").back() +
+								splitCustom(wsiResultPath.toStdString(), "/").back() +
 								"_" + modelMetadata["name"] + "/";
 							std::cout << "current high-res result path: " << currPath << std::endl;
 
@@ -4153,14 +4087,14 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 						std::ifstream infile(cwd + "data/Models/" + someModelName + ".anchors");
 						std::string anchorStr;
 						while (std::getline(infile, anchorStr)) {
-							std::vector<std::string> anchorVector = split(anchorStr, " ");
+							std::vector<std::string> anchorVector = splitCustom(anchorStr, " ");
 							anchorVector.resize(
 								6); // for TinyYOLOv3 should only be 6 pairs, 3 for each level (2 levels)
 							int cntr = 0;
 							for (int i = 1; i < 3; i++) { // assumes TinyYOLOv3 (only two output layers)
 								std::vector<Vector2f> levelAnchors;
 								for (int j = 0; j < 3; j++) {
-									auto currentPair = split(anchorVector[cntr], ",");
+									auto currentPair = splitCustom(anchorVector[cntr], ",");
 									levelAnchors.push_back(
 										Vector2f(std::stoi(currentPair[0]), std::stoi(currentPair[1])));
 									cntr++;
@@ -4170,7 +4104,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 						}
 						currNetwork->setAnchors(anchors); // finally set anchors
 
-						auto scale_factor = split(modelMetadata["scale_factor"],
+						auto scale_factor = splitCustom(modelMetadata["scale_factor"],
 							"/"); // get scale factor from metadata
 						currNetwork->setScaleFactor((float)std::stoi(scale_factor[0]) /
 							(float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
@@ -4231,9 +4165,9 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 
 							auto someRenderer = SegmentationRenderer::New();
 							someRenderer->setOpacity(0.4f);
-							vector<string> colors = split(modelMetadata["class_colors"], ";");
+							vector<string> colors = splitCustom(modelMetadata["class_colors"], ";");
 							for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
-								vector<string> rgb = split(colors[i], ",");
+								vector<string> rgb = splitCustom(colors[i], ",");
 								someRenderer->setColor(i, Color((float)std::stoi(rgb[0]) / 255.0f,
 									(float)std::stoi(rgb[1]) / 255.0f,
 									(float)std::stoi(rgb[2]) / 255.0f));
@@ -4248,7 +4182,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 						else {
 							// save result
 							QString wsiResultPath = (projectFolderName.toStdString() + "/results/" +
-								split(split(currWSI, "/").back(), ".")[0]).c_str();
+								splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
 							wsiResultPath = wsiResultPath.replace("//", "/");
 							std::cout << "current result path: " << wsiResultPath.toStdString() << std::endl;
 							if (!QDir(wsiResultPath).exists()) {
@@ -4259,7 +4193,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 							auto exporter = ImageFileExporter::New();
 							exporter->setFilename(
 								wsiResultPath.toStdString() + "/" +
-								split(split(currWSI, "/").back(), ".")[0] +
+								splitCustom(splitCustom(currWSI, "/").back(), ".")[0] +
 								"_" + modelMetadata["name"] + ".png");
 							exporter->setInputData(currMap);
 							exporter->update();
@@ -4314,7 +4248,7 @@ std::vector<std::vector<Vector2f> > MainWindow::getAnchorMetadata(std::string an
 }
 
 // for string delimiter
-std::vector<std::string> split(const std::string& s, const std::string& delimiter) {
+std::vector<std::string> MainWindow::splitCustom(const std::string& s, const std::string& delimiter) {
     size_t pos_start = 0, pos_end, delim_len = delimiter.length();
     string token;
     vector<string> res;
@@ -4481,8 +4415,8 @@ bool MainWindow::opacityRenderer(int value, const std::string& name) {
         if (m_rendererTypeList[name] == "SegmentationRenderer") {
             auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(getRenderer(name));
             someRenderer->setOpacity((float) value / 20.0f);
-        } else if (m_rendererTypeList[name] == "SegmentationPyramidRenderer") { // FIXME: Apparently, this doesn't change opacity
-            auto someRenderer = std::dynamic_pointer_cast<SegmentationPyramidRenderer>(getRenderer(name));
+        } else if (m_rendererTypeList[name] == "SegmentationRenderer") { // FIXME: Apparently, this doesn't change opacity
+            auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(getRenderer(name));
             someRenderer->setOpacity((float) value / 20.0f);
         } else {
             auto someRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(getRenderer(name));

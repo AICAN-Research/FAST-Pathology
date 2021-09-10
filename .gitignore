@@ -32,3 +32,4 @@ out/
 openslide_test_data/
 inference_study/Debug/
 inference_study/Release/
+CMakeSettings.json

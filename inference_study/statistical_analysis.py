@@ -121,10 +121,10 @@ gpu_var = []
 gpus = ["CPU", "RTX2070", "P5000", "Max-Q", "0-CPU", "O-GPU"]
 
 for curr in curr_engine_and_device:
-    curr_machine = curr.split(" / ")[1]
+    curr_machine = curr.split_custom(" / ")[1]
     machine_var.append(curr_machine)
-    engine_var.append(curr.split(" / ")[0].split("_")[1])
-    tmp = curr.split(" / ")[0].split("_")
+    engine_var.append(curr.split_custom(" / ")[0].split_custom("_")[1])
+    tmp = curr.split_custom(" / ")[0].split_custom("_")
 
     if len(tmp) == 4:
         tmp = ["_".join(tmp[:2])] + tmp[2:]
@@ -154,8 +154,8 @@ print(gpu_var)
 exit()
 '''
 
-#machine_var = [x.split(" / ")[1] for x in curr_engine_and_device]
-#engine_var = ["_".join(x.split(" / ")[0].split("_")[1:]) for x in curr_engine_and_device]
+#machine_var = [x.split_custom(" / ")[1] for x in curr_engine_and_device]
+#engine_var = ["_".join(x.split_custom(" / ")[0].split_custom("_")[1:]) for x in curr_engine_and_device]
 
 #tmp = []
 print(df)
@@ -195,7 +195,7 @@ for i, n in enumerate(names):
 names = [n.replace("_", "-") for n in names]
 
 for i, n in enumerate(names):
-    tmp = n.split("-")
+    tmp = n.split_custom("-")
     if "inceptionv3" in n:
         names[i] = n.replace("-inceptionv3", "\_InceptionV3")
         #names[i] = n.replace("-inceptionv3", "") + "-InceptionV3"
@@ -203,7 +203,7 @@ for i, n in enumerate(names):
     #    names[i] = n + "-MobileNetV2"
 
 for i, n in enumerate(names):
-    tmp = n.split("-")
+    tmp = n.split_custom("-")
     if tmp[3] == "ubuntu":
         if tmp[0] == "1":
             if tmp[2] == "ANY0":

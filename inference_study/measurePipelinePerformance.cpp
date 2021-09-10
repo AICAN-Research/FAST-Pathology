@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
                     std::cout << "//////////////////////////////" << std::endl;
 
                     for (int iteration = 0; iteration <= iterations; ++iteration) {
-                        auto importer = WholeSlideImageImporter::New();
+                        auto importer = WholeSlideImageImporter::create();
 						if (machine == "windows") {
 							importer->setFilename("C:/Users/andrep/workspace/FAST-Pathology_old/A05.svs");
 						} else if (machine == "windows2") {
@@ -115,17 +115,17 @@ int main(int argc, char** argv) {
                             importer->setFilename(Config::getTestDataPath() + "/WSI/A05.svs");
                         }
 
-                        auto tissueSegmentation = TissueSegmentation::New();
+                        auto tissueSegmentation = TissueSegmentation::create();
                         tissueSegmentation->setInputConnection(importer->getOutputPort());
 
-                        auto generator = PatchGenerator::New();
+                        auto generator = PatchGenerator::create();
                         generator->setPatchSize(img_size[0], img_size[1]);
                         generator->setPatchLevel(patch_level);
                         generator->setInputConnection(importer->getOutputPort());
                         generator->setInputConnection(1, tissueSegmentation->getOutputPort());
                         generator->enableRuntimeMeasurements();
 
-                        auto network = NeuralNetwork::New();
+                        auto network = NeuralNetwork::create();
                         network->setInferenceEngine(engine);
                         if (engine != "TensorRT") {
                         //if (!((engine == "TensorRT") || (engine == "TensorFlowCUDA"))) {
@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
                         network->setScaleFactor(1.0f / 255.0f);
                         network->enableRuntimeMeasurements();
 
-                        auto stitcher = PatchStitcher::New();
+                        auto stitcher = PatchStitcher::create();
                         stitcher->setInputConnection(network->getOutputPort());
                         stitcher->enableRuntimeMeasurements();
 
@@ -255,7 +255,7 @@ int main(int argc, char** argv) {
                     std::cout << "Current device (GPU): " << currDevice << std::endl;
                     std::cout << "//////////////////////////////" << std::endl;
                     for (int iteration = 0; iteration <= iterations; ++iteration) {  // run N number of times
-                        auto importer = WholeSlideImageImporter::New();
+                        auto importer = WholeSlideImageImporter::create();
                         importer->setFilename(Config::getTestDataPath() + "/WSI/A05.svs");
                         importer->enableRuntimeMeasurements();
 
@@ -266,7 +266,7 @@ int main(int argc, char** argv) {
                         importer->update();
 
                         // resize
-                        ImageResizer::pointer resizer = ImageResizer::New();
+                        ImageResizer::pointer resizer = ImageResizer::create();
                         resizer->setInputData(input);
                         resizer->setWidth(img_size[0]);
                         resizer->setHeight(img_size[1]);
@@ -275,7 +275,7 @@ int main(int argc, char** argv) {
                         resizer->update();
                         //Image::pointer resized = port->getNextFrame<Image>();
 
-                        auto network = SegmentationNetwork::New();
+                        auto network = SegmentationNetwork::create();
                         network->setInferenceEngine(engine);
                         network->getInferenceEngine()->setDevice(1);
                         std::string postfix;
@@ -305,7 +305,7 @@ int main(int argc, char** argv) {
                         network->setScaleFactor(1.0f / 255.0f);   // 1.0f/255.0f
                         network->enableRuntimeMeasurements();
 
-                        auto converter = TensorToSegmentation::New();  // FIXME: This is where it hangs for whatever reason... And only with openvino IE (not TF)
+                        auto converter = TensorToSegmentation::create();  // FIXME: This is where it hangs for whatever reason... And only with openvino IE (not TF)
                         converter->setInputConnection(network->getOutputPort());
                         converter->enableRuntimeMeasurements();
                         //converter->update();
@@ -317,7 +317,7 @@ int main(int argc, char** argv) {
                          */
 
                         // resize back
-                        ImageResizer::pointer resizer2 = ImageResizer::New();
+                        ImageResizer::pointer resizer2 = ImageResizer::create();
                         resizer2->setInputData(converter->updateAndGetOutputData<Image>());
                         resizer2->setWidth(input->getWidth());
                         resizer2->setHeight(input->getHeight());
@@ -433,20 +433,20 @@ int main(int argc, char** argv) {
                 std::cout << "====================================" << std::endl;
 
                 for (int iteration = 0; iteration <= iterations; ++iteration) {
-                    auto importer = WholeSlideImageImporter::New();
+                    auto importer = WholeSlideImageImporter::create();
                     importer->setFilename(Config::getTestDataPath() + "/WSI/A05.svs");
 
-                    auto tissueSegmentation = TissueSegmentation::New();
+                    auto tissueSegmentation = TissueSegmentation::create();
                     tissueSegmentation->setInputConnection(importer->getOutputPort());
 
-                    auto generator = PatchGenerator::New();
+                    auto generator = PatchGenerator::create();
                     generator->setPatchSize(img_size[0], img_size[1]);
                     generator->setPatchLevel(patch_level);
                     generator->setInputConnection(importer->getOutputPort());
                     generator->setInputConnection(1, tissueSegmentation->getOutputPort());
                     generator->enableRuntimeMeasurements();
 
-                    auto network = SegmentationNetwork::New();
+                    auto network = SegmentationNetwork::create();
                     network->setInferenceEngine(engine);
                     network->getInferenceEngine()->setDevice(1);
                     std::string postfix;
@@ -468,7 +468,7 @@ int main(int argc, char** argv) {
                     network->setScaleFactor(1.0f / 255.0f);
                     network->enableRuntimeMeasurements();
 
-                    auto stitcher = PatchStitcher::New();
+                    auto stitcher = PatchStitcher::create();
                     stitcher->setInputConnection(network->getOutputPort());
                     stitcher->enableRuntimeMeasurements();
 
@@ -542,20 +542,20 @@ int main(int argc, char** argv) {
                 std::cout << "====================================" << std::endl;
 
                 for(int iteration = 0; iteration <= iterations; ++iteration) {
-                    auto importer = WholeSlideImageImporter::New();
+                    auto importer = WholeSlideImageImporter::create();
                     importer->setFilename(Config::getTestDataPath() + "/WSI/A05.svs");
 
-                    auto tissueSegmentation = TissueSegmentation::New();
+                    auto tissueSegmentation = TissueSegmentation::create();
                     tissueSegmentation->setInputConnection(importer->getOutputPort());
 
-                    auto generator = PatchGenerator::New();
+                    auto generator = PatchGenerator::create();
                     generator->setPatchSize(img_size[0], img_size[1]);
                     generator->setPatchLevel(patch_level);
                     generator->setInputConnection(importer->getOutputPort());
                     generator->setInputConnection(1, tissueSegmentation->getOutputPort());
                     generator->enableRuntimeMeasurements();
 
-                    auto network = BoundingBoxNetwork::New();
+                    auto network = BoundingBoxNetwork::create();
                     network->setThreshold(0.1); //0.01); // default: 0.5
                     network->setInferenceEngine(engine);
                     network->getInferenceEngine()->setDevice(1);
@@ -578,13 +578,13 @@ int main(int argc, char** argv) {
                     std::ifstream infile("/home/andrep/FastPathology/data/Models/yolo_test_model_fixed_output_nodes.anchors");
                     std::string anchorStr;
                     while (std::getline(infile, anchorStr)) {
-                        std::vector<std::string> anchorVector = split(anchorStr, " ");
+                        std::vector<std::string> anchorVector = split_custom(anchorStr, " ");
                         anchorVector.resize(6); // for TinyYOLOv3 should only be 6 pairs, 3 for each level (2 levels)
                         int cntr = 0;
                         for (int i = 1; i < 3; i++) { // assumes TinyYOLOv3 (only two output layers)
                             std::vector<Vector2f> levelAnchors;
                             for (int j = 0; j < 3; j++) {
-                                auto currentPair = split(anchorVector[cntr], ",");
+                                auto currentPair = split_custom(anchorVector[cntr], ",");
                                 levelAnchors.push_back(Vector2f(std::stoi(currentPair[0]), std::stoi(currentPair[1])));
                                 cntr++;
                             }
@@ -599,7 +599,7 @@ int main(int argc, char** argv) {
                     network->setScaleFactor(1.0f / 255.0f);
                     network->enableRuntimeMeasurements();
 
-                    auto boxAccum = BoundingBoxSetAccumulator::New();
+                    auto boxAccum = BoundingBoxSetAccumulator::create();
                     //boxAccum->setInputConnection(nms->getOutputPort());
                     boxAccum->setInputConnection(network->getOutputPort());
                     boxAccum->enableRuntimeMeasurements();
@@ -682,24 +682,24 @@ int main(int argc, char** argv) {
                     std::cout << "//////////////////////////////" << std::endl;
 
                     for (int iteration = 0; iteration <= iterations; ++iteration) {
-                        auto importer = WholeSlideImageImporter::New();
+                        auto importer = WholeSlideImageImporter::create();
                         importer->setFilename(Config::getTestDataPath() + "/WSI/A05.svs");
 
-                        auto tissueSegmentation = TissueSegmentation::New();
+                        auto tissueSegmentation = TissueSegmentation::create();
                         tissueSegmentation->setInputConnection(importer->getOutputPort());
 
-                        auto generator = PatchGenerator::New();
+                        auto generator = PatchGenerator::create();
                         generator->setPatchSize(img_size[0], img_size[1]);
                         generator->setPatchLevel(patch_level);
                         generator->setInputConnection(importer->getOutputPort());
                         generator->setInputConnection(1, tissueSegmentation->getOutputPort());
                         generator->enableRuntimeMeasurements();
 
-                        auto batchGenerator = ImageToBatchGenerator::New();
+                        auto batchGenerator = ImageToBatchGenerator::create();
                         batchGenerator->setMaxBatchSize(max_batch_size);
                         batchGenerator->setInputConnection(generator->getOutputPort());
 
-                        auto network = NeuralNetwork::New();
+                        auto network = NeuralNetwork::create();
                         network->setInferenceEngine(engine);
                         if (engine != "TensorRT") {
                             //if (!((engine == "TensorRT") || (engine == "TensorFlowCUDA"))) {
@@ -729,7 +729,7 @@ int main(int argc, char** argv) {
                         network->setScaleFactor(1.0f / 255.0f);
                         network->enableRuntimeMeasurements();
 
-                        auto stitcher = PatchStitcher::New();
+                        auto stitcher = PatchStitcher::create();
                         stitcher->setInputConnection(network->getOutputPort());
                         stitcher->enableRuntimeMeasurements();
 
@@ -843,7 +843,7 @@ int main(int argc, char** argv) {
                     std::cout << "//////////////////////////////" << std::endl;
 
                     for (int iteration = 0; iteration <= iterations; ++iteration) {
-                        auto importer = WholeSlideImageImporter::New();
+                        auto importer = WholeSlideImageImporter::create();
                         //importer->setFilename(Config::getTestDataPath() + "/WSI/A05.svs");
                         if (machine == "windows") {
                             importer->setFilename("C:/Users/andrep/workspace/FAST-Pathology_old/A05.svs");
@@ -853,10 +853,10 @@ int main(int argc, char** argv) {
                             importer->setFilename(Config::getTestDataPath() + "/WSI/A05.svs");
                         }
 
-                        auto tissueSegmentation = TissueSegmentation::New();
+                        auto tissueSegmentation = TissueSegmentation::create();
                         tissueSegmentation->setInputConnection(importer->getOutputPort());
 
-                        auto generator = PatchGenerator::New();
+                        auto generator = PatchGenerator::create();
                         generator->setPatchSize(img_size[0], img_size[1]);
                         generator->setPatchLevel(patch_level);
                         generator->setInputConnection(importer->getOutputPort());
@@ -864,12 +864,12 @@ int main(int argc, char** argv) {
                         generator->enableRuntimeMeasurements();
 
                         /*
-                        auto batchGenerator = ImageToBatchGenerator::New();
+                        auto batchGenerator = ImageToBatchGenerator::create();
                         batchGenerator->setMaxBatchSize(max_batch_size);
                         batchGenerator->setInputConnection(generator->getOutputPort());
                          */
 
-                        auto network = NeuralNetwork::New();
+                        auto network = NeuralNetwork::create();
                         network->setInferenceEngine(engine);
                         if (engine != "TensorRT") {
                             //if (!((engine == "TensorRT") || (engine == "TensorFlowCUDA"))) {
@@ -916,7 +916,7 @@ int main(int argc, char** argv) {
                         network->setScaleFactor(1.0f / 255.0f);
                         network->enableRuntimeMeasurements();
 
-                        auto stitcher = PatchStitcher::New();
+                        auto stitcher = PatchStitcher::create();
                         stitcher->setInputConnection(network->getOutputPort());
                         stitcher->enableRuntimeMeasurements();
 
@@ -1016,7 +1016,7 @@ int main(int argc, char** argv) {
                         std::cout << "------------------------------------" << std::endl;
 
                         for(int iteration = 0; iteration <= iterations; ++iteration) {
-                            auto importer = WholeSlideImageImporter::New();
+                            auto importer = WholeSlideImageImporter::create();
                             importer->setFilename("/home/andrep/workspace/FAST-Pathology/fastPathology_stuff/images/camelyon16_tumor_047-043.tif");
 
                             /*
@@ -1027,10 +1027,10 @@ int main(int argc, char** argv) {
                             std::cout << "\nFinished!" << std::endl;
                              */
 
-                            auto tissueSegmentation = TissueSegmentation::New();
+                            auto tissueSegmentation = TissueSegmentation::create();
                             tissueSegmentation->setInputConnection(importer->getOutputPort());
 
-                            auto generator = PatchGenerator::New();
+                            auto generator = PatchGenerator::create();
                             generator->setPatchSize(img_size, img_size);
                             std::cout << "\nCurrent p-level: " << curr_patch_level << std::endl;
                             generator->setPatchLevel(curr_patch_level);
@@ -1038,7 +1038,7 @@ int main(int argc, char** argv) {
                             generator->setInputConnection(1, tissueSegmentation->getOutputPort());
                             generator->enableRuntimeMeasurements();
 
-                            auto network = SegmentationNetwork::New();
+                            auto network = SegmentationNetwork::create();
                             network->setInferenceEngine(engine);
                             network->getInferenceEngine()->setDevice(1);
                             std::string postfix;
@@ -1060,7 +1060,7 @@ int main(int argc, char** argv) {
                             network->setScaleFactor(1.0f / 255.0f);
                             network->enableRuntimeMeasurements();
 
-                            auto stitcher = PatchStitcher::New();
+                            auto stitcher = PatchStitcher::create();
                             stitcher->setInputConnection(network->getOutputPort());
                             stitcher->enableRuntimeMeasurements();
 
@@ -1146,7 +1146,7 @@ int main(int argc, char** argv) {
                     int curr_patch_level = (int) (log2(wsi_res / patch_level) / log2(2));
 
                     for(int iteration = 0; iteration <= iterations; ++iteration) {
-                        auto importer = WholeSlideImageImporter::New();
+                        auto importer = WholeSlideImageImporter::create();
                         importer->setFilename("/home/andrep/workspace/FAST-Pathology/fastPathology_stuff/images/camelyon16_tumor_047-043.tif");
 
                         auto image = importer->updateAndGetOutputData<ImagePyramid>();
@@ -1155,17 +1155,17 @@ int main(int argc, char** argv) {
                         }
                         std::cout << "\nFinished!" << std::endl;
 
-                        auto tissueSegmentation = TissueSegmentation::New();
+                        auto tissueSegmentation = TissueSegmentation::create();
                         tissueSegmentation->setInputConnection(importer->getOutputPort());
 
-                        auto generator = PatchGenerator::New();
+                        auto generator = PatchGenerator::create();
                         generator->setPatchSize(img_size[0], img_size[1]);
                         generator->setPatchLevel(curr_patch_level);
                         generator->setInputConnection(importer->getOutputPort());
                         generator->setInputConnection(1, tissueSegmentation->getOutputPort());
                         generator->enableRuntimeMeasurements();
 
-                        auto network = BoundingBoxNetwork::New();
+                        auto network = BoundingBoxNetwork::create();
                         network->setThreshold(0.1); //0.01); // default: 0.5
                         network->setInferenceEngine(engine);
                         network->getInferenceEngine()->setDevice(1);
@@ -1192,14 +1192,14 @@ int main(int argc, char** argv) {
                                 "/home/andrep/FastPathology/data/Models/yolo_test_model_fixed_output_nodes.anchors");
                         std::string anchorStr;
                         while (std::getline(infile, anchorStr)) {
-                            std::vector<std::string> anchorVector = split(anchorStr, " ");
+                            std::vector<std::string> anchorVector = split_custom(anchorStr, " ");
                             anchorVector.resize(
                                     6); // for TinyYOLOv3 should only be 6 pairs, 3 for each level (2 levels)
                             int cntr = 0;
                             for (int i = 1; i < 3; i++) { // assumes TinyYOLOv3 (only two output layers)
                                 std::vector<Vector2f> levelAnchors;
                                 for (int j = 0; j < 3; j++) {
-                                    auto currentPair = split(anchorVector[cntr], ",");
+                                    auto currentPair = split_custom(anchorVector[cntr], ",");
                                     levelAnchors.push_back(
                                             Vector2f(std::stoi(currentPair[0]), std::stoi(currentPair[1])));
                                     cntr++;
@@ -1217,7 +1217,7 @@ int main(int argc, char** argv) {
                         network->setScaleFactor(1.0f / 255.0f);
                         network->enableRuntimeMeasurements();
 
-                        auto boxAccum = BoundingBoxSetAccumulator::New();
+                        auto boxAccum = BoundingBoxSetAccumulator::create();
                         //boxAccum->setInputConnection(nms->getOutputPort());
                         boxAccum->setInputConnection(network->getOutputPort());
                         boxAccum->enableRuntimeMeasurements();
@@ -1295,23 +1295,23 @@ int main(int argc, char** argv) {
                 std::cout << "====================================" << std::endl;
 
                 for(int iteration = 0; iteration <= iterations; ++iteration) {
-                    auto importer = WholeSlideImageImporter::New();
+                    auto importer = WholeSlideImageImporter::create();
                     importer->setFilename(Config::getTestDataPath() + "/WSI/A05.svs");
 
-                    auto tissueSegmentation = TissueSegmentation::New();
+                    auto tissueSegmentation = TissueSegmentation::create();
                     tissueSegmentation->setInputConnection(importer->getOutputPort());
 
-                    auto generator = PatchGenerator::New();
+                    auto generator = PatchGenerator::create();
                     generator->setPatchSize(512, 512);
                     generator->setPatchLevel(0);
                     generator->setInputConnection(importer->getOutputPort());
                     generator->setInputConnection(1, tissueSegmentation->getOutputPort());
                     generator->enableRuntimeMeasurements();
 
-                    auto batchGenerator = ImageToBatchGenerator::New();
+                    auto batchGenerator = ImageToBatchGenerator::create();
                     batchGenerator->setMaxBatchSize(16);
 
-                    auto network = NeuralNetwork::New();
+                    auto network = NeuralNetwork::create();
                     network->setInferenceEngine(engine);
                     network->getInferenceEngine()->setMaxBatchSize(batchSize);
                     std::string postfix;
@@ -1333,7 +1333,7 @@ int main(int argc, char** argv) {
                     network->setScaleFactor(1.0f / 255.0f);
                     network->enableRuntimeMeasurements();
 
-                    auto stitcher = PatchStitcher::New();
+                    auto stitcher = PatchStitcher::create();
                     stitcher->setInputConnection(network->getOutputPort());
                     stitcher->enableRuntimeMeasurements();
 
