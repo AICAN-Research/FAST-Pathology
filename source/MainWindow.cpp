@@ -154,7 +154,7 @@ MainWindow::MainWindow() {
 std::string MainWindow::createRandomNumbers_(int n) {
 	std::string out;
 	for (int i = 0; i < n; i++) {
-		out.append(std::to_string(i));
+		out.append(std::to_string(rand() % 10));
 	}
 	return out;
 }
@@ -1003,7 +1003,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 			//someRenderer->setLabelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
 		});
 	} else {
-		std::cout << "Invalid renderer used..." << std::endl;
+        simpleInfoPrompt("Invalid renderer used...");
 	}
 
     connect(currComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateChannelValue(int)));
@@ -1609,12 +1609,6 @@ void MainWindow::selectFile() {
                 break;
         }
     }
-    /*
-    if (pageComboBox->count() != 0) { // if not empty, clear
-        pageComboBox->clear();
-        exportComboBox->clear();
-    }
-     */
 
     // TODO: Unable to read .zvi and .scn (Zeiss and Leica). I'm wondering if they are stored in some unexpected way (not image pyramids)
     auto fileNames = QFileDialog::getOpenFileNames(
@@ -1643,11 +1637,15 @@ void MainWindow::selectFile() {
     progDialog.show();
 
 	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-
 	auto currentPosition = curr_pos;
+
+    // need to handle scenario where a WSI is added, but there already exists N WSIs from before
+    auto nb_wsis_in_list = wsiList.size();
+    if (nb_wsis_in_list != 0)
+        currentPosition = nb_wsis_in_list;
+
     int counter = 0;
     for (QString& fileName : fileNames) {
-
         if (fileName == "")
             return;
         //filename = fileName.toStdString();
@@ -1660,7 +1658,7 @@ void MainWindow::selectFile() {
         importer->setFilename(currFileName);
         auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
 
-        // for reading of multiple WSIs, only render last one
+        // for reading of multiple WSIs, only render first one
         if (counter == 0) { //fileNames.count()-1) {
 
             // current WSI (global)
@@ -1686,7 +1684,6 @@ void MainWindow::selectFile() {
             createDynamicViewWidget("WSI", modelName);
 
             // update application name to contain current WSI
-            //setTitle(applicationName + " - " + splitCustom(filename, "/").back());
             if (advancedMode) {
                 setTitle(applicationName + " (Research mode)" + " - " + splitCustom(currFileName, "/").back());
             } else {
@@ -1695,6 +1692,7 @@ void MainWindow::selectFile() {
         }
         counter ++;
 
+        // Create thumbnail image
         // TODO: This is a little bit slow. Possible to speed it up? Bottleneck is probably the creation of thumbnails
         auto access = currImage->getAccess(ACCESS_READ);
         auto input = access->getLevelAsImage(currImage->getNrOfLevels() - 1);
@@ -2654,7 +2652,7 @@ void MainWindow::addModels() {
     QStringList ls = QFileDialog::getOpenFileNames(
             mWidget,
             tr("Select Model"), nullptr,
-            tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff *.anchors" ".onnx"),
+            tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff *.anchors *.onnx *.fpl"),
             nullptr, QFileDialog::DontUseNativeDialog
     ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
 
@@ -2695,7 +2693,7 @@ void MainWindow::addModels() {
         }
 
         // check which corresponding model files that exist, except from the one that is chosen
-        std::vector<std::string> allowedFileFormats{"txt", "pb", "h5", "mapping", "xml", "bin", "uff", "anchors", "onnx"};
+        std::vector<std::string> allowedFileFormats{"txt", "pb", "h5", "mapping", "xml", "bin", "uff", "anchors", "onnx", "fpl"};
 
         std::cout << "Copy test" << std::endl;
         foreach(std::string currExtension, allowedFileFormats) {
@@ -2776,7 +2774,6 @@ float MainWindow::getMagnificationLevel() {
 }
 
 bool MainWindow::segmentTissue() {
-
 	if (wsiList.empty()) {
 		std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
 		return false;
@@ -2784,268 +2781,261 @@ bool MainWindow::segmentTissue() {
 
 	// prompt if you want to run the analysis again, if it has already been ran
     if (hasRenderer("tissue")) {
-        std::cout << "Analysis on current WSI has already been performed. Delete the rendered object from the View widget if you want to run the method again." << std::endl;
+        simpleInfoPrompt("Tissue segmentation on current WSI has already been performed.");
         return false;
-    } else {
-
-		// basic thresholding (with morph. post-proc.) based on euclidean distance from the color white
-        auto tissueSegmentation = TissueSegmentation::New();
-        tissueSegmentation->setInputData(m_image);
-
-        stopFlag = false;
-        if (advancedMode) {
-            // option for setting parameters
-            QDialog paramDialog;
-            paramDialog.setStyleSheet(mWidget->styleSheet()); // transfer style sheet from parent
-            QFormLayout form(&paramDialog);
-            form.addRow(new QLabel("Please, set the parameters for this analysis: "));
-
-            // threshold : for WSI this should be grayed out, shouldn't be able to change it
-            auto threshSlider = new QSlider(Qt::Horizontal, dynamicViewWidget);
-            threshSlider->setFixedWidth(150);
-            threshSlider->setMinimum(0);
-            threshSlider->setMaximum(255);
-            threshSlider->setValue(tissueSegmentation->getThreshold());
-            threshSlider->setTickInterval(1);
-            QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue){tissueSegmentation->setThreshold(newValue);});
-
-            auto currValue = new QLabel;
-            currValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getThreshold())));
-            currValue->setFixedWidth(50);
-            QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue){currValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getThreshold())));});
-
-			// threshold
-            auto threshWidget = new QWidget;
-            auto sliderLayout = new QHBoxLayout;
-            threshWidget->setLayout(sliderLayout);
-            sliderLayout->addWidget(threshSlider);
-            sliderLayout->addWidget(currValue);
-
-            std::string tempTissueName = "temporaryTissue";
-
-			QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue) {
-				const int step = 2;
-				threshSlider->setValue(newValue);
-				tissueSegmentation->setThreshold(newValue);
-				auto checkFlag = true;
-
-				if (checkFlag) {
-					auto temporaryTissueSegmentation = TissueSegmentation::New();
-					temporaryTissueSegmentation->setInputData(m_image);
-					temporaryTissueSegmentation->setThreshold(tissueSegmentation->getThreshold());
-					temporaryTissueSegmentation->setErode(tissueSegmentation->getErode());
-					temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
-
-					auto someRenderer = SegmentationRenderer::New();
-					someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
-					someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
-					someRenderer->setOpacity(0.4f);
-					someRenderer->update();
-
-					if (hasRenderer(tempTissueName)) {
-
-						auto currRenderer = m_rendererList[tempTissueName];
-						getView(0)->removeRenderer(currRenderer);
-						m_rendererList.erase(tempTissueName);
-					}
-					insertRenderer(tempTissueName, someRenderer);
-				}
-			});
-
-            // dilation
-            auto dilateSlider = new QSlider(Qt::Horizontal, dynamicViewWidget);
-            dilateSlider->setFixedWidth(150);
-            dilateSlider->setMinimum(1);
-            dilateSlider->setMaximum(28);
-            dilateSlider->setValue(tissueSegmentation->getDilate());
-            dilateSlider->setSingleStep(2);
-            QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue) {
-                const int step = 2;
-				bool checkFlag = false;
-                if (newValue < 3) {
-                    dilateSlider->setValue(0);
-                    tissueSegmentation->setDilate(0);
-					checkFlag = true;
-                } else {
-                    if (newValue % 2 != 0) {
-                        dilateSlider->setValue(newValue);
-                        tissueSegmentation->setDilate(newValue);
-						checkFlag = true;
-                    }
-                }
-
-				if (checkFlag) {
-					auto temporaryTissueSegmentation = TissueSegmentation::New();
-					temporaryTissueSegmentation->setInputData(m_image);
-					temporaryTissueSegmentation->setThreshold(tissueSegmentation->getThreshold());
-					temporaryTissueSegmentation->setErode(tissueSegmentation->getErode());
-					temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
-
-					auto someRenderer = SegmentationRenderer::New();
-					someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
-					someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
-					someRenderer->setOpacity(0.4f);
-					someRenderer->update();
-
-					if (hasRenderer(tempTissueName)) {
-						1;
-
-						auto currRenderer = m_rendererList[tempTissueName];
-						getView(0)->removeRenderer(currRenderer);
-						m_rendererList.erase(tempTissueName);
-
-					}
-					insertRenderer(tempTissueName, someRenderer);
-				}
-            });
-
-            auto currDilateValue = new QLabel;
-            currDilateValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getDilate())));
-            currDilateValue->setFixedWidth(50);
-            QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue){currDilateValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getDilate())));});
-
-            auto dilateWidget = new QWidget;
-            auto dilateSliderLayout = new QHBoxLayout;
-            dilateWidget->setLayout(dilateSliderLayout);
-            dilateSliderLayout->addWidget(dilateSlider);
-            dilateSliderLayout->addWidget(currDilateValue);
-
-            // erosion
-            auto erodeSlider = new QSlider(Qt::Horizontal, dynamicViewWidget);
-            erodeSlider->setFixedWidth(150);
-            erodeSlider->setMinimum(1);
-            erodeSlider->setMaximum(28);
-            erodeSlider->setValue(tissueSegmentation->getErode());
-            erodeSlider->setSingleStep(2);
-            QObject::connect(erodeSlider, &QSlider::valueChanged, [=](int newValue) {
-                bool checkFlag = false;
-                if (newValue < 3) {
-                    erodeSlider->setValue(0);
-                    tissueSegmentation->setErode(0);
-                    checkFlag = true;
-                } else {
-                    if (newValue % 2 != 0) {
-                        erodeSlider->setValue(newValue);
-                        tissueSegmentation->setErode(newValue);
-                        checkFlag = true;
-                    }
-                }
-                // /*
-                if (checkFlag) {
-                    auto temporaryTissueSegmentation = TissueSegmentation::New();
-                    temporaryTissueSegmentation->setInputData(m_image);
-                    temporaryTissueSegmentation->setThreshold(tissueSegmentation->getThreshold());
-                    temporaryTissueSegmentation->setErode(tissueSegmentation->getErode());
-                    temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
-
-                    auto someRenderer = SegmentationRenderer::New();
-                    someRenderer->setColor(1, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
-                    someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
-                    someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
-                    someRenderer->update();
-
-                    if (hasRenderer(tempTissueName)) {
-
-						auto currRenderer = m_rendererList[tempTissueName];
-						getView(0)->removeRenderer(currRenderer);
-						m_rendererList.erase(tempTissueName);
-                    }
-                    //m_rendererTypeList[tempTissueName] = "SegmentationRenderer";
-                    insertRenderer(tempTissueName, someRenderer);
-                }
-                // */
-            });
-
-            auto currErodeValue = new QLabel;
-            currErodeValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getErode())));
-            currErodeValue->setFixedWidth(50);
-            QObject::connect(erodeSlider, &QSlider::valueChanged, [=](int newValue){currErodeValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getErode())));});
-
-            auto erodeWidget = new QWidget;
-            auto erodeSliderLayout = new QHBoxLayout;
-            erodeWidget->setLayout(erodeSliderLayout);
-            erodeSliderLayout->addWidget(erodeSlider);
-            erodeSliderLayout->addWidget(currErodeValue);
-
-            QList<QSlider *> fields;
-            QString labelThresh = "Threshold";
-            form.addRow(labelThresh, threshWidget);
-            fields << threshSlider;
-
-            QString labelDilate = "Dilation";
-            form.addRow(labelDilate, dilateWidget);
-            fields << dilateSlider;
-
-            QString labelErode = "Erosion";
-            form.addRow(labelErode, erodeWidget);
-            fields << erodeSlider;
-
-            // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
-            QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
-                    Qt::Horizontal, &paramDialog);
-            buttonBox.button(QDialogButtonBox::Ok)->setText("Run");
-            form.addRow(&buttonBox);
-            QObject::connect(&buttonBox, SIGNAL(accepted()), &paramDialog, SLOT(accept()));
-            QObject::connect(&buttonBox, SIGNAL(rejected()), &paramDialog, SLOT(reject()));
-
-            // Show the dialog as modal
-            int ret = paramDialog.exec();
-
-            // should delete temporary segmentation when selecting is finished or cancelled
-            auto currRenderer = m_rendererList[tempTissueName];
-            getView(0)->removeRenderer(currRenderer);
-            m_rendererList.erase(tempTissueName);
-
-            std::cout << "Value chosen: " << ret << std::endl;
-            switch (ret) {
-                case 1:
-                    std::cout << "OK was pressed, should have updated params!" << std::endl;
-                    break;
-                case 0:
-                    std::cout << "Cancel was pressed." << std::endl;
-                    stopFlag = true;
-                    return false;
-                default:
-                    std::cout << "Default was pressed." << std::endl;
-                    return false;
-            }
-        }
-
-        std::cout << "Thresh: " << tissueSegmentation->getThreshold() << std::endl;
-        std::cout << "Dilate: " << tissueSegmentation->getDilate() << std::endl;
-        std::cout << "Erode:  " << tissueSegmentation->getErode() << std::endl;
-
-        // finally get resulting tissueMap to be used later on
-        m_tissue = tissueSegmentation->updateAndGetOutputData<Image>();
-
-        auto someRenderer = SegmentationRenderer::New();
-        someRenderer->setColor(1, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
-        someRenderer->setInputData(m_tissue);
-        someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
-        someRenderer->update();
-
-		std::string currSegment = "tissue";
-
-		// TODO: should append some unique ID next to "tissue" (also really for all other results) such that multiple
-		//  runs with different hyperparamters may be ran, visualized and stored
-		/*
-        std::string origSegment = "tissue";
-        auto iter = 2;
-        while (hasRenderer(currSegment)) {
-            currSegment = origSegment + std::to_string(iter);
-            iter++;
-        }
-		 */
-
-		m_rendererTypeList[currSegment] = "SegmentationRenderer";
-        createDynamicViewWidget(currSegment, modelName);
-        insertRenderer(currSegment, someRenderer);
-
-        availableResults[currSegment] = m_tissue;
-        exportComboBox->addItem(tr(currSegment.c_str()));
-
-        return true;
     }
+
+	// basic thresholding (with morph. post-proc.) based on euclidean distance from the color white
+    auto tissueSegmentation = TissueSegmentation::New();
+    tissueSegmentation->setInputData(m_image);
+
+    stopFlag = false;
+    if (advancedMode) {
+        // option for setting parameters
+        QDialog paramDialog;
+        paramDialog.setStyleSheet(mWidget->styleSheet()); // transfer style sheet from parent
+        QFormLayout form(&paramDialog);
+        form.addRow(new QLabel("Please, set the parameters for this analysis: "));
+
+        // threshold : for WSI this should be grayed out, shouldn't be able to change it
+        auto threshSlider = new QSlider(Qt::Horizontal, dynamicViewWidget);
+        threshSlider->setFixedWidth(150);
+        threshSlider->setMinimum(0);
+        threshSlider->setMaximum(255);
+        threshSlider->setValue(tissueSegmentation->getThreshold());
+        threshSlider->setTickInterval(1);
+        QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue){tissueSegmentation->setThreshold(newValue);});
+
+        auto currValue = new QLabel;
+        currValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getThreshold())));
+        currValue->setFixedWidth(50);
+        QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue){currValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getThreshold())));});
+
+		// threshold
+        auto threshWidget = new QWidget;
+        auto sliderLayout = new QHBoxLayout;
+        threshWidget->setLayout(sliderLayout);
+        sliderLayout->addWidget(threshSlider);
+        sliderLayout->addWidget(currValue);
+
+        std::string tempTissueName = "temporaryTissue";
+
+		QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue) {
+			const int step = 2;
+			threshSlider->setValue(newValue);
+			tissueSegmentation->setThreshold(newValue);
+			auto checkFlag = true;
+
+			if (checkFlag) {
+				auto temporaryTissueSegmentation = TissueSegmentation::New();
+				temporaryTissueSegmentation->setInputData(m_image);
+				temporaryTissueSegmentation->setThreshold(tissueSegmentation->getThreshold());
+				temporaryTissueSegmentation->setErode(tissueSegmentation->getErode());
+				temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
+
+				auto someRenderer = SegmentationRenderer::New();
+				someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
+				someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
+				someRenderer->setOpacity(0.4f);
+				someRenderer->update();
+
+				if (hasRenderer(tempTissueName)) {
+					auto currRenderer = m_rendererList[tempTissueName];
+					getView(0)->removeRenderer(currRenderer);
+					m_rendererList.erase(tempTissueName);
+				}
+				insertRenderer(tempTissueName, someRenderer);
+			}
+		});
+
+        // dilation
+        auto dilateSlider = new QSlider(Qt::Horizontal, dynamicViewWidget);
+        dilateSlider->setFixedWidth(150);
+        dilateSlider->setMinimum(1);
+        dilateSlider->setMaximum(28);
+        dilateSlider->setValue(tissueSegmentation->getDilate());
+        dilateSlider->setSingleStep(2);
+        QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue) {
+            const int step = 2;
+			bool checkFlag = false;
+            if (newValue < 3) {
+                dilateSlider->setValue(0);
+                tissueSegmentation->setDilate(0);
+				checkFlag = true;
+            } else {
+                if (newValue % 2 != 0) {
+                    dilateSlider->setValue(newValue);
+                    tissueSegmentation->setDilate(newValue);
+					checkFlag = true;
+                }
+            }
+
+			if (checkFlag) {
+				auto temporaryTissueSegmentation = TissueSegmentation::New();
+				temporaryTissueSegmentation->setInputData(m_image);
+				temporaryTissueSegmentation->setThreshold(tissueSegmentation->getThreshold());
+				temporaryTissueSegmentation->setErode(tissueSegmentation->getErode());
+				temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
+
+				auto someRenderer = SegmentationRenderer::New();
+				someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
+				someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
+				someRenderer->setOpacity(0.4f);
+				someRenderer->update();
+
+				if (hasRenderer(tempTissueName)) {
+					auto currRenderer = m_rendererList[tempTissueName];
+					getView(0)->removeRenderer(currRenderer);
+					m_rendererList.erase(tempTissueName);
+				}
+				insertRenderer(tempTissueName, someRenderer);
+			}
+        });
+
+        auto currDilateValue = new QLabel;
+        currDilateValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getDilate())));
+        currDilateValue->setFixedWidth(50);
+        QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue){currDilateValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getDilate())));});
+
+        auto dilateWidget = new QWidget;
+        auto dilateSliderLayout = new QHBoxLayout;
+        dilateWidget->setLayout(dilateSliderLayout);
+        dilateSliderLayout->addWidget(dilateSlider);
+        dilateSliderLayout->addWidget(currDilateValue);
+
+        // erosion
+        auto erodeSlider = new QSlider(Qt::Horizontal, dynamicViewWidget);
+        erodeSlider->setFixedWidth(150);
+        erodeSlider->setMinimum(1);
+        erodeSlider->setMaximum(28);
+        erodeSlider->setValue(tissueSegmentation->getErode());
+        erodeSlider->setSingleStep(2);
+        QObject::connect(erodeSlider, &QSlider::valueChanged, [=](int newValue) {
+            bool checkFlag = false;
+            if (newValue < 3) {
+                erodeSlider->setValue(0);
+                tissueSegmentation->setErode(0);
+                checkFlag = true;
+            } else {
+                if (newValue % 2 != 0) {
+                    erodeSlider->setValue(newValue);
+                    tissueSegmentation->setErode(newValue);
+                    checkFlag = true;
+                }
+            }
+            // /*
+            if (checkFlag) {
+                auto temporaryTissueSegmentation = TissueSegmentation::New();
+                temporaryTissueSegmentation->setInputData(m_image);
+                temporaryTissueSegmentation->setThreshold(tissueSegmentation->getThreshold());
+                temporaryTissueSegmentation->setErode(tissueSegmentation->getErode());
+                temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
+
+                auto someRenderer = SegmentationRenderer::New();
+                someRenderer->setColor(1, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
+                someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
+                someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
+                someRenderer->update();
+
+                if (hasRenderer(tempTissueName)) {
+					auto currRenderer = m_rendererList[tempTissueName];
+					getView(0)->removeRenderer(currRenderer);
+					m_rendererList.erase(tempTissueName);
+                }
+                insertRenderer(tempTissueName, someRenderer);
+            }
+            // */
+        });
+
+        auto currErodeValue = new QLabel;
+        currErodeValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getErode())));
+        currErodeValue->setFixedWidth(50);
+        QObject::connect(erodeSlider, &QSlider::valueChanged, [=](int newValue){currErodeValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getErode())));});
+
+        auto erodeWidget = new QWidget;
+        auto erodeSliderLayout = new QHBoxLayout;
+        erodeWidget->setLayout(erodeSliderLayout);
+        erodeSliderLayout->addWidget(erodeSlider);
+        erodeSliderLayout->addWidget(currErodeValue);
+
+        QList<QSlider *> fields;
+        QString labelThresh = "Threshold";
+        form.addRow(labelThresh, threshWidget);
+        fields << threshSlider;
+
+        QString labelDilate = "Dilation";
+        form.addRow(labelDilate, dilateWidget);
+        fields << dilateSlider;
+
+        QString labelErode = "Erosion";
+        form.addRow(labelErode, erodeWidget);
+        fields << erodeSlider;
+
+        // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
+        QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+                Qt::Horizontal, &paramDialog);
+        buttonBox.button(QDialogButtonBox::Ok)->setText("Run");
+        form.addRow(&buttonBox);
+        QObject::connect(&buttonBox, SIGNAL(accepted()), &paramDialog, SLOT(accept()));
+        QObject::connect(&buttonBox, SIGNAL(rejected()), &paramDialog, SLOT(reject()));
+
+        // Show the dialog as modal
+        int ret = paramDialog.exec();
+
+        // should delete temporary segmentation when selecting is finished or cancelled
+        auto currRenderer = m_rendererList[tempTissueName];
+        getView(0)->removeRenderer(currRenderer);
+        m_rendererList.erase(tempTissueName);
+
+        std::cout << "Value chosen: " << ret << std::endl;
+        switch (ret) {
+            case 1:
+                std::cout << "OK was pressed, should have updated params!" << std::endl;
+                break;
+            case 0:
+                std::cout << "Cancel was pressed." << std::endl;
+                stopFlag = true;
+                return false;
+            default:
+                std::cout << "Default was pressed." << std::endl;
+                return false;
+        }
+    }
+
+    std::cout << "Thresh: " << tissueSegmentation->getThreshold() << std::endl;
+    std::cout << "Dilate: " << tissueSegmentation->getDilate() << std::endl;
+    std::cout << "Erode:  " << tissueSegmentation->getErode() << std::endl;
+
+    // finally get resulting tissueMap to be used later on
+    m_tissue = tissueSegmentation->updateAndGetOutputData<Image>();
+
+    auto someRenderer = SegmentationRenderer::New();
+    someRenderer->setColor(1, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
+    someRenderer->setInputData(m_tissue);
+    someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
+    someRenderer->update();
+
+	std::string currSegment = "tissue";
+
+	// TODO: should append some unique ID next to "tissue" (also really for all other results) such that multiple
+	//  runs with different hyperparamters may be ran, visualized and stored
+	/*
+    std::string origSegment = "tissue";
+    auto iter = 2;
+    while (hasRenderer(currSegment)) {
+        currSegment = origSegment + std::to_string(iter);
+        iter++;
+    }
+		*/
+
+	m_rendererTypeList[currSegment] = "SegmentationRenderer";
+    createDynamicViewWidget(currSegment, modelName);
+    insertRenderer(currSegment, someRenderer);
+
+    availableResults[currSegment] = m_tissue;
+    exportComboBox->addItem(tr(currSegment.c_str()));
+
+    return true;
 }
 
 void MainWindow::loadHighres(QString path, QString name) {
@@ -3185,7 +3175,7 @@ void MainWindow::runPipeline(std::string path) {
 		// pipeline requires some user-defined inputs, e.g. which WSI to use (and which model?)
 		std::map<std::string, std::string> arguments;
 		arguments["filename"] = filename;
-		arguments["modelPath"] = path;
+		//arguments["modelPath"] = path;
 
 		// check if folder for current WSI exists, if not, create one
 		/*
@@ -3202,21 +3192,14 @@ void MainWindow::runPipeline(std::string path) {
 
 		// parse fpl-file, and run pipeline with correspodning input arguments
 		auto pipeline = Pipeline(path, arguments);
-		//pipeline.parsePipelineFile();
+        pipeline.parse();
 
-		//m_rendererTypeList["WSI"] == "ImagePyramidRenderer";
-		m_rendererTypeList["nuclei_seg"] == "SegmentationRenderer";
-		//m_rendererTypeList["nuclei_detect"] == "HeatmapRenderer";
-
-		// add renderer(s)
-		//insertRenderer("WSI", pipeline.getRenderers()[0]); // only render the NN-results (not the WSI)
-		//createDynamicViewWidget("wsi", "wsi"); // modelMetadata["name"], modelName);
-
-		insertRenderer("nuclei_seg", pipeline.getRenderers()[1]); // only render the NN-results (not the WSI)
-		createDynamicViewWidget("nuclei_seg", "nuclei_seg"); // modelMetadata["name"], modelName);
-
-		//insertRenderer("nuclei_detect", pipeline.getRenderers()[2]); // only render the NN-results (not the WSI)
-		//createDynamicViewWidget("nuclei_detect", "nuclei_detect"); // modelMetadata["name"], modelName);
+        std::cout << "Before update: " << std::endl;
+        for (const auto& renderer : pipeline.getRenderers()) {
+            auto currId = createRandomNumbers_(8);
+            insertRenderer("result_" + currId, pipeline.getRenderers()[1]);
+            createDynamicViewWidget("result_" + currId, "result_" + currId);
+        }
 
 		// update progress bar
 		progDialog.setValue(counter);
@@ -3540,7 +3523,8 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
     for (const auto &[k, v] : modelMetadata)
         std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
 
-    try {
+    // try {
+    if (true) {
 		// if no WSI is currently being rendered,
 		if (wsiList.empty()) {
 			std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
@@ -3548,7 +3532,6 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 		}
 
 		std::cout << "Current model: " << someModelName << std::endl;
-
 		stopFlag = false;
 
 		// for run-for-project
@@ -3871,19 +3854,13 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 								TensorShape({ 1, std::stoi(modelMetadata["nb_classes"]) }));
 						}
 
-						std::cout << "Chosen IE extension: "
-							<< getModelFileExtension(
-								network->getInferenceEngine()->getPreferredModelFormat())
-							<< std::endl;
+                        //auto extension = "";
+                        //if (engine == "OpenVINO") {
+                        //}
 
-
-						if (engine != "TensorRT") {
-							network->load(cwd + "data/Models/" + someModelName + "." + getModelFileExtension(
-								network->getInferenceEngine()->getPreferredModelFormat())); //".uff");
-						}
-						else {
-							network->load(cwd + "data/Models/" + someModelName + "." + chosenIE);
-						}
+                        if ((engine != "TensorRT") && (engine != "OpenVINO"))
+                            chosenIE = getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat());
+                        network->load(cwd + "data/Models/" + someModelName + "." + chosenIE);
 					}
 
 					//network->setInferenceEngine("OpenVINO"); // force it to use a specific IE -> only for testing
@@ -3894,15 +3871,13 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 						auto port = resizer->getOutputPort();
 						resizer->update();
 						network->setInputData(port->getNextFrame<Image>());
-					}
-					else {
+					} else {
 						// whether or not to run tissue segmentation
 						if (modelMetadata["tissue_threshold"] == "none") {
 							std::cout
 								<< "No tissue segmentation filtering will be applied before this analysis."
 								<< std::endl;
-						}
-						else if (!modelMetadata["tissue_threshold"].empty()) {
+						} else if (!modelMetadata["tissue_threshold"].empty()) {
 							auto tissueSegmentation = TissueSegmentation::New();
 							tissueSegmentation->setInputData(m_image);
 							tissueSegmentation->setThreshold(std::stoi(modelMetadata["tissue_threshold"]));
@@ -3922,8 +3897,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 							//   names such as m_tissue and m_tumorMap.
 							if (m_tissue) {
 								generator->setInputData(1, m_tissue);
-							}
-							else if (m_tumorMap) {
+							} else if (m_tumorMap) {
 								generator->setInputData(1, m_tumorMap);
 							}
 						}
@@ -3934,14 +3908,12 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 						generator->setPatchLevel(patch_lvl_model);
 						if (modelMetadata["mask_threshold"].empty()) {
 							std::cout << "No mask_threshold variable exists. Defaults to 0.5." << std::endl;
-						}
-						else {
+						} else {
 							generator->setMaskThreshold(std::stof(modelMetadata["mask_threshold"]));
 						}
 						if (modelMetadata["patch_overlap"].empty()) {
 							std::cout << "No patch_overlap variable exists. Defaults to 0." << std::endl;
-						}
-						else {
+						} else {
 							generator->setOverlap(std::stof(modelMetadata["patch_overlap"]));
 						}
 						generator->setInputData(0, currImage);
@@ -4210,8 +4182,8 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 
 		//emit inferenceFinished(someModelName);
 		std::cout << "Inference thread is finished..." << std::endl;
-    } catch (const std::exception& e){
-        simpleInfoPrompt("Something went wrong during inference.");
+    //} catch (const std::exception& e){
+    //    simpleInfoPrompt("Something went wrong during inference.");
     };
 }
 
