@@ -1669,6 +1669,7 @@ void MainWindow::selectFile() {
             metadata = m_image->getMetadata(); // get metadata
 
             auto renderer = ImagePyramidRenderer::New();
+            renderer->setSharpening(m_wsiSharpening);
             renderer->setInputData(m_image);
 
             // TODO: Something here results in me not being able to run analysis on new images (after the first)
@@ -1824,6 +1825,7 @@ void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
             metadata = m_image->getMetadata(); // get metadata
 
             auto renderer = ImagePyramidRenderer::New();
+            renderer->setSharpening(m_wsiSharpening);
             renderer->setInputData(m_image);
 
             // TODO: Something here results in me not being able to run analysis on new images (after the first)
@@ -1970,6 +1972,7 @@ void MainWindow::selectFileInProject(int pos) {
 	metadata = m_image->getMetadata();
 
 	auto renderer = ImagePyramidRenderer::New();
+    renderer->setSharpening(m_wsiSharpening);
 	renderer->setInputData(m_image);
 
 	removeAllRenderers();
@@ -2195,6 +2198,7 @@ void MainWindow::openProject() {
             metadata = m_image->getMetadata();
 
             auto renderer = ImagePyramidRenderer::New();
+            renderer->setSharpening(m_wsiSharpening);
             renderer->setInputData(m_image);
 
             removeAllRenderers();
@@ -3735,12 +3739,21 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 					network->setInferenceEngine("TensorRT");
 					chosenIE = "uff";
 				}
-				else if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".onnx") !=
-					acceptedModels.end()) &&
-					(std::find(IEsList.begin(), IEsList.end(), "TensorRT") != IEsList.end())) {
-					std::cout << "TensorRT (using ONNX) selected" << std::endl;
-					network->setInferenceEngine("TensorRT");
-					chosenIE = "onnx";
+                else if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".onnx") !=
+                    acceptedModels.end()) &&
+                    (std::find(IEsList.begin(), IEsList.end(), "TensorRT") != IEsList.end())) {
+                    // @TODO: I don't think this works exactly how I want it to. TensorRT is still find as it is found in the lib/ directory, even though
+                    //  it is not installed.
+                    std::cout << "TensorRT (using ONNX) selected" << std::endl;
+                    network->setInferenceEngine("TensorRT");
+                    chosenIE = "onnx";
+                }
+                else if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".onnx") !=
+                    acceptedModels.end()) &&
+                    (std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end())) {
+                    std::cout << "OpenVINO (using ONNX) selected" << std::endl;
+                    network->setInferenceEngine("OpenVINO");
+                    chosenIE = "onnx";
 				}
 				else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") !=
 					acceptedModels.end() &&
@@ -3858,8 +3871,9 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                         //if (engine == "OpenVINO") {
                         //}
 
-                        if ((engine != "TensorRT") && (engine != "OpenVINO"))
+                        if ((engine != "TensorRT") && (engine != "OpenVINO")) {
                             chosenIE = getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat());
+                        }
                         network->load(cwd + "data/Models/" + someModelName + "." + chosenIE);
 					}
 

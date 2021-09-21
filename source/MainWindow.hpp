@@ -53,6 +53,7 @@ class MainWindow : public Window {
         bool m_runForProject = false;
         bool background_flag = false;
         bool advancedMode = false;
+        bool m_wsiSharpening = false;
 
         int curr_pos = 0;
         float magn_lvl;
