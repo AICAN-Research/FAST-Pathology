@@ -3699,6 +3699,8 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 
 				// init network
 				auto network = NeuralNetwork::New(); // default, need special case for high_res segmentation
+                //return;
+
 				if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
 					network = SegmentationNetwork::New();
 				}
