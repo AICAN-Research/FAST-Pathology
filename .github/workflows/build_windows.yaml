@@ -25,7 +25,6 @@ jobs:
 
     - name: Install FAST
       run: |
-        powershell.exe -file ./fast_windows_4.1.0.exe
         Start-Process -Wait -FilePath "./fast_windows_4.1.0.exe" -ArgumentList "/S" -PassThru
       #./fast_windows_4.1.0.exe /S
       
