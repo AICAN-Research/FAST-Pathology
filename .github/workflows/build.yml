@@ -19,7 +19,7 @@ jobs:
         mkdir subdir
 
     - name: Download FAST
-      #uses: dsaltares/fetch-gh-release-asset@master
+      uses: dsaltares/fetch-gh-release-asset@master
       id: get_release
       uses: ./
       with:
