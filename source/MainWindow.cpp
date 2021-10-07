@@ -3150,6 +3150,48 @@ void MainWindow::loadSegmentation(QString tissuePath, QString name) {
 	savedList.emplace_back(someName);
 }
 
+void MainWindow::runPipeline_wrapper(std::string path) {
+
+    std::vector<std::string> currentWSIs;
+    if (m_runForProject) {
+        currentWSIs = m_runForProjectWsis;
+    }
+    else {
+        currentWSIs.push_back(wsiList[curr_pos]);
+    }
+
+    auto progDialog = QProgressDialog(mWidget);
+    progDialog.setRange(0, (int)currentWSIs.size() - 1);
+    //progDialog.setContentsMargins(0, 0, 0, 0);
+    progDialog.setVisible(true);
+    progDialog.setModal(false);
+    progDialog.setLabelText("Running pipeline across WSIs in project...");
+    //QRect screenrect = mWidget->screen()[0].geometry();
+    progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
+    progDialog.show();
+
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+
+    auto counter = 0;
+    for (const auto& currWSI : currentWSIs) {
+
+        // if run for project is enabled, run the inference-export pipeline in a background thread, else don't
+        if (m_runForProject) {
+            std::atomic_bool stopped(false);
+            std::thread inferenceThread([&, path]() {
+                runPipeline(path);
+            });
+            inferenceThread.detach();
+        }
+        else {
+            runPipeline(path);
+
+            // now make it possible to edit prediction in the View Widget
+            // createDynamicViewWidget(modelMetadata["name"], someModelName);
+        }
+    }
+}
+
 void MainWindow::runPipeline(std::string path) {
 
 	std::vector<std::string> currentWSIs;
@@ -3172,14 +3214,33 @@ void MainWindow::runPipeline(std::string path) {
 
 	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
+    //std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
+
 	auto counter = 0;
 	for (const auto& currWSI : currentWSIs) {
+
+        // check if folder for current WSI exists, if not, create one
+        QString projectFolderName = "C:/Users/andrp/workspace/test_projects/project3";
+        QString wsiResultPath = (projectFolderName.toStdString() + "/results/" +
+            splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
+        wsiResultPath = wsiResultPath.replace("//", "/");
+        if (!QDir(wsiResultPath).exists()) {
+            QDir().mkdir(wsiResultPath);
+        }
+        auto currPath =
+            wsiResultPath.toStdString() + "/" +
+            splitCustom(wsiResultPath.toStdString(), "/").back() +
+            "_" + "tubuleSegTest" + "/";
+            //"_" + modelMetadata["name"] + "/";
 
 		// TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
 		// pipeline requires some user-defined inputs, e.g. which WSI to use (and which model?)
 		std::map<std::string, std::string> arguments;
 		arguments["filename"] = filename;
+        arguments["exportPath"] = currPath;
 		//arguments["modelPath"] = path;
+
+        std::cout << "exportPath: " << currPath << std::endl;
 
 		// check if folder for current WSI exists, if not, create one
 		/*
@@ -3199,11 +3260,13 @@ void MainWindow::runPipeline(std::string path) {
         pipeline.parse();
 
         std::cout << "Before update: " << std::endl;
+        /*
         for (const auto& renderer : pipeline.getRenderers()) {
             auto currId = createRandomNumbers_(8);
             insertRenderer("result_" + currId, pipeline.getRenderers()[1]);
             createDynamicViewWidget("result_" + currId, "result_" + currId);
         }
+         */
 
 		// update progress bar
 		progDialog.setValue(counter);

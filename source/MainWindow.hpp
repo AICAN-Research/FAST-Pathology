@@ -340,6 +340,14 @@ class MainWindow : public Window {
          * @param path
          */
         void runPipeline(std::string path);
+        /**
+         * Simple wrapper of the alternative inference method, runPipeline. If ran with Projects enabled, it will be ran in a
+         * non-blocking background thread and will not render any results. Otherwise the rendered results will be
+         * streamed on the fly, but no results will be stored (relevant for simple demonstrations). If advanced mode
+         * is enabled, a parameter dialog will be prompted for setting parameters before inference is ran.
+         * @param path
+         */
+        void runPipeline_wrapper(std::string path);
 
         // PROJECT RELATED STUFF
         /**
