@@ -13,7 +13,7 @@ cmake-build*
 *.mapping
 *.bin
 *build/
-*build*
+*build
 *.rcc
 *.pro
 WSI/
@@ -22,8 +22,6 @@ Models/
 Models*
 fastpath.png
 tmp/
-Models/
-Models*
 CMakeFiles/
 fastPathology_stuff*
 data/Models/*
