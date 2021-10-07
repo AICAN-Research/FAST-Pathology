@@ -19,9 +19,8 @@ jobs:
         mkdir subdir
 
     - name: Download FAST
-      uses: dsaltares/fetch-gh-release-asset@master
       id: get_release
-      uses: ./
+      uses: dsaltares/fetch-gh-release-asset@master
       with:
         repo: "smistad/FAST"
         version: "tags/v4.1.0"
