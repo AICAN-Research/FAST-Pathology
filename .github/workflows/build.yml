@@ -50,39 +50,9 @@ jobs:
       run: |
         cmake --build ${{github.workspace}}/build --config $${{env.BUILD_TYPE}} -j 4
 
-
-    - name: Display the details
+    - name: Build Package
       run: |
-        echo ${{ steps.get_release.outputs.version }}
-        echo ${{ steps.get_release.outputs.name }}
-        echo ${{ steps.get_release.outputs.body }}
-        ls -l subdir/fast_ubuntu18.04_4.1.0.deb
+        cmake --build ${{github.workspace}}/build --config $${{env.BUILD_TYPE}} --target package -j 4
 
-    # - uses: actions/checkout@v2
-    # - name: Install dependencies
-    #   run: |
-    #     ls
-
-    # - name: Configure CMake
-    #   run: |
-    #     cmake ${{github.workspace}} -B ${{github.workspace}}/build `
-
-    # - name: Build
-    #   run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j 4
-
-    # - name: Package
-    #   run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target package -j 4
+        
     
-    # - name: Upload Windows installer
-    #   uses: actions/upload-artifact@v2
-    #   with:
-    #     name: Window installer
-    #     path: ${{github.workspace}}/build/FastPathology_*.exe
-    #     if-no-files-found: error
-
-    # - name: Upload archive package
-    #   uses: actions/upload-artifact@v2
-    #   with:
-    #     name: Archive package (zip)
-    #     path: ${{github.workspace}}/build/FastPathology_*.zip
-    #     if-no-files-found: error
