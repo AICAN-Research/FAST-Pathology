@@ -18,7 +18,7 @@ jobs:
       run: |
         curl.exe -OL "https://github.com/smistad/FAST/suites/3988368847/artifacts/100451804/Archive package (zip).zip"
         ls 
-        tar xzf "Archive package (zip)"
+        tar xzf "Archive package (zip).zip"
         ls
         tar xzf "fast_windows_4.1.0.zip"
         ls
