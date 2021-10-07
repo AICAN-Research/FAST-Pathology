@@ -1,4 +1,4 @@
-name: Build
+name: Build Ubuntu
 
 on:
   push:
@@ -61,9 +61,9 @@ jobs:
         path: ${{github.workspace}}/build/fastpathology_*.deb
         if-no-files-found: error
 
-    - name: Upload archive package
-      uses: actions/upload-artifact@v2
-      with:
-        name: Archive package (tar.xz)
-        path: ${{github.workspace}}/build/fastpathology_*.tar.xz
-        if-no-files-found: error
+    # - name: Upload archive package
+    #   uses: actions/upload-artifact@v2
+    #   with:
+    #     name: Archive package (tar.xz)
+    #     path: ${{github.workspace}}/build/fastpathology_*.tar.xz
+    #     if-no-files-found: error

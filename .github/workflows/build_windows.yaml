@@ -1,0 +1,63 @@
+name: Build Windows
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: windows-2019
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Create a subdirectory
+      run: |
+        mkdir subdir
+
+    - name: Download FAST
+      id: get_release
+      uses: dsaltares/fetch-gh-release-asset@master
+      with:
+        repo: "smistad/FAST"
+        version: "tags/v4.1.0"
+        file: "fast_windows_4.1.0.exe"
+        target: "subdir/fast_windows_4.1.0.exe"
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install dependencies
+      run: |
+        pip3 install numpy==1.19.5
+
+    - name: Install FAST
+      run: |
+        ./subdir/fast_windows_4.1.0.exe /S
+      
+    - name: Configure CMake
+      run: |
+        cmake -B ${{github.workspace}}/build
+
+    - name: Build FastPathology
+      run: |
+        cmake --build ${{github.workspace}}/build --config $${{env.BUILD_TYPE}} -j 4
+
+    - name: Build Package
+      run: |
+        cmake --build ${{github.workspace}}/build --config $${{env.BUILD_TYPE}} --target package -j 4
+
+    - name: Upload Windows installer
+      uses: actions/upload-artifact@v2
+      with:
+        name: Windows package
+        path: ${{github.workspace}}/build/fastpathology_*.exe
+        if-no-files-found: error
+
+    # - name: Upload archive package
+    #   uses: actions/upload-artifact@v2
+    #   with:
+    #     name: Archive package (tar.xz)
+    #     path: ${{github.workspace}}/build/fastpathology_*.tar.xz
+    #     if-no-files-found: error
