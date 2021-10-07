@@ -16,15 +16,10 @@ jobs:
 
     - name: Download FAST
       run: |
-        curl.exe -OL "https://github.com/smistad/FAST/suites/3988368847/artifacts/100451804/Archive package (zip).zip"
-        ls 
-        tar xzf "Archive package (zip).zip"
+        #curl -OL https://raw.githubusercontent.com/smistad/FAST/master/releases/download/v4.1.0/fast_windows_4.1.0.exe
         ls
-        tar xzf "fast_windows_4.1.0.zip"
-        ls
+    # curl.exe -OL https://github.com/smistad/FAST/suites/3988368847/artifacts/100451804/zip
 
-    #curl -OL https://raw.githubusercontent.com/smistad/FAST/master/releases/download/v4.1.0/fast_windows_4.1.0.exe
-    #ls
     - name: Test Windows 64 bit
       run: |
         [Environment]::Is64BitOperatingSystem
@@ -36,11 +31,16 @@ jobs:
     - name: Install dependencies
       run: |
         pip3 install numpy==1.19.5
+
+    - name: Install FAST
+      run: |
+        ./fast_windows_4.1.0.exe
+      #Start-Process -Wait -FilePath "./fast_windows_4.1.0.exe" -ArgumentList "/S" -PassThru
+      #./fast_windows_4.1.0.exe /S
       
     - name: Configure CMake
       run: |
-        cmake -B ${{github.workspace}}/build `
-            -DFAST_DIR=${{github.workspace}}/fast_windows_4.1.0/fast/cmake
+        cmake -B ${{github.workspace}}/build
 
     - name: Build FastPathology
       run: |
