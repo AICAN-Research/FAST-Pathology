@@ -17,6 +17,7 @@ jobs:
     - name: Download FAST
       run: |
         curl -OL https://raw.githubusercontent.com/smistad/FAST/master/releases/download/v4.1.0/fast_windows_4.1.0.exe
+        ls
 
     - name: Install dependencies
       run: |
