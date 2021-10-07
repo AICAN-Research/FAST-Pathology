@@ -28,10 +28,6 @@ jobs:
         target: "subdir/fast_ubuntu18.04_4.1.0.deb"
         token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Install FAST
-      run: |
-        sudo dpkg -i subdir/fast_ubuntu18.04_4.1.0.deb
-
     - name: Install dependencies
       run: |
         sudo snap install cmake --classic # Use snap to get more recent version of cmake on Ubuntu 18.04
@@ -41,6 +37,10 @@ jobs:
         sudo apt install pkgconf libusb-1.0-0-dev # Needed for realsense
         sudo apt install python3 libpython3-dev python3-pip python3-setuptools
         pip3 install numpy==1.19.5 pylddwrap==1.2.0
+
+    - name: Install FAST
+      run: |
+        sudo dpkg -i subdir/fast_ubuntu18.04_4.1.0.deb
       
     - name: Configure CMake
       run: |
