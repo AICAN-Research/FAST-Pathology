@@ -16,7 +16,7 @@ jobs:
 
     - name: Download FAST
       run: |
-        curl.exe -OL https://github.com/smistad/FAST/suites/3988368847/artifacts/100451804/zip
+        curl.exe -OL "https://github.com/smistad/FAST/suites/3988368847/artifacts/100451804/Archive package (zip).zip"
         ls 
         tar xzf "Archive package (zip)"
         ls
