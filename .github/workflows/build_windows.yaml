@@ -25,7 +25,8 @@ jobs:
 
     - name: Install FAST
       run: |
-        ./fast_windows_4.1.0.exe /S
+        powershell.exe -file ./fast_windows_4.1.0.exe
+      #./fast_windows_4.1.0.exe /S
       
     - name: Configure CMake
       run: |
