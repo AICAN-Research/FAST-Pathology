@@ -37,6 +37,16 @@ jobs:
         ./fast_windows_4.1.0.exe
       #Start-Process -Wait -FilePath "./fast_windows_4.1.0.exe" -ArgumentList "/S" -PassThru
       #./fast_windows_4.1.0.exe /S
+
+    - name: Check if FAST is installed
+      run: |
+        ls
+        cd "C:/Program Files"
+        ls
+        cd "C:/Program Files/FAST"
+        ls
+        cd "C:/Program Files/FAST/cmake"
+        ls
       
     - name: Configure CMake
       run: |
