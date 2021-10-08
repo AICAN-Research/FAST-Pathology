@@ -29,10 +29,10 @@ jobs:
     - name: Debugging
       run: |
         ls
-        \n
+        echo
         cd fast_macosx10.13_4.1.0
         ls
-        \n
+        echo
         cd fast
         ls
       
