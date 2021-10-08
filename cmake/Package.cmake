@@ -143,7 +143,10 @@ if(WIN32 AND NOT UNIX)
 	set(CPACK_NSIS_INSTALLED_ICON_NAME bin\\\\fastpathology.exe)
 	set(CPACK_NSIS_INSTALL_DIRECTORY ${CPACK_NSIS_INSTALL_ROOT}/FastPathology) #${CPACK_PACKAGE_INSTALL_DIRECTORY})
 
-    include(CPack)
+elseif(APPLE)
+    set(CPACK_GENERATOR "TXZ")
+    set(CPACK_PACKAGE_FILE_NAME "fast_macosx_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+
 else()
     ## UNIX
 
@@ -172,5 +175,5 @@ else()
 	set(CPACK_DEBIAN_FILE_NAME "fastpathology_ubuntu_v${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}.deb")
     set(CPACK_DEBIAN_fastpathology_PACKAGE_NAME "fastpathology")
 
-    include(CPack)
 endif()
+include(CPack)
