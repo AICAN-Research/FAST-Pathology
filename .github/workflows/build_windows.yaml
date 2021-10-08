@@ -15,8 +15,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Install dependencies
-      run: |
-        pip3 install numpy==1.19.5
+      run: pip3 install numpy==1.19.5
 
     - name: Download FAST
       run: |
@@ -42,10 +41,3 @@ jobs:
         name: Windows package
         path: ${{github.workspace}}/build/fastpathology_*.exe
         if-no-files-found: error
-
-    # - name: Upload archive package
-    #   uses: actions/upload-artifact@v2
-    #   with:
-    #     name: Archive package (tar.xz)
-    #     path: ${{github.workspace}}/build/fastpathology_*.tar.xz
-    #     if-no-files-found: error

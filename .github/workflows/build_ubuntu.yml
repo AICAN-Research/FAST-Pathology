@@ -39,20 +39,16 @@ jobs:
         pip3 install numpy==1.19.5 pylddwrap==1.2.0
 
     - name: Install FAST
-      run: |
-        sudo dpkg -i subdir/fast_ubuntu18.04_4.1.0.deb
+      run: sudo dpkg -i subdir/fast_ubuntu18.04_4.1.0.deb
       
     - name: Configure CMake
-      run: |
-        cmake -B ${{github.workspace}}/build
+      run: cmake -B ${{github.workspace}}/build
 
     - name: Build FastPathology
-      run: |
-        cmake --build ${{github.workspace}}/build --config $${{env.BUILD_TYPE}} -j 4
+      run: cmake --build ${{github.workspace}}/build --config Release -j 4
 
     - name: Build Package
-      run: |
-        cmake --build ${{github.workspace}}/build --config $${{env.BUILD_TYPE}} --target package -j 4
+      run: cmake --build ${{github.workspace}}/build --config Release --target package -j 4
 
     - name: Upload Debian package
       uses: actions/upload-artifact@v2
@@ -60,10 +56,3 @@ jobs:
         name: Debian package
         path: ${{github.workspace}}/build/fastpathology_*.deb
         if-no-files-found: error
-
-    # - name: Upload archive package
-    #   uses: actions/upload-artifact@v2
-    #   with:
-    #     name: Archive package (tar.xz)
-    #     path: ${{github.workspace}}/build/fastpathology_*.tar.xz
-    #     if-no-files-found: error
