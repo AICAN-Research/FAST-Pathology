@@ -228,7 +228,6 @@ void MainWindow::setApplicationMode() {
             }
             break;
         case QMessageBox::No:
-            1; // if "No", do nothing
             break;
         default:
             break;
@@ -482,7 +481,6 @@ void MainWindow::reset() {
                 exportComboBox->clear();
                 break;
             case QMessageBox::No:
-                1;
                 break;
             default:
                 break;
@@ -1042,7 +1040,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 		//colorSetWidget->setDisabled(true);
 		//biggerTextBoxWidget_imageName->setDisabled(true);
 	} else if (m_rendererTypeList[someName] == "BoundingBoxRenderer") {
-		1;
+
 	} else {
 		colorSetWidget->setDisabled(false);
 	}
@@ -1329,7 +1327,7 @@ void MainWindow::createProcessWidget() {
 
     QDir directory(QString::fromStdString(cwd + "data/Models/"));
     QStringList paths = directory.entryList(QStringList() << "*.txt" << "*.TXT",QDir::Files);
-    int counter=1;
+    int counter = 1;
     foreach(QString currFile, paths) {
 
         // current model
@@ -1427,7 +1425,7 @@ void MainWindow::createExportWidget() {
 }
 
 void MainWindow::createDynamicExportWidget(const std::string& someName) {
-    1;
+    /* Unimplemented at the moment */
 }
 
 void MainWindow::saveThumbnail() {
@@ -2481,7 +2479,7 @@ void MainWindow::runForProject() {
 		for (const auto& currItem : currSelectedItems) {
 			std::cout << "current item: " << currItem->text().toStdString() << std::endl;
 			if (std::find(currItemsAlreadySelected.begin(), currItemsAlreadySelected.end(), currItem->text().toStdString()) != currItemsAlreadySelected.end()) {
-				1;
+			
 			} else {
 				selectedFilesWidget->addItem(currItem->text());
 			}
@@ -3768,8 +3766,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 					network = SegmentationNetwork::New();
 				}
 				else if ((modelMetadata["problem"] == "object_detection") &&
-					(modelMetadata["resolution"] == "high")) {
-					1;
+					(modelMetadata["resolution"] == "high")) { 
 					//network = BoundingBoxNetwork::New();  // TODO: This cannot be done, because the stuff right below is unavailable in NeuralNetwork. BoundingBoxNetwork should be a part of the NeuralNetwork class similarly to the other NN classes.
 					//network->loadAttributes();
 					//network->setThreshold(0.3); // default value: 0.3

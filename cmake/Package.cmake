@@ -145,7 +145,7 @@ if(WIN32 AND NOT UNIX)
 
 elseif(APPLE)
     set(CPACK_GENERATOR "TXZ")
-    set(CPACK_PACKAGE_FILE_NAME "fast_macosx_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+    set(CPACK_PACKAGE_FILE_NAME "fastpathology_macosx_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 
 else()
     ## UNIX
