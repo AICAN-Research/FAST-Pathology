@@ -22,24 +22,19 @@ jobs:
       run: |
         curl.exe -OL https://github.com/smistad/FAST/releases/download/v4.1.0/fast_windows_4.1.0.zip
         tar -xvzf ./fast_windows_4.1.0.zip
-        ls
-        cd fast_windows_4.1.0/
-        ls
-        cd fast
-        ls
       
     - name: Configure CMake
       run: |
         cmake -B ${{github.workspace}}/build `
-            -DFAST_DIR=${{github.workspace}}/fast_windows_4.1.0/fast/cmake
+            -DFAST_DIR=${{github.workspace}}/fast_windows_4.1.0/fast/cmake `
+            -G "Visual Studio 16 2019" `
+            -A "x64"
 
     - name: Build FastPathology
-      run: |
-        cmake --build ${{github.workspace}}/build --config $${{env.BUILD_TYPE}} -j 4
+      run: cmake --build ${{github.workspace}}/build --config $${{env.BUILD_TYPE}} --config Release --target fastpathology -j 4
 
     - name: Build Package
-      run: |
-        cmake --build ${{github.workspace}}/build --config $${{env.BUILD_TYPE}} --target package -j 4
+      run: cmake --build ${{github.workspace}}/build --config $${{env.BUILD_TYPE}} --target package -j 4
 
     - name: Upload Windows installer
       uses: actions/upload-artifact@v2
