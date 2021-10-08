@@ -16,17 +16,11 @@ jobs:
 
     - name: Download FAST
       run: |
-        curl.exe -OL https://github.com/smistad/FAST/releases/download/v4.1.0/fast_windows_4.1.0.exe
+        curl.exe -OL https://github.com/smistad/FAST/releases/download/v4.1.0/fast_windows_4.1.0.zip
+        tar -xvzf ./fast_windows_4.1.0.zip
         ls
-    # curl.exe -OL https://github.com/smistad/FAST/suites/3988368847/artifacts/100451804/zip
-
-    - name: Test Windows 64 bit
-      run: |
-        [Environment]::Is64BitOperatingSystem
-
-    - name: Test Windows 32 bit
-      run: |
-        [Environment]::Is32BitOperatingSystem
+        cd fast_windows_4.1.0/
+        ls
 
     - name: Install dependencies
       run: |
