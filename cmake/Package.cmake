@@ -87,7 +87,7 @@ install(
 )
 
 # setup .desktop file
-if (UNIX)
+if (UNIX AND NOT APPLE)
 set(APP_CONFIG_CONTENT "[Desktop Entry]
 Name=FastPathology
 Comment=FastPathology
