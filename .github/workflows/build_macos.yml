@@ -31,12 +31,12 @@ jobs:
     - name: Build FastPathology
       run: cmake --build ${{github.workspace}}/build --config Release --target fastpathology -j 4
 
-    - name: Build Package
-      run: cmake --build ${{github.workspace}}/build --config Release --target package -j 4
+    # - name: Build Package
+    #   run: cmake --build ${{github.workspace}}/build --config Release --target package -j 4
 
-    - name: Upload Windows installer
-      uses: actions/upload-artifact@v2
-      with:
-        name: Windows package
-        path: ${{github.workspace}}/build/fastpathology_*.exe
-        if-no-files-found: error
+    # - name: Upload Windows installer
+    #   uses: actions/upload-artifact@v2
+    #   with:
+    #     name: Windows package
+    #     path: ${{github.workspace}}/build/fastpathology_*.exe
+    #     if-no-files-found: error
