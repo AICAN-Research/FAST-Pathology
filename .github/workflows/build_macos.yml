@@ -34,9 +34,9 @@ jobs:
     - name: Build Package
       run: cmake --build ${{github.workspace}}/build --config Release --target package -j 4
 
-    - name: Upload Windows installer
+    - name: Upload archive package
       uses: actions/upload-artifact@v2
       with:
-        name: Windows package
-        path: ${{github.workspace}}/build/fastpathology_*.exe
+        name: Archive package (tar.xz)
+        path: ${{github.workspace}}/build/fastpathology_*.tar.xz
         if-no-files-found: error
