@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-10.15
 
     steps:
     - name: Checkout
@@ -38,6 +38,14 @@ jobs:
       
     - name: Configure CMake
       run: |
+        ls ${{github.workspace}}
+        echo
+        ls ${{github.workspace}}/fast_macosx10.13_4.1.0
+        echo
+        ls ${{github.workspace}}/fast_macosx10.13_4.1.0/fast
+        echo
+        ls ${{github.workspace}}/fast_macosx10.13_4.1.0/fast/cmake/
+        echo
         cmake -B ${{github.workspace}}/build `
             -DFAST_DIR=${{github.workspace}}/fast_macosx10.13_4.1.0/fast/cmake/ `
 
