@@ -18,6 +18,12 @@ if(WIN32)
         DESTINATION bin
         FILES_MATCHING PATTERN "*.dll" PATTERN "*plugins.xml"
     )
+elseif(APPLE)
+    install(
+        DIRECTORY ${FAST_BINARY_DIR}/../lib/
+        DESTINATION lib
+        FILES_MATCHING PATTERN "*.dylib*" PATTERN "*plugins.xml"
+    )
 else()
     install(
         DIRECTORY ${FAST_BINARY_DIR}/../lib/
@@ -25,26 +31,32 @@ else()
         FILES_MATCHING PATTERN "*.so*" PATTERN "*plugins.xml"
     )
 endif()
+
 install(
     DIRECTORY ${FAST_BINARY_DIR}/../kernels/
     DESTINATION kernels
 )
+
 install(
     DIRECTORY ${FAST_BINARY_DIR}/../plugins/
     DESTINATION plugins
 )
+
 install(
     DIRECTORY ${FAST_BINARY_DIR}/../doc/
     DESTINATION doc
 )
+
 install(
     DIRECTORY ${FAST_BINARY_DIR}/../licenses/
     DESTINATION licenses
 )
+
 install(
 		DIRECTORY ${FAST_BINARY_DIR}/../pipelines/
 		DESTINATION pipelines
 )
+
 install(
     DIRECTORY
     DESTINATION kernel_binaries
@@ -64,10 +76,8 @@ set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
 DocumentationPath = @ROOT@/doc/
 LibraryPath = @ROOT@/bin/
 QtPluginsPath = @ROOT@/plugins/")
-
 # move data folder to specific location
 #file(MAKE_DIRECTORY $ENV{HOME}/fastpathology/data/Icons)
-
 else()
 # UNIX
 set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
@@ -145,7 +155,7 @@ if(WIN32 AND NOT UNIX)
 
 elseif(APPLE)
     set(CPACK_GENERATOR "TXZ")
-    set(CPACK_PACKAGE_FILE_NAME "fastpathology_macosx_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+    set(CPACK_PACKAGE_FILE_NAME "fastpathology_macosx_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
 else()
     ## UNIX
