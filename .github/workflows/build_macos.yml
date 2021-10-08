@@ -25,9 +25,8 @@ jobs:
       
     - name: Configure CMake
       run: |
-        ls ${{github.workspace}}/fast_macosx10.13_4.1.0/fast/cmake/
-        echo
-        cmake -B ${{github.workspace}}/build -DFAST_DIR=${{github.workspace}}/fast_macosx10.13_4.1.0/fast/cmake/
+        cmake -B ${{github.workspace}}/build \
+            -DFAST_DIR=${{github.workspace}}/fast_macosx10.13_4.1.0/fast/cmake/
 
     - name: Build FastPathology
       run: cmake --build ${{github.workspace}}/build --config Release --target fastpathology -j 4
