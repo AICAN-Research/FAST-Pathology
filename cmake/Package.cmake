@@ -53,8 +53,8 @@ install(
 )
 
 install(
-		DIRECTORY ${FAST_BINARY_DIR}/../pipelines/
-		DESTINATION pipelines
+        DIRECTORY ${FAST_BINARY_DIR}/../pipelines/
+        DESTINATION pipelines
 )
 
 install(
@@ -137,47 +137,54 @@ SET(CPACK_PACKAGE_EXECUTABLES "fastpathology" "fastpathology")
 set(CPACK_ARCHIVE_THREADS 0)
 set(CPACK_THREADS 0)
 
+# point to readme and license files
+set(CPACK_RESOURCE_FILE_README ${PROJECT_SOURCE_DIR}/README.md)
+set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE.md)
+
 if(WIN32)
-	
+
     ## Windows
     # Create windows installer (Requires NSIS from http://nsis.sourceforge.net)
     set(CPACK_GENERATOR NSIS)
 
-	set(CPACK_PACKAGE_INSTALL_DIRECTORY "FastPathology")
-	set(CPACK_PACKAGE_FILE_NAME "fastpathology_win10_v${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
-	set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
-	set(CPACK_NSIS_MENU_LINKS "bin\\\\fastpathology.exe" "FastPathology")
-	set(CPACK_CREATE_DESKTOP_LINKS "fastpathology")
+    set(CPACK_PACKAGE_INSTALL_DIRECTORY "FastPathology")
+    set(CPACK_PACKAGE_FILE_NAME "fastpathology_win10_v${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+    set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+    set(CPACK_NSIS_MENU_LINKS "bin\\\\fastpathology.exe" "FastPathology")
+    set(CPACK_CREATE_DESKTOP_LINKS "fastpathology")
 
-	# Icon stuff
-	set(CPACK_NSIS_MODIFY_PATH ON)
-	#set(CPACK_NSIS_MUI_ICON ${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon_large.ico)  # @TODO: find a way to add icon to installer
-	#set(CPACK_NSIS_MUI_UNICON ${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon_large.ico)
-	#set(CPACK_CREATE_DESKTOP_LINKS ON)
-	set(CPACK_NSIS_INSTALLED_ICON_NAME bin\\\\fastpathology.exe)
-	set(CPACK_NSIS_INSTALL_DIRECTORY ${CPACK_NSIS_INSTALL_ROOT}/FastPathology) #${CPACK_PACKAGE_INSTALL_DIRECTORY})
+    # Icon stuff
+    set(CPACK_NSIS_MODIFY_PATH ON)
+    #set(CPACK_NSIS_MUI_ICON ${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon_large.ico)  # @TODO: find a way to add icon to installer
+    #set(CPACK_NSIS_MUI_UNICON ${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon_large.ico)
+    #set(CPACK_CREATE_DESKTOP_LINKS ON)
+    set(CPACK_NSIS_INSTALLED_ICON_NAME bin\\\\fastpathology.exe)
+    set(CPACK_NSIS_INSTALL_DIRECTORY ${CPACK_NSIS_INSTALL_ROOT}/FastPathology) #${CPACK_PACKAGE_INSTALL_DIRECTORY})
 
 elseif(APPLE)
+    configure_file(${PROJECT_SOURCE_DIR}/README.md ${PROJECT_BINARY_DIR}/ReadMe.txt COPYONLY)
+    set(CPACK_RESOURCE_FILE_README ${PROJECT_BINARY_DIR}/ReadMe.txt)
+
     # create Bundle package
     set(CPACK_GENERATOR "productbuild")
 
-    set(CPACK_PRODUCTBUILD_IDENTITY_NAME "fastpathology")
+    #set(CPACK_PRODUCTBUILD_IDENTITY_NAME "fastpathology")
     set(CPACK_PACKAGE_FILE_NAME "fastpathology_macosx_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
 else()
     ## UNIX
 
-	# Get distro name and version
-	find_program(LSB_RELEASE_EXEC lsb_release)
-	execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
-			OUTPUT_VARIABLE DISTRO_NAME
-			OUTPUT_STRIP_TRAILING_WHITESPACE
-	)
-	string(TOLOWER ${DISTRO_NAME} DISTRO_NAME)
-	execute_process(COMMAND ${LSB_RELEASE_EXEC} -rs
-			OUTPUT_VARIABLE DISTRO_VERSION
-			OUTPUT_STRIP_TRAILING_WHITESPACE
-	)
+    # Get distro name and version
+    find_program(LSB_RELEASE_EXEC lsb_release)
+    execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
+            OUTPUT_VARIABLE DISTRO_NAME
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    string(TOLOWER ${DISTRO_NAME} DISTRO_NAME)
+    execute_process(COMMAND ${LSB_RELEASE_EXEC} -rs
+            OUTPUT_VARIABLE DISTRO_VERSION
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
 
     # Create debian package
     set(CPACK_GENERATOR "DEB")
@@ -189,7 +196,7 @@ else()
     set(CPACK_DEB_COMPONENT_INSTALL OFF)
     set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/fastpathology")  #"/opt/")  $HOME/fastpathology
     set(CPACK_DEBIAN_COMPRESSION_TYPE "xz")
-	set(CPACK_DEBIAN_FILE_NAME "fastpathology_ubuntu_v${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}.deb")
+    set(CPACK_DEBIAN_FILE_NAME "fastpathology_ubuntu_v${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}.deb")
     set(CPACK_DEBIAN_fastpathology_PACKAGE_NAME "fastpathology")
 
 endif()
