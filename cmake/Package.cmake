@@ -12,7 +12,7 @@ install(
 )
 
 # Install FAST dependency (need to include plugins.xml for OpenVINO as well)
-if(WIN32)
+if(WIN32 AND NOT UNIX)
     install(
         DIRECTORY ${FAST_BINARY_DIR}
         DESTINATION bin
@@ -27,7 +27,7 @@ elseif(APPLE)
 else()
     install(
         DIRECTORY ${FAST_BINARY_DIR}/../lib/
-        DESTINATION lib  # lib or bin?
+        DESTINATION lib
         FILES_MATCHING PATTERN "*.so*" PATTERN "*plugins.xml"
     )
 endif()
@@ -70,7 +70,7 @@ install(
 )
 
 # Setup fast_configuration.txt file
-if(WIN32)
+if(WIN32 AND NOT UNIX)
 # windows
 set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
 DocumentationPath = @ROOT@/doc/
@@ -132,6 +132,10 @@ set(CPACK_PACKAGE_FILE_NAME "fastpathology")
 set(CPACK_COMPONENT_FAST_REQUIRED ON)
 
 SET(CPACK_PACKAGE_EXECUTABLES "fastpathology" "fastpathology")
+
+# Speed up compression:
+set(CPACK_ARCHIVE_THREADS 0)
+set(CPACK_THREADS 0)
 
 if(WIN32 AND NOT UNIX)
 	
