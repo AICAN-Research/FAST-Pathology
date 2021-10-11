@@ -12,7 +12,7 @@ install(
 )
 
 # Install FAST dependency (need to include plugins.xml for OpenVINO as well)
-if(WIN32 AND NOT UNIX)
+if(WIN32)
     install(
         DIRECTORY ${FAST_BINARY_DIR}
         DESTINATION bin
@@ -71,19 +71,19 @@ install(
 
 # Setup fast_configuration.txt file
 if(WIN32 AND NOT UNIX)
-# windows
-set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
-DocumentationPath = @ROOT@/doc/
-LibraryPath = @ROOT@/bin/
-QtPluginsPath = @ROOT@/plugins/")
-# move data folder to specific location
-#file(MAKE_DIRECTORY $ENV{HOME}/fastpathology/data/Icons)
+    # windows
+    set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
+    DocumentationPath = @ROOT@/doc/
+    LibraryPath = @ROOT@/bin/
+    QtPluginsPath = @ROOT@/plugins/")
+    # move data folder to specific location
+    #file(MAKE_DIRECTORY $ENV{HOME}/fastpathology/data/Icons)
 else()
-# UNIX
-set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
-DocumentationPath = @ROOT@/doc/
-LibraryPath = @ROOT@/lib/
-QtPluginsPath = @ROOT@/plugins/")
+    # UNIX
+    set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
+    DocumentationPath = @ROOT@/doc/
+    LibraryPath = @ROOT@/lib/
+    QtPluginsPath = @ROOT@/plugins/")
 endif()
 
 # Write file
@@ -98,24 +98,24 @@ install(
 
 # setup .desktop file
 if (UNIX AND NOT APPLE)
-set(APP_CONFIG_CONTENT "[Desktop Entry]
-Name=FastPathology
-Comment=FastPathology
-Exec=/opt/fastpathology/bin/fastpathology
-Terminal=false
-Type=Application
-Icon=/opt/fastpathology/data/Icons/fastpathology_logo_large.png
-Categories=public.app-categorical.medical")
+    set(APP_CONFIG_CONTENT "[Desktop Entry]
+    Name=FastPathology
+    Comment=FastPathology
+    Exec=/opt/fastpathology/bin/fastpathology
+    Terminal=false
+    Type=Application
+    Icon=/opt/fastpathology/data/Icons/fastpathology_logo_large.png
+    Categories=public.app-categorical.medical")
 
-# write
-file(WRITE ${PROJECT_BINARY_DIR}/fastpathology.desktop ${APP_CONFIG_CONTENT})
+    # write
+    file(WRITE ${PROJECT_BINARY_DIR}/fastpathology.desktop ${APP_CONFIG_CONTENT})
 
-# install
-install(
-    FILES ${PROJECT_BINARY_DIR}/fastpathology.desktop
-    DESTINATION /usr/share/applications/
-    PERMISSIONS OWNER_READ OWNER_EXECUTE OWNER_WRITE GROUP_READ GROUP_EXECUTE GROUP_WRITE WORLD_READ WORLD_WRITE WORLD_EXECUTE
-)
+    # install
+    install(
+        FILES ${PROJECT_BINARY_DIR}/fastpathology.desktop
+        DESTINATION /usr/share/applications/
+        PERMISSIONS OWNER_READ OWNER_EXECUTE OWNER_WRITE GROUP_READ GROUP_EXECUTE GROUP_WRITE WORLD_READ WORLD_WRITE WORLD_EXECUTE
+    )
 endif()
 
 set(CPACK_PACKAGE_NAME "fastpathology")
@@ -137,7 +137,7 @@ SET(CPACK_PACKAGE_EXECUTABLES "fastpathology" "fastpathology")
 set(CPACK_ARCHIVE_THREADS 0)
 set(CPACK_THREADS 0)
 
-if(WIN32 AND NOT UNIX)
+if(WIN32)
 	
     ## Windows
     # Create windows installer (Requires NSIS from http://nsis.sourceforge.net)
@@ -159,10 +159,9 @@ if(WIN32 AND NOT UNIX)
 
 elseif(APPLE)
     # create Bundle package
-    set(CPACK_GENERATOR "DragNDrop")
+    set(CPACK_GENERATOR "productbuild")
 
-    set(CPACK_DMG_VOLUME_NAME "fastpathology")
-    set(CPACK_DMG_FORMAT "UDZO")  # zlib compressed
+    set(CPACK_PRODUCTBUILD_IDENTITY_NAME "fastpathology")
     set(CPACK_PACKAGE_FILE_NAME "fastpathology_macosx_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
 else()
