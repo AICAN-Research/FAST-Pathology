@@ -21,11 +21,11 @@ add_dependencies(fastpathology fast_copy)
 
 if (WIN32)
 	target_link_libraries(fastpathology ${FAST_LIBRARIES})
-endif (WIN32)
-
-if (UNIX)
+elseif(APPLE)
 	target_link_libraries(fastpathology ${FAST_LIBRARIES} pthread)
-endif (UNIX)
+else()
+	target_link_libraries(fastpathology ${FAST_LIBRARIES} pthread)
+endif()
 
 set_target_properties(fastpathology PROPERTIES
         CXX_STANDARD 17
