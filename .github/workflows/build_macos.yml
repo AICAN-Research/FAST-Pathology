@@ -35,12 +35,9 @@ jobs:
     - name: Build Package
       run: cmake --build ${{github.workspace}}/build --config Release --target package -j 4
 
-    - name: Check install
-      run: ls -la
-
     - name: Upload Bundle package
       uses: actions/upload-artifact@v2
       with:
         name: Bundle package (macOS)
-        path: ${{github.workspace}}/build/fastpathology_*.pkg
+        path: ${{github.workspace}}/build/fastpathology_*.dmg
         if-no-files-found: error
