@@ -14,9 +14,6 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Install dependencies
-      run: pip3 install numpy==1.19.5
-
     - name: Download FAST
       run: |
         curl.exe -OL https://github.com/smistad/FAST/releases/download/v4.1.0/fast_windows_4.1.0.zip
