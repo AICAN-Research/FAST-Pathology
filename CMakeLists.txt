@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.12)  # 3.15
-# set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version")
 project(fastpathology)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -29,9 +28,6 @@ add_dependencies(fastpathology fast_copy)
 
 if (WIN32)
 	target_link_libraries(fastpathology ${FAST_LIBRARIES})
-elseif(APPLE)
-	# find_library(FAST_LIBRARIES FAST "${CMAKE_CURRENT_SOURCE_DIR}/some-path-here"
-	target_link_libraries(fastpathology ${FAST_LIBRARIES} pthread)  # @TODO: Is this sufficient on macOS?
 else()
 	target_link_libraries(fastpathology ${FAST_LIBRARIES} pthread)
 endif()

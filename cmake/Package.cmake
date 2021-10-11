@@ -158,7 +158,11 @@ if(WIN32 AND NOT UNIX)
 	set(CPACK_NSIS_INSTALL_DIRECTORY ${CPACK_NSIS_INSTALL_ROOT}/FastPathology) #${CPACK_PACKAGE_INSTALL_DIRECTORY})
 
 elseif(APPLE)
-    set(CPACK_GENERATOR "TXZ")
+    # create Bundle package
+    set(CPACK_GENERATOR "Bundle")
+
+    set(CPACK_BUNDLE_ICON "${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon_large.ico")
+    set(CPACK_BUNDLE_NAME "fastpathology")
     set(CPACK_PACKAGE_FILE_NAME "fastpathology_macosx_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
 else()
