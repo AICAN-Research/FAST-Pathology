@@ -159,10 +159,10 @@ if(WIN32 AND NOT UNIX)
 
 elseif(APPLE)
     # create Bundle package
-    set(CPACK_GENERATOR "Bundle")
+    set(CPACK_GENERATOR "DragNDrop")
 
-    set(CPACK_BUNDLE_ICON "${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon_large.ico")
-    set(CPACK_BUNDLE_NAME "fastpathology")
+    set(CPACK_DMG_VOLUME_NAME "fastpathology")
+    set(CPACK_DMG_FORMAT "UDZO")  # zlib compressed
     set(CPACK_PACKAGE_FILE_NAME "fastpathology_macosx_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
 else()
