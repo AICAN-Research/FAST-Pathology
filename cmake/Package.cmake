@@ -158,21 +158,32 @@ if(WIN32)
     set(CPACK_NSIS_INSTALL_DIRECTORY ${CPACK_NSIS_INSTALL_ROOT}/FastPathology) #${CPACK_PACKAGE_INSTALL_DIRECTORY})
 
 elseif(APPLE)
+    ## macOS
+    # start by defining the Bundle Layout
+    file(MAKE_DIRECTORY ${directory})
+
+
+    ## macOS
     configure_file(${PROJECT_SOURCE_DIR}/README.md ${PROJECT_BINARY_DIR}/README.txt COPYONLY)
     set(CPACK_RESOURCE_FILE_README ${PROJECT_BINARY_DIR}/README.txt)
 
     configure_file(${PROJECT_SOURCE_DIR}/LICENSE.md ${PROJECT_BINARY_DIR}/LICENSE.txt COPYONLY)
     set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_BINARY_DIR}/LICENSE.txt)
 
-    # create Bundle package
-    set(CPACK_GENERATOR "productbuild")
+    set(MACOSX_BUNDLE_ICON_FILE fastpathology_logo_macosx.icns)
 
-    #set(CPACK_PRODUCTBUILD_IDENTITY_NAME "fastpathology")
+    set_source_files_properties(myAppImage.icns PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+
+    set(CPACK_GENERATOR "DragNDrop")
+
+    set(CPACK_MACOSX_BUNDLE "TRUE")
+    set(CPACK_DMG_VOLUME_NAME "fastpathology")
+    set(CPACK_DMG_FORMAT "ODZO")  # zlib compression
     set(CPACK_PACKAGE_FILE_NAME "fastpathology_macosx_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+    set(CPACK_PACKAGE_NAME "fastpathology_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
 else()
     ## UNIX
-
     # Get distro name and version
     find_program(LSB_RELEASE_EXEC lsb_release)
     execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
