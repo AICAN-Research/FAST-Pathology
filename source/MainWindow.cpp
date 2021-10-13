@@ -3919,28 +3919,12 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 										{ 1, std::stoi(modelMetadata["nb_classes"]) }));
 							}
 						}
-						else if (engine == "TensorRT") {
-							// TensorRT needs to know everything about the input and output nodes
-							network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
-								{ 1, std::stoi(modelMetadata["nb_channels"]),
-								 std::stoi(modelMetadata["input_img_size_y"]),
-								 std::stoi(modelMetadata["input_img_size_y"]) })); //{1, size, size, 3}
-							network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
-								TensorShape({ 1, std::stoi(modelMetadata["nb_classes"]) }));
-						}
-
-                        //auto extension = "";
-                        //if (engine == "OpenVINO") {
-                        //}
 
                         if ((engine != "TensorRT") && (engine != "OpenVINO")) {
                             chosenIE = getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat());
                         }
                         network->load(cwd + "data/Models/" + someModelName + "." + chosenIE);
 					}
-
-					//network->setInferenceEngine("OpenVINO"); // force it to use a specific IE -> only for testing
-					//network->setInferenceEngine("TensorRT");
 
 					auto generator = PatchGenerator::New();
 					if (modelMetadata["resolution"] == "low") { // special case handling for low_res NN inference
