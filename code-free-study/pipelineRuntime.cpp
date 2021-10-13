@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
     CommandLineParser parser("Measure neural network performance script");
     parser.addOption("disable-warmup");
     parser.parse(argc, argv);
-    const int iterations = 15;  // 10
+    const int iterations = 10;  // 10
     const bool warmupIteration = !parser.getOption("disable-warmup");
 
     std::cout << "\nPatch-wise high-res semantic segmentation...\n" << std::endl;
@@ -36,6 +36,9 @@ int main(int argc, char** argv) {
     // Write header
     file << "Engine;Device Type;Iteration;Patch generator AVG;Patch generator STD;NN input AVG;NN input STD;NN inference AVG;NN inference STD;NN output AVG;NN output STD;Patch stitcher AVG;Patch stitcher STD;Exporter AVG; Exporter STD;Total\n";
 
+    // initialize neural network once
+    //auto network = SegmentationNetwork::New();
+
     for (std::string engine : {"TensorRT", "OpenVINO"}) {
         std::map<std::string, InferenceDeviceType> deviceTypes = {{"ANY", InferenceDeviceType::ANY}};
         if (engine == "OpenVINO") {
@@ -45,99 +48,93 @@ int main(int argc, char** argv) {
                     {"GPU", InferenceDeviceType::GPU},
             };
         }
+
         for (auto &&deviceType : deviceTypes) {
             std::cout << engine << " for device type " << deviceType.first << std::endl;
             std::cout << "====================================" << std::endl;
 
             for (int iteration = 0; iteration <= iterations; ++iteration) {
 
-                // start this in a separate thread
-                std::atomic_bool stopped(true);
-                std::thread pipelineThread([&, img_size, engine, deviceType, patch_level, warmupIteration]() {
+                auto importer = WholeSlideImageImporter::New();
+                //importer->setFilename("C:/Users/andrp/workspace/Henrik-DP/file-and-model-to-henrik-210921/0018ae58b01bdadc8e347995b69f99aa.tiff");
+                importer->setFilename("C:/Users/andrp/Downloads/transfer_190689_files_b2b897b6/11435_CD3.ndpi");
 
-                    auto importer = WholeSlideImageImporter::New();
-                    //importer->setFilename("C:/Users/andrp/workspace/Henrik-DP/file-and-model-to-henrik-210921/0018ae58b01bdadc8e347995b69f99aa.tiff");
-                    importer->setFilename("C:/Users/andrp/Downloads/transfer_190689_files_b2b897b6/11435_CD3.ndpi");
+                auto tissueSegmentation = TissueSegmentation::New();
+                tissueSegmentation->setDilate(45);
+                tissueSegmentation->setInputConnection(importer->getOutputPort());
 
-                    auto tissueSegmentation = TissueSegmentation::New();
-                    tissueSegmentation->setDilate(45);
-                    tissueSegmentation->setInputConnection(importer->getOutputPort());
+                auto generator = PatchGenerator::New();
+                generator->setPatchSize(img_size[0], img_size[1]);
+                generator->setPatchLevel(patch_level);
+                generator->setOverlap(0.0);
+                generator->setMaskThreshold(0.01);
+                generator->setInputConnection(importer->getOutputPort());
+                generator->setInputConnection(1, tissueSegmentation->getOutputPort());
+                generator->enableRuntimeMeasurements();
 
-                    auto generator = PatchGenerator::New();
-                    generator->setPatchSize(img_size[0], img_size[1]);
-                    generator->setPatchLevel(patch_level);
-                    generator->setOverlap(0.0);
-                    generator->setMaskThreshold(0.01);
-                    generator->setInputConnection(importer->getOutputPort());
-                    generator->setInputConnection(1, tissueSegmentation->getOutputPort());
-                    generator->enableRuntimeMeasurements();
+                auto network = SegmentationNetwork::New();
+                network->setInferenceEngine(engine);
+                if (engine == "OpenVINO")
+                    network->getInferenceEngine()->setDeviceType(deviceType.second);
+                network->load("C:/Users/andrp/Downloads/transfer_190689_files_b2b897b6/CD3_UNET_256_1P16B32FD6_w_Augm_290921.onnx");
+                //network->load("C:/Users/andrp/workspace/convert_test/transfer_190689_files_b2b897b6/CD3_UNET_256_1P16B32FD6_w_Augm_290921");
+                //network->load("C:/Users/andrp/fastpathology/data/Models/high_res_nuclei_unet.pb");
+                network->setScaleFactor(1.0f);
+                network->setInputConnection(generator->getOutputPort());
+                network->enableRuntimeMeasurements();
 
-                    auto network = SegmentationNetwork::New();
-                    network->setInferenceEngine(engine);
-                    network->getInferenceEngine()->setDevice(1);
-                    //network->load("C:/Users/andrp/fastpathology/data/Models/UNET_256_1p48b64fd6_pretrNucleiHardm240621_RETRAIN_NEWSET_c_HARDM_CmAndre_110921.onnx");
-                    network->load("C:/Users/andrp/Downloads/transfer_190689_files_b2b897b6/CD3_UNET_256_1P16B32FD6_w_Augm_290921.onnx");
-                    network->setInputConnection(generator->getOutputPort());
-                    network->setScaleFactor(1.0f);
-                    network->enableRuntimeMeasurements();
+                auto stitcher = PatchStitcher::New();
+                stitcher->setInputConnection(network->getOutputPort());
+                stitcher->enableRuntimeMeasurements();
 
-                    auto stitcher = PatchStitcher::New();
-                    stitcher->setInputConnection(network->getOutputPort());
-                    stitcher->enableRuntimeMeasurements();
+                auto start = std::chrono::high_resolution_clock::now();
+                DataObject::pointer data;
+                do {
+                    data = stitcher->updateAndGetOutputData<DataObject>();
+                } while (!data->isLastFrame());
 
-                    auto start = std::chrono::high_resolution_clock::now();
-                    DataObject::pointer data;
-                    do {
-                        data = stitcher->updateAndGetOutputData<DataObject>();
-                    } while (!data->isLastFrame());
+                auto exporter = TIFFImagePyramidExporter::New();
+                exporter->setFilename("C:/Users/andrp/workspace/FAST-Pathology/code-free-study/build/pred_seg" + std::to_string(iter) + ".tiff");
+                exporter->setInputConnection(stitcher->getOutputPort());
+                exporter->setExecuteOnLastFrameOnly(false);
+                exporter->enableRuntimeMeasurements();
+                exporter->update();  // @TODO: Seems like I have to have this for it to actually start saving. Expected behaviour?
 
-                    auto exporter = TIFFImagePyramidExporter::New();
-                    exporter->setFilename("C:/Users/andrp/workspace/FAST-Pathology/code-free-study/build/pred_seg" + std::to_string(iter) + ".tiff");
-                    exporter->setInputConnection(stitcher->getOutputPort());
-                    exporter->setExecuteOnLastFrameOnly(false);
-                    exporter->enableRuntimeMeasurements();
-                    exporter->update();  // @TODO: Seems like I have to have this for it to actually start saving. Expected behaviour?
+                std::chrono::duration<float, std::milli> timeUsed =
+                        std::chrono::high_resolution_clock::now() - start;
+                std::cout << "Total runtime: " << timeUsed.count() << std::endl;
+                std::cout << "Patch generator runtime: " << std::endl;
+                generator->getRuntime("create patch")->print();
+                std::cout << "NN runtime: " << std::endl;
+                network->getRuntime()->print();
+                std::cout << "Patch stitcher runtime: " << std::endl;
+                stitcher->getRuntime()->print();
+                std::cout << "Exporter runtime" << std::endl;
+                exporter->getRuntime()->print();
 
-                    std::chrono::duration<float, std::milli> timeUsed =
-                            std::chrono::high_resolution_clock::now() - start;
-                    std::cout << "Total runtime: " << timeUsed.count() << std::endl;
-                    std::cout << "Patch generator runtime: " << std::endl;
-                    generator->getRuntime("create patch")->print();
-                    std::cout << "NN runtime: " << std::endl;
-                    network->getRuntime()->print();
-                    std::cout << "Patch stitcher runtime: " << std::endl;
-                    stitcher->getRuntime()->print();
-                    std::cout << "Exporter runtime" << std::endl;
-                    exporter->getRuntime()->print();
+                iter++;
 
-                    iter++;
+                if (iteration == 0 && warmupIteration)
+                    continue;
 
-                    // @FIXME: Delete neural network object to free memory(?)
-                    //delete &stitcher;
-
-                    file <<
-                         engine + ";" +
-                         deviceType.first + ";" +
-                         std::to_string(iteration) + ";" +
-                         std::to_string(generator->getRuntime("create patch")->getAverage()) + ";" +
-                         std::to_string(generator->getRuntime("create patch")->getStdDeviation()) + ";" +
-                         std::to_string(network->getRuntime("input_processing")->getAverage()) + ";" +
-                         std::to_string(network->getRuntime("input_processing")->getStdDeviation()) + ";" +
-                         std::to_string(network->getRuntime("inference")->getAverage()) + ";" +
-                         std::to_string(network->getRuntime("inference")->getStdDeviation()) + ";" +
-                         std::to_string(network->getRuntime("output_processing")->getAverage()) + ";" +
-                         std::to_string(network->getRuntime("output_processing")->getStdDeviation()) + ";" +
-                         std::to_string(stitcher->getRuntime("stitch patch")->getAverage()) + ";" +
-                         std::to_string(stitcher->getRuntime("stitch patch")->getStdDeviation()) + ";" +
-                         std::to_string(exporter->getRuntime()->getAverage()) + ";" +
-                         "0" + ";" +
-                         std::to_string(timeUsed.count())
-                         << std::endl;
-
-                });
-                
-                // block until finished .join(), use .detach() for non-blocking compute
-                pipelineThread.join();
+                file <<
+                     engine + ";" +
+                     deviceType.first + ";" +
+                     std::to_string(iteration) + ";" +
+                     std::to_string(generator->getRuntime("create patch")->getAverage()) + ";" +
+                     std::to_string(generator->getRuntime("create patch")->getStdDeviation()) + ";" +
+                     std::to_string(network->getRuntime("input_processing")->getAverage()) + ";" +
+                     std::to_string(network->getRuntime("input_processing")->getStdDeviation()) + ";" +
+                     std::to_string(network->getRuntime("inference")->getAverage()) + ";" +
+                     std::to_string(network->getRuntime("inference")->getStdDeviation()) + ";" +
+                     std::to_string(network->getRuntime("output_processing")->getAverage()) + ";" +
+                     std::to_string(network->getRuntime("output_processing")->getStdDeviation()) + ";" +
+                     std::to_string(stitcher->getRuntime("stitch patch")->getAverage()) + ";" +
+                     std::to_string(stitcher->getRuntime("stitch patch")->getStdDeviation()) + ";" +
+                     std::to_string(exporter->getRuntime()->getAverage()) + ";" +
+                     "0" + ";" +
+                     std::to_string(timeUsed.count())
+                     << std::endl;
             }
         }
     }
