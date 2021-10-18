@@ -959,6 +959,8 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 			//std::cout << "window: " << someRenderer->updateAndGetOutputData<Image>() << std::endl;
 			//auto vals = someRenderer->getIntensityWindow();
 
+            std::cout << "\nset color was pressed! (in SegmentationRenderer)" << std::endl;
+
 			// TODO: Supports only binary images (where class of interest = 1)
 			someRenderer->setColor(currComboBox->currentIndex() + 1, Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
 		});
@@ -979,6 +981,7 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 		QObject::connect(colorButton, &QPushButton::clicked, [=]() {
 			auto rgb = colorSetWidget->getColor().toRgb();
 			auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(m_rendererList[someName]);
+            std::cout << "\nset color was pressed!" << std::endl;
             someRenderer->setColor(currComboBox->currentIndex() + 1, Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
 			//someRenderer->setChannelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
 		});
@@ -3797,7 +3800,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 				// TODO: Current optimization profile is: 0. Please ensure there are no enqueued operations pending in this context prior to switching profiles
 				if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".uff") != acceptedModels.end()) &&
 					(std::find(IEsList.begin(), IEsList.end(), "TensorRT") != IEsList.end())) {
-					std::cout << "TensorRT selected" << std::endl;
+					std::cout << "TensorRT selected (using UFF)" << std::endl;
 					network->setInferenceEngine("TensorRT");
 					chosenIE = "uff";
 				}
@@ -3919,6 +3922,15 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 										{ 1, std::stoi(modelMetadata["nb_classes"]) }));
 							}
 						}
+                        else if ((engine == "TensorRT") && (chosenIE == "uff")) {
+                            // TensorRT needs to know everything about the input and output nodes
+                            network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
+                                { 1, std::stoi(modelMetadata["nb_channels"]),
+                                 std::stoi(modelMetadata["input_img_size_y"]),
+                                 std::stoi(modelMetadata["input_img_size_y"]) })); //{1, size, size, 3}
+                            network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
+                                TensorShape({ 1, std::stoi(modelMetadata["nb_classes"]) }));
+                        }
 
                         if ((engine != "TensorRT") && (engine != "OpenVINO")) {
                             chosenIE = getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat());
@@ -3938,6 +3950,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 								<< "No tissue segmentation filtering will be applied before this analysis."
 								<< std::endl;
 						} else if (!modelMetadata["tissue_threshold"].empty()) {
+                            std::cout << "Threshold was defined: " << modelMetadata["tissue_threshold"] << std::endl; 
 							auto tissueSegmentation = TissueSegmentation::New();
 							tissueSegmentation->setInputData(m_image);
 							tissueSegmentation->setThreshold(std::stoi(modelMetadata["tissue_threshold"]));
@@ -3948,7 +3961,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 						}
 						else {
 							std::cout
-								<< "The tissue_threshold has not been properly defined in the model config file, and thus the method will use any existing segmentation masks as filtering."
+								<< "The tissue_threshold has not been properly defined in the model config file, and thus the method will use any existing segmentation masks as filtering (if available)."
 								<< std::endl;
 							// TODO: This should be handled more generically. For pipelines that allow the user to use
 							//   an already existing segmentation as mask for another method, they should be able to
@@ -3962,13 +3975,13 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 							}
 						}
 
-						//auto generator = PatchGenerator::New();
 						generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]),
 							std::stoi(modelMetadata["input_img_size_x"]));
 						generator->setPatchLevel(patch_lvl_model);
 						if (modelMetadata["mask_threshold"].empty()) {
 							std::cout << "No mask_threshold variable exists. Defaults to 0.5." << std::endl;
 						} else {
+                            std::cout << "Setting mask_threshold to: " << modelMetadata["mask_threshold"] << std::endl;
 							generator->setMaskThreshold(std::stof(modelMetadata["mask_threshold"]));
 						}
 						if (modelMetadata["patch_overlap"].empty()) {
@@ -4052,7 +4065,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 							auto port = stitcher->getOutputPort();
 
 							auto someRenderer = SegmentationRenderer::New();
-							someRenderer->setOpacity(0.7f);
+							someRenderer->setOpacity(0.7f, 1.0f);
 							vector<string> colors = splitCustom(modelMetadata["class_colors"], ";");
 							for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
 								vector<string> rgb = splitCustom(colors[i], ",");
@@ -4095,20 +4108,15 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 						}
 					}
 					else if ((modelMetadata["problem"] == "object_detection") && (modelMetadata["resolution"] == "high")) {  // TODO: Perhaps use switch() instead of tons of if-statements?
-
-					 // FIXME: Currently, need to do special handling for object detection as setThreshold and setAnchors only exist for BBNetwork and not NeuralNetwork
-						auto generator = PatchGenerator::New();
-						generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]),
-							std::stoi(modelMetadata["input_img_size_x"]));
-						generator->setPatchLevel(patch_lvl_model);
-						generator->setInputData(0, currImage);
-						if (m_tissue)
-							generator->setInputData(1, m_tissue);
-						if (m_tumorMap)
-							generator->setInputData(1, m_tumorMap);
+					    // FIXME: Currently, need to do special handling for object detection as setThreshold and setAnchors only exist for BBNetwork and not NeuralNetwork
 
 						auto currNetwork = BoundingBoxNetwork::New();
-						currNetwork->setThreshold(0.1f); //0.01); // default: 0.5
+                        if (modelMetadata["pred_threshold"].empty()) {
+                            std::cout << "No pred_threshold variable exists. Defaults to 0.1." << std::endl;
+                        }
+                        else {
+                            currNetwork->setThreshold(std::stof(modelMetadata["nms_threshold"])); //0.01); // default: 0.5
+                        }
 
 						std::cout << "Current anchor file path: "
 							<< cwd + "data/Models/" + someModelName + ".anchors"
@@ -4146,16 +4154,18 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 							currNetwork->getInferenceEngine()->getPreferredModelFormat())); //".uff");
 						currNetwork->setInputConnection(generator->getOutputPort());
 
-						// FIXME: Bug when using NMS - ERROR [140237963507456] Terminated with unhandled exception:
-						//  Size must be > 0, got: -49380162997889393559076864.000000 -96258.851562
-						// - Windows only?
-						//auto nms = NonMaximumSuppression::New();
-						//nms->setThreshold(0.5);
-						//nms->setInputConnection(currNetwork->getOutputPort());
+						auto nms = NonMaximumSuppression::New();
+                        if (modelMetadata["nms_threshold"].empty()) {
+                            std::cout << "No nms_threshold variable exists. Defaults to 0.5." << std::endl;
+                        }
+                        else {
+                            nms->setThreshold(std::stof(modelMetadata["nms_threshold"]));
+                        }
+						nms->setInputConnection(currNetwork->getOutputPort());
 
 						auto boxAccum = BoundingBoxSetAccumulator::New();
-						//boxAccum->setInputConnection(nms->getOutputPort());
-						boxAccum->setInputConnection(currNetwork->getOutputPort());
+						boxAccum->setInputConnection(nms->getOutputPort());
+						//boxAccum->setInputConnection(currNetwork->getOutputPort());
 
 						auto boxRenderer = BoundingBoxRenderer::New();
 						boxRenderer->setInputConnection(boxAccum->getOutputPort());
