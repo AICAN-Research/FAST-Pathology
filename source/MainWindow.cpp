@@ -1003,9 +1003,12 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 			auto someRenderer = std::dynamic_pointer_cast<BoundingBoxRenderer>(m_rendererList[someName]);
 			//someRenderer->setLabelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
 		});
-	} else {
+	}
+    /*
+    else {
         simpleInfoPrompt("Invalid renderer used...");
 	}
+     */
 
     connect(currComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateChannelValue(int)));
 
@@ -3584,9 +3587,6 @@ void MainWindow::pixelClassifier_wrapper(std::string someModelName) {
 
 void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string, std::string> modelMetadata) {
 
-    //modelName = std::move(someModelName);
-    //someModelName = std::move(modelName);
-
     std::cout << "Final model metadata config WITHIN to pixelClassifier:" << std::endl;
     for (const auto &[k, v] : modelMetadata)
         std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
@@ -3635,17 +3635,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 		for (const auto &currWSI : currentWSIs) {
 
 			std::cout << "current WSI: " << currWSI << std::endl;
-
-			//if (!hasRenderer(modelMetadata["name"])) { // only run analysis if it has not been ran previously on current WSI
-			if (true) {
-
-				// segment tissue if not already ran, but hide it
-				/*
-				if (!hasRenderer("tissue")) {
-					segmentTissue();
-					hideTissueMask(true);
-				}
-				 */
+			if (!hasRenderer(modelMetadata["name"])) { // only run analysis if it has not been ran previously on current WSI
 
 				 // based on predicted magnification level of WSI, set magnificiation level for optimal input to model based on predicted resolution of WSI
 				int patch_lvl_model = 0; // defaults to 0
@@ -3763,23 +3753,13 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 
 				// init network
 				auto network = NeuralNetwork::New(); // default, need special case for high_res segmentation
-                //return;
-
 				if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
 					network = SegmentationNetwork::New();
-				}
-				else if ((modelMetadata["problem"] == "object_detection") &&
-					(modelMetadata["resolution"] == "high")) { 
-					//network = BoundingBoxNetwork::New();  // TODO: This cannot be done, because the stuff right below is unavailable in NeuralNetwork. BoundingBoxNetwork should be a part of the NeuralNetwork class similarly to the other NN classes.
-					//network->loadAttributes();
-					//network->setThreshold(0.3); // default value: 0.3
-					//network->setAnchors(getAnchorMetadata("tiny_yolo_anchors_pannuke"));
 				}
 				else if ((modelMetadata["problem"] == "segmentation") &&
 					(modelMetadata["resolution"] == "low")) {
 					network = SegmentationNetwork::New();
 				}
-				//network->setInferenceEngine("TensorRT"); //"TensorRT");
 
 				bool checkFlag = true;
 
@@ -3798,20 +3778,20 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 				// /*
 				// Now select best available IE based on which extensions exist for chosen model
 				// TODO: Current optimization profile is: 0. Please ensure there are no enqueued operations pending in this context prior to switching profiles
-				if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".uff") != acceptedModels.end()) &&
-					(std::find(IEsList.begin(), IEsList.end(), "TensorRT") != IEsList.end())) {
-					std::cout << "TensorRT selected (using UFF)" << std::endl;
-					network->setInferenceEngine("TensorRT");
-					chosenIE = "uff";
-				}
-                else if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".onnx") !=
-                    acceptedModels.end()) &&
+				if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".onnx") !=
+                     acceptedModels.end()) &&
                     (std::find(IEsList.begin(), IEsList.end(), "TensorRT") != IEsList.end())) {
                     // @TODO: I don't think this works exactly how I want it to. TensorRT is still find as it is found in the lib/ directory, even though
                     //  it is not installed.
                     std::cout << "TensorRT (using ONNX) selected" << std::endl;
                     network->setInferenceEngine("TensorRT");
                     chosenIE = "onnx";
+                }
+                else if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".uff") != acceptedModels.end()) &&
+                         (std::find(IEsList.begin(), IEsList.end(), "TensorRT") != IEsList.end())) {
+                    std::cout << "TensorRT selected (using UFF)" << std::endl;
+                    network->setInferenceEngine("TensorRT");
+                    chosenIE = "uff";
                 }
                 else if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".onnx") !=
                     acceptedModels.end()) &&
@@ -3820,24 +3800,13 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                     network->setInferenceEngine("OpenVINO");
                     chosenIE = "onnx";
 				}
-				else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") !=
-					acceptedModels.end() &&
-					std::find(IEsList.begin(), IEsList.end(), "TensorFlow") != IEsList.end()) {
-					std::cout << "TensorFlow selected" << std::endl;
-					network->setInferenceEngine("TensorFlow");
-					/*
-					if (std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") != acceptedModels.end() && std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end()) {
-						network->setInferenceEngine("OpenVINO");
-					}
-					 */
-				}
-				else if (
-					std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") !=
-					acceptedModels.end() &&
-					std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end()) {
-					std::cout << "OpenVINO selected" << std::endl;
-					network->setInferenceEngine("OpenVINO");
-				}
+                else if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") !=
+                          acceptedModels.end()) &&
+                         (std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end())) {
+                    std::cout << "OpenVINO (using IR) selected" << std::endl;
+                    network->setInferenceEngine("OpenVINO");
+                    chosenIE = "xml";
+                }
 				else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") !=
 					acceptedModels.end() &&
 					std::find(IEsList.begin(), IEsList.end(), "TensorFlow") != IEsList.end()) {
@@ -3884,14 +3853,13 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 									<< "CPU only was selected, but was not able to find any CPU devices..."
 									<< std::endl;
 							}
-							// else continue -> will use default one (one that is available)
 						}
 
 						// if stated in the model txt file, use the specified inference engine
 						if (!((modelMetadata.count("IE") == 0) || modelMetadata["IE"] == "none")) {
 							std::cout << "Preselected IE was used: " << modelMetadata["IE"] << std::endl;
 							network->setInferenceEngine(modelMetadata["IE"]);
-							std::cout << network->getInferenceEngine() << std::endl;
+                            chosenIE = getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat());
 						}
 
 						const auto engine = network->getInferenceEngine()->getName();
@@ -3902,7 +3870,8 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 								{ 1, std::stoi(modelMetadata["input_img_size_y"]),
 								 std::stoi(modelMetadata["input_img_size_x"]),
 								 std::stoi(modelMetadata["nb_channels"]) })); //{1, size, size, 3}
-						// TensorFlow needs to know what the output node is called
+
+						    // TensorFlow needs to know what the output node is called
 							if (modelMetadata["problem"] == "classification") {
 								network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
 									TensorShape(

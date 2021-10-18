@@ -26,6 +26,7 @@ int main(int argc, char** argv) {
 
     std::cout << "\nPatch-wise high-res semantic segmentation...\n" << std::endl;
     const std::string resultFilename = "C:/Users/andrp/workspace/FAST-Pathology/code-free-study/build/results_neural-network-runtime.csv";
+    //const std::string resultFilename = "/home/andrep/workspace/FAST-Pathology/code-free-study/build/results_neural-network-runtime.csv";
     std::ofstream file(resultFilename.c_str());
 
     std::vector<int> img_size{256, 256};
@@ -58,6 +59,7 @@ int main(int argc, char** argv) {
                 auto importer = WholeSlideImageImporter::New();
                 //importer->setFilename("C:/Users/andrp/workspace/Henrik-DP/file-and-model-to-henrik-210921/0018ae58b01bdadc8e347995b69f99aa.tiff");
                 importer->setFilename("C:/Users/andrp/Downloads/transfer_190689_files_b2b897b6/11435_CD3.ndpi");
+                //importer->setFilename("/home/andrep/Downloads/transfer_190689_files_b2b897b6/11435_CD3.ndpi");
 
                 auto tissueSegmentation = TissueSegmentation::New();
                 tissueSegmentation->setDilate(45);
@@ -76,6 +78,7 @@ int main(int argc, char** argv) {
                 network->setInferenceEngine(engine);
                 if (engine == "OpenVINO")
                     network->getInferenceEngine()->setDeviceType(deviceType.second);
+                //network->load("/home/andrep/Downloads/transfer_190689_files_b2b897b6/CD3_UNET_256_1P16B32FD6_w_Augm_290921.onnx");
                 network->load("C:/Users/andrp/Downloads/transfer_190689_files_b2b897b6/CD3_UNET_256_1P16B32FD6_w_Augm_290921.onnx");
                 //network->load("C:/Users/andrp/workspace/convert_test/transfer_190689_files_b2b897b6/CD3_UNET_256_1P16B32FD6_w_Augm_290921");
                 //network->load("C:/Users/andrp/fastpathology/data/Models/high_res_nuclei_unet.pb");
@@ -96,7 +99,7 @@ int main(int argc, char** argv) {
                 auto exporter = TIFFImagePyramidExporter::New();
                 exporter->setFilename("C:/Users/andrp/workspace/FAST-Pathology/code-free-study/build/pred_seg" + std::to_string(iter) + ".tiff");
                 exporter->setInputConnection(stitcher->getOutputPort());
-                exporter->setExecuteOnLastFrameOnly(false);
+                //exporter->setExecuteOnLastFrameOnly(false);
                 exporter->enableRuntimeMeasurements();
                 exporter->update();  // @TODO: Seems like I have to have this for it to actually start saving. Expected behaviour?
 
