@@ -160,7 +160,7 @@ if(WIN32)
 elseif(APPLE)
     ## macOS
     set(CPACK_GENERATOR "TXZ")
-    set(CPACK_PACKAGE_FILE_NAME "fastpathology_macosx_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+    set(CPACK_PACKAGE_FILE_NAME "fastpathology_macosx_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
     # # start by defining the Bundle Layout
     # file(MAKE_DIRECTORY ${directory})
