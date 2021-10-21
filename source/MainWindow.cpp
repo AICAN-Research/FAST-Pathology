@@ -166,7 +166,6 @@ void MainWindow::receiveFileList(const QList<QString> &names) {
 
 void MainWindow::createOpenGLWindow() {
     // initialize view
-	float OpenGL_background_color = 0.0f; //0.0f; //200.0f / 255.0f;
 	view = createView();
     view->setSynchronizedRendering(false);
 	view->set2DMode();
@@ -1647,8 +1646,6 @@ void MainWindow::selectFile() {
     currentView = getView(0);
     currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
     mWidget->clearViews();
-
-    float OpenGL_background_color = 0.0f; //0.0f; //200.0f / 255.0f;
 
     auto tmpView = createView();
     tmpView->setSynchronizedRendering(false);

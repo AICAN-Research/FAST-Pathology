@@ -58,6 +58,7 @@ class MainWindow : public Window {
 
         int curr_pos = 0;
         float magn_lvl;
+        float OpenGL_background_color = 0.0f; //0.0f; //200.0f / 255.0f;
         uint channel_value;
 
         std::string applicationName;
