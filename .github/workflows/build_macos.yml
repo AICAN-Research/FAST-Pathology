@@ -23,7 +23,7 @@ jobs:
       # curl -v -H "Authorization: token $SOME_TOKEN_WITHOUT_PERMISSIONS" https://api.github.com/repos/endless-sky/endless-sky/actions/artifacts/5036752/zip
       # https://github.com/smistad/FAST/suites/4121204831/artifacts/105393539
       run: |
-        curl -v -H "Authorization: token ${{secrets.SuperSecret}}" https://api.github.com/repos/smistad/FAST/actions/artifacts/105393539/zip
+        curl -v -H "Authorization: token ${{secrets.FP}}" https://api.github.com/repos/smistad/FAST/actions/artifacts/105393539/zip
         ls -la
         unzip "./Archive package (tar.xz).zip"
         ls -la
