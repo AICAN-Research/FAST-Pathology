@@ -54,6 +54,7 @@ class MainWindow : public Window {
         bool background_flag = false;
         bool advancedMode = false;
         bool m_wsiSharpening = false;
+        bool m_doneFirstWSI = false;
 
         int curr_pos = 0;
         float magn_lvl;
@@ -97,6 +98,8 @@ class MainWindow : public Window {
         QListWidget *scrollList;
         QStatusBar *statusBar;
         View *view;
+        View* currentView;
+        QSplitter* mainSplitter;
 
         QHBoxLayout *mainLayout;
         QVBoxLayout *superLayout;

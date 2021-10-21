@@ -166,8 +166,11 @@ void MainWindow::receiveFileList(const QList<QString> &names) {
 void MainWindow::createOpenGLWindow() {
 	float OpenGL_background_color = 0.0f; //0.0f; //200.0f / 255.0f;
 	view = createView();
+    view->setSynchronizedRendering(false);
 	//view = mWidget->addView();
 	//view->setLayout(mainLayout);
+
+    //mWidget->addView(view);
 
 	//mainLayout->addLayout(menuLayout);
 	//mainLayout->insertWidget(1, view);
@@ -178,7 +181,7 @@ void MainWindow::createOpenGLWindow() {
 	//view->setToolTip("hallo");
 
 	// create QSplitter for adjustable windows
-	auto mainSplitter = new QSplitter(Qt::Horizontal);
+	mainSplitter = new QSplitter(Qt::Horizontal);
 	//mainSplitter->setHandleWidth(5);
 	//mainSplitter->setFrameShadow(QFrame::Sunken);
 	//mainSplitter->setStyleSheet("background-color: rgb(55, 100, 110);");
@@ -195,6 +198,11 @@ void MainWindow::createOpenGLWindow() {
 	*/
 
     mainLayout->addWidget(mainSplitter);
+
+    // initialize current view, relevant for reinitializing view after a new WSI is selected
+    // Get old view, and remove it from Widget
+    //currentView = getView(0);
+    //mWidget->clearViews();
 }
 
 void MainWindow::setApplicationMode() {
@@ -1629,6 +1637,7 @@ void MainWindow::selectFile() {
 	// for a new selection of wsi(s), should reset and update these QWidgets
 	pageComboBox->clear();
 	exportComboBox->clear();
+    m_rendererList.clear();
 
     auto progDialog = QProgressDialog(mWidget);
     progDialog.setRange(0, fileNames.count()-1);
@@ -1648,8 +1657,40 @@ void MainWindow::selectFile() {
     if (nb_wsis_in_list != 0)
         currentPosition = nb_wsis_in_list;
 
+    if (m_doneFirstWSI) {
+        std::cout << "stopping pipeline (done with first WSI): " << std::endl;
+        // Stop any pipelines running in old view and delete it!
+        currentView->stopPipeline();
+
+        std::cout << "deleting view (done with first WSI): " << std::endl;
+        delete currentView;
+    }
+
+    std::cout << "getting view: " << std::endl;
+
+    // temporary view, to be updated for each WSI
+    // Get old view, and remove it from Widget
+    currentView = getView(0);
+    printf("\n%d\n", __LINE__);
+    currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
+    printf("\n%d\n", __LINE__);
+    mWidget->clearViews();
+
+    printf("\n%d\n", __LINE__);
+    auto tmpView = createView();
+    printf("\n%d\n", __LINE__);
+    tmpView->setSynchronizedRendering(false);
+    printf("\n%d\n", __LINE__);
+
+    //mainSplitter->replaceWidget(oldView, view); // Replace new view with old view in Qt GUI
+    mainSplitter->replaceWidget(1, tmpView);
+    printf("\n%d\n", __LINE__);
+    mWidget->addView(tmpView); // Give new view to mWidget so it is used in the computation thread
+    printf("\n%d\n", __LINE__);
+
     int counter = 0;
     for (QString& fileName : fileNames) {
+        printf("\n%d\n", __LINE__);
         if (fileName == "")
             return;
         //filename = fileName.toStdString();
@@ -1686,25 +1727,35 @@ void MainWindow::selectFile() {
             magn_lvl = getMagnificationLevel(); // get magnification level of current WSI
 
             // now make it possible to edit image in the View Widget
+            printf("\n%d\n", __LINE__);
             createDynamicViewWidget("WSI", modelName);
+            printf("\n%d\n", __LINE__);
 
             // update application name to contain current WSI
+            /*
             if (advancedMode) {
                 setTitle(applicationName + " (Research mode)" + " - " + splitCustom(currFileName, "/").back());
             } else {
                 setTitle(applicationName + " - " + splitCustom(currFileName, "/").back());
             }
+             */
         }
+        printf("\n%d\n", __LINE__);
         counter ++;
+
+        printf("\n%d\n", __LINE__);
 
         // Create thumbnail image
         // TODO: This is a little bit slow. Possible to speed it up? Bottleneck is probably the creation of thumbnails
         auto access = currImage->getAccess(ACCESS_READ);
+        printf("\n%d\n", __LINE__);
         auto input = access->getLevelAsImage(currImage->getNrOfLevels() - 1);
 
+        printf("\n%d\n", __LINE__);
         // try to convert to FAST Image -> QImage
         QImage image(input->getWidth(), input->getHeight(), QImage::Format_RGB32);
 
+        printf("\n%d\n", __LINE__);
         // TODO have to do some type conversion here, assuming float for now
         unsigned char *pixelData = image.bits();
 
@@ -1724,6 +1775,7 @@ void MainWindow::selectFile() {
             }
         }
 
+        printf("\n%d\n", __LINE__);
         auto button = new QPushButton(mWidget);
         auto m_NewPixMap = QPixmap::fromImage(image);
         QIcon ButtonIcon(m_NewPixMap);
@@ -1741,13 +1793,19 @@ void MainWindow::selectFile() {
 
         //curr_pos++; // this should change if we render the first WSI when loading
 		currentPosition++;
+        printf("\n%d\n", __LINE__);
 
         // update progress bar
         progDialog.setValue(counter);
 
         // to render straight away (avoid waiting on all WSIs to be handled before rendering)
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+        printf("\n%d\n", __LINE__);
     }
+
+    // update flag only if first
+    if (!m_doneFirstWSI)
+        m_doneFirstWSI = true;  // then this should never happen again
 }
 
 void MainWindow::selectFileDrag(const QList<QString> &fileNames) {

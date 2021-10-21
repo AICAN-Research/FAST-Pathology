@@ -12,6 +12,7 @@
 #include <FAST/Tools/CommandLineParser.hpp>
 #include <FAST/Data/ImagePyramid.hpp>
 #include <FAST/Exporters/TIFFImagePyramidExporter.hpp>
+#include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
 
 using namespace fast;
 
@@ -102,6 +103,13 @@ int main(int argc, char** argv) {
                 //exporter->setExecuteOnLastFrameOnly(false);
                 exporter->enableRuntimeMeasurements();
                 exporter->update();  // @TODO: Seems like I have to have this for it to actually start saving. Expected behaviour?
+
+                /*
+                auto someRenderer = SegmentationRenderer::New();
+                someRenderer->setOpacity(0.4f);
+                someRenderer->setInputConnection(stitcher->getOutputPort());
+                someRenderer->update();
+                 */
 
                 std::chrono::duration<float, std::milli> timeUsed =
                         std::chrono::high_resolution_clock::now() - start;
