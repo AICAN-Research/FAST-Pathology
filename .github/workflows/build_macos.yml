@@ -19,8 +19,11 @@ jobs:
         brew install openslide libomp
 
     - name: Download FAST
+      # #curl -OL https://github.com/smistad/FAST/releases/download/v4.1.0/fast_macosx10.13_4.1.0.tar.xz
       run: |
-        curl -OL https://github.com/smistad/FAST/releases/download/v4.1.0/fast_macosx10.13_4.1.0.tar.xz
+        curl -v -H "Authorization: token $PERSONAL_TOKEN https://api.github.com/repos/smistad/FAST/actions/artifacts/105393539/zip
+        gunzip "./Archive package (tar.xz)"
+        cd ./Archive package (tar.xz)
         gunzip fast_macosx10.13_4.1.0.tar.xz
         tar -xzf ./fast_macosx10.13_4.1.0.tar
       
@@ -38,7 +41,8 @@ jobs:
     - name: Upload Bundle package
       uses: actions/upload-artifact@v2
       with:
-        name: Bundle package (macOS)
+        #name: Bundle package (macOS)
+        name: Archive package (tar.xz)
         path: ${{github.workspace}}/build/fastpathology_*.tar.xz
         #path: ${{github.workspace}}/build/fastpathology_*.pkg
         if-no-files-found: error
