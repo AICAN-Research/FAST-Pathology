@@ -1957,23 +1957,33 @@ void MainWindow::selectFileInProject(int pos) {
 
 	// remove results of current WSI
 	savedList.clear();
-	removeAllRenderers();
 	pageComboBox->clear();
 	exportComboBox->clear();
 	m_rendererList.clear();
 	m_rendererTypeList.clear();
 	clearLayout(stackedLayout);
 
-	// TODO: remove global segmentations. What to do about global variables/results that are stored for
-	//  the current WSI, which are not relevant for the next WSI?
+    // Stop any pipelines running in old view and delete it!
+    currentView->stopPipeline();
+    delete currentView;
 
+    // Get old view, and remove it from Widget
+    currentView = getView(0);
+    currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
+    mWidget->clearViews();
 
-	// kill all NN pipelines and clear holders
-	for (auto const& keyValue : m_neuralNetworkList) {
-		auto neuralNetwork = keyValue.second;
-		neuralNetwork->stopPipeline();
-	}
-	m_neuralNetworkList.clear(); // finally clear map
+    auto tmpView = createView();
+    tmpView->setSynchronizedRendering(false);
+    tmpView->set2DMode();
+    tmpView->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
+    tmpView->setAutoUpdateCamera(true);
+
+    mainSplitter->replaceWidget(1, tmpView);
+    mainSplitter->setStretchFactor(1, 1);
+
+    mWidget->addView(tmpView); // Give new view to mWidget so it is used in the computation thread
+
+    removeAllRenderers();  // VERY IMPORTANT THAT THIS IS DONE AFTER!!!
 
 	// add WSI to project list
 	filename = wsiList[pos];
