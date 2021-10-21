@@ -1648,14 +1648,17 @@ void MainWindow::selectFile() {
     currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
     mWidget->clearViews();
 
-    auto tmpView = createView();
     float OpenGL_background_color = 0.0f; //0.0f; //200.0f / 255.0f;
+
+    auto tmpView = createView();
     tmpView->setSynchronizedRendering(false);
     tmpView->set2DMode();
     tmpView->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
     tmpView->setAutoUpdateCamera(true);
 
     mainSplitter->replaceWidget(1, tmpView);
+    mainSplitter->setStretchFactor(1, 1);
+
     mWidget->addView(tmpView); // Give new view to mWidget so it is used in the computation thread
 
     int counter = 0;
