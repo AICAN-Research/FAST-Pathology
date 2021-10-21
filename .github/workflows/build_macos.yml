@@ -6,24 +6,13 @@ on:
   pull_request:
     branches: [ master ]
 
-env:
-  BUILD_TYPE: Release
-  MACOSX_DEPLOYMENT_TARGET: 10.13
-
 jobs:
   build:
     runs-on: macos-10.15
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup pyenv
-      env:
-        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-        MACOSX_DEPLOYMENT_TARGET: ${{env.MACOSX_DEPLOYMENT_TARGET}}
-        PYTHON_CONFIGURE_OPTS: "--enable-framework"
-      uses: "gabrielfalcao/pyenv-action@v5"
-      with:
-          default: 3.6.9
+    - name: Checkout
+      uses: actions/checkout@v2
 
     - name: Install dependencies
       run: |
