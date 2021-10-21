@@ -6,13 +6,24 @@ on:
   pull_request:
     branches: [ master ]
 
+env:
+  BUILD_TYPE: Release
+  MACOSX_DEPLOYMENT_TARGET: 10.13
+
 jobs:
   build:
     runs-on: macos-10.15
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v2
+    - name: Setup pyenv
+      env:
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+        MACOSX_DEPLOYMENT_TARGET: ${{env.MACOSX_DEPLOYMENT_TARGET}}
+        PYTHON_CONFIGURE_OPTS: "--enable-framework"
+      uses: "gabrielfalcao/pyenv-action@v5"
+      with:
+          default: 3.6.9
 
     - name: Install dependencies
       run: |
@@ -33,7 +44,6 @@ jobs:
       run: |
         gunzip fast_macosx10.13_4.1.0.tar.xz
         tar -xzf ./fast_macosx10.13_4.1.0.tar
-        ls -la
       
     - name: Configure CMake
       run: |
@@ -49,8 +59,6 @@ jobs:
     - name: Upload Bundle package
       uses: actions/upload-artifact@v2
       with:
-        #name: Bundle package (macOS)
         name: Archive package (tar.xz)
         path: ${{github.workspace}}/build/fastpathology_*.tar.xz
-        #path: ${{github.workspace}}/build/fastpathology_*.pkg
         if-no-files-found: error
