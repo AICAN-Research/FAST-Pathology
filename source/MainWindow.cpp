@@ -3898,13 +3898,17 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 							if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") !=
 								acceptedModels.end() &&
 								std::find(IEsList.begin(), IEsList.end(), "TensorFlow") != IEsList.end()) {
+                                std::cout << "GPU is disabled! (with TensorFlow)" << std::endl;
 								network->setInferenceEngine("TensorFlow");
+                                network->getInferenceEngine()->setDeviceType(InferenceDeviceType::CPU);  // Andre: 0 or 1 for personal Ubuntu Desktop
 							}
 							else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") !=
 								acceptedModels.end() &&
 								std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end()) {
+                                std::cout << "GPU is disabled! (with OpenVINO)" << std::endl;
 								network->setInferenceEngine("OpenVINO");
 								//network->getInferenceEngine()->setDeviceType(InferenceDeviceType::CPU);
+                                network->getInferenceEngine()->setDeviceType(InferenceDeviceType::CPU);
 							}
 							else {
 								std::cout
@@ -4090,6 +4094,14 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 							auto stitcher = PatchStitcher::New();
 							stitcher->setInputConnection(network->getOutputPort());
 							auto port = stitcher->getOutputPort();
+
+                            /*
+                            auto start = std::chrono::high_resolution_clock::now();
+                            DataObject::pointer data;
+                            do {
+                                data = stitcher->updateAndGetOutputData<DataObject>();
+                            } while (!data->isLastFrame());
+                             */
 
 							auto someRenderer = SegmentationRenderer::New();
 							someRenderer->setOpacity(0.7f, 1.0f);
