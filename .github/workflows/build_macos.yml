@@ -39,5 +39,6 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: Bundle package (macOS)
-        path: ${{github.workspace}}/build/fastpathology_*.pkg
+        path: ${{github.workspace}}/build/fastpathology_*.tar.xz
+        #path: ${{github.workspace}}/build/fastpathology_*.pkg
         if-no-files-found: error

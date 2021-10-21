@@ -159,28 +159,31 @@ if(WIN32)
 
 elseif(APPLE)
     ## macOS
-    # start by defining the Bundle Layout
-    file(MAKE_DIRECTORY ${directory})
+    set(CPACK_GENERATOR "TXZ")
+    set(CPACK_PACKAGE_FILE_NAME "fastpathology_macosx_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+
+    # # start by defining the Bundle Layout
+    # file(MAKE_DIRECTORY ${directory})
 
 
-    ## macOS
-    configure_file(${PROJECT_SOURCE_DIR}/README.md ${PROJECT_BINARY_DIR}/README.txt COPYONLY)
-    set(CPACK_RESOURCE_FILE_README ${PROJECT_BINARY_DIR}/README.txt)
+    # ## macOS
+    # configure_file(${PROJECT_SOURCE_DIR}/README.md ${PROJECT_BINARY_DIR}/README.txt COPYONLY)
+    # set(CPACK_RESOURCE_FILE_README ${PROJECT_BINARY_DIR}/README.txt)
 
-    configure_file(${PROJECT_SOURCE_DIR}/LICENSE.md ${PROJECT_BINARY_DIR}/LICENSE.txt COPYONLY)
-    set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_BINARY_DIR}/LICENSE.txt)
+    # configure_file(${PROJECT_SOURCE_DIR}/LICENSE.md ${PROJECT_BINARY_DIR}/LICENSE.txt COPYONLY)
+    # set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_BINARY_DIR}/LICENSE.txt)
 
-    set(MACOSX_BUNDLE_ICON_FILE fastpathology_logo_macosx.icns)
+    # set(MACOSX_BUNDLE_ICON_FILE fastpathology_logo_macosx.icns)
 
-    set_source_files_properties(myAppImage.icns PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+    # set_source_files_properties(myAppImage.icns PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
 
-    set(CPACK_GENERATOR "DragNDrop")
+    # set(CPACK_GENERATOR "DragNDrop")
 
-    set(CPACK_MACOSX_BUNDLE "TRUE")
-    set(CPACK_DMG_VOLUME_NAME "fastpathology")
-    set(CPACK_DMG_FORMAT "ODZO")  # zlib compression
-    set(CPACK_PACKAGE_FILE_NAME "fastpathology_macosx_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
-    set(CPACK_PACKAGE_NAME "fastpathology_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+    # set(CPACK_MACOSX_BUNDLE "TRUE")
+    # set(CPACK_DMG_VOLUME_NAME "fastpathology")
+    # set(CPACK_DMG_FORMAT "ODZO")  # zlib compression
+    # set(CPACK_PACKAGE_FILE_NAME "fastpathology_macosx_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+    # set(CPACK_PACKAGE_NAME "fastpathology_${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 
 else()
     ## UNIX
