@@ -10,6 +10,7 @@ cmake-build*
 *.h5
 *.uff
 *.xml
+*.onnx
 *.mapping
 *.bin
 *build/
@@ -31,3 +32,4 @@ openslide_test_data/
 inference_study/Debug/
 inference_study/Release/
 CMakeSettings.json
+studies/tumour-study/pred_tumour_seg_1.png 
