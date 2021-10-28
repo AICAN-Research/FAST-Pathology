@@ -167,7 +167,7 @@ void MainWindow::receiveFileList(const QList<QString> &names) {
 void MainWindow::createOpenGLWindow() {
     // initialize view
 	view = createView();
-    view->setSynchronizedRendering(false);
+    //view->setSynchronizedRendering(false);
 	view->set2DMode();
 	view->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
 	view->setAutoUpdateCamera(true);
@@ -1644,11 +1644,11 @@ void MainWindow::selectFile() {
 
     // Get old view, and remove it from Widget
     currentView = getView(0);
-    currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
+    //currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
     mWidget->clearViews();
 
     auto tmpView = createView();
-    tmpView->setSynchronizedRendering(false);
+    //tmpView->setSynchronizedRendering(false);
     tmpView->set2DMode();
     tmpView->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
     tmpView->setAutoUpdateCamera(true);
@@ -1969,11 +1969,11 @@ void MainWindow::selectFileInProject(int pos) {
 
     // Get old view, and remove it from Widget
     currentView = getView(0);
-    currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
+    //currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
     mWidget->clearViews();
 
     auto tmpView = createView();
-    tmpView->setSynchronizedRendering(false);
+    //tmpView->setSynchronizedRendering(false);
     tmpView->set2DMode();
     tmpView->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
     tmpView->setAutoUpdateCamera(true);

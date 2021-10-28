@@ -150,7 +150,7 @@ if(WIN32)
     set(CPACK_CREATE_DESKTOP_LINKS "fastpathology")
 
     # Icon stuff
-    set(CPACK_NSIS_MODIFY_PATH ON)
+    set(CPACK_NSIS_MODIFY_PATH OFF)
     #set(CPACK_NSIS_MUI_ICON ${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon_large.ico)  # @TODO: find a way to add icon to installer
     #set(CPACK_NSIS_MUI_UNICON ${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon_large.ico)
     #set(CPACK_CREATE_DESKTOP_LINKS ON)

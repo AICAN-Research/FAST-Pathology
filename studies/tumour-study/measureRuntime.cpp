@@ -17,6 +17,7 @@
 #include <FAST/Algorithms/ImageResizer/ImageResizer.hpp>
 #include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
 #include <FAST/Data/Image.hpp>
+#include <FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp>
 
 using namespace fast;
 
@@ -26,7 +27,7 @@ int main(int argc, char** argv) {
     CommandLineParser parser("Measure neural network performance script");
     parser.addOption("disable-warmup");
     parser.parse(argc, argv);
-    const int iterations = 10;  // 10
+    const int iterations = 1;  // 10
     const bool warmupIteration = !parser.getOption("disable-warmup");
 
     std::cout << "\nPatch-wise high-res semantic segmentation...\n" << std::endl;
@@ -34,19 +35,20 @@ int main(int argc, char** argv) {
     std::ofstream file(resultFilename.c_str());
 
     std::vector<int> m_img_size{256, 256};
-    int m_patch_level = 1;
+    int m_patch_level = 2;
+    int low_res_patch_level = 5;
     float m_maskThreshold = 0.2;
     int iter = 1;
 
     // Write header
     file << "Engine;Device Type;Iteration;Patch generator AVG;Patch generator STD;NN input AVG;NN input STD;NN inference AVG;NN inference STD;NN output AVG;NN output STD;Patch stitcher AVG;Patch stitcher STD;Exporter AVG; Exporter STD;Total\n";
 
-    for (std::string engine : {"TensorRT", "OpenVINO"}) {
+    for (std::string engine : {"OpenVINO"}) {
         std::map<std::string, InferenceDeviceType> deviceTypes = {{"ANY", InferenceDeviceType::ANY}};
         if (engine == "OpenVINO") {
             // On OpenVINO, try all device types
             deviceTypes = std::map<std::string, InferenceDeviceType>{
-                    {"CPU", InferenceDeviceType::CPU},
+                    //{"CPU", InferenceDeviceType::CPU},
                     {"GPU", InferenceDeviceType::GPU},
             };
         }
@@ -62,7 +64,8 @@ int main(int argc, char** argv) {
                 //importer->setFilename("E:/DigitalPathology/WSI/C.tif");
                 //importer->setFilename("../../../../wsi-2_HE.ndpi");
                 //importer->setFilename("../../703.tif");
-                importer->setFilename("../../../../A05.svs");
+                //importer->setFilename("../../../../A05.svs");
+                importer->setFilename("../../../../WSI/283.tif");
 
                 //auto tissueSegmentation = TissueSegmentation::New();
                 //tissueSegmentation->setInputConnection(importer->getOutputPort());
@@ -98,9 +101,10 @@ int main(int argc, char** argv) {
                 // extract low-resolution image and resize it
                 auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
                 auto access = currImage->getAccess(ACCESS_READ);
-                auto input = access->getLevelAsImage(1);
+                auto input = access->getLevelAsImage(low_res_patch_level);
 
                 auto resizer = ImageResizer::New();
+                resizer->setInterpolation(true);
                 resizer->setInputData(input);
                 resizer->setWidth(1024);
                 resizer->setHeight(1024);
@@ -113,6 +117,7 @@ int main(int argc, char** argv) {
                 converter->setInputConnection(stitcher->getOutputPort());
 
                 auto resizer2 = ImageResizer::New();
+                resizer2->setInterpolation(true);
                 resizer2->setInputConnection(converter->getOutputPort());
                 //resizer2->setInputData(stitcher->updateAndGetOutputData<Image>());
                 resizer2->setWidth(1024);
@@ -126,25 +131,41 @@ int main(int argc, char** argv) {
                 refinement->setInferenceEngine("TensorFlow");
                 refinement->load("../../unet_tumour_refinement_model.pb");
                 refinement->setScaleFactor(0.00392156862f);
+                //refinement->setScaleFactor(1.0f);
                 refinement->setInputData(1, port->getNextFrame<Image>());
                 refinement->setInputData(0, port2->getNextFrame<Image>());
                 //refinement->setInputConnection(0, stitcher->getOutputPort());
                 //refinement->setInputData(1, stitcher->updateAndGetOutputData<Image>());  // @FIXME: Input here is null
                 refinement->enableRuntimeMeasurements();
-                refinement->update();
+                //refinement->update();
+
+                /*
+                // threshold
+                auto thresh = BinaryThresholding::New();
+                thresh->setLowerThreshold(0.5);
+                thresh->setInputData(refinement->updateAndGetOutputData<Image>());
+                thresh->update();
+                 */
+
+                //auto currPred = refinement->updateAndGetOutputData<Image>();
+                //currPred->setSpacing(1.0f, 1.0f, 1.0f);
 
                 // finally, export final result to disk
                 auto finalSegExporter = ImageFileExporter::New();
                 finalSegExporter->setFilename("../../pred_tumour_seg_" + std::to_string(iter) + ".png");
                 finalSegExporter->setInputData(refinement->updateAndGetOutputData<Image>());
+                //finalSegExporter->setInputData(currPred);
+                //finalSegExporter->setInputData(thresh->updateAndGetOutputData<Image>());
                 finalSegExporter->enableRuntimeMeasurements();
                 finalSegExporter->update();  // runs the exporter
 
+                /*
                 auto start2 = std::chrono::high_resolution_clock::now();
                 DataObject::pointer data2;
                 do {
                     data2 = stitcher->updateAndGetOutputData<DataObject>();
                 } while (!data2->isLastFrame());
+                 */
 
                 std::chrono::duration<float, std::milli> timeUsed =
                         std::chrono::high_resolution_clock::now() - start;
@@ -160,8 +181,8 @@ int main(int argc, char** argv) {
 
                 iter++;
 
-                if (iteration == 0 && warmupIteration)
-                    continue;
+                //if (iteration == 0 && warmupIteration)
+                //    continue;
 
                 file <<
                      engine + ";" +
