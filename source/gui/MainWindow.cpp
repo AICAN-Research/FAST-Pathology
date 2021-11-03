@@ -149,15 +149,39 @@ MainWindow::MainWindow() {
     createMainMenuWidget(); // create menu widget
     createMenubar();        // create Menubar
     createOpenGLWindow();   // create OpenGL window
+    this->setupConnections();
 }
 
-std::string MainWindow::createRandomNumbers_(int n) {
-	std::string out;
-	for (int i = 0; i < n; i++) {
-		out.append(std::to_string(rand() % 10));
-	}
-	return out;
+
+void MainWindow::setupConnections()
+{
+    // Overall
+    QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::newAppTitle, this, &MainWindow::updateAppTitle);
+    // Main menu actions
+    QObject::connect(this->_file_menu_create_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::createProjectTriggered);
+    QObject::connect(this->_file_menu_import_wsi_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::selectFilesTriggered);
+    QObject::connect(this->_file_menu_add_model_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::addModelsTriggered);
+    QObject::connect(this->_file_menu_add_pipeline_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::addPipelinesTriggered);
+    QObject::connect(this->_project_menu_create_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::createProjectTriggered);
+    QObject::connect(this->_project_menu_open_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::openProjectTriggered);
+    QObject::connect(this->_project_menu_save_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::saveProjectTriggered);
+    QObject::connect(this->_edit_menu_change_mode_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::setApplicationMode);
+    QObject::connect(this->_edit_menu_download_testdata_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::downloadTestDataTriggered);
+    //QObject::connect(this->_edit_menu_download_testdata_action, &QAction::triggered, this, &MainWindow::downloadAndAddTestData);
 }
+
+void MainWindow::updateAppTitle(std::string title_suffix)
+{
+    this->setTitle(applicationName + title_suffix);
+}
+
+//std::string MainWindow::createRandomNumbers_(int n) {
+//	std::string out;
+//	for (int i = 0; i < n; i++) {
+//		out.append(std::to_string(rand() % 10));
+//	}
+//	return out;
+//}
 
 void MainWindow::receiveFileList(const QList<QString> &names) {
     selectFileDrag(names);
@@ -184,7 +208,8 @@ void MainWindow::createOpenGLWindow() {
 	//mainSplitter->setStyleSheet("background-color: rgb(55, 100, 110);");
 	mainSplitter->setHandleWidth(5);
 	mainSplitter->setStyleSheet("QSplitter::handle { background-color: rgb(100, 100, 200); }; QMenuBar::handle { background-color: rgb(20, 100, 20); }");
-	mainSplitter->addWidget(menuWidget);
+//	mainSplitter->addWidget(menuWidget);
+    mainSplitter->addWidget(_side_panel_widget);
 	mainSplitter->addWidget(view);
 	mainSplitter->setStretchFactor(1, 1);
 
@@ -195,44 +220,6 @@ void MainWindow::createOpenGLWindow() {
 	*/
 
     mainLayout->addWidget(mainSplitter);
-}
-
-void MainWindow::setApplicationMode() {
-    // prompt
-    QMessageBox mBox;
-    mBox.setIcon(QMessageBox::Warning);
-    if (setModeButton->text() == "Clinical mode") {
-        mBox.setText("This will set the application from clinical mode to advanced mode.");
-    } else {
-        mBox.setText("This will set the application from advanced mode to clinical mode.");
-    }
-    mBox.setInformativeText("Are you sure you want to change mode?");
-    mBox.setDefaultButton(QMessageBox::No);
-    mBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-    int ret = mBox.exec();
-
-    switch (ret) {
-        case QMessageBox::Yes:
-            // toggle and update text on button to show current mode
-            advancedMode = !advancedMode; // toggle
-            if (setModeButton->text() == "Clinical mode") {
-                setModeButton->setText("Research mode");
-            } else {
-                setModeButton->setText("Clinical mode");
-            }
-            // also update title
-            if (advancedMode) {
-                setTitle(applicationName + " (Research mode)" + " - " + splitCustom(filename, "/").back());
-            } else {
-                setTitle(applicationName + " - " + splitCustom(filename, "/").back());
-            }
-            break;
-        case QMessageBox::No:
-            1; // if "No", do nothing
-            break;
-        default:
-            break;
-    }
 }
 
 void MainWindow::reportIssueUrl() {
@@ -311,7 +298,7 @@ void MainWindow::downloadAndAddTestData() {
 		auto tmp = it2.next();
 		fileNames.push_back(tmp);
 	}
-	addModelsDrag(fileNames);
+//	addModelsDrag(fileNames);
 
 	auto mBox2 = new QMessageBox(mWidget);
 	mBox2->setIcon(QMessageBox::Warning);
@@ -335,14 +322,14 @@ void MainWindow::downloadAndAddTestData() {
 		break;
 	}
 
-	// OPTIONAL: Add WSIs to project for visualization
-	fileNames.clear();
-	QDirIterator it(downloadsFolder + "/test_data/WSI/", QDir::Files);
-	while (it.hasNext()) {
-		auto tmp = it.next();
-		fileNames.push_back(tmp);
-	}
-	selectFileDrag(fileNames);
+//	// OPTIONAL: Add WSIs to project for visualization
+//	fileNames.clear();
+//	QDirIterator it(downloadsFolder + "/test_data/WSI/", QDir::Files);
+//	while (it.hasNext()) {
+//		auto tmp = it.next();
+//		fileNames.push_back(tmp);
+//	}
+//	selectFileDrag(fileNames);
 }
 
 void MainWindow::aboutProgram() {
@@ -390,35 +377,47 @@ void MainWindow::createMenubar() {
     //topFiller->setStyleSheet(qss);
     topFiller->setMaximumHeight(30);
 
-    //auto fileMenu = new QMenu();
+    // File tab
     auto fileMenu = topFiller->addMenu(tr("&File"));
     //fileMenu->setFixedHeight(100);
     //fileMenu->setFixedWidth(100);
     //QAction *createProjectAction;
-    fileMenu->addAction("Create Project", this,  &MainWindow::createProject);
-    fileMenu->addAction("Import WSIs", this, &MainWindow::selectFile);
-    fileMenu->addAction("Add Models", this, &MainWindow::addModels);
-    fileMenu->addAction("Add Pipelines", this, &MainWindow::addPipelines);
+    this->_file_menu_create_project_action = new QAction("Create Project");
+    fileMenu->addAction(this->_file_menu_create_project_action);
+    this->_file_menu_import_wsi_action = new QAction("Import WSIs");
+    fileMenu->addAction(this->_file_menu_import_wsi_action);
+    this->_file_menu_add_model_action = new QAction("Add Models");
+    fileMenu->addAction(this->_file_menu_add_model_action);
+    this->_file_menu_add_pipeline_action = new QAction("Add Pipelines");
+    fileMenu->addAction(this->_file_menu_add_pipeline_action);
     fileMenu->addSeparator();
     fileMenu->addAction("Quit", QApplication::quit);
 
+    // Projects tab
+    auto projectMenu = topFiller->addMenu(tr("&Projects"));
+    this->_project_menu_create_project_action = new QAction("Create Project");
+    projectMenu->addAction(this->_project_menu_create_project_action);
+    this->_project_menu_open_project_action = new QAction("Open Project");
+    projectMenu->addAction(this->_project_menu_open_project_action);
+    this->_project_menu_save_project_action = new QAction("Save Project");
+    projectMenu->addAction(this->_project_menu_save_project_action);
+    projectMenu->addAction("Run for project", this, &MainWindow::runForProject);
+
+    // Edit tab
     auto editMenu = topFiller->addMenu(tr("&Edit"));
     editMenu->addAction("Reset", this, &MainWindow::reset);
-    editMenu->addAction("Change mode", this, &MainWindow::setApplicationMode);
-	editMenu->addAction("Download test data", this, &MainWindow::downloadAndAddTestData);
+    this->_edit_menu_change_mode_action = new QAction("Change mode");
+    editMenu->addAction(this->_edit_menu_change_mode_action);
+    this->_edit_menu_download_testdata_action = new QAction("Download test data");
+    editMenu->addAction(this->_edit_menu_download_testdata_action);
 
+    // Pipelines tab
     auto pipelineMenu = topFiller->addMenu(tr("&Pipelines"));
     pipelineMenu->addAction("Import pipelines", this, &MainWindow::addPipelines);
     pipelineMenu->addAction("Pipeline Editor", this, &MainWindow::customPipelineEditor);
     runPipelineMenu = new QMenu("&Run Pipeline", mWidget);
     //runPipelineMenu->addAction("Grade classification");
     pipelineMenu->addMenu(runPipelineMenu);
-
-    auto projectMenu = topFiller->addMenu(tr("&Projects"));
-    projectMenu->addAction("Create Project", this, &MainWindow::createProject);
-    projectMenu->addAction("Open Project", this, &MainWindow::openProject);
-    projectMenu->addAction("Save Project", this, &MainWindow::saveProject);
-	projectMenu->addAction("Run for project", this, &MainWindow::runForProject);
 
     loadPipelines(); // load pipelines that exists in the data/Pipelines directory
 
@@ -500,7 +499,7 @@ void MainWindow::reset() {
 
 void MainWindow::createMainMenuWidget() {
     // create widgets for Menu layout
-    createFileWidget();
+//    createFileWidget();
     createProcessWidget();
     createViewWidget();
     createStatsWidget();
@@ -526,160 +525,224 @@ void clearLayout(QLayout *layout) {
     }
 }
 
+void MainWindow::updateView(std::string uid_name, bool state){
+    wsiList.push_back(uid_name);
+
+//    // Import image from file using the ImageFileImporter
+//    auto importer = WholeSlideImageImporter::New();
+//    importer->setFilename(currFileName);
+//    auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
+//
+//    // for reading of multiple WSIs, only render first one
+//    // current WSI (global)
+//    filename = currFileName;
+//
+//    m_image = currImage;
+//    metadata = m_image->getMetadata(); // get metadata
+//
+//    auto renderer = ImagePyramidRenderer::New();
+//    renderer->setSharpening(m_wsiSharpening);
+//    renderer->setInputData(m_image);
+//
+//    // TODO: Something here results in me not being able to run analysis on new images (after the first)
+    removeAllRenderers();
+//    m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
+//    auto image(std::make_shared<WholeSlideImage>(currFileName));
+//    image->memory_load();
+//    image->memory_unload();
+//    image->memory_load();
+
+//    DataManager::GetInstance()->IncludeImage(currFileName);
+
+//    auto renderer = DataManager::GetInstance()->get_renderer("WSI");
+//    getView(0)->addRenderer(renderer);
+    if(state) {
+        auto img = DataManager::GetInstance()->get_image(uid_name);
+        getView(0)->addRenderer(img->get_renderer("WSI"));
+//    insertRenderer("WSI", renderer);
+        getView(0)->reinitialize(); // Must call this after removing all renderers
+        DataManager::GetInstance()->setVisibleImageName(uid_name);
+    }
+    else
+        DataManager::GetInstance()->setVisibleImageName("");
+
+    wsiFormat = metadata["openslide.vendor"]; // get WSI format
+//    magn_lvl = getMagnificationLevel(); // get magnification level of current WSI
+
+    // now make it possible to edit image in the View Widget
+//    createDynamicViewWidget("WSI", modelName);
+
+    // update application name to contain current WSI
+    if (advancedMode) {
+        setTitle(applicationName + " (Research mode)" + " - " + splitCustom(uid_name, "/").back());
+    } else {
+        setTitle(applicationName + " - " + splitCustom(uid_name, "/").back());
+    }
+
+    // to render straight away (avoid waiting on all WSIs to be handled before rendering)
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+}
+
 void MainWindow::createMenuWidget() {
-    stackedWidget = new QStackedWidget(mWidget);
-    //stackedWidget->setStyleSheet("border:1px solid rgb(0, 255, 0); ");
-    //stackedWidget->setFixedWidth(200);
-    //stackedWidget->setStyleSheet("border:1px solid rgb(0, 0, 255); ");
-    stackedWidget->insertWidget(0, fileWidget);
-    stackedWidget->insertWidget(1, processWidget);
-    stackedWidget->insertWidget(2, viewWidget); // TODO: Disable viewWidget at the start, as there is no images to visualize
-    stackedWidget->insertWidget(3, statsWidget);
-    stackedWidget->insertWidget(4, exportWidget);
-    //stackedLayout->setSizeConstraint(QLayout::SetFixedSize);
-    //stackedWidget->setLayout(mainLayout);
+    _side_panel_widget = new MainSidePanelWidget(mWidget);
+//    QObject::connect(stackedWidget->_project_widget, &ProjectWidget::newImageFilename, this, &MainWindow::updateView);
+    QObject::connect(_side_panel_widget, &MainSidePanelWidget::newImageDisplay, this, &MainWindow::updateView);
+    QObject::connect(_side_panel_widget, &MainSidePanelWidget::resetDisplay, this, &MainWindow::resetDisplay);
+//    QObject::connect(stackedWidget->_project_widget, &ProjectWidget::newRenderer, this, &MainWindow::updateView);
 
-    int im_size = 40;
-
-    auto mapper = new QSignalMapper(mWidget);
-
-    auto spacerWidgetLeft = new QWidget(mWidget);
-    spacerWidgetLeft->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    spacerWidgetLeft->setVisible(true);
-
-    auto spacerWidgetRight = new QWidget(mWidget);
-    spacerWidgetRight->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    spacerWidgetRight->setVisible(true);
-
-    auto tb = new QToolBar(mWidget);
-    //tb->setStyleSheet("QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };");
-    //                         "border-bottom:2px solid rgba(25,25,120,75); "
-    //                         "QMenu{background-color:palette(window);border:1px solid palette(shadow);}");
-	//tb->setStyleSheet("{ background-color: rgb(100, 100, 200); }; QMenuBar::handle { background-color: rgb(20, 100, 20);");
-    tb->setIconSize(QSize(im_size, im_size));
-    //tb->setFixedWidth(200);
-    //tb->setMovable(true);
-    //tb->setMinimumSize(QSize(im_size, im_size));
-    //tb->setBaseSize(QSize(im_size, im_size));
-    tb->setFont(QFont("Times", 8)); //QFont::Bold));
-    tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);  // adds text under icons
-
-	//QResource::registerResource("qtres.qrc");
-
-	/*
-	std::cout << "Anything in Qt Resources: " << std::endl;
-	QDirIterator it(":", QDir::NoFilter);
-	while (it.hasNext()) {
-		auto tmp = it.next();
-		QDirIterator it2(tmp, QDir::NoFilter);
-		std::cout << "elem: " << tmp.toStdString() << std::endl;
-		while (it2.hasNext()) {
-			std::cout << "elem: " << it2.next().toStdString() << std::endl;
-		}
-		//qDebug() << it.next();
-	}
-	 */
-		
-    //auto toolBar = new QToolBar;
-    QPixmap openPix(QString::fromStdString(":/data/Icons/import_icon_new_cropped_resized.png"));
-	QPixmap processPix(QString::fromStdString(":/data/Icons/process_icon_new_cropped_resized.png"));
-    QPixmap viewPix(QString::fromStdString(":/data/Icons/visualize_icon_new_cropped_resized.png"));
-    QPixmap resultPix(QString::fromStdString(":/data/Icons/statistics_icon_new_cropped_resized.png"));
-    QPixmap savePix(QString::fromStdString(":/data/Icons/export_icon_new_cropped_resized.png"));
-
-    QPainter painter(&savePix);
-    QFont font = painter.font();
-    font.setPixelSize(4);
-    //font.setBold(true);
-    font.setFamily("Arial");
-    painter.setFont(font);
-    painter.setPen(*(new QColor(Qt::black)));
-    //painter.drawText(QPoint(0, 500), "Read WSI");
-
-    tb->addWidget(spacerWidgetLeft);
-
-    auto actionGroup = new QActionGroup(tb);
-
-    auto file_action = new QAction("Import", actionGroup);
-    file_action->setIcon(QIcon(openPix));
-    file_action->setCheckable(true);
-    file_action->setChecked(true);
-    tb->addAction(file_action);
-    mapper->setMapping(file_action, 0);
-    auto test2 = mapper->connect(file_action, SIGNAL(triggered(bool)), SLOT(map()));
-
-    auto process_action = new QAction("Process", actionGroup);
-    process_action->setIcon(QIcon(processPix));
-    process_action->setCheckable(true);
-    tb->addAction(process_action);
-    mapper->setMapping(process_action, 1);
-    mapper->connect(process_action, SIGNAL(triggered(bool)), SLOT(map()));
-
-    auto view_action = new QAction("View", actionGroup);
-    view_action->setIcon(QIcon(viewPix));
-    view_action->setCheckable(true);
-    tb->addAction(view_action);
-    mapper->setMapping(view_action, 2);
-    mapper->connect(view_action, SIGNAL(triggered(bool)), SLOT(map()));
-
-    auto stats_action = new QAction("Stats", actionGroup);
-    stats_action->setIcon(QIcon(resultPix));
-    stats_action->setCheckable(true);
-    tb->addAction(stats_action);
-    mapper->setMapping(stats_action, 3);
-    mapper->connect(stats_action, SIGNAL(triggered(bool)), SLOT(map()));
-
-    auto save_action = new QAction("Export", actionGroup);
-    save_action->setIcon(QIcon(savePix));
-    save_action->setCheckable(true);
-    tb->addAction(save_action);
-    mapper->setMapping(save_action, 4);
-    mapper->connect(save_action, SIGNAL(triggered(bool)), SLOT(map()));
-
-    tb->addWidget(spacerWidgetRight);
-
-    //stackedWidget->connect(&mapper, SIGNAL(mapped(int)), SLOT(setCurrentIndex(int)));
-    connect(mapper, SIGNAL(mapped(int)), stackedWidget, SLOT(setCurrentIndex(int)));
-
-    auto dockLayout = new QVBoxLayout; //or any other layout type you want
-    dockLayout->setMenuBar(tb); // <-- the interesting part
-
-    auto dockContent = new QWidget(mWidget);
-    dockContent->setLayout(dockLayout);
-
-    /*
-    auto pageComboBox = new QComboBox; // <- perhaps use toolbar instead?
-    pageComboBox->setFixedWidth(100);
-    pageComboBox->addItem(tr("File"));
-    pageComboBox->addItem(tr("Process"));
-    pageComboBox->addItem(tr("View"));
-    pageComboBox->addItem(tr("Save"));
-    connect(pageComboBox, SIGNAL(activated(int)), stackedWidget, SLOT(setCurrentIndex(int)));
-    //pageComboBox->setCurrentIndex(0);
-     */
-
-    dockLayout = new QVBoxLayout;
-    dockLayout->insertWidget(0, dockContent); //addWidget(dockContent);
-    //tmpLayout->addWidget(pageComboBox);
-    dockLayout->insertWidget(1, stackedWidget);
-
-    menuWidget = new QWidget(mWidget);
-    //menuWidget->setFixedWidth(300); //300);  // TODO: This was a good width for my screen, but need it to be adjustable (!)
-    //menuWidget->set
-    menuWidget->setMaximumWidth(700);
-    menuWidget->setMinimumWidth(360);
-    //tmpWidget->setStyleSheet("border:1px solid rgb(0, 255, 0); ");
-    menuWidget->setLayout(dockLayout);
-
-    // add button on the bottom of widget for toggling clinical/advanced mode
-    setModeButton = new QPushButton(mWidget);
-    setModeButton->setText("Clinical mode");
-    setModeButton->setFixedHeight(50);
-    setModeButton->setStyleSheet("color: white; background-color: gray");
-    QObject::connect(setModeButton, &QPushButton::clicked, std::bind(&MainWindow::setApplicationMode, this));
-
-    advancedMode = false; // true : advanced mode
-    dockLayout->addWidget(setModeButton);
+//    stackedWidget = new QStackedWidget(mWidget);
+//    //stackedWidget->setStyleSheet("border:1px solid rgb(0, 255, 0); ");
+//    //stackedWidget->setFixedWidth(200);
+//    //stackedWidget->setStyleSheet("border:1px solid rgb(0, 0, 255); ");
+//    stackedWidget->insertWidget(0, fileWidget);
+//    stackedWidget->insertWidget(1, processWidget);
+//    stackedWidget->insertWidget(2, viewWidget); // TODO: Disable viewWidget at the start, as there is no images to visualize
+//    stackedWidget->insertWidget(3, statsWidget);
+//    stackedWidget->insertWidget(4, exportWidget);
+//    //stackedLayout->setSizeConstraint(QLayout::SetFixedSize);
+//    //stackedWidget->setLayout(mainLayout);
+//
+//    int im_size = 40;
+//
+//    auto mapper = new QSignalMapper(mWidget);
+//
+//    auto spacerWidgetLeft = new QWidget(mWidget);
+//    spacerWidgetLeft->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+//    spacerWidgetLeft->setVisible(true);
+//
+//    auto spacerWidgetRight = new QWidget(mWidget);
+//    spacerWidgetRight->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+//    spacerWidgetRight->setVisible(true);
+//
+//    auto tb = new QToolBar(mWidget);
+//    //tb->setStyleSheet("QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };");
+//    //                         "border-bottom:2px solid rgba(25,25,120,75); "
+//    //                         "QMenu{background-color:palette(window);border:1px solid palette(shadow);}");
+//	//tb->setStyleSheet("{ background-color: rgb(100, 100, 200); }; QMenuBar::handle { background-color: rgb(20, 100, 20);");
+//    tb->setIconSize(QSize(im_size, im_size));
+//    //tb->setFixedWidth(200);
+//    //tb->setMovable(true);
+//    //tb->setMinimumSize(QSize(im_size, im_size));
+//    //tb->setBaseSize(QSize(im_size, im_size));
+//    tb->setFont(QFont("Times", 8)); //QFont::Bold));
+//    tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);  // adds text under icons
+//
+//	//QResource::registerResource("qtres.qrc");
+//
+//	/*
+//	std::cout << "Anything in Qt Resources: " << std::endl;
+//	QDirIterator it(":", QDir::NoFilter);
+//	while (it.hasNext()) {
+//		auto tmp = it.next();
+//		QDirIterator it2(tmp, QDir::NoFilter);
+//		std::cout << "elem: " << tmp.toStdString() << std::endl;
+//		while (it2.hasNext()) {
+//			std::cout << "elem: " << it2.next().toStdString() << std::endl;
+//		}
+//		//qDebug() << it.next();
+//	}
+//	 */
+//
+//    //auto toolBar = new QToolBar;
+//    QPixmap openPix(QString::fromStdString(":/data/Icons/import_icon_new_cropped_resized.png"));
+//	QPixmap processPix(QString::fromStdString(":/data/Icons/process_icon_new_cropped_resized.png"));
+//    QPixmap viewPix(QString::fromStdString(":/data/Icons/visualize_icon_new_cropped_resized.png"));
+//    QPixmap resultPix(QString::fromStdString(":/data/Icons/statistics_icon_new_cropped_resized.png"));
+//    QPixmap savePix(QString::fromStdString(":/data/Icons/export_icon_new_cropped_resized.png"));
+//
+//    QPainter painter(&savePix);
+//    QFont font = painter.font();
+//    font.setPixelSize(4);
+//    //font.setBold(true);
+//    font.setFamily("Arial");
+//    painter.setFont(font);
+//    painter.setPen(*(new QColor(Qt::black)));
+//    //painter.drawText(QPoint(0, 500), "Read WSI");
+//
+//    tb->addWidget(spacerWidgetLeft);
+//
+//    auto actionGroup = new QActionGroup(tb);
+//
+//    auto file_action = new QAction("Import", actionGroup);
+//    file_action->setIcon(QIcon(openPix));
+//    file_action->setCheckable(true);
+//    file_action->setChecked(true);
+//    tb->addAction(file_action);
+//    mapper->setMapping(file_action, 0);
+//    auto test2 = mapper->connect(file_action, SIGNAL(triggered(bool)), SLOT(map()));
+//
+//    auto process_action = new QAction("Process", actionGroup);
+//    process_action->setIcon(QIcon(processPix));
+//    process_action->setCheckable(true);
+//    tb->addAction(process_action);
+//    mapper->setMapping(process_action, 1);
+//    mapper->connect(process_action, SIGNAL(triggered(bool)), SLOT(map()));
+//
+//    auto view_action = new QAction("View", actionGroup);
+//    view_action->setIcon(QIcon(viewPix));
+//    view_action->setCheckable(true);
+//    tb->addAction(view_action);
+//    mapper->setMapping(view_action, 2);
+//    mapper->connect(view_action, SIGNAL(triggered(bool)), SLOT(map()));
+//
+//    auto stats_action = new QAction("Stats", actionGroup);
+//    stats_action->setIcon(QIcon(resultPix));
+//    stats_action->setCheckable(true);
+//    tb->addAction(stats_action);
+//    mapper->setMapping(stats_action, 3);
+//    mapper->connect(stats_action, SIGNAL(triggered(bool)), SLOT(map()));
+//
+//    auto save_action = new QAction("Export", actionGroup);
+//    save_action->setIcon(QIcon(savePix));
+//    save_action->setCheckable(true);
+//    tb->addAction(save_action);
+//    mapper->setMapping(save_action, 4);
+//    mapper->connect(save_action, SIGNAL(triggered(bool)), SLOT(map()));
+//
+//    tb->addWidget(spacerWidgetRight);
+//
+//    //stackedWidget->connect(&mapper, SIGNAL(mapped(int)), SLOT(setCurrentIndex(int)));
+//    connect(mapper, SIGNAL(mapped(int)), stackedWidget, SLOT(setCurrentIndex(int)));
+//
+//    auto dockLayout = new QVBoxLayout; //or any other layout type you want
+//    dockLayout->setMenuBar(tb); // <-- the interesting part
+//
+//    auto dockContent = new QWidget(mWidget);
+//    dockContent->setLayout(dockLayout);
+//
+//    /*
+//    auto pageComboBox = new QComboBox; // <- perhaps use toolbar instead?
+//    pageComboBox->setFixedWidth(100);
+//    pageComboBox->addItem(tr("File"));
+//    pageComboBox->addItem(tr("Process"));
+//    pageComboBox->addItem(tr("View"));
+//    pageComboBox->addItem(tr("Save"));
+//    connect(pageComboBox, SIGNAL(activated(int)), stackedWidget, SLOT(setCurrentIndex(int)));
+//    //pageComboBox->setCurrentIndex(0);
+//     */
+//
+//    dockLayout = new QVBoxLayout;
+//    dockLayout->insertWidget(0, dockContent); //addWidget(dockContent);
+//    //tmpLayout->addWidget(pageComboBox);
+//    dockLayout->insertWidget(1, stackedWidget);
+//
+//    menuWidget = new QWidget(mWidget);
+//    //menuWidget->setFixedWidth(300); //300);  // TODO: This was a good width for my screen, but need it to be adjustable (!)
+//    //menuWidget->set
+//    menuWidget->setMaximumWidth(700);
+//    menuWidget->setMinimumWidth(360);
+//    //tmpWidget->setStyleSheet("border:1px solid rgb(0, 255, 0); ");
+//    menuWidget->setLayout(dockLayout);
+//
+//    // add button on the bottom of widget for toggling clinical/advanced mode
+//    setModeButton = new QPushButton(mWidget);
+//    setModeButton->setText("Clinical mode");
+//    setModeButton->setFixedHeight(50);
+//    setModeButton->setStyleSheet("color: white; background-color: gray");
+//    QObject::connect(setModeButton, &QPushButton::clicked, std::bind(&MainWindow::setApplicationMode, this));
+//
+//    advancedMode = false; // true : advanced mode
+//    dockLayout->addWidget(setModeButton);
 }
 
 void MainWindow::createWSIScrollAreaWidget() {
@@ -736,70 +799,72 @@ void MainWindow::createWSIScrollAreaWidget() {
 
 void MainWindow::createFileWidget() {
 
-    fileLayout = new QVBoxLayout;
-    fileLayout->setAlignment(Qt::AlignTop);
+    this->fileWidget = new ProjectWidget(mWidget);
 
-    fileWidget = new QWidget(mWidget);
-    fileWidget->setLayout(fileLayout);
-    //fileWidget->setFixedWidth(200);
-
-    auto createProjectButton = new QPushButton(mWidget);
-    createProjectButton->setText("Create Project");
-    createProjectButton->setFixedHeight(50);
-    createProjectButton->setStyleSheet("color: white; background-color: blue");
-    QObject::connect(createProjectButton, &QPushButton::clicked, std::bind(&MainWindow::createProject, this));
-
-    auto openProjectButton = new QPushButton(mWidget);
-    openProjectButton->setText("Open Project");
-    openProjectButton->setFixedHeight(50);
-    //openProjectButton->setStyleSheet("color: white; background-color: blue");
-    QObject::connect(openProjectButton, &QPushButton::clicked, std::bind(&MainWindow::openProject, this));
-
-    auto selectFileButton = new QPushButton(mWidget);
-    selectFileButton->setText("Import WSIs");
-    //selectFileButton->setFixedWidth(200);
-    selectFileButton->setFixedHeight(50);
-    //selectFileButton->setStyleSheet("color: white; background-color: blue");
-    QObject::connect(selectFileButton, &QPushButton::clicked, std::bind(&MainWindow::selectFile, this));
-
-    /*
-    auto addModelButton = new QPushButton(fileWidget);
-    addModelButton->setText("Import model");
-    //selectFileButton->setFixedWidth(200);
-    addModelButton->setFixedHeight(50);
-    addModelButton->setStyleSheet("color: white; background-color: blue");
-    QObject::connect(addModelButton, &QPushButton::clicked, std::bind(&MainWindow::addModels, this));
-
-    auto quitButton = new QPushButton(fileWidget);
-    quitButton->setText("Quit");
-    //quitButton->setFixedWidth(200);
-    quitButton->setFixedHeight(50);
-    quitButton->setStyleSheet("color: black; background-color: red"); //; border-style: outset; border-color: black; border-width: 3px");
-    QObject::connect(quitButton, &QPushButton::clicked, std::bind(&Window::stop, this));
-
-    auto smallTextWindow = new QTextEdit;
-    smallTextWindow->setPlainText(tr("Hello, this is a prototype of the software I am developing as part of my "
-                                     "PhD project. The software is made to be simple, but still contains multiple advanced "
-                                     "options either for processing WSIs, deploying trained CNNs or visualizing WSIs and "
-                                     "segments and stuff... Have fun! :)"));
-    smallTextWindow->setReadOnly(true);
-
-    auto bigEditor = new QTextEdit;
-    bigEditor->setPlainText(tr("This widget takes up all the remaining space "
-                               "in the top-level layout."));
-    */
-
-    fileLayout->addWidget(createProjectButton);
-    fileLayout->addWidget(openProjectButton);
-    fileLayout->addWidget(selectFileButton); //, Qt::AlignTop);
-    /*
-    fileLayout->addWidget(addModelButton);
-    fileLayout->addWidget(smallTextWindow);
-    fileLayout->addWidget(bigEditor);
-    fileLayout->addWidget(quitButton, Qt::AlignTop);
-     */
-
-    createWSIScrollAreaWidget();
+//    fileLayout = new QVBoxLayout;
+//    fileLayout->setAlignment(Qt::AlignTop);
+//
+//    fileWidget = new QWidget(mWidget);
+//    fileWidget->setLayout(fileLayout);
+//    //fileWidget->setFixedWidth(200);
+//
+//    auto createProjectButton = new QPushButton(mWidget);
+//    createProjectButton->setText("Create Project");
+//    createProjectButton->setFixedHeight(50);
+//    createProjectButton->setStyleSheet("color: white; background-color: blue");
+//    QObject::connect(createProjectButton, &QPushButton::clicked, std::bind(&MainWindow::createProject, this));
+//
+//    auto openProjectButton = new QPushButton(mWidget);
+//    openProjectButton->setText("Open Project");
+//    openProjectButton->setFixedHeight(50);
+//    //openProjectButton->setStyleSheet("color: white; background-color: blue");
+//    QObject::connect(openProjectButton, &QPushButton::clicked, std::bind(&MainWindow::openProject, this));
+//
+//    auto selectFileButton = new QPushButton(mWidget);
+//    selectFileButton->setText("Import WSIs");
+//    //selectFileButton->setFixedWidth(200);
+//    selectFileButton->setFixedHeight(50);
+//    //selectFileButton->setStyleSheet("color: white; background-color: blue");
+//    QObject::connect(selectFileButton, &QPushButton::clicked, std::bind(&MainWindow::selectFile, this));
+//
+//    /*
+//    auto addModelButton = new QPushButton(fileWidget);
+//    addModelButton->setText("Import model");
+//    //selectFileButton->setFixedWidth(200);
+//    addModelButton->setFixedHeight(50);
+//    addModelButton->setStyleSheet("color: white; background-color: blue");
+//    QObject::connect(addModelButton, &QPushButton::clicked, std::bind(&MainWindow::addModels, this));
+//
+//    auto quitButton = new QPushButton(fileWidget);
+//    quitButton->setText("Quit");
+//    //quitButton->setFixedWidth(200);
+//    quitButton->setFixedHeight(50);
+//    quitButton->setStyleSheet("color: black; background-color: red"); //; border-style: outset; border-color: black; border-width: 3px");
+//    QObject::connect(quitButton, &QPushButton::clicked, std::bind(&Window::stop, this));
+//
+//    auto smallTextWindow = new QTextEdit;
+//    smallTextWindow->setPlainText(tr("Hello, this is a prototype of the software I am developing as part of my "
+//                                     "PhD project. The software is made to be simple, but still contains multiple advanced "
+//                                     "options either for processing WSIs, deploying trained CNNs or visualizing WSIs and "
+//                                     "segments and stuff... Have fun! :)"));
+//    smallTextWindow->setReadOnly(true);
+//
+//    auto bigEditor = new QTextEdit;
+//    bigEditor->setPlainText(tr("This widget takes up all the remaining space "
+//                               "in the top-level layout."));
+//    */
+//
+//    fileLayout->addWidget(createProjectButton);
+//    fileLayout->addWidget(openProjectButton);
+//    fileLayout->addWidget(selectFileButton); //, Qt::AlignTop);
+//    /*
+//    fileLayout->addWidget(addModelButton);
+//    fileLayout->addWidget(smallTextWindow);
+//    fileLayout->addWidget(bigEditor);
+//    fileLayout->addWidget(quitButton, Qt::AlignTop);
+//     */
+//
+//    createWSIScrollAreaWidget();
 
 }
 
@@ -2034,339 +2099,6 @@ void MainWindow::selectFileInProject(int pos) {
         setTitle(applicationName + " (Research mode)" + " - " + splitCustom(filename, "/").back());
     } else {
         setTitle(applicationName + " - " + splitCustom(filename, "/").back());
-    }
-}
-
-void MainWindow::createProject() {
-
-    // start by selecting where to create folder and give project name
-    // should also handle if folder name already exist, prompt warning and option to change name
-    QFileDialog dialog(mWidget);
-    dialog.setFileMode(QFileDialog::AnyFile);
-
-    projectFolderName = dialog.getExistingDirectory(
-            mWidget, tr("Set Project Directory"),
-            QCoreApplication::applicationDirPath(), QFileDialog::DontUseNativeDialog);
-
-    std::cout << "Project dir: " << projectFolderName.toStdString() << std::endl;
-
-    // create file for saving which WSIs exist in folder
-    QString projectFileName = "/project.txt";
-    QFile file(projectFolderName + projectFileName);
-    if (file.open(QIODevice::ReadWrite)) {
-        QTextStream stream(&file);
-        //stream << "something" << endl;
-    }
-
-    // now create folders for saving results and such (prompt warning if name already exists)
-    QDir().mkdir(projectFolderName + QString::fromStdString("/results"));
-    QDir().mkdir(projectFolderName + QString::fromStdString("/pipelines"));
-    QDir().mkdir(projectFolderName + QString::fromStdString("/thumbnails"));
-
-    // check if any WSIs have been selected previously, and ask if you want to make a project and add these,
-    // or make a new fresh one -> if no, need to clear all WSIs in the QListWidget
-    if (pageComboBox->count() > 0) {
-        // prompt
-        QMessageBox mBox;
-        mBox.setIcon(QMessageBox::Warning);
-        mBox.setText("There are already WSIs that has been used.");
-        mBox.setInformativeText("Do you wish to add them to the project?");
-        mBox.setDefaultButton(QMessageBox::Yes);
-        mBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        int ret = mBox.exec();
-
-        switch (ret) {
-            case QMessageBox::Yes:
-                std::cout << "Saved!" << std::endl;
-                saveProject();
-                break;
-            case QMessageBox::No:
-                std::cout << "Removing WSIs from QListWidget!" << std::endl;
-                scrollList->clear();
-                break;
-            default:
-                break;
-        }
-    }
-}
-
-void MainWindow::openProject() {
-
-    if (pageComboBox->count() > 0) {
-        // prompt
-        QMessageBox mBox;
-        mBox.setIcon(QMessageBox::Warning);
-        mBox.setText("Opening project will erase current edits.");
-        mBox.setInformativeText("Do you still wish to open?");
-        mBox.setDefaultButton(QMessageBox::No);
-        mBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        int ret = mBox.exec();
-
-        switch (ret) {
-            case QMessageBox::Yes:
-                wsiList.clear();
-                savedList.clear();
-                scrollList->clear();
-                removeAllRenderers();
-                pageComboBox->clear();
-                exportComboBox->clear();
-                curr_pos=0;
-                break;
-            case QMessageBox::No:
-                break;
-            default:
-                break;
-        }
-    }
-
-    curr_pos = 0; // reset
-
-    // select project file
-    QFileDialog dialog(mWidget);
-    dialog.setFileMode(QFileDialog::ExistingFile);
-    QString projectPath = dialog.getOpenFileName(
-            mWidget,
-            tr("Select Project File"), nullptr,
-            tr("Project (*project.txt)"),
-            nullptr, QFileDialog::DontUseNativeDialog
-    );
-
-    std::cout << projectPath.toStdString() << std::endl;
-    projectFolderName = splitCustom(projectPath.toStdString(), "project.txt")[0].c_str();
-    std::cout << projectFolderName.toStdString() << std::endl;
-
-    // check if all relevant files and folders are in selected folder directory
-    // qDebug << "hallo";
-    // if any of the folders does not exists, create them
-    if (!QDir(projectFolderName + "/pipelines").exists()) {
-        QDir().mkdir(projectFolderName + "/pipelines");
-    }
-    if (!QDir(projectFolderName + "/results").exists()) {
-        QDir().mkdir(projectFolderName + "/results");
-    }
-    if (!QDir(projectFolderName + "/thumbnails").exists()) {
-        QDir().mkdir(projectFolderName + "/thumbnails");
-    }
-
-    // now, parse project.txt-file and add if there are any WSIs in the project
-    // create file for saving which WSIs exist in folder
-    QList<QString> fileNames;
-    QString projectFileName = "project.txt";
-    QFile file(projectFolderName + projectFileName);
-    if (file.open(QIODevice::ReadOnly)) {
-        QTextStream in(&file);
-        while (!in.atEnd()) {
-            QString line = in.readLine();
-            fileNames.push_back(line);
-        }
-    }
-
-    if (fileNames.empty()) {
-        // prompt if no valid WSI was found in project-file
-        simpleInfoPrompt("There was found no valid WSI in the project file.");
-    }
-
-    auto progDialog = QProgressDialog(mWidget);
-    progDialog.setRange(0, fileNames.count()-1);
-    //progDialog.setContentsMargins(0, 0, 0, 0);
-    progDialog.setVisible(true);
-    progDialog.setModal(false);
-    progDialog.setLabelText("Loading WSIs...");
-    //QRect screenrect = mWidget->screen()[0].geometry();
-    progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
-    progDialog.show();
-
-    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-
-    int counter = 0;
-    for (QString &fileName : fileNames) {
-
-        if (fileName == "")
-            return;
-        filename = fileName.toStdString();
-        wsiList.push_back(filename);
-
-        // Import image from file using the ImageFileImporter
-        auto someImporter = WholeSlideImageImporter::New();
-        someImporter->setFilename(fileName.toStdString());
-        m_image = someImporter->updateAndGetOutputData<ImagePyramid>();
-
-        // for reading of multiple WSIs, only render last one
-        if (counter == fileNames.count() - 1) {
-
-            // get metadata
-            metadata = m_image->getMetadata();
-
-            auto renderer = ImagePyramidRenderer::New();
-            renderer->setSharpening(m_wsiSharpening);
-            renderer->setInputData(m_image);
-
-            removeAllRenderers();
-            m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
-            insertRenderer("WSI", renderer);
-            getView(0)->reinitialize(); // Must call this after removing all renderers
-
-            // get WSI format
-            wsiFormat = metadata["openslide.vendor"];
-
-            // get magnification level of current WSI
-            magn_lvl = getMagnificationLevel();
-
-            // now make it possible to edit image in the View Widget
-            createDynamicViewWidget("WSI", modelName);
-
-			// check if any results exists for current WSI, if there are load them
-			std::string wsiPath = splitCustom(splitCustom(filename, "/").back(), ".")[0];
-			auto currentResultPath = projectFolderName.toStdString() + "/results/" + wsiPath.c_str();
-
-			// update title to include name of current file
-            if (advancedMode) {
-                setTitle(applicationName + " (Research mode)" + " - " + splitCustom(filename, "/").back());
-            } else {
-                setTitle(applicationName + " - " + splitCustom(filename, "/").back());
-            }
-
-			std::cout << "Current WSI used: " << fileName.toStdString() << std::endl;
-
-			QDirIterator iter(QString::fromStdString(currentResultPath));
-			std::cout << "Current result folder path: " << currentResultPath << std::endl;
-			while (iter.hasNext()) {
-				auto currentResult = iter.next().toStdString();
-
-				std::cout << "current file: " << currentResult << std::endl;
-
-				auto tmp = splitCustom(currentResult, "/").back();
-
-				if ((tmp == ".") || (tmp == ".."))
-				    continue;
-
-				// check if current "file" is a directory, if directly, it will assume that there exists some high-res seg results to render, else do other stuff
-                QFileInfo pathFileInfo(currentResult.c_str());
-                if (pathFileInfo.isDir()){
-                    if (!QDir(currentResult.c_str()).isEmpty()) {
-                        loadHighres(QString::fromStdString(currentResult), QString::fromStdString(splitCustom(splitCustom(currentResult, "/").back(), wsiPath + "_").back()));
-                    } else {
-                        simpleInfoPrompt("Project directory containing high-resolution result was empty.");
-                    }
-                } else {
-                    auto splits = splitCustom(splitCustom(currentResult.c_str(), "/").back(), ".");
-                    std::cout << "Current result path: " << currentResult << std::endl;
-
-                    auto str = splits.back();
-                    transform(str.begin(), str.end(), str.begin(), ::tolower);
-                    if (str == "png") {
-                        // @TODO: this splitception will be handled better in the future :p
-                        loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(splitCustom(splitCustom(splitCustom(currentResult, "/").back(), splitCustom(splitCustom(fileName.toStdString(), "/").back(), ".")[0] + "_").back(), ".")[0]));
-                    } else if ((str == "h5") || (str == "hd5") || (str == "hdf5")) {
-                        loadHeatmap(QString::fromStdString(currentResult), QString::fromStdString(splitCustom(splitCustom(splitCustom(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
-                    } else {
-                        std::cout << "Unable to load result (format is not supported): " << currentResultPath << std::endl;
-                    }
-                }
-			}
-        }
-        counter++;
-
-        // check if thumbnail image exists for current WSI, if yes load it, else extract one
-        std::string wsiPath = splitCustom(splitCustom(filename, "/").back(), ".")[0];
-        QString fullPath = projectFolderName + "/thumbnails/" + wsiPath.c_str();
-        fullPath = fullPath.replace("//", "/") + ".png";
-
-        // try to convert FAST Image -> QImage
-        QImage image;
-        std::cout << "Path: " << fullPath.toStdString() << std::endl;
-        if (QDir().exists(fullPath)) {
-            std::cout << "Thumbnail exists! Load it project folder" << std::endl;
-            image.load(fullPath);
-        } else {
-            std::cout << "Thumbnail does not exist! Creating one from the WSI" << std::endl;
-            // get thumbnail image
-            image = extractThumbnail();
-        }
-
-        // /*
-        auto button = new QPushButton();
-        auto m_NewPixMap = QPixmap::fromImage(image);
-        QIcon ButtonIcon(m_NewPixMap);
-        button->setIcon(ButtonIcon);
-        //button->setCheckable(true);
-        button->setAutoDefault(true);
-        //button->setStyleSheet("border: none, padding: 0, background: none");
-        //button->setIconSize(QSize(200, 200));
-        button->setToolTip(QString::fromStdString(wsiPath));
-        int height_val = 150;
-        button->setIconSize(QSize(height_val, (int) std::round(
-                (float) image.width() * (float) height_val / (float) image.height())));
-
-        auto listItem = new QListWidgetItem;
-        listItem->setToolTip(QString::fromStdString(wsiPath));
-        listItem->setSizeHint(
-                QSize((int) std::round((float) image.width() * (float) height_val / (float) image.height()),
-                      height_val));
-        QObject::connect(button, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, curr_pos));
-        scrollList->addItem(listItem);
-        scrollList->setItemWidget(listItem, button);
-
-        curr_pos++;
-
-        // update progress bar
-        progDialog.setValue(counter);
-        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-    }
-}
-
-void MainWindow::simpleInfoPrompt(const QString& str) {
-    // prompt if no valid WSI was found in project-file
-    auto mBox = new QMessageBox(mWidget);
-    mBox->setText(str);
-    mBox->setIcon(QMessageBox::Information);
-    mBox->setModal(false);
-    QRect screenrect = mWidget->screen()[0].geometry();
-    mBox->move(mWidget->width() - mBox->width() / 2, -mWidget->width() / 2 - mBox->width() / 2);
-    mBox->show();
-    QTimer::singleShot(3000, mBox, SLOT(accept()));
-}
-
-QImage MainWindow::extractThumbnail() {
-        auto access = m_image->getAccess(ACCESS_READ);
-        auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
-
-        // try to convert FAST Image -> QImage
-        QImage image(input->getWidth(), input->getHeight(), QImage::Format_RGB32);
-
-        // TODO have to do some type conversion here, assuming float for now
-        unsigned char *pixelData = image.bits();
-
-        ImageAccess::pointer new_access = input->getImageAccess(ACCESS_READ);
-        void *inputData = new_access->get();
-        uint nrOfComponents = input->getNrOfChannels();
-
-        for (uint x = 0; x < (uint)input->getWidth(); x++) {
-            for (uint y = 0; y < (uint)input->getHeight(); y++) {
-                uint i = x + y * input->getWidth();
-                for (uint c = 0; c < (uint)input->getNrOfChannels(); c++) {
-                    float data;
-                    data = ((uchar *) inputData)[i * nrOfComponents + c]; // assumes TYPE_UINT8
-                    pixelData[i * 4 + (2-c)] = (unsigned char) data;  // TODO: NOTE (2-c) fixed BGR->RGB, but maybe there is a smarter solution?
-					//pixelData[i * 4 + c] = (unsigned char)data;  // TODO: NOTE (2-c) fixed BGR->RGB, but maybe there is a smarter solution?
-                }
-                pixelData[i * 4 + 3] = 255; // Alpha
-            }
-        }
-        return image;
-};
-
-void MainWindow::saveProject() {
-    // create file for saving which WSIs exist in folder
-    QString projectFileName = "/project.txt";
-    QFile file(projectFolderName + projectFileName);
-    file.resize(0);  // clear it and then write
-
-    if (file.open(QIODevice::ReadWrite)) {
-        foreach(std::string currPath, wsiList) {
-            QTextStream stream(&file);
-            stream << currPath.c_str() << endl;
-        }
     }
 }
 
@@ -4490,6 +4222,7 @@ void MainWindow::insertRenderer(std::string name, std::shared_ptr<Renderer> rend
 void MainWindow::removeAllRenderers() {
     m_rendererList.clear();
     getView(0)->removeAllRenderers();
+    getView(0)->stopPipeline();
 }
 
 bool MainWindow::hasRenderer(std::string name) {
@@ -4502,4 +4235,8 @@ std::shared_ptr<Renderer> MainWindow::getRenderer(std::string name) {
     return m_rendererList[name];
 }
 
+void MainWindow::resetDisplay(){
+    getView(0)->removeAllRenderers();
+    getView(0)->reinitialize();
+}
 }

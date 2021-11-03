@@ -11,10 +11,34 @@ set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
 
 add_executable(fastpathology
         source/main.cpp
-        source/MainWindow.cpp
+        source/gui/MainWindow.cpp
 		misc/AppIcon.rc
 		misc/qtres.qrc  # TODO: is this needed if qtres.cpp is added?
-		misc/qtres.cpp)
+                misc/qtres.cpp
+                source/utils/utilities.h
+                source/utils/qutilities.h
+                source/gui/ProjectTab/ProjectThumbnailPushButton.cpp
+                source/gui/ProjectTab/ProjectThumbnailPushButton.h
+                source/gui/ProjectTab/ProjectWidget.cpp
+                source/gui/ProjectTab/ProjectWidget.h
+                source/gui/ProcessTab/ProcessWidget.cpp
+                source/gui/ProcessTab/ProcessWidget.h
+                source/gui/ViewTab/ViewWidget.cpp
+                source/gui/ViewTab/ViewWidget.h
+                source/gui/StatsTab/StatsWidget.cpp
+                source/gui/StatsTab/StatsWidget.h
+                source/gui/MainSidePanelWidget.cpp
+                source/gui/MainSidePanelWidget.h
+                source/logic/DataManager.cpp
+                source/logic/DataManager.h
+                source/logic/WholeSlideImage.cpp
+                source/logic/WholeSlideImage.h
+                source/logic/ProcessManager.cpp
+                source/logic/ProcessManager.h
+                source/logic/SegmentationProcess.cpp
+                source/logic/SegmentationProcess.h
+                source/logic/InferenceModel.cpp
+                source/logic/InferenceModel.h)
 
 add_definitions(-D_USE_MATH_DEFINES)
 add_dependencies(fastpathology fast_copy)

@@ -8,6 +8,10 @@
 #include <QWidget>
 #include <QNetworkReply>
 #include <QProgressDialog>
+#include "source/utils/utilities.h"
+//#include "source/gui/ProjectWidget.h"
+#include "source/gui/MainSidePanelWidget.h"
+#include "source/logic/DataManager.h"
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -84,13 +88,13 @@ class MainWindow : public Window {
         QWidget *exportWidget;
         QWidget *statsWidget;
         QWidget *viewWidget;
-        QWidget *fileWidget;
+//        QWidget *fileWidget;
         QWidget *menuWidget;
         QWidget *dynamicViewWidget;
         QWidget *scrollWidget;
         QComboBox *pageComboBox;
         QComboBox *exportComboBox;
-        QStackedWidget *stackedWidget;
+//        QStackedWidget *stackedWidget;
         QPushButton *setModeButton;
         QMenu *runPipelineMenu;
         QScrollArea *scrollArea;
@@ -119,12 +123,6 @@ class MainWindow : public Window {
         std::vector<std::string> splitCustom(const std::string& s, const std::string& delimiter);
 
         // STATIC METHODS, TODO THAT PROBABLY SHOULD BE ADDED TO A UTILS OR SOMETHING SIMILAR
-        /**
-         * Creates a string of random numbers of length n.
-         * @param n
-         * @return
-         */
-        static std::string createRandomNumbers_(int n);
         /**
          * Reads the model configuration metadata from the model config file on disk and stores them in a container.
          * @param modelName
@@ -164,22 +162,13 @@ class MainWindow : public Window {
          * @return
          */
         float getMagnificationLevel();
-        /**
-         * Gets the thumbnail image and stores it as a QImage.
-         * @return
-         */
-        QImage extractThumbnail();
+
         /**
          * Updates the current WSI dependent on which file is selected form the WSI scroll bar widget on the left. It
          * will render the selected WSI and load all corresponding results, if a Project exists.
          * @param pos
          */
         void selectFileInProject(int pos);
-        /**
-         * Shows simple QMessageBox informing the usage about something.
-         * @param str
-         */
-        void simpleInfoPrompt(const QString& str);
 
         // GUI RELATED STUFF
         /**
@@ -246,12 +235,6 @@ class MainWindow : public Window {
          * Opens a simple dialog which contains information about the software.
          */
         void aboutProgram();
-        /**
-         * To change GUI mode. By default it is in diagnostics mode. In advanced mode, additional options are included,
-         * such as possibility to set parameters to methods and such. Toggling will update the title of the program
-         * and the Qt "mode" button on the down-left of the program.
-         */
-        void setApplicationMode();
 
         // IMPORT RELATED STUFF
         /**
@@ -343,22 +326,6 @@ class MainWindow : public Window {
 
         // PROJECT RELATED STUFF
         /**
-         * To create a Project. Opens a file explorer to choose which empty directory to create the project.
-         * A new directory may be created from the file explorer, before selection.
-         */
-        void createProject();
-        /**
-         * To open a created Project from disk. Opens a file explorer to select which project.txt file open.
-         * When selected, thumbnails from all WSIs will be added to the left scroll widget.
-         * For the image, the WSI will be rendered with corresponding existing results.
-         */
-        void openProject();
-        /**
-         * To save the current Project. This simply updates the project.txt file to include the current
-         * WSIs that are in use in the program.
-         */
-        void saveProject();
-        /**
          * Opens a QDialog to enable RunForProject, which makes it possible for the user to run an analysis
          * on a set of WSIs sequentially. From the QDialog the WSIs may be selected, and when accepted pressing the
          * "apply" button updates the current WSIs in the RunForProject.
@@ -429,6 +396,11 @@ class MainWindow : public Window {
          * @return
          */
         std::shared_ptr<Renderer> getRenderer(std::string name);
+
+        /**
+         * Define the connections for all elements inside the current global widget.
+         */
+        void setupConnections();
 
         // EXPORT RELATED STUFF
         /**
@@ -518,12 +490,35 @@ class MainWindow : public Window {
         std::shared_ptr<Image> m_tissue;
         std::shared_ptr<Image> m_tumorMap;
 
+
+        ProjectWidget *fileWidget;
+        MainSidePanelWidget *_side_panel_widget; /* Main widget for the left-hand panel */
+        std::map<std::string, QAction*> _file_menu_actions; /* Holder for all actions in the File main menu bar */
+        QAction* _file_menu_create_project_action;
+        QAction* _file_menu_import_wsi_action;
+        QAction* _file_menu_add_model_action;
+        QAction* _file_menu_add_pipeline_action;
+        QAction* _project_menu_create_project_action;
+        QAction* _project_menu_open_project_action;
+        QAction* _project_menu_save_project_action;
+        QAction* _edit_menu_change_mode_action;
+        QAction* _edit_menu_download_testdata_action;
+
     signals:
         void inferenceFinished(std::string name);
 
+        /**
+         * @brief Propagate the main menu bar action to the ProjectWidget
+         */
+//        void createProjectTriggered();
+//        void selectFilesTriggered();
+
+    public slots:
+        void resetDisplay();
+        void updateView(std::string uid_name, bool state);
+        void updateAppTitle(std::string title_suffix);
     private slots:
         void updateChannelValue(int index);
-
     };
 
 }

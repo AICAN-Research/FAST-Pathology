@@ -1,5 +1,5 @@
 #include <FAST/Tools/CommandLineParser.hpp>
-#include "MainWindow.hpp"
+#include "source/gui/MainWindow.hpp"
 
 using namespace fast;
 
