@@ -27,6 +27,7 @@ namespace fast{
     class Image;
     class Tensor;
     class View;
+    class ImageExporter;
 
     class SegmentationProcess {
         public:

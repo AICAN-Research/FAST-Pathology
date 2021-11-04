@@ -51,6 +51,13 @@ namespace fast{
         _image.reset();
     }
 
+    const std::string WholeSlideImage::get_renderer_type(const std::string& name){
+        if(has_renderer(name))
+            return this->_renderers_types[name];
+        else
+            return "";
+    }
+
     void WholeSlideImage::compute_magnification_level() {
         float magnification_lvl = 0.0f;
 
@@ -125,5 +132,11 @@ namespace fast{
                 }
             }
         }
+    }
+
+    void WholeSlideImage::insert_renderer(std::string renderer_name, std::string renderer_type, std::shared_ptr<Renderer> renderer)
+    {
+        this->_renderers_types[renderer_name] = renderer_type;
+        this->_renderers[renderer_name] = renderer;
     }
 } // End of namespace fast

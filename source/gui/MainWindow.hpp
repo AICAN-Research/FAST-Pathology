@@ -424,14 +424,6 @@ class MainWindow : public Window {
 
         // SCRIPT EDITOR RELATED STUFF
         /**
-         * Defines and creates the script editor widget.
-         */
-        void customPipelineEditor();
-        /**
-         * Defined and created the menubar related to the script editor.
-         */
-        void createActionsScript();
-        /**
          * Opens file explorer to select which script to use in the script editor.
          */
         void openScript();
@@ -503,6 +495,9 @@ class MainWindow : public Window {
         QAction* _project_menu_save_project_action;
         QAction* _edit_menu_change_mode_action;
         QAction* _edit_menu_download_testdata_action;
+        QMenu* _pipeline_menu;
+        QAction* _pipeline_menu_import_action;
+        QAction* _pipeline_menu_editor_action;
 
     signals:
         void inferenceFinished(std::string name);
@@ -515,8 +510,17 @@ class MainWindow : public Window {
 
     public slots:
         void resetDisplay();
+
         void updateView(std::string uid_name, bool state);
-        void updateAppTitle(std::string title_suffix);
+
+        void updateAppTitleReceived(std::string title_suffix);
+
+        /**
+         * @brief addRendererToViewReceived Adds a new renderer for the currently visible image to the main View.
+         * @param name: Identifier for the renderer to add.
+         */
+        void addRendererToViewReceived(const std::string& name);
+
     private slots:
         void updateChannelValue(int index);
     };

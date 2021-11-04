@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include "source/logic/WholeSlideImage.h"
 #include "source/logic/SegmentationProcess.h"
+#include "source/logic/InferenceModel.h"
 #include "source/utils/utilities.h"
 #include "source/utils/qutilities.h"
 
@@ -59,13 +60,22 @@ namespace fast {
 
             static ProcessManager *GetInstance();
 
+            inline bool has_model(std::string model_name){
+                return _models.find(model_name) != _models.end();
+            }
+
+            inline std::shared_ptr<InferenceModel> get_model(std::string model_name){return this->_models[model_name];}
+
             inline bool get_advanced_mode_status(){return this->_advanced_mode;}
             void set_advanced_mode_status(bool status);
+
+            void runProcess(const std::string image_uid, const std::string process_name);
 
         private:
             static ProcessManager * _pinstance;
             static std::mutex _mutex;
             bool _advanced_mode; /* */
+            std::map<std::string, std::shared_ptr<InferenceModel>> _models; /* Loaded model objects. */
     };
 }
 #endif //FASTPATHOLOGY_PROCESSMANAGER_H

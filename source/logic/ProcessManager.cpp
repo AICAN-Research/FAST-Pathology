@@ -37,4 +37,10 @@ namespace fast {
         this->_advanced_mode = status;
     }
 
+    void ProcessManager::runProcess(const std::string image_uid, const std::string process_name)
+    {
+        auto tissue_seg_process = new SegmentationProcess(image_uid);
+        tissue_seg_process->segmentTissue();
+    }
+
 } // End of namespace fast

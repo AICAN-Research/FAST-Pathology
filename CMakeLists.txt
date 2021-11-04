@@ -23,8 +23,12 @@ add_executable(fastpathology
                 source/gui/ProjectTab/ProjectWidget.h
                 source/gui/ProcessTab/ProcessWidget.cpp
                 source/gui/ProcessTab/ProcessWidget.h
+                source/gui/ProcessTab/PipelineScriptEditorWidget.cpp
+                source/gui/ProcessTab/PipelineScriptEditorWidget.h
                 source/gui/ViewTab/ViewWidget.cpp
                 source/gui/ViewTab/ViewWidget.h
+                source/gui/ViewTab/DynamicViewTabWidget.cpp
+                source/gui/ViewTab/DynamicViewTabWidget.h
                 source/gui/StatsTab/StatsWidget.cpp
                 source/gui/StatsTab/StatsWidget.h
                 source/gui/MainSidePanelWidget.cpp

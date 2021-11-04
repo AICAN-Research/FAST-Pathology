@@ -7,6 +7,7 @@
 #include <FAST/Importers/WholeSlideImageImporter.hpp>
 #include <FAST/Visualization/ImagePyramidRenderer/ImagePyramidRenderer.hpp>
 #include <FAST/Data/ImagePyramid.hpp>
+#include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
 
 namespace fast {
     ProcessWidget::ProcessWidget(QWidget *parent): QWidget(parent){
@@ -58,6 +59,7 @@ namespace fast {
             this->_main_layout->insertWidget(counter, someButton);
             // @TODO. Has to be thought further, when I have models to run.
             this->_specific_seg_models_pushbutton_map[std::to_string(counter)] = someButton;
+//            QObject::connect(someButton, &QPushButton::clicked, std::bind(&ProcessWidget::processStartEventReceived, this, modelName));
 
             counter++;
         }
@@ -229,5 +231,40 @@ namespace fast {
             simpleInfoPrompt("Tissue segmentation on current WSI has already been performed.", this);
             return false;
         }
+
+        ProcessManager::GetInstance()->runProcess(DataManager::GetInstance()->getVisibleImageName(), "tissue");
+        emit processTriggered("tissue");
+        emit addRendererToViewRequested("tissue");
+    }
+
+    bool ProcessWidget::processStartEventReceived(std::string process_name)
+    {
+        if (DataManager::GetInstance()->isEmpty()) {
+            std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
+            return false;
+        }
+
+        if (DataManager::GetInstance()->getVisibleImageName() == "")
+        {
+            std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
+            return false;
+        }
+
+        auto visible_image = DataManager::GetInstance()->get_visible_image();
+
+        // prompt if you want to run the analysis again, if it has already been ran
+        if (visible_image->has_renderer(process_name)) {
+            simpleInfoPrompt("Segmentation on current WSI has already been performed.", this);
+            return false;
+        }
+
+        ProcessManager::GetInstance()->runProcess(DataManager::GetInstance()->getVisibleImageName(), process_name);
+        emit processTriggered(process_name);
+        emit addRendererToViewRequested(process_name);
+    }
+
+    void ProcessWidget::editorPipelinesReceived()
+    {
+//        auto editor = new PipelineScriptEditorWidget(this);
     }
 }

@@ -45,6 +45,9 @@ namespace fast{
         void downloadTestDataTriggered();
         void addModelsTriggered();
         void addPipelinesTriggered();
+        void editorPipelinesTriggered();
+        void addRendererToViewRequested(const std::string&);
+
     public slots:
         /**
          * To change GUI mode. By default it is in diagnostics mode. In advanced mode, additional options are included,

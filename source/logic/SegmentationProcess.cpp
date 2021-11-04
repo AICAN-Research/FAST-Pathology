@@ -5,8 +5,11 @@
 #include "SegmentationProcess.h"
 #include <FAST/Importers/WholeSlideImageImporter.hpp>
 #include <FAST/Visualization/ImagePyramidRenderer/ImagePyramidRenderer.hpp>
+#include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
 #include <FAST/Data/ImagePyramid.hpp>
 #include <FAST/Data/Image.hpp>
+#include <FAST/Algorithms/TissueSegmentation/TissueSegmentation.hpp>
+#include <FAST/Exporters/ImageExporter.hpp>
 
 
 namespace fast{
@@ -20,7 +23,6 @@ namespace fast{
     }
 
     bool SegmentationProcess::segmentTissue() {
-        return false;
         // @TODO. Does the segmentation run only on the visible WSI, or on all loaded WSIs showing on the side list?
 //        if (DataManager::GetInstance()->isEmpty()) {
 //            std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
@@ -33,7 +35,7 @@ namespace fast{
 //            return false;
 //        }
 
-//        auto visible_image = DataManager::GetInstance()->get_visible_image();
+        auto visible_image = DataManager::GetInstance()->get_visible_image();
 
 //        // prompt if you want to run the analysis again, if it has already been ran
 //        if (visible_image->has_renderer("tissue")) {
@@ -41,11 +43,11 @@ namespace fast{
 //            return false;
 //        }
 
-//        // basic thresholding (with morph. post-proc.) based on euclidean distance from the color white
-//        auto tissueSegmentation = TissueSegmentation::New();
-//        tissueSegmentation->setInputData(visible_image->get_image_pyramid());
+        // basic thresholding (with morph. post-proc.) based on euclidean distance from the color white
+        auto tissueSegmentation = TissueSegmentation::New();
+        tissueSegmentation->setInputData(visible_image->get_image_pyramid());
 
-//        this->_stop_flag = false;
+        this->_stop_flag = false;
 //        if (this->_advanced_mode) {
 //            // option for setting parameters
 //            QDialog paramDialog;
@@ -258,40 +260,44 @@ namespace fast{
 //            }
 //        }
 
-//        std::cout << "Thresh: " << tissueSegmentation->getThreshold() << std::endl;
-//        std::cout << "Dilate: " << tissueSegmentation->getDilate() << std::endl;
-//        std::cout << "Erode:  " << tissueSegmentation->getErode() << std::endl;
+        std::cout << "Thresh: " << tissueSegmentation->getThreshold() << std::endl;
+        std::cout << "Dilate: " << tissueSegmentation->getDilate() << std::endl;
+        std::cout << "Erode:  " << tissueSegmentation->getErode() << std::endl;
 
-//        // finally get resulting tissueMap to be used later on
-//        auto tissue_seg = tissueSegmentation->updateAndGetOutputData<Image>();
+        // finally get resulting tissueMap to be used later on
+        auto tissue_seg = tissueSegmentation->updateAndGetOutputData<Image>();
+//        ImageExporter::pointer exporter = ImageExporter::New();
+//        exporter->setFilename("/home/dbouget/Desktop/test-tissueseg.png");
+//        exporter->setInputData(tissue_seg);
+//        exporter->update();
+        auto someRenderer = SegmentationRenderer::New();
+        someRenderer->setColor(1, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
+        someRenderer->setInputData(tissue_seg);
+        someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
+        someRenderer->update();
 
-//        auto someRenderer = SegmentationRenderer::New();
-//        someRenderer->setColor(1, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
-//        someRenderer->setInputData(tissue_seg);
-//        someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
-//        someRenderer->update();
+        std::string currSegment = "tissue";
 
-//        std::string currSegment = "tissue";
-
-//        // TODO: should append some unique ID next to "tissue" (also really for all other results) such that multiple
-//        //  runs with different hyperparamters may be ran, visualized and stored
-//        /*
-//        std::string origSegment = "tissue";
-//        auto iter = 2;
-//        while (hasRenderer(currSegment)) {
-//            currSegment = origSegment + std::to_string(iter);
-//            iter++;
-//        }
-//            */
-
+        // TODO: should append some unique ID next to "tissue" (also really for all other results) such that multiple
+        //  runs with different hyperparamters may be ran, visualized and stored
+        /*
+        std::string origSegment = "tissue";
+        auto iter = 2;
+        while (hasRenderer(currSegment)) {
+            currSegment = origSegment + std::to_string(iter);
+            iter++;
+        }
+            */
+        DataManager::GetInstance()->get_visible_image()->insert_renderer("tissue", "SegmentationRenderer", someRenderer);
 //        m_rendererTypeList[currSegment] = "SegmentationRenderer";
-//        createDynamicViewWidget(currSegment, modelName);
 //        insertRenderer(currSegment, someRenderer);
 
+          // ?
+//        createDynamicViewWidget(currSegment, modelName);
 //        availableResults[currSegment] = m_tissue;
 //        exportComboBox->addItem(tr(currSegment.c_str()));
 
-//        return true;
+        return true;
     }
 
 } // End of namespace fast

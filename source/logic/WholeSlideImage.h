@@ -55,6 +55,9 @@ namespace fast{
                 return this->_renderers[name];
             }
 
+            const std::string get_renderer_type(const std::string& name);
+
+            void insert_renderer(std::string renderer_name, std::string renderer_type, std::shared_ptr<Renderer> renderer);
 
         private:
             void compute_magnification_level();
@@ -70,6 +73,7 @@ namespace fast{
             std::unordered_map<std::string, std::string> _metadata; /* */
             float _magnification_level; /* */
             std::shared_ptr<ImagePyramid> _image; /* Loaded WSI */
+            // @TODO. For segmentation renderers, should they be kept in memory? Or dumped on disk, and only the physical location kept to reload when there is a need for display?
             std::map<std::string, std::shared_ptr<Renderer>> _renderers; /* */
             std::map<std::string, std::string> _renderers_types; /* */
             QImage _thumbnail; /* Thumbnail for the WSI */

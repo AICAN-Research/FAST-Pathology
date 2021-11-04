@@ -156,7 +156,7 @@ MainWindow::MainWindow() {
 void MainWindow::setupConnections()
 {
     // Overall
-    QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::newAppTitle, this, &MainWindow::updateAppTitle);
+    QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::newAppTitle, this, &MainWindow::updateAppTitleReceived);
     // Main menu actions
     QObject::connect(this->_file_menu_create_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::createProjectTriggered);
     QObject::connect(this->_file_menu_import_wsi_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::selectFilesTriggered);
@@ -168,9 +168,12 @@ void MainWindow::setupConnections()
     QObject::connect(this->_edit_menu_change_mode_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::setApplicationMode);
     QObject::connect(this->_edit_menu_download_testdata_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::downloadTestDataTriggered);
     //QObject::connect(this->_edit_menu_download_testdata_action, &QAction::triggered, this, &MainWindow::downloadAndAddTestData);
+    QObject::connect(this->_pipeline_menu_import_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::addPipelinesTriggered);
+    QObject::connect(this->_pipeline_menu_editor_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::editorPipelinesTriggered);
+    QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::addRendererToViewRequested, this, &MainWindow::addRendererToViewReceived);
 }
 
-void MainWindow::updateAppTitle(std::string title_suffix)
+void MainWindow::updateAppTitleReceived(std::string title_suffix)
 {
     this->setTitle(applicationName + title_suffix);
 }
@@ -412,12 +415,14 @@ void MainWindow::createMenubar() {
     editMenu->addAction(this->_edit_menu_download_testdata_action);
 
     // Pipelines tab
-    auto pipelineMenu = topFiller->addMenu(tr("&Pipelines"));
-    pipelineMenu->addAction("Import pipelines", this, &MainWindow::addPipelines);
-    pipelineMenu->addAction("Pipeline Editor", this, &MainWindow::customPipelineEditor);
+    this->_pipeline_menu = topFiller->addMenu(tr("&Pipelines"));
+    this->_pipeline_menu_import_action = new QAction("Import pipelines");
+    this->_pipeline_menu->addAction(this->_pipeline_menu_import_action);
+    this->_pipeline_menu_editor_action = new QAction("Pipeline Editor");
+    this->_pipeline_menu->addAction(this->_pipeline_menu_editor_action);
     runPipelineMenu = new QMenu("&Run Pipeline", mWidget);
     //runPipelineMenu->addAction("Grade classification");
-    pipelineMenu->addMenu(runPipelineMenu);
+    this->_pipeline_menu->addMenu(runPipelineMenu);
 
     loadPipelines(); // load pipelines that exists in the data/Pipelines directory
 
@@ -1138,118 +1143,6 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     // add widget to QComboBox
     pageComboBox->addItem(tr(tmpSomeName.c_str()));
     stackedLayout->addWidget(dynamicViewWidget);
-}
-
-void MainWindow::customPipelineEditor() {
-
-    auto backgroundLayout = new QVBoxLayout;
-
-    scriptEditorWidget = new QDialog(mWidget);
-    scriptEditorWidget->setWindowTitle("Script Editor");
-    backgroundLayout->addWidget(scriptEditorWidget);
-
-    scriptLayout = new QVBoxLayout;
-    scriptEditorWidget->setLayout(scriptLayout);
-
-    scriptEditor = new QPlainTextEdit;
-    auto highlighter = new PipelineHighlighter(scriptEditor->document());
-    const QFont fixedFont("UbuntuMono");
-    scriptEditor->setFont(fixedFont);
-
-    scriptLayout->insertWidget(1, scriptEditor);
-
-    // center QDialog when opened
-    QRect rect = scriptEditorWidget->geometry();
-    QRect parentRect = mWidget->geometry();
-    rect.moveTo(mWidget->mapToGlobal(QPoint(parentRect.x() + parentRect.width() - rect.width(), parentRect.y())));
-	scriptEditorWidget->resize(600, 800);
-
-    createActionsScript();
-    scriptEditorWidget->show();
-}
-
-void MainWindow::createActionsScript() {
-
-    auto menuBar = new QMenuBar(scriptEditorWidget);
-    auto toolBar = new QToolBar();
-
-    scriptLayout->setMenuBar(menuBar);
-
-    auto fileMenu = menuBar->addMenu(tr("&File"));
-    auto fileToolBar = new QToolBar;
-
-    const QIcon newIcon = QIcon::fromTheme("document-new", QIcon(":/images/new.png"));
-    auto newAct = new QAction(newIcon, tr("&New"), this);
-    newAct->setShortcuts(QKeySequence::New);
-    newAct->setStatusTip(tr("Create a new file"));
-    connect(newAct, &QAction::triggered, this, &MainWindow::newFileScript);
-    fileMenu->addAction(newAct);
-
-    const QIcon openIcon = QIcon::fromTheme("document-open", QIcon(":/images/open.png"));
-    auto openAct = new QAction(openIcon, tr("&Open..."), this);
-    openAct->setShortcuts(QKeySequence::Open);
-    openAct->setStatusTip(tr("Open an existing file"));
-    connect(openAct, &QAction::triggered, this, &MainWindow::openScript);
-    fileMenu->addAction(openAct);
-    fileToolBar->addAction(openAct);
-
-    const QIcon saveIcon = QIcon::fromTheme("document-save", QIcon(":/images/save.png"));
-    auto saveAct = new QAction(saveIcon, tr("&Save"), this);
-    saveAct->setShortcuts(QKeySequence::Save);
-    saveAct->setStatusTip(tr("Save the document to disk"));
-    connect(saveAct, &QAction::triggered, this, &MainWindow::saveScript);
-    fileMenu->addAction(saveAct);
-    fileToolBar->addAction(saveAct);
-
-    const QIcon saveAsIcon = QIcon::fromTheme("document-save-as");
-    QAction *saveAsAct = fileMenu->addAction(saveAsIcon, tr("Save &As..."), this, &MainWindow::saveAsScript);
-    saveAsAct->setShortcuts(QKeySequence::SaveAs);
-    saveAsAct->setStatusTip(tr("Save the document under a new name"));
-
-    fileMenu->addSeparator();
-
-    QMenu *editMenu = menuBar->addMenu(tr("&Edit"));
-    auto editToolBar = new QToolBar(tr("Edit"));
-
-#ifndef QT_NO_CLIPBOARD
-    const QIcon cutIcon = QIcon::fromTheme("edit-cut", QIcon(":/images/cut.png"));
-    auto cutAct = new QAction(cutIcon, tr("Cu&t"), this);
-
-    cutAct->setShortcuts(QKeySequence::Cut);
-    cutAct->setStatusTip(tr("Cut the current selection's contents to the "
-                            "clipboard"));
-    connect(cutAct, &QAction::triggered, scriptEditor, &QPlainTextEdit::cut);
-    editMenu->addAction(cutAct);
-    editToolBar->addAction(cutAct);
-
-    const QIcon copyIcon = QIcon::fromTheme("edit-copy", QIcon(":/images/copy.png"));
-    auto copyAct = new QAction(copyIcon, tr("&Copy"), this);
-    copyAct->setShortcuts(QKeySequence::Copy);
-    copyAct->setStatusTip(tr("Copy the current selection's contents to the "
-                             "clipboard"));
-    connect(copyAct, &QAction::triggered, scriptEditor, &QPlainTextEdit::copy);
-    editMenu->addAction(copyAct);
-    editToolBar->addAction(copyAct);
-
-    const QIcon pasteIcon = QIcon::fromTheme("edit-paste", QIcon(":/images/paste.png"));
-    auto pasteAct = new QAction(pasteIcon, tr("&Paste"), this);
-    pasteAct->setShortcuts(QKeySequence::Paste);
-    pasteAct->setStatusTip(tr("Paste the clipboard's contents into the current "
-                              "selection"));
-    connect(pasteAct, &QAction::triggered, scriptEditor, &QPlainTextEdit::paste);
-    editMenu->addAction(pasteAct);
-    editToolBar->addAction(pasteAct);
-
-    menuBar->addSeparator();
-
-#endif // !QT_NO_CLIPBOARD
-
-#ifndef QT_NO_CLIPBOARD
-    cutAct->setEnabled(false);
-    copyAct->setEnabled(false);
-    connect(scriptEditor, &QPlainTextEdit::copyAvailable, cutAct, &QAction::setEnabled);
-    connect(scriptEditor, &QPlainTextEdit::copyAvailable, copyAct, &QAction::setEnabled);
-#endif // !QT_NO_CLIPBOARD
 }
 
 bool MainWindow::saveScript() {
@@ -4238,5 +4131,11 @@ std::shared_ptr<Renderer> MainWindow::getRenderer(std::string name) {
 void MainWindow::resetDisplay(){
     getView(0)->removeAllRenderers();
     getView(0)->reinitialize();
+}
+
+void MainWindow::addRendererToViewReceived(const std::string& name)
+{
+    if(DataManager::GetInstance()->get_visible_image()->has_renderer(name))
+        getView(0)->addRenderer(DataManager::GetInstance()->get_visible_image()->get_renderer(name));
 }
 }

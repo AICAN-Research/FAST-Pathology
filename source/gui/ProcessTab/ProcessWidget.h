@@ -18,11 +18,17 @@
 #include <QProgressDialog>
 #include <QListWidgetItem>
 #include <QScrollArea>
-#include <iostream>
+#include <QLabel>
+#include <QColorDialog>
+#include <QComboBox>
+#include <QGroupBox>
+#include <QPlainTextEdit>
 #include <FAST/Visualization/Renderer.hpp>
 #include "source/logic/DataManager.h"
+#include "source/logic/ProcessManager.h"
 #include "source/utils/utilities.h"
 #include "source/utils/qutilities.h"
+#include "source/gui/ProcessTab/PipelineScriptEditorWidget.h"
 
 
 namespace fast {
@@ -30,6 +36,7 @@ namespace fast {
     class ImagePyramid;
     class ImagePyramidRenderer;
     class Renderer;
+    class SegmentationRenderer;
 
 class ProcessWidget: public QWidget {
 Q_OBJECT
@@ -54,10 +61,21 @@ protected:
      */
     void setupConnections();
 
+signals:
+    void processTriggered(std::string);
+    void addRendererToViewRequested(const std::string&);
+
 public slots:
     bool segmentTissue();
     void addModels();
     void addPipelines();
+    /**
+     * Defines and creates the script editor widget.
+     */
+    void editorPipelinesReceived();
+
+private slots:
+    bool processStartEventReceived(std::string process_name);
 
 private:
     QVBoxLayout* _main_layout; /* Principal layout holder for the current custom QWidget */
