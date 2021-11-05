@@ -265,6 +265,6 @@ namespace fast {
 
     void ProcessWidget::editorPipelinesReceived()
     {
-//        auto editor = new PipelineScriptEditorWidget(this);
+        auto editor = new PipelineScriptEditorWidget(this);
     }
 }

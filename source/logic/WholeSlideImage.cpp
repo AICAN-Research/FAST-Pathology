@@ -15,12 +15,15 @@ namespace fast{
         // @TODO. Renderers memory release leads to segfault...
         this->memory_load();
         this->create_thumbnail();
-//        this->memory_unload();
+        this->memory_unload();
     }
 
     WholeSlideImage::~WholeSlideImage()
     {
-//        this->memory_unload();
+        // @FIXME. Only uncommented for debugging purposes, the same process happens by default regardless.
+        // Segfault is generated here if multiple WSI are loaded, but not all were clicked (and viewed).
+        // If all are clicked and viewed/unviewed, it seems to work fine...
+        this->memory_unload();
     }
 
     void WholeSlideImage::memory_load()

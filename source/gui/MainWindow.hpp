@@ -9,7 +9,6 @@
 #include <QNetworkReply>
 #include <QProgressDialog>
 #include "source/utils/utilities.h"
-//#include "source/gui/ProjectWidget.h"
 #include "source/gui/MainSidePanelWidget.h"
 #include "source/logic/DataManager.h"
 
@@ -184,14 +183,6 @@ class MainWindow : public Window {
          */
         void createOpenGLWindow();
         /**
-         * Creates the import module of the main menu widget.
-         */
-        void createFileWidget();
-        /**
-         * Creates the process module of the main menu widget.
-         */
-        void createProcessWidget();
-        /**
          * Creates the view module of the main menu widget.
          */
         void createViewWidget();
@@ -200,28 +191,14 @@ class MainWindow : public Window {
          */
         void createExportWidget();
         /**
-         * Creates the stats module of the main menu widget.
-         */
-        void createStatsWidget();
-        /**
          * Combines all the WSI pipeline module widgets into a single widget.
          */
         void createMenuWidget();
-        /**
-         * Updates the view widget given a new object.
-         * @param someName
-         * @param modelName
-         */
-        void createDynamicViewWidget(const std::string &someName, std::string modelName);
         /**
          * Updates the export widget dependent on which results that exists.
          * @param someName
          */
         void createDynamicExportWidget(const std::string &someName);
-        /**
-         * Creates the WSI scroll area for selecting which WSI to work with.
-         */
-        void createWSIScrollAreaWidget();
         /**
          * Opens the default browser and directs the user to the FastPathology GitHub page to seek for assistance.
          */
@@ -345,13 +322,6 @@ class MainWindow : public Window {
          */
         bool hideChannel(const std::string &name); //, uint channel_value);
         /**
-         * Adjust opacity for selected renderer object
-         * @param value
-         * @param someName
-         * @return
-         */
-        bool opacityRenderer(int value, const std::string &name);
-        /**
          * Toggle selected renderer
          * @param name
          * @return
@@ -421,48 +391,6 @@ class MainWindow : public Window {
          * TODO: Remove when export is working as intended.
          */
         void saveTumor();
-
-        // SCRIPT EDITOR RELATED STUFF
-        /**
-         * Opens file explorer to select which script to use in the script editor.
-         */
-        void openScript();
-        /**
-         * Loads the script file from disk, relevant for the script editor.
-         * @param fileName
-         */
-        void loadFileScript(const QString &fileName);
-        /**
-         * Sets the title of the script editor widget to the current file name.
-         * @param fileName
-         */
-        void setCurrentFileScript(const QString &fileName);
-        /**
-         * Create a new file from the script editor. Opens a blank document. If already unsaved document exist,
-         * it will prompt whether the user wish to save the unsaved changes.
-         */
-        void newFileScript();
-        /**
-         * To save the current document as a completely new document, from the script editor.
-         * @return
-         */
-        bool saveAsScript();
-        /**
-         * Save the current document in the script editor.
-         * @return
-         */
-        bool saveScript();
-        /**
-         * Prompt given to the user if they wish the current changes in the script editor or not.
-         * @return
-         */
-        bool maybeSaveScript();
-        /**
-         * Actually saves document in script editor, given a save/saveAs event.
-         * @param fileName
-         * @return
-         */
-        bool saveFileScript(const QString &fileName);
 
     private:
         MainWindow();

@@ -42,6 +42,11 @@ public:
     ~ProjectWidget();
 
     /**
+     * Set the interface in its default state.
+     */
+    void resetInterface();
+
+    /**
      * To open a created Project from disk. Opens a file explorer to select which project.txt file open.
      * When selected, thumbnails from all WSIs will be added to the left scroll widget.
      * For the image, the WSI will be rendered with corresponding existing results.
@@ -100,13 +105,7 @@ protected:
     void setupInterface();
 
     /**
-     * Set the interface in its default state.
-     */
-    void resetInterface();
-
-    /**
-     * Define the interface for the specific widget holding a thumbnail for
-     * each loaded whole slide image.
+     * Creates the WSI scroll area for selecting which WSI to work with.
      */
     void createWSIScrollAreaWidget();
 
@@ -114,6 +113,8 @@ protected:
      * Define the connections for all elements inside the current global widget.
      */
     void setupConnections();
+
+    void loadSelectedWSIs(const QList<QString> &fileNames);
 
 private:
     QPushButton* _createProjectButton;

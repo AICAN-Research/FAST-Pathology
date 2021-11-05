@@ -172,8 +172,12 @@ namespace fast{
         this->setLayout(dockLayout);
     }
 
-    void MainSidePanelWidget::resetInterface(){
-        return;
+    void MainSidePanelWidget::resetInterface()
+    {
+        this->_project_widget->resetInterface();
+        this->_process_widget->resetInterface();
+        this->_view_widget->resetInterface();
+        this->_stats_widget->resetInterface();
     }
 
     void MainSidePanelWidget::setupConnections()
@@ -189,6 +193,7 @@ namespace fast{
         QObject::connect(this, &MainSidePanelWidget::selectFilesTriggered, this->_project_widget, &ProjectWidget::selectFile);
         QObject::connect(this, &MainSidePanelWidget::saveProjectTriggered, this->_project_widget, &ProjectWidget::saveProject);
         QObject::connect(this, &MainSidePanelWidget::downloadTestDataTriggered, this->_project_widget, &ProjectWidget::downloadAndAddTestData);
+        QObject::connect(this, &MainSidePanelWidget::filesDropped, this->_project_widget, &ProjectWidget::selectFileDrag);
         QObject::connect(this, &MainSidePanelWidget::addModelsTriggered, this->_process_widget, &ProcessWidget::addModels);
         QObject::connect(this, &MainSidePanelWidget::addPipelinesTriggered, this->_process_widget, &ProcessWidget::addPipelines);
         QObject::connect(this, &MainSidePanelWidget::editorPipelinesTriggered, this->_process_widget, &ProcessWidget::editorPipelinesReceived);

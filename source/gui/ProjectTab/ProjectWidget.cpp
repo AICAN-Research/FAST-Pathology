@@ -45,6 +45,7 @@ namespace fast {
 
     void ProjectWidget::resetInterface()
     {
+        this->_projectFolderName = QString();
         _wsi_scroll_listwidget->clear();
         _thumbnail_qpushbutton_map.clear();
         emit resetDisplay();
@@ -54,10 +55,8 @@ namespace fast {
 
     void ProjectWidget::setupConnections() {
         QObject::connect(this->_createProjectButton, &QPushButton::clicked, this, &ProjectWidget::createProject);
-//        QObject::connect(this->parentWidget(), SIGNAL(createProjectTriggered()), this, SLOT(createProject()));
         QObject::connect(this->_openProjectButton, &QPushButton::clicked, this, &ProjectWidget::openProject);
         QObject::connect(this->_selectFileButton, &QPushButton::clicked, this, &ProjectWidget::selectFile);
-//        QObject::connect(this->parentWidget(), SIGNAL(selectFilesTriggered()), this, SLOT(selectFile()));
     }
 
     void ProjectWidget::createWSIScrollAreaWidget() {
@@ -287,37 +286,37 @@ namespace fast {
     }
 
     void ProjectWidget::selectFile() {
-//        std::cout<<"Plop"<<std::endl;
         // check if view object list is empty, if not, prompt to save results or not, if not clear
-//        if (pageComboBox->count() > 1) {
-//            // prompt
-//            QMessageBox mBox;
-//            mBox.setIcon(QMessageBox::Warning);
-//            mBox.setStyleSheet(mWidget->styleSheet());
-//            mBox.setText("There are unsaved results.");
-//            mBox.setInformativeText("Do you wish to save them?");
-//            mBox.setDefaultButton(QMessageBox::Save);
-//            mBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-//            int ret = mBox.exec();
-//
-//            switch (ret) {
-//                case QMessageBox::Save:
-//                    std::cout << "Results not saved yet. Just cancelled the switch!" << std::endl;
-//                    // Save was clicked
-//                    return;
-//                case QMessageBox::Discard:
-//                    // Don't Save was clicked
-//                    std::cout << "Discarded!" << std::endl;
-//                    break;
-//                case QMessageBox::Cancel:
-//                    // Cancel was clicked
-//                    std::cout << "Cancelled!"  << std::endl;
-//                    return;
-//                default:
-//                    // should never be reached
-//                    break;
-//            }
-//        }
+        if (not DataManager::GetInstance()->isEmpty())
+        {
+            // prompt
+            QMessageBox mBox;
+            mBox.setIcon(QMessageBox::Warning);
+            mBox.setStyleSheet(this->styleSheet());
+            mBox.setText("There are unsaved results.");
+            mBox.setInformativeText("Do you wish to save them?");
+            mBox.setDefaultButton(QMessageBox::Save);
+            mBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+            int ret = mBox.exec();
+
+            switch (ret) {
+                case QMessageBox::Save:
+                    std::cout << "Results not saved yet. Just cancelled the switch!" << std::endl;
+                    // Save was clicked
+                    return;
+                case QMessageBox::Discard:
+                    // Don't Save was clicked
+                    std::cout << "Discarded!" << std::endl;
+                    break;
+                case QMessageBox::Cancel:
+                    // Cancel was clicked
+                    std::cout << "Cancelled!"  << std::endl;
+                    return;
+                default:
+                    // should never be reached
+                    break;
+            }
+        }
 
         // TODO: Unable to read .zvi and .scn (Zeiss and Leica). I'm wondering if they are stored in some unexpected way (not image pyramids)
         auto fileNames = QFileDialog::getOpenFileNames(this, tr("Select File(s)"), nullptr,
@@ -344,6 +343,11 @@ namespace fast {
         progDialog.show();
 
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+        this->loadSelectedWSIs(fileNames);
+    }
+
+    void ProjectWidget::loadSelectedWSIs(const QList<QString> &fileNames)
+    {
         auto currentPosition = 0; // curr_pos <=?
 
         // need to handle scenario where a WSI is added, but there already exists N WSIs from before
@@ -352,7 +356,8 @@ namespace fast {
             currentPosition = nb_wsis_in_list;
 
         int counter = 0;
-        for (QString& fileName : fileNames) {
+        for (QString fileName : fileNames)
+        {
             if (fileName == "")
                 return;
             //filename = fileName.toStdString();
@@ -570,104 +575,7 @@ namespace fast {
         progDialog.show();
 
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-        // @TODO. Below is the same process as the selectFile, should make another submethod for both cases.
-
-//        int counter = 0;
-//        for (const QString& fileName : fileNames) {
-
-//            if (fileName == "")
-//                return;
-//            //filename = fileName.toStdString();
-//            auto currFileName = fileName.toStdString();
-//            std::cout << "Selected file: " << currFileName << std::endl;
-//            wsiList.push_back(currFileName);
-
-//            // Import image from file using the ImageFileImporter
-//            auto importer = WholeSlideImageImporter::New();
-//            importer->setFilename(currFileName);
-//            auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
-
-//            // for reading of multiple WSIs, only render last one
-//            if (counter == 0) { //fileNames.count()-1) {
-
-//                // current WSI (global)
-//                filename = currFileName;
-
-//                m_image = currImage;
-//                std::cout << "count:" << counter << std::endl;
-//                metadata = m_image->getMetadata(); // get metadata
-
-//                auto renderer = ImagePyramidRenderer::New();
-//                renderer->setSharpening(m_wsiSharpening);
-//                renderer->setInputData(m_image);
-
-//                // TODO: Something here results in me not being able to run analysis on new images (after the first)
-//                removeAllRenderers();
-//                m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
-//                insertRenderer("WSI", renderer);
-//                getView(0)->reinitialize(); // Must call this after removing all renderers
-
-//                wsiFormat = metadata["openslide.vendor"]; // get WSI format
-//                magn_lvl = getMagnificationLevel(); // get magnification level of current WSI
-
-//                // now make it possible to edit image in the View Widget
-//                createDynamicViewWidget("WSI", modelName);
-
-//                // update application name to contain current WSI
-//                //setTitle(applicationName + " - " + splitCustom(filename, "/").back());
-//                if (advancedMode) {
-//                    setTitle(applicationName + " (Research mode)" + " - " + splitCustom(currFileName, "/").back());
-//                } else {
-//                    setTitle(applicationName + " - " + splitCustom(currFileName, "/").back());
-//                }
-//            }
-//            counter ++;
-
-//            // TODO: This is a little bit slow. Possible to speed it up? Bottleneck is probably the creation of thumbnails
-//            auto access = currImage->getAccess(ACCESS_READ);
-//            auto input = access->getLevelAsImage(currImage->getNrOfLevels() - 1);
-
-//            // try to convert to FAST Image -> QImage
-//            QImage image(input->getWidth(), input->getHeight(), QImage::Format_RGB32);
-
-//            // TODO have to do some type conversion here, assuming float for now
-//            unsigned char *pixelData = image.bits();
-
-//            ImageAccess::pointer new_access = input->getImageAccess(ACCESS_READ);
-//            void *inputData = new_access->get();
-//            uint nrOfComponents = input->getNrOfChannels();
-
-//            for (uint x = 0; x < (uint)input->getWidth(); x++) {
-//                for (uint y = 0; y < (uint)input->getHeight(); y++) {
-//                    uint i = x + y * input->getWidth();
-//                    for (uint c = 0; c < (uint)input->getNrOfChannels(); c++) {
-//                        float data;
-//                        data = ((uchar *) inputData)[i * nrOfComponents + c]; // assumes TYPE_UINT8
-//                        pixelData[i * 4 + (2-c)] = (unsigned char) data;  // TODO: NOTE (2-c) fixed BGR->RGB, but maybe there is a smarter solution?
-//                        pixelData[i * 4 + 3] = 255; // Alpha
-//                    }
-//                }
-//            }
-
-//            auto button = new QPushButton(mWidget);
-//            auto m_NewPixMap = QPixmap::fromImage(image);
-//            QIcon ButtonIcon(m_NewPixMap);
-//            button->setIcon(ButtonIcon);
-//            int width_val = 100;
-//            int height_val = 150;
-//            button->setIconSize(QSize((int) std::round(0.9 * (float) image.width() * (float) height_val / (float) image.height()), (int) std::round(0.9f * (float) height_val)));
-
-//            auto listItem = new QListWidgetItem;
-//            listItem->setSizeHint(QSize(width_val, height_val));
-//            QObject::connect(button, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, curr_pos));
-//            scrollList->addItem(listItem);
-//            scrollList->setItemWidget(listItem, button);
-
-//            curr_pos++; // this should change if we render the first WSI when loading
-
-//            progDialog.setValue(counter);
-//            QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-//        }
+        this->loadSelectedWSIs(fileNames);
     }
 
 

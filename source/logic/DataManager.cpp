@@ -38,6 +38,7 @@ namespace fast {
 //            it->second->memory_unload();
         _images.clear();
         _wsi_filenames_list.clear();
+        _visible_wsi_uid = "";
     }
 
     const std::string DataManager::IncludeImage(std::string currFileName){

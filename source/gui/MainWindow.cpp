@@ -80,7 +80,7 @@ MainWindow::MainWindow() {
     enableMaximized(); // <- function from Window.cpp
 
     mWidget->setAcceptDrops(true); // to enable drag/drop events
-    QObject::connect(mWidget, &WindowWidget::filesDropped, std::bind(&MainWindow::receiveFileList, this, std::placeholders::_1));  //this, SLOT(receiveFileList(QList<QString>))); //std::bind(&MainWindow::receiveFileList, this));
+//    QObject::connect(mWidget, &WindowWidget::filesDropped, std::bind(&MainWindow::receiveFileList, this, std::placeholders::_1));  //this, SLOT(receiveFileList(QList<QString>))); //std::bind(&MainWindow::receiveFileList, this));
 
     //mWidget->setMouseTracking(true);
     //mWidget->setFocusPolicy(Qt::StrongFocus);
@@ -157,6 +157,7 @@ void MainWindow::setupConnections()
 {
     // Overall
     QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::newAppTitle, this, &MainWindow::updateAppTitleReceived);
+    QObject::connect(mWidget, &WindowWidget::filesDropped, this->_side_panel_widget, &MainSidePanelWidget::filesDropped);
     // Main menu actions
     QObject::connect(this->_file_menu_create_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::createProjectTriggered);
     QObject::connect(this->_file_menu_import_wsi_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::selectFilesTriggered);
@@ -177,14 +178,6 @@ void MainWindow::updateAppTitleReceived(std::string title_suffix)
 {
     this->setTitle(applicationName + title_suffix);
 }
-
-//std::string MainWindow::createRandomNumbers_(int n) {
-//	std::string out;
-//	for (int i = 0; i < n; i++) {
-//		out.append(std::to_string(rand() % 10));
-//	}
-//	return out;
-//}
 
 void MainWindow::receiveFileList(const QList<QString> &names) {
     selectFileDrag(names);
@@ -466,7 +459,8 @@ void MainWindow::loadPipelines() {
 
 void MainWindow::reset() {
     //first prompt warning, that it will delete all unsaved results, etc...
-    if (pageComboBox->count() > 0) {
+    if (! DataManager::GetInstance()->isEmpty())
+    {
         // prompt
         QMessageBox mBox;
         mBox.setIcon(QMessageBox::Warning);
@@ -478,12 +472,8 @@ void MainWindow::reset() {
 
         switch (ret) {
             case QMessageBox::Yes:
-                wsiList.clear();
-                savedList.clear();
-                scrollList->clear();
                 removeAllRenderers();
-                pageComboBox->clear();
-                exportComboBox->clear();
+                this->_side_panel_widget->resetInterface();
                 break;
             case QMessageBox::No:
                 1;
@@ -494,7 +484,7 @@ void MainWindow::reset() {
     }
 
     // update application name to contain current WSI
-    if (advancedMode) {
+    if (ProcessManager::GetInstance()->get_advanced_mode_status()) {
         setTitle(applicationName + " (Research mode)");
     } else {
         setTitle(applicationName);
@@ -505,10 +495,11 @@ void MainWindow::reset() {
 void MainWindow::createMainMenuWidget() {
     // create widgets for Menu layout
 //    createFileWidget();
-    createProcessWidget();
-    createViewWidget();
-    createStatsWidget();
-    createExportWidget(); // TODO: MAKE IT DYNAMIC DEPENDING ON WHAT RESULTS ARE AVAILABLE
+
+//    createProcessWidget();
+//    createViewWidget();
+//    createStatsWidget();
+//    createExportWidget(); // TODO: MAKE IT DYNAMIC DEPENDING ON WHAT RESULTS ARE AVAILABLE
     createMenuWidget();
 
     // add widgets to meny layout
@@ -750,129 +741,6 @@ void MainWindow::createMenuWidget() {
 //    dockLayout->addWidget(setModeButton);
 }
 
-void MainWindow::createWSIScrollAreaWidget() {
-    //auto scrollAreaDialog = new QDialog();
-    //scrollAreaDialog->setGeometry(100, 100, 260, 260);
-
-    // TODO: Need to substitute this with QListWidget or similar as it's quite slow and memory expensive for
-    //        larger number of elements
-    scrollArea = new QScrollArea(mWidget);  //scrollAreaDialog);
-    scrollArea->setAlignment(Qt::AlignTop);
-    //scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-    scrollArea->setWidgetResizable(true);
-    scrollArea->setGeometry(10, 10, 200, 200);
-
-    scrollList = new QListWidget(mWidget);
-    //scrollList->setStyleSheet("border: none, padding: 0, background: white, color: none");
-    scrollList->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    scrollList->setItemAlignment(Qt::AlignTop);
-    scrollList->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-    scrollList->setResizeMode(QListView::Adjust);  // resizable adaptively
-    scrollList->setGeometry(10, 10, 200, 200);
-	//scrollList->setStyleSheet("*:hover {background:blue;}");  // setting color of widget when hovering
-	//scrollList->setStyleSheet("QListWidget:item:selected:active {background: blue;}; QListWidget:item:selected:!active {background: gray};");
-	//scrollList->setFocus();
-    //scrollList->setViewMode(QListWidget::IconMode);
-    //scrollList->setIconSize(QSize(100, 100));
-    //scrollList->setFlow(QListView::TopToBottom);
-    //scrollList->setResizeMode(QListWidget::Adjust);
-    //QObject::connect(scrollList, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, 1));
-    //QObject::connect(scrollList, &QListWidget::itemPressed, std::bind(&MainWindow::selectFileInProject, this, 1));  // this, SLOT(onListMailItemClicked(QListWidgetItem*)));
-    //QObject::connect(scrollList,itemClicked(QListWidgetItem*), std::bind(&MainWindow::selectFileInProject, this, 1));
-    //connect(ui->listMail, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(onListMailItemClicked(QListWidgetItem*)));
-    // QListWidget::itemPressed(QListWidgetItem *item)
-    //QObject::connect(scrollList, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(&MainWindow::selectFileInProject));
-
-	//scrollList->setSelectionMode(QListWidgetItem::NoSelection);
-	//QObject::connect(scrollList, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(itemDoubleClicked(QListWidgetItem*)));
-
-    scrollArea->setWidget(scrollList);
-
-    scrollWidget = new QWidget(mWidget);
-    //scrollArea->setWidget(scrollWidget);
-
-    scrollLayout = new QVBoxLayout;
-    scrollWidget->setLayout(scrollLayout);
-
-    //connect(scrollList, SIGNAL(activated(int)), scrollLayout, SLOT(setCurrentIndex(int)));
-
-    //fileLayout->insertWidget(2, scrollArea);  //widget);
-    fileLayout->addWidget(scrollArea);
-
-    //scrollAreaDialog->show();
-}
-
-void MainWindow::createFileWidget() {
-
-    this->fileWidget = new ProjectWidget(mWidget);
-
-//    fileLayout = new QVBoxLayout;
-//    fileLayout->setAlignment(Qt::AlignTop);
-//
-//    fileWidget = new QWidget(mWidget);
-//    fileWidget->setLayout(fileLayout);
-//    //fileWidget->setFixedWidth(200);
-//
-//    auto createProjectButton = new QPushButton(mWidget);
-//    createProjectButton->setText("Create Project");
-//    createProjectButton->setFixedHeight(50);
-//    createProjectButton->setStyleSheet("color: white; background-color: blue");
-//    QObject::connect(createProjectButton, &QPushButton::clicked, std::bind(&MainWindow::createProject, this));
-//
-//    auto openProjectButton = new QPushButton(mWidget);
-//    openProjectButton->setText("Open Project");
-//    openProjectButton->setFixedHeight(50);
-//    //openProjectButton->setStyleSheet("color: white; background-color: blue");
-//    QObject::connect(openProjectButton, &QPushButton::clicked, std::bind(&MainWindow::openProject, this));
-//
-//    auto selectFileButton = new QPushButton(mWidget);
-//    selectFileButton->setText("Import WSIs");
-//    //selectFileButton->setFixedWidth(200);
-//    selectFileButton->setFixedHeight(50);
-//    //selectFileButton->setStyleSheet("color: white; background-color: blue");
-//    QObject::connect(selectFileButton, &QPushButton::clicked, std::bind(&MainWindow::selectFile, this));
-//
-//    /*
-//    auto addModelButton = new QPushButton(fileWidget);
-//    addModelButton->setText("Import model");
-//    //selectFileButton->setFixedWidth(200);
-//    addModelButton->setFixedHeight(50);
-//    addModelButton->setStyleSheet("color: white; background-color: blue");
-//    QObject::connect(addModelButton, &QPushButton::clicked, std::bind(&MainWindow::addModels, this));
-//
-//    auto quitButton = new QPushButton(fileWidget);
-//    quitButton->setText("Quit");
-//    //quitButton->setFixedWidth(200);
-//    quitButton->setFixedHeight(50);
-//    quitButton->setStyleSheet("color: black; background-color: red"); //; border-style: outset; border-color: black; border-width: 3px");
-//    QObject::connect(quitButton, &QPushButton::clicked, std::bind(&Window::stop, this));
-//
-//    auto smallTextWindow = new QTextEdit;
-//    smallTextWindow->setPlainText(tr("Hello, this is a prototype of the software I am developing as part of my "
-//                                     "PhD project. The software is made to be simple, but still contains multiple advanced "
-//                                     "options either for processing WSIs, deploying trained CNNs or visualizing WSIs and "
-//                                     "segments and stuff... Have fun! :)"));
-//    smallTextWindow->setReadOnly(true);
-//
-//    auto bigEditor = new QTextEdit;
-//    bigEditor->setPlainText(tr("This widget takes up all the remaining space "
-//                               "in the top-level layout."));
-//    */
-//
-//    fileLayout->addWidget(createProjectButton);
-//    fileLayout->addWidget(openProjectButton);
-//    fileLayout->addWidget(selectFileButton); //, Qt::AlignTop);
-//    /*
-//    fileLayout->addWidget(addModelButton);
-//    fileLayout->addWidget(smallTextWindow);
-//    fileLayout->addWidget(bigEditor);
-//    fileLayout->addWidget(quitButton, Qt::AlignTop);
-//     */
-//
-//    createWSIScrollAreaWidget();
-
-}
-
 void MainWindow::createViewWidget() {
 
     viewLayout = new QVBoxLayout;
@@ -919,413 +787,8 @@ void MainWindow::createViewWidget() {
 
 }
 
-void MainWindow::createDynamicViewWidget(const std::string& someName, std::string modelName) {
-
-    //std::string someName = "tumor";
-
-    dynamicViewWidget = new QWidget;
-
-    auto imageButton = new QPushButton(mWidget);
-    imageButton->setText("Toggle image");
-    //showHeatmapButton->setFixedWidth(200);
-    imageButton->setFixedHeight(50);
-    imageButton->setCheckable(true);
-    imageButton->setChecked(true);
-    //showHeatmapButton->setChecked(true);
-    QObject::connect(imageButton, &QPushButton::clicked, std::bind(&MainWindow::toggleRenderer, this, someName));
-    //imageButton->setDisabled(visible[0]);
-
-    // for WSI this should be grayed out, shouldn't be able to change it
-    auto opacitySlider = new QSlider(Qt::Horizontal, dynamicViewWidget);
-    //opacitySlider->setFixedWidth(200);
-    opacitySlider->setMinimum(0);
-    opacitySlider->setMaximum(20);
-    //opacityTissueSlider->setText("Tissue");
-    opacitySlider->setValue(8);
-    opacitySlider->setTickInterval(1);
-    QObject::connect(opacitySlider, &QSlider::valueChanged, std::bind(&MainWindow::opacityRenderer, this, std::placeholders::_1, someName));
-
-    auto label_tissue = new QLabel(mWidget);
-    std::string tmpSomeName = someName;
-    tmpSomeName[0] = toupper(tmpSomeName[0]);
-    label_tissue->setText(QString::fromStdString(tmpSomeName + ": "));
-    label_tissue->setFixedWidth(50);
-    auto smallTextBox_tissue = new QHBoxLayout;
-    smallTextBox_tissue->addWidget(label_tissue);
-    smallTextBox_tissue->addWidget(opacitySlider);
-    auto smallTextBoxWidget_tissue = new QWidget(mWidget);
-    smallTextBoxWidget_tissue->setFixedHeight(50);
-    smallTextBoxWidget_tissue->setLayout(smallTextBox_tissue);
-    //smallTextBoxWidget_tissue->setDisabled(visible[1]);
-
-    // make QColorDialog for manually setting color to different classes
-    auto colorSetWidget = new QColorDialog;
-    colorSetWidget->setOption(QColorDialog::DontUseNativeDialog, true);
-    //colorSetWidget->setDisabled(visible[2]);
-
-	auto colorButton = new QPushButton;
-	colorButton->setFixedHeight(50);
-	colorButton->setText("Set color");
-	colorButton->setChecked(true);
-
-	//auto colorSquare = new QLabel;
-	//colorSquare->setStyleSheet("color: white; background-color: white");
-
-    // to be able to set which classes to show/hide
-    channel_value = 0;
-
-    auto toggleShowButton = new QPushButton(mWidget);
-    toggleShowButton->setText("Toggle class");
-    //showHeatmapButton->setFixedWidth(200);
-    toggleShowButton->setFixedHeight(50);
-    //toggleShowButton->setFixedWidth(100);
-    toggleShowButton->setCheckable(true);
-    toggleShowButton->setChecked(true);
-    //showHeatmapButton->setChecked(true);
-    QObject::connect(toggleShowButton, &QPushButton::clicked, std::bind(&MainWindow::hideChannel, this, someName));
-
-    auto deleteButton = new QPushButton(mWidget);
-    deleteButton->setText("Delete object");
-    deleteButton->setFixedHeight(50);
-    QObject::connect(deleteButton, &QPushButton::clicked, std::bind(&MainWindow::deleteViewObject, this, someName));
-    deleteButton->setStyleSheet("color: black; background-color: red");  // "border: 1px solid red");
-
-
-    auto currComboBox = new QComboBox;
-
-    // additional options for setting which classes to show and colors
-    if (m_rendererTypeList[someName] == "HeatmapRenderer") {
-        // get metadata of current model
-        std::map<std::string, std::string> metadata = getModelMetadata(modelName);
-        std::vector someVector = splitCustom(metadata["class_names"], ";");
-        // clear vector first
-        currentClassesInUse.clear();
-        for (const auto & i : someVector){
-            currentClassesInUse.append(QString::fromStdString(i));
-        }
-        currComboBox->clear();
-        currComboBox->update();
-        currComboBox->insertItems(0, currentClassesInUse);
-
-		QObject::connect(colorButton, &QPushButton::clicked, [=]() {
-			auto rgb = colorSetWidget->getColor().toRgb();
-
-			auto someRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(m_rendererList[someName]);
-			someRenderer->setChannelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
-		});
-	} else if(m_rendererTypeList[someName] == "SegmentationRenderer") {
-		// clear vector first
-		currentClassesInUse.clear();
-		for (const auto & i : { 1 }) { //{ 0, 1 }) {  // TODO: Supports only binary images (where class of interest = 1)
-			currentClassesInUse.append(QString::number(i));
-		}
-		currComboBox->clear();
-		currComboBox->update();
-		currComboBox->insertItems(0, currentClassesInUse);
-
-		QObject::connect(colorButton, &QPushButton::clicked, [=]() {
-			auto rgb = colorSetWidget->getColor().toRgb();
-			auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(m_rendererList[someName]);
-			//auto currImage = someRenderer->updateAndGetOutputData<Image>();
-			//currImage->
-			//std::cout << "window: " << someRenderer->updateAndGetOutputData<Image>() << std::endl;
-			//auto vals = someRenderer->getIntensityWindow();
-
-			// TODO: Supports only binary images (where class of interest = 1)
-			someRenderer->setColor(currComboBox->currentIndex() + 1, Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
-		});
-	// TODO: Need to add proper options in SegmentationPyramidRenderer and SegmentationRenderer for toggling and setting which classes to show, do to this properly...
-	} else if (m_rendererTypeList[someName] == "SegmentationPyramidRenderer") {
-		// get metadata of current model
-		std::map<std::string, std::string> metadata = getModelMetadata(modelName);
-		std::vector someVector = splitCustom(metadata["class_names"], ";");
-		// clear vector first
-		currentClassesInUse.clear();
-		for (const auto & i : someVector) {
-			currentClassesInUse.append(QString::fromStdString(i));
-		}
-		currComboBox->clear();
-		currComboBox->update();
-		currComboBox->insertItems(0, currentClassesInUse);
-
-		QObject::connect(colorButton, &QPushButton::clicked, [=]() {
-			auto rgb = colorSetWidget->getColor().toRgb();
-			auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(m_rendererList[someName]);
-            someRenderer->setColor(currComboBox->currentIndex() + 1, Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
-			//someRenderer->setChannelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
-		});
-	} else if (m_rendererTypeList[someName] == "BoundingBoxRenderer") {
-		// get metadata of current model
-		std::map<std::string, std::string> metadata = getModelMetadata(modelName);
-		std::vector someVector = splitCustom(metadata["class_names"], ";");
-		// clear vector first
-		currentClassesInUse.clear();
-		for (const auto & i : someVector) {
-			currentClassesInUse.append(QString::fromStdString(i));
-		}
-		currComboBox->clear();
-		currComboBox->update();
-		currComboBox->insertItems(0, currentClassesInUse);
-
-		QObject::connect(colorButton, &QPushButton::clicked, [=]() {
-			auto rgb = colorSetWidget->getColor().toRgb();
-			auto someRenderer = std::dynamic_pointer_cast<BoundingBoxRenderer>(m_rendererList[someName]);
-			//someRenderer->setLabelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
-		});
-	} else {
-        simpleInfoPrompt("Invalid renderer used...");
-	}
-
-    connect(currComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateChannelValue(int)));
-
-    auto imageNameTexts = new QLabel();
-    imageNameTexts->setText("Class: ");
-    imageNameTexts->setFixedWidth(50);
-    auto smallTextBox_imageName = new QHBoxLayout;
-    smallTextBox_imageName->addWidget(imageNameTexts);
-    smallTextBox_imageName->addWidget(currComboBox);
-
-    auto smallTextBoxWidget_imageName = new QWidget;
-    smallTextBoxWidget_imageName->setFixedHeight(50);
-    smallTextBoxWidget_imageName->setLayout(smallTextBox_imageName);
-    auto biggerTextBox_imageName = new QVBoxLayout;
-    biggerTextBox_imageName->addWidget(smallTextBoxWidget_imageName);
-    biggerTextBox_imageName->setAlignment(Qt::AlignTop);
-
-	auto smallToggleColorBox_layout = new QHBoxLayout;
-	smallToggleColorBox_layout->addWidget(toggleShowButton);
-	smallToggleColorBox_layout->addWidget(colorButton);
-	auto smallToggleColorBox = new QWidget;
-	smallToggleColorBox->setLayout(smallToggleColorBox_layout);
-    auto biggerTextBoxWidget_imageName = new QWidget;
-    biggerTextBoxWidget_imageName->setLayout(smallToggleColorBox_layout);
-
-    // disable some features for specific renderer types
-    if (m_rendererTypeList[someName] == "ImagePyramidRenderer") {
-        opacitySlider->setDisabled(true);
-        colorSetWidget->setDisabled(true);
-        biggerTextBoxWidget_imageName->setDisabled(true);
-	} else if (m_rendererTypeList[someName] == "SegmentationRenderer") {
-		toggleShowButton->setDisabled(true);
-	} else if (m_rendererTypeList[someName] == "SegmentationPyramidRenderer") {
-		toggleShowButton->setDisabled(true);
-		//colorSetWidget->setDisabled(true);
-		//biggerTextBoxWidget_imageName->setDisabled(true);
-	} else if (m_rendererTypeList[someName] == "BoundingBoxRenderer") {
-		1;
-	} else {
-		colorSetWidget->setDisabled(false);
-	}
-
-	auto allBox = new QGroupBox(tr("Modify image"), mWidget);
-	auto classBox = new QGroupBox(tr("Modify class"), mWidget);
-
-    dynamicViewLayout = new QVBoxLayout;
-    dynamicViewLayout->setAlignment(Qt::AlignTop);
-    dynamicViewWidget->setLayout(dynamicViewLayout);
-
-	auto allViewLayout = new QVBoxLayout;
-	allViewLayout->addWidget(imageButton);
-	allViewLayout->addWidget(smallTextBoxWidget_tissue);
-
-	allBox->setLayout(allViewLayout);
-
-	auto classViewLayout = new QVBoxLayout;
-	classViewLayout->addWidget(smallTextBoxWidget_imageName);
-	classViewLayout->addWidget(biggerTextBoxWidget_imageName);
-
-	classBox->setLayout(classViewLayout);
-
-	dynamicViewLayout->addWidget(allBox);
-	dynamicViewLayout->addWidget(classBox);
-	dynamicViewLayout->addWidget(deleteButton);
-
-    // add widget to QComboBox
-    pageComboBox->addItem(tr(tmpSomeName.c_str()));
-    stackedLayout->addWidget(dynamicViewWidget);
-}
-
-bool MainWindow::saveScript() {
-    std::cout << "Saving...: " << currScript.toStdString() << std::endl;
-    if (currScript.isEmpty()) {
-        return saveAsScript();
-    } else {
-        std::cout << "We are saving, not save as..." << std::endl;
-        return saveFileScript(currScript);
-    }
-}
-
-bool MainWindow::saveAsScript() {
-    QFileDialog dialog(scriptEditorWidget);
-    //dialog.DontUseNativeDialog;
-    dialog.setOption(QFileDialog::DontUseNativeDialog);
-    dialog.setWindowModality(Qt::WindowModal);
-    dialog.setAcceptMode(QFileDialog::AcceptSave);
-    if (dialog.exec() != QDialog::Accepted)
-        return false;
-    return saveFileScript(dialog.selectedFiles().first());
-}
-
-bool MainWindow::saveFileScript(const QString &fileName) {
-    QString errorMessage;
-
-    QGuiApplication::setOverrideCursor(Qt::WaitCursor);
-    QSaveFile file(fileName);
-    if (file.open(QFile::WriteOnly | QFile::Text)) {
-        QTextStream out(&file);
-        out << scriptEditor->toPlainText();
-        if (!file.commit()) {
-            errorMessage = tr("Cannot write file %1:\n%2.")
-                    .arg(QDir::toNativeSeparators(fileName), file.errorString());
-        }
-    } else {
-        errorMessage = tr("Cannot open file %1 for writing:\n%2.")
-                .arg(QDir::toNativeSeparators(fileName), file.errorString());
-    }
-    QGuiApplication::restoreOverrideCursor();
-
-    if (!errorMessage.isEmpty()) {
-        QMessageBox::warning(scriptEditorWidget, tr("Application"), errorMessage);
-        return false;
-    }
-
-    setCurrentFileScript(fileName);
-    return true;
-}
-
-bool MainWindow::maybeSaveScript() {
-    if (!scriptEditor->document()->isModified())
-        return true;
-    const QMessageBox::StandardButton ret = QMessageBox::warning(scriptEditorWidget, tr("Application"),
-                                   tr("The document has been modified.\n"
-                                      "Do you want to save your changes?"),
-                                   QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-    switch (ret) {
-        case QMessageBox::Save:
-            return saveScript();
-        case QMessageBox::Cancel:
-            return false;
-        default:
-            break;
-    }
-    return true;
-}
-
-void MainWindow::newFileScript() {
-    if (maybeSaveScript()) {
-        scriptEditor->clear();
-        setCurrentFileScript(QString());
-    }
-}
-
-void MainWindow::openScript() {
-    if (maybeSaveScript()) {
-        auto fileName = QFileDialog::getOpenFileName(
-                mWidget,
-                tr("Open File"), nullptr, tr("WSI Files (*.fpl *.txt)"),
-                nullptr, QFileDialog::DontUseNativeDialog
-        );
-        if (!fileName.isEmpty())
-            loadFileScript(fileName);
-    }
-}
-
-void MainWindow::loadFileScript(const QString &fileName) {
-    QFile file(fileName);
-    if (!file.open(QFile::ReadOnly | QFile::Text)) { // handle read only files
-        QMessageBox::warning(scriptEditorWidget, tr("Application"),
-                             tr("Cannot read file %1:\n%2.")
-                                     .arg(QDir::toNativeSeparators(fileName), file.errorString()));
-        return;
-    }
-
-    QTextStream in(&file);
-#ifndef QT_NO_CURSOR
-    QGuiApplication::setOverrideCursor(Qt::WaitCursor);
-#endif
-    scriptEditor->setPlainText(in.readAll());
-#ifndef QT_NO_CURSOR
-    QGuiApplication::restoreOverrideCursor();
-#endif
-
-    setCurrentFileScript(fileName);
-}
-
-void MainWindow::setCurrentFileScript(const QString &fileName) {
-
-    currScript = fileName;
-    scriptEditor->document()->setModified(false);
-    scriptEditor->setWindowModified(false);
-
-    QString shownName = currScript;
-    if (currScript.isEmpty())
-        shownName = "untitled.txt";
-    scriptEditor->setWindowFilePath(shownName);
-}
-
 void MainWindow::updateChannelValue(int index) {
     channel_value = (uint) index;
-}
-
-void MainWindow::createProcessWidget() {
-
-    processLayout = new QVBoxLayout;
-    processLayout->setSpacing(6);
-    processLayout->setAlignment(Qt::AlignTop);
-
-    processWidget = new QWidget(mWidget);
-    processWidget->setLayout(processLayout);
-
-    auto segTissueButton = new QPushButton(mWidget);
-    segTissueButton->setText("Segment Tissue");
-    //segTissueButton->setFixedWidth(200);
-    segTissueButton->setFixedHeight(50);
-    QObject::connect(segTissueButton, &QPushButton::clicked, std::bind(&MainWindow::segmentTissue, this));
-
-    // add tissue segmentation to widget (should always exist as built-in FAST)
-    processLayout->insertWidget(0, segTissueButton);
-
-    QDir directory(QString::fromStdString(cwd + "data/Models/"));
-    QStringList paths = directory.entryList(QStringList() << "*.txt" << "*.TXT",QDir::Files);
-    int counter=1;
-    foreach(QString currFile, paths) {
-
-        // current model
-        modelName = splitCustom(currFile.toStdString(), ".")[0];
-
-        // get metadata of current model
-        std::map<std::string, std::string> metadata = getModelMetadata(modelName);
-
-        auto someButton = new QPushButton(mWidget);//(exportWidget);
-        someButton->setText(QString::fromStdString(metadata["task"]));
-        //predGradeButton->setFixedWidth(200);
-        someButton->setFixedHeight(50);
-        QObject::connect(someButton, &QPushButton::clicked, std::bind(&MainWindow::pixelClassifier_wrapper, this, modelName));
-        someButton->show();
-
-        processLayout->insertWidget(counter, someButton);
-
-        counter++;
-    }
-
-    std::vector<string> modelPaths;
-}
-
-void MainWindow::createStatsWidget() {
-
-    statsLayout = new QVBoxLayout;
-    statsLayout->setAlignment(Qt::AlignTop);
-
-    statsWidget = new QWidget(mWidget);
-    statsWidget->setLayout(statsLayout);
-
-    // make button that prints distribution of pixels of each class -> for histogram
-    auto calcTissueHistButton = new QPushButton(statsWidget);
-    calcTissueHistButton->setText("Calculate tissue histogram");
-    calcTissueHistButton->setFixedHeight(50);
-    QObject::connect(calcTissueHistButton, &QPushButton::clicked, std::bind(&MainWindow::calcTissueHist, this));
-
-    statsLayout->insertWidget(0, calcTissueHistButton);
 }
 
 void MainWindow::createExportWidget() {
@@ -1640,7 +1103,7 @@ void MainWindow::selectFile() {
             magn_lvl = getMagnificationLevel(); // get magnification level of current WSI
 
             // now make it possible to edit image in the View Widget
-            createDynamicViewWidget("WSI", modelName);
+//            createDynamicViewWidget("WSI", modelName);
 
             // update application name to contain current WSI
             if (advancedMode) {
@@ -1796,7 +1259,7 @@ void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
             magn_lvl = getMagnificationLevel(); // get magnification level of current WSI
 
             // now make it possible to edit image in the View Widget
-            createDynamicViewWidget("WSI", modelName);
+//            createDynamicViewWidget("WSI", modelName);
 
             // update application name to contain current WSI
             //setTitle(applicationName + " - " + splitCustom(filename, "/").back());
@@ -1945,7 +1408,7 @@ void MainWindow::selectFileInProject(int pos) {
 	magn_lvl = getMagnificationLevel();
 
 	// now make it possible to edit image in the View Widget
-	createDynamicViewWidget("WSI", modelName);
+//	createDynamicViewWidget("WSI", modelName);
 
 	// check if any results exists for current WSI, if there are load them
 	std::string wsiPath = splitCustom(splitCustom(filename, "/").back(), ".")[0];
@@ -2658,7 +2121,7 @@ bool MainWindow::segmentTissue() {
 		*/
 
 	m_rendererTypeList[currSegment] = "SegmentationRenderer";
-    createDynamicViewWidget(currSegment, modelName);
+//    createDynamicViewWidget(currSegment, modelName);
     insertRenderer(currSegment, someRenderer);
 
     availableResults[currSegment] = m_tissue;
@@ -2688,7 +2151,7 @@ void MainWindow::loadHighres(QString path, QString name) {
 
     m_rendererTypeList[someName] = "SegmentationRenderer";
     insertRenderer(someName, someRenderer);
-    createDynamicViewWidget(someName, modelName);
+//    createDynamicViewWidget(someName, modelName);
     savedList.emplace_back(someName);
 }
 
@@ -2728,7 +2191,7 @@ void MainWindow::loadHeatmap(QString tissuePath, QString name) {
 	//hideTissueMask(false);
 
 	// now make it possible to edit prediction in the View Widget
-	createDynamicViewWidget(someName, modelName);
+//	createDynamicViewWidget(someName, modelName);
 
 	std::cout << "Finished loading..." << std::endl;;
 	savedList.emplace_back(someName);
@@ -2771,7 +2234,7 @@ void MainWindow::loadSegmentation(QString tissuePath, QString name) {
 
 	m_rendererTypeList[someName] = "SegmentationRenderer";
 	insertRenderer(someName, someRenderer);
-	createDynamicViewWidget(someName, modelName);
+//	createDynamicViewWidget(someName, modelName);
 	savedList.emplace_back(someName);
 }
 
@@ -2827,7 +2290,7 @@ void MainWindow::runPipeline(std::string path) {
         for (const auto& renderer : pipeline.getRenderers()) {
             auto currId = createRandomNumbers_(8);
             insertRenderer("result_" + currId, pipeline.getRenderers()[1]);
-            createDynamicViewWidget("result_" + currId, "result_" + currId);
+//            createDynamicViewWidget("result_" + currId, "result_" + currId);
         }
 
 		// update progress bar
@@ -2974,8 +2437,8 @@ void MainWindow::MIL_test() {
     m_rendererTypeList["mil_attention"] = "HeatmapRenderer";
     insertRenderer("mil_attention", someRenderer2);
 
-    createDynamicViewWidget("mil_grade", modelName);
-    createDynamicViewWidget("mil_attention", modelName);
+//    createDynamicViewWidget("mil_grade", modelName);
+//    createDynamicViewWidget("mil_attention", modelName);
 }
 
 void MainWindow::Kmeans_MTL_test() {
@@ -3025,7 +2488,7 @@ void MainWindow::Kmeans_MTL_test() {
     m_rendererTypeList["cluster_pw"] = "HeatmapRenderer";
     insertRenderer("cluster_pw", heatmap1);
 
-    createDynamicViewWidget("cluster_pw", modelName);
+//    createDynamicViewWidget("cluster_pw", modelName);
 }
 
 void MainWindow::MTL_test() {
@@ -3100,8 +2563,8 @@ void MainWindow::MTL_test() {
 	m_rendererTypeList["nuclei_detect"] = "HeatmapRenderer";
 	insertRenderer("nuclei_detect", someRenderer2);
 
-	createDynamicViewWidget("nuclei_seg", modelName);
-	createDynamicViewWidget("nuclei_detect", modelName);
+//	createDynamicViewWidget("nuclei_seg", modelName);
+//	createDynamicViewWidget("nuclei_detect", modelName);
 }
 
 void MainWindow::pixelClassifier_wrapper(std::string someModelName) {
@@ -3139,7 +2602,7 @@ void MainWindow::pixelClassifier_wrapper(std::string someModelName) {
 
         // now make it possible to edit prediction in the View Widget
         //std::map<std::string, std::string> modelMetadata = getModelMetadata(someModelName);
-        createDynamicViewWidget(modelMetadata["name"], someModelName);
+//        createDynamicViewWidget(modelMetadata["name"], someModelName);
     }
 }
 
@@ -4018,28 +3481,6 @@ bool MainWindow::hideTissueMask(bool flag) {
     }
 }
 
-bool MainWindow::opacityRenderer(int value, const std::string& name) {
-    if (m_rendererTypeList[name] == "ImagePyramidRenderer") {
-        return false;
-    }
-    if (!hasRenderer(name)) {
-        return false;
-    }else{
-        if (m_rendererTypeList[name] == "SegmentationRenderer") {
-            auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(getRenderer(name));
-            someRenderer->setOpacity((float) value / 20.0f);
-        } else if (m_rendererTypeList[name] == "SegmentationRenderer") { // FIXME: Apparently, this doesn't change opacity
-            auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(getRenderer(name));
-            someRenderer->setOpacity((float) value / 20.0f);
-        } else {
-            auto someRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(getRenderer(name));
-            someRenderer->setMaxOpacity((float) value / 20.0f);
-            //someRenderer->setMinConfidence(0.9);
-        }
-        return true;
-    }
-}
-
 bool MainWindow::hideChannel(const std::string& name) {
     if (m_rendererTypeList[name] != "HeatmapRenderer") {
         return false;
@@ -4087,7 +3528,7 @@ void MainWindow::deleteViewObject(std::string name) {
 		if (modelNames.count(key) != 0) {
 			modelName = modelNames[key];
 		}
-		createDynamicViewWidget(key, modelName);
+//		createDynamicViewWidget(key, modelName);
 	}
 
 	// TODO: Should store QComboBox based on name, perhaps setTooltip instead, such that I dont need to think about indices.

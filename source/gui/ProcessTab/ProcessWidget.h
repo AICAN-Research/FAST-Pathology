@@ -43,6 +43,10 @@ Q_OBJECT
 public:
     ProcessWidget(QWidget* parent=0);
     ~ProcessWidget();
+    /**
+     * Set the interface in its default state.
+     */
+    void resetInterface();
 
     std::map<std::string, std::string> getModelMetadata(std::string modelName);
 protected:
@@ -50,12 +54,6 @@ protected:
      * Define the interface for the current global widget.
      */
     void setupInterface();
-
-    /**
-     * Set the interface in its default state.
-     */
-    void resetInterface();
-
     /**
      * Define the connections for all elements inside the current global widget.
      */

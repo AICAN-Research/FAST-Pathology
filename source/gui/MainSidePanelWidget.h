@@ -22,19 +22,20 @@ namespace fast{
     public:
         MainSidePanelWidget(QWidget *parent=0);
         ~MainSidePanelWidget();
-    protected:
-        void setUpInterface();
         /**
          * Set the interface in its default state.
          */
         void resetInterface();
 
+    protected:
+        void setUpInterface();
         /**
          * Define the connections for all elements inside the current global widget.
          */
         void setupConnections();
 
     signals:
+        void filesDropped(const QList<QString> &);
         void newImageDisplay(std::string, bool);
         void resetDisplay();
         void newAppTitle(std::string);
