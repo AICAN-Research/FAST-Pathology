@@ -41,8 +41,10 @@ add_executable(fastpathology
                 source/logic/ProcessManager.h
                 source/logic/SegmentationProcess.cpp
                 source/logic/SegmentationProcess.h
-                source/logic/InferenceModel.cpp
-                source/logic/InferenceModel.h)
+                source/logic/LogicRuntimeModel.cpp
+                source/logic/LogicRuntimeModel.h
+                source/logic/PipelineProcess.cpp
+                source/logic/PipelineProcess.h)
 
 add_definitions(-D_USE_MATH_DEFINES)
 add_dependencies(fastpathology fast_copy)

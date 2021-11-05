@@ -63,18 +63,17 @@ namespace fast {
             inline std::vector<std::string> getProjectFilenames(){return _wsi_filenames_list;}
             inline bool isEmpty(){return _images.empty();}
             inline std::string getVisibleImageName(){return this->_visible_wsi_uid;}
-            void setVisibleImageName(std::string id_name){this->_visible_wsi_uid = id_name;}
-
+            inline std::map<std::string, std::shared_ptr<WholeSlideImage>> getAllImages(){return this->_images;}
             std::shared_ptr<WholeSlideImage> get_image(std::string name){
                 return this->_images[name];
             }
-
             std::shared_ptr<WholeSlideImage> get_visible_image(){
                 if(_visible_wsi_uid != "")
                     return this->_images[this->_visible_wsi_uid];
                 else
                     return NULL;
             }
+            void setVisibleImageName(std::string id_name){this->_visible_wsi_uid = id_name;}
 
             void doEmpty();
 

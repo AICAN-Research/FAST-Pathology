@@ -12,10 +12,11 @@
 namespace fast{
     WholeSlideImage::WholeSlideImage(const std::string filename): _filename(filename)
     {
-        // @TODO. Renderers memory release leads to segfault...
-        this->memory_load();
-        this->create_thumbnail();
-        this->memory_unload();
+        this->init();
+//        // @TODO. Renderers memory release leads to segfault...
+//        this->memory_load();
+//        this->create_thumbnail();
+////        this->memory_unload();
     }
 
     WholeSlideImage::~WholeSlideImage()
@@ -24,6 +25,18 @@ namespace fast{
         // Segfault is generated here if multiple WSI are loaded, but not all were clicked (and viewed).
         // If all are clicked and viewed/unviewed, it seems to work fine...
         this->memory_unload();
+    }
+
+    void WholeSlideImage::init()
+    {
+        auto importer = WholeSlideImageImporter::New();
+        importer->setFilename(this->_filename);
+        auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
+        this->_image = currImage;
+        this->_metadata = this->_image->getMetadata(); // Can be dropped?
+        this->_format = this->_metadata["openslide.vendor"];
+        this->compute_magnification_level();
+        this->create_thumbnail();
     }
 
     void WholeSlideImage::memory_load()
@@ -42,6 +55,25 @@ namespace fast{
         renderer->setSynchronizedRendering(false);
         _renderers["WSI"] = renderer;
         this->_renderers_types["WSI"] = "ImagePyramidRenderer";
+    }
+
+    void WholeSlideImage::load_renderer()
+    {
+        auto renderer = ImagePyramidRenderer::New();
+        renderer->setSharpening(false); // Parameters for sharpening, coming from where?
+        renderer->setInputData(this->_image);
+        renderer->setSynchronizedRendering(false);
+        this->_renderers["WSI"] = renderer;
+        this->_renderers_types["WSI"] = "ImagePyramidRenderer";
+    }
+
+    void WholeSlideImage::unload_renderer()
+    {
+        if(!this->_renderers.empty())
+        {
+            this->_renderers.clear();
+            this->_renderers_types.clear();
+        }
     }
 
     void WholeSlideImage::memory_unload()

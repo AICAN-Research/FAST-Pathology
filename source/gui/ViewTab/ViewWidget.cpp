@@ -54,6 +54,7 @@ namespace fast {
 
         this->_main_layout->insertWidget(0, smallTextBoxWidget_imageName);
         this->_main_layout->insertWidget(1, this->_stacked_widget);
+        this->setVisible(false);
         this->hide();
     }
 
@@ -61,6 +62,7 @@ namespace fast {
     {
         this->_dynamic_widget_list.clear();
         this->_page_combobox->clear();
+        this->setVisible(false);
         this->hide();
     }
 
@@ -78,6 +80,7 @@ namespace fast {
             this->_dynamic_widget_list["WSI"] = dynamic_widget;
             this->_stacked_layout->addWidget(dynamic_widget);
             this->_page_combobox->insertItem(0, "WSI");
+            this->setVisible(true);
             this->show();
         }
 

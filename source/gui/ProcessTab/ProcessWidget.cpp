@@ -39,30 +39,51 @@ namespace fast {
         this->_main_layout->insertWidget(0, this->_tissue_seg_pushbutton);
 
         QDir directory(QString::fromStdString(this->_cwd + "data/Models/"));
-        QStringList paths = directory.entryList(QStringList() << "*.txt" << "*.TXT",QDir::Files);
+        QStringList model_dirs = directory.entryList(QDir::NoDot | QDir::NoDotDot | QDir::Dirs);
         int counter=1;
-        foreach(QString currFile, paths) {
-
-            // current model
-            std::string modelName = splitCustom(currFile.toStdString(), ".")[0];
-
-            // get metadata of current model
-            std::map<std::string, std::string> metadata = getModelMetadata(modelName);
+        foreach(QString model_dir, model_dirs)
+        {
+            ProcessManager::GetInstance()->importModel(model_dir.toStdString());
 
             auto someButton = new QPushButton(this);
-            someButton->setText(QString::fromStdString(metadata["task"]));
+            someButton->setText(QString::fromStdString(ProcessManager::GetInstance()->get_model(model_dir.toStdString())->get_model_metadata()["task"]));
             //predGradeButton->setFixedWidth(200);
             someButton->setFixedHeight(50);
 //            QObject::connect(someButton, &QPushButton::clicked, std::bind(&MainWindow::pixelClassifier_wrapper, this, modelName));
             someButton->show();
 
             this->_main_layout->insertWidget(counter, someButton);
-            // @TODO. Has to be thought further, when I have models to run.
+            // @TODO. Has to be thought further, maybe not needed to store those buttons?
             this->_specific_seg_models_pushbutton_map[std::to_string(counter)] = someButton;
-//            QObject::connect(someButton, &QPushButton::clicked, std::bind(&ProcessWidget::processStartEventReceived, this, modelName));
+            QObject::connect(someButton, &QPushButton::clicked, std::bind(&ProcessWidget::processStartEventReceived, this, model_dir.toStdString()));
 
             counter++;
         }
+//        QStringList paths = directory.entryList(QStringList() << "*.txt" << "*.TXT", QDir::Files);
+//        int counter=1;
+//        foreach(QString currFile, paths)
+//        {
+
+//            // current model
+//            std::string modelName = splitCustom(currFile.toStdString(), ".")[0];
+
+//            // get metadata of current model
+//            std::map<std::string, std::string> metadata = getModelMetadata(modelName);
+
+//            auto someButton = new QPushButton(this);
+//            someButton->setText(QString::fromStdString(metadata["task"]));
+//            //predGradeButton->setFixedWidth(200);
+//            someButton->setFixedHeight(50);
+////            QObject::connect(someButton, &QPushButton::clicked, std::bind(&MainWindow::pixelClassifier_wrapper, this, modelName));
+//            someButton->show();
+
+//            this->_main_layout->insertWidget(counter, someButton);
+//            // @TODO. Has to be thought further, when I have models to run.
+//            this->_specific_seg_models_pushbutton_map[std::to_string(counter)] = someButton;
+//            QObject::connect(someButton, &QPushButton::clicked, std::bind(&ProcessWidget::processStartEventReceived, this, modelName));
+
+//            counter++;
+//        }
 
 //        std::vector<string> modelPaths;
     }

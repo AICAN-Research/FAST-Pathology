@@ -80,7 +80,6 @@ MainWindow::MainWindow() {
     enableMaximized(); // <- function from Window.cpp
 
     mWidget->setAcceptDrops(true); // to enable drag/drop events
-//    QObject::connect(mWidget, &WindowWidget::filesDropped, std::bind(&MainWindow::receiveFileList, this, std::placeholders::_1));  //this, SLOT(receiveFileList(QList<QString>))); //std::bind(&MainWindow::receiveFileList, this));
 
     //mWidget->setMouseTracking(true);
     //mWidget->setFocusPolicy(Qt::StrongFocus);
@@ -157,30 +156,33 @@ void MainWindow::setupConnections()
 {
     // Overall
     QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::newAppTitle, this, &MainWindow::updateAppTitleReceived);
+    // @TODO. The drag and drop can be about anything? Images, models, pipelines, etc...?
     QObject::connect(mWidget, &WindowWidget::filesDropped, this->_side_panel_widget, &MainSidePanelWidget::filesDropped);
+    QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::addRendererToViewRequested, this, &MainWindow::addRendererToViewReceived);
+
     // Main menu actions
     QObject::connect(this->_file_menu_create_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::createProjectTriggered);
     QObject::connect(this->_file_menu_import_wsi_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::selectFilesTriggered);
     QObject::connect(this->_file_menu_add_model_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::addModelsTriggered);
     QObject::connect(this->_file_menu_add_pipeline_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::addPipelinesTriggered);
+
     QObject::connect(this->_project_menu_create_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::createProjectTriggered);
     QObject::connect(this->_project_menu_open_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::openProjectTriggered);
     QObject::connect(this->_project_menu_save_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::saveProjectTriggered);
+
     QObject::connect(this->_edit_menu_change_mode_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::setApplicationMode);
     QObject::connect(this->_edit_menu_download_testdata_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::downloadTestDataTriggered);
+
     //QObject::connect(this->_edit_menu_download_testdata_action, &QAction::triggered, this, &MainWindow::downloadAndAddTestData);
     QObject::connect(this->_pipeline_menu_import_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::addPipelinesTriggered);
     QObject::connect(this->_pipeline_menu_editor_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::editorPipelinesTriggered);
-    QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::addRendererToViewRequested, this, &MainWindow::addRendererToViewReceived);
+
+    QObject::connect(this->_help_menu_about_action, &QAction::triggered, this, &MainWindow::aboutProgram);
 }
 
 void MainWindow::updateAppTitleReceived(std::string title_suffix)
 {
     this->setTitle(applicationName + title_suffix);
-}
-
-void MainWindow::receiveFileList(const QList<QString> &names) {
-    selectFileDrag(names);
 }
 
 void MainWindow::createOpenGLWindow() {
@@ -416,31 +418,32 @@ void MainWindow::createMenubar() {
     runPipelineMenu = new QMenu("&Run Pipeline", mWidget);
     //runPipelineMenu->addAction("Grade classification");
     this->_pipeline_menu->addMenu(runPipelineMenu);
-
     loadPipelines(); // load pipelines that exists in the data/Pipelines directory
 
-    //auto deployMenu = new QMenu();
-    auto deployMenu = topFiller->addMenu(tr("&Deploy"));
-    //deployMenu->addMenu(tr("&Deploy"));
-    //deployMenu->setFixedHeight(100);
-    //deployMenu->setFixedWidth(100);
-    deployMenu->addAction("Run Pipeline");
-    deployMenu->addAction("Segment Tissue");
-    deployMenu->addAction("Predict Tumor");
-    deployMenu->addAction("Classify Grade");
-	//deployMenu->addAction("MTL nuclei seg/detect", this, &MainWindow::MTL_test);
-    deployMenu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
-    deployMenu->addAction("Deep KMeans MTL", this, &MainWindow::Kmeans_MTL_test);
-    deployMenu->addSeparator();
+    // Deploy tab
+    //auto this->_deploy_menu = new QMenu();
+    this->_deploy_menu = topFiller->addMenu(tr("&Deploy"));
+    //this->_deploy_menu->addMenu(tr("&Deploy"));
+    //this->_deploy_menu->setFixedHeight(100);
+    //this->_deploy_menu->setFixedWidth(100);
+    this->_deploy_menu->addAction("Run Pipeline");
+    this->_deploy_menu->addAction("Segment Tissue");
+    this->_deploy_menu->addAction("Predict Tumor");
+    this->_deploy_menu->addAction("Classify Grade");
+    //this->_deploy_menu->addAction("MTL nuclei seg/detect", this, &MainWindow::MTL_test);
+    this->_deploy_menu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
+    this->_deploy_menu->addAction("Deep KMeans MTL", this, &MainWindow::Kmeans_MTL_test);
+    this->_deploy_menu->addSeparator();
 
-    auto helpMenu = topFiller->addMenu(tr("&Help"));
-    helpMenu->addAction("Contact support", helpUrl);
-    helpMenu->addAction("Report issue", reportIssueUrl);
-    helpMenu->addAction("Check for updates");  // TODO: Add function that checks if the current binary in usage is the most recent one
-    helpMenu->addAction("About", this, &MainWindow::aboutProgram);
+    this->_help_menu = topFiller->addMenu(tr("&Help"));
+    this->_help_menu->addAction("Contact support", helpUrl);
+    this->_help_menu->addAction("Report issue", reportIssueUrl);
+    this->_help_menu->addAction("Check for updates");  // TODO: Add function that checks if the current binary in usage is the most recent one
+    this->_help_menu_about_action = new QAction("About", this);
+    this->_help_menu->addAction(this->_help_menu_about_action);
 
     //topFiller->addMenu(fileMenu);
-    //topFiller->addMenu(deployMenu);
+    //topFiller->addMenu(this->_deploy_menu);
 
     superLayout->insertWidget(0, topFiller);
 }
@@ -554,14 +557,17 @@ void MainWindow::updateView(std::string uid_name, bool state){
 //    getView(0)->addRenderer(renderer);
     if(state) {
         auto img = DataManager::GetInstance()->get_image(uid_name);
+        DataManager::GetInstance()->get_image(uid_name)->load_renderer();
         getView(0)->addRenderer(img->get_renderer("WSI"));
 //    insertRenderer("WSI", renderer);
-        getView(0)->reinitialize(); // Must call this after removing all renderers
         DataManager::GetInstance()->setVisibleImageName(uid_name);
     }
     else
+    {
+        DataManager::GetInstance()->get_image(uid_name)->unload_renderer();
         DataManager::GetInstance()->setVisibleImageName("");
-
+    }
+    getView(0)->reinitialize(); // Must call this after removing all renderers
     wsiFormat = metadata["openslide.vendor"]; // get WSI format
 //    magn_lvl = getMagnificationLevel(); // get magnification level of current WSI
 
@@ -3554,7 +3560,7 @@ void MainWindow::insertRenderer(std::string name, std::shared_ptr<Renderer> rend
 }
 
 void MainWindow::removeAllRenderers() {
-    m_rendererList.clear();
+//    m_rendererList.clear();
     getView(0)->removeAllRenderers();
     getView(0)->stopPipeline();
 }

@@ -235,11 +235,6 @@ class MainWindow : public Window {
          */
         void addModelsDrag(const QList<QString> &fileNames);
         /**
-         * Wrapper for the file drag event to properly catch and execute the file import after drag event.
-         * @param names
-         */
-        void receiveFileList(const QList<QString> &names); // FIXME: silly stuff
-        /**
          * Opens a file explorer for selecting which Pipelines from disk to import to the program.
          * All selected Pipelines will be automatically added to the default Pipelines and the Pipeline menu.
          */
@@ -414,6 +409,9 @@ class MainWindow : public Window {
         ProjectWidget *fileWidget;
         MainSidePanelWidget *_side_panel_widget; /* Main widget for the left-hand panel */
         std::map<std::string, QAction*> _file_menu_actions; /* Holder for all actions in the File main menu bar */
+        QMenu* _pipeline_menu; /* */
+        QMenu* _deploy_menu; /* */
+        QMenu* _help_menu; /* */
         QAction* _file_menu_create_project_action;
         QAction* _file_menu_import_wsi_action;
         QAction* _file_menu_add_model_action;
@@ -423,9 +421,9 @@ class MainWindow : public Window {
         QAction* _project_menu_save_project_action;
         QAction* _edit_menu_change_mode_action;
         QAction* _edit_menu_download_testdata_action;
-        QMenu* _pipeline_menu;
         QAction* _pipeline_menu_import_action;
         QAction* _pipeline_menu_editor_action;
+        QAction* _help_menu_about_action;
 
     signals:
         void inferenceFinished(std::string name);

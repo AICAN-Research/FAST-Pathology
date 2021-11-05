@@ -41,6 +41,14 @@ namespace fast{
              ***/
             void memory_load();
 
+            void init();
+            /***
+             * @TODO. Should it only be for the WSI renderer, other results renderers cannot be invoked from here
+             * and will be lost everytime a new thumbnail is clicked?
+             ***/
+            void load_renderer();
+            void unload_renderer();
+
             /***
              * Unload the current whole slide image from memory when not used for user interaction.
              * But all other relevant parameters are kept for future re-loading.
