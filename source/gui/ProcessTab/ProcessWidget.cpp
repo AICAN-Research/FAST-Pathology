@@ -279,6 +279,19 @@ namespace fast {
             return false;
         }
 
+        auto progDialog = QProgressDialog();
+        progDialog.setRange(0, 1); //currentWSIs.size() <= total number of WSIs to process
+        //progDialog.setContentsMargins(0, 0, 0, 0);
+        progDialog.setValue(0);
+        progDialog.setVisible(true);
+        progDialog.setModal(false);
+        progDialog.setLabelText("Running inference...");
+        //QRect screenrect = mWidget->screen()[0].geometry();
+        progDialog.move(this->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
+        progDialog.show();
+
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+
         ProcessManager::GetInstance()->runProcess(DataManager::GetInstance()->getVisibleImageName(), process_name);
         emit processTriggered(process_name);
         emit addRendererToViewRequested(process_name);

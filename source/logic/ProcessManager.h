@@ -11,6 +11,7 @@
 #include <mutex>
 #include <map>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include "source/logic/WholeSlideImage.h"
 #include "source/logic/SegmentationProcess.h"
@@ -20,6 +21,7 @@
 
 namespace fast {
     class NeuralNetwork;
+    class SegmentationNetwork;
     class PatchStitcher;
     class SegmentationRenderer;
     class Renderer;
@@ -31,6 +33,7 @@ namespace fast {
     class Tensor;
     class View;
     class ImageResizer;
+    class Config;
 
     class ProcessManager
     {

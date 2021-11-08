@@ -20,7 +20,6 @@ namespace fast{
         this->_project_widget = new ProjectWidget(this);
         this->_process_widget = new ProcessWidget(this);
         this->_view_widget = new ViewWidget(this);
-        this->_view_widget->setVisible(false);
         this->_stats_widget = new StatsWidget(this);
         //stackedWidget->setStyleSheet("border:1px solid rgb(0, 255, 0); ");
         //stackedWidget->setFixedWidth(200);

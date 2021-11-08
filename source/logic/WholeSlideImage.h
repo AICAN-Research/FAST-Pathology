@@ -35,6 +35,7 @@ namespace fast{
             inline std::string get_filename(){return _filename;}
             inline QImage get_thumbnail() {return _thumbnail;}
             inline std::shared_ptr<ImagePyramid> get_image_pyramid(){return _image;}
+            inline std::unordered_map<std::string, std::string> get_metadata(){return _metadata;}
 
             /***
              * Load the current whole slide image in memory for display and interaction.
