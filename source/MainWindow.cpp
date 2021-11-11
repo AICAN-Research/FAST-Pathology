@@ -4115,6 +4115,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 							m_patchStitcherList[modelMetadata["name"]] = stitcher;
 
 							auto someRenderer = HeatmapRenderer::New();
+                            someRenderer->setChannelHidden(0, false);
 							someRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"]));
 							someRenderer->setInputConnection(stitcher->getOutputPort());
 							someRenderer->setMaxOpacity(0.6f);
