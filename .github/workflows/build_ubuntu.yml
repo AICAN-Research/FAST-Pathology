@@ -18,15 +18,16 @@ jobs:
       run: |
         mkdir subdir
 
-    - name: Download FAST
-      id: get_release
-      uses: dsaltares/fetch-gh-release-asset@master
+    - name: Download FAST (artifact)
+      uses: dawidd6/action-download-artifact@v2
       with:
-        repo: "smistad/FAST"
-        version: "tags/v4.1.0"
-        file: "fast_ubuntu18.04_4.1.0.deb"
-        target: "subdir/fast_ubuntu18.04_4.1.0.deb"
-        token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{secrets.FP}}
+        workflow: CI-ubuntu.yml
+        workflow_conclusion: success
+        branch: master
+        event: push
+        name: "Debian package"
+        repo: smistad/FAST
 
     - name: Install dependencies  # @TODO: Reduce this
       run: |

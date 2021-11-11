@@ -14,13 +14,20 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Download FAST
-      run: |
-        curl.exe -OL https://github.com/smistad/FAST/releases/download/v4.1.0/fast_windows_4.1.0.zip
-        tar -xzf ./fast_windows_4.1.0.zip
+    - name: Download FAST (artifact)
+      uses: dawidd6/action-download-artifact@v2
+      with:
+        github_token: ${{secrets.FP}}
+        workflow: CI-windows.yml
+        workflow_conclusion: success
+        branch: master
+        event: push
+        name: "Archive package (zip)"
+        repo: smistad/FAST
       
     - name: Configure CMake
       run: |
+        tar -xzf ./fast_windows_4.1.0.zip
         cmake -B ${{github.workspace}}/build `
             -DFAST_DIR=${{github.workspace}}/fast_windows_4.1.0/fast/cmake `
             -G "Visual Studio 16 2019" `
