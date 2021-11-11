@@ -81,6 +81,10 @@ private:
 
 public slots:
     void processTriggerUpdate(std::string process_name);
+    void deleteViewObjectReceived(std::string uid);
+
+signals:
+    void removeRendererFromViewRequested(const std::string&);
 };
 
 }

@@ -73,11 +73,11 @@ public slots:
     void createProject();
     void selectFile();
     /**
-     * @brief selectNewDisplay To toggle/untoggle the main view with the WSI represented by id_name
+     * @brief changeWSIDisplayReceived To toggle/untoggle the main view with the WSI represented by id_name
      * @param id_name Unique name for the WSI to consider
      * @param state True to display the WSI in the main central view and False to hide it.
      */
-    void selectNewDisplay(std::string id_name, bool state);
+    void changeWSIDisplayReceived(std::string id_name, bool state);
 
     /**
      * @brief removeImage To remove one WSI from the list (and memory).
@@ -95,7 +95,7 @@ public slots:
 signals:
     void newImageFilename(std::string);
     void newRenderer(std::shared_ptr<Renderer>);
-    void newImageDisplay(std::string, bool);
+    void changeWSIDisplayTriggered(std::string, bool);
     void resetDisplay();
 
 protected:

@@ -36,7 +36,7 @@ namespace fast{
 
     signals:
         void filesDropped(const QList<QString> &);
-        void newImageDisplay(std::string, bool);
+        void changeWSIDisplayTriggered(std::string, bool);
         void resetDisplay();
         void newAppTitle(std::string);
         void createProjectTriggered();
@@ -48,6 +48,7 @@ namespace fast{
         void addPipelinesTriggered();
         void editorPipelinesTriggered();
         void addRendererToViewRequested(const std::string&);
+        void removeRendererFromViewRequested(const std::string&);
 
     public slots:
         /**

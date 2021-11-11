@@ -29,6 +29,7 @@ namespace fast{
     class WholeSlideImage {
         public:
             WholeSlideImage(const std::string filename);
+            WholeSlideImage(const std::string filename, const QImage thumbnail);
             ~WholeSlideImage();
 
             inline float get_magnification_level() const {return this->_magnification_level;}
@@ -67,6 +68,7 @@ namespace fast{
             const std::string get_renderer_type(const std::string& name);
 
             void insert_renderer(std::string renderer_name, std::string renderer_type, std::shared_ptr<Renderer> renderer);
+            void remove_renderer(std::string renderer_name);
 
         private:
             void compute_magnification_level();
@@ -83,9 +85,10 @@ namespace fast{
             float _magnification_level; /* */
             std::shared_ptr<ImagePyramid> _image; /* Loaded WSI */
             // @TODO. For segmentation renderers, should they be kept in memory? Or dumped on disk, and only the physical location kept to reload when there is a need for display?
-            std::map<std::string, std::shared_ptr<Renderer>> _renderers; /* */
-            std::map<std::string, std::string> _renderers_types; /* */
+            std::map<std::string, std::shared_ptr<Renderer>> _renderers; /* List of loaded renderers associated with the image (e.g., Segmentation/HeatmapRenderer). */
+            std::map<std::string, std::string> _renderers_types; /* Type of each renderer. */
             QImage _thumbnail; /* Thumbnail for the WSI */
+            std::map<std::string, std::string> _results_filenames; /* When the renderers are not in memory, the image files are dumped on disk. */
     };
 }
 

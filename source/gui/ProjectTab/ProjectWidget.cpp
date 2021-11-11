@@ -121,6 +121,7 @@ namespace fast {
                 QCoreApplication::applicationDirPath(), QFileDialog::DontUseNativeDialog);
 
         std::cout << "Project dir: " << this->_projectFolderName.toStdString() << std::endl;
+        DataManager::GetInstance()->getCurrentProject()->setRootFolder(this->_projectFolderName.toStdString());
 
         // create file for saving which WSIs exist in folder
         QString projectFileName = "/project.txt";
@@ -136,7 +137,7 @@ namespace fast {
 
         // check if any WSIs have been selected previously, and ask if you want to make a project and add these,
         // or make a new fresh one -> if no, need to clear all WSIs in the QListWidget
-        if (not DataManager::GetInstance()->isEmpty()) {
+        if (not DataManager::GetInstance()->getCurrentProject()->isProjectEmpty()) {
             // prompt
             QMessageBox mBox;
             mBox.setIcon(QMessageBox::Warning);
@@ -163,25 +164,33 @@ namespace fast {
         }
     }
 
-    void ProjectWidget::saveProject() {
-        // create file for saving which WSIs exist in folder
-        QString projectFileName = "/project.txt";
-        QFile file(_projectFolderName + projectFileName);
-        file.resize(0);  // clear it and then write
+    void ProjectWidget::saveProject()
+    {
+        if (DataManager::GetInstance()->getCurrentProject()->isProjectEmpty())
+            return;
 
-        if (file.open(QIODevice::ReadWrite))
+        // If existing data, but still a temporary project directory, ask to select a valid folder
+        if (not DataManager::GetInstance()->getCurrentProject()->hasUserSelectedDestinationFolder())
         {
-            auto opened_images_fns = DataManager::GetInstance()->getProjectFilenames();
-            foreach(std::string currPath, opened_images_fns) {
-                    QTextStream stream(&file);
-                    stream << currPath.c_str() << endl;
-            }
+            QFileDialog dialog(this);
+            dialog.setFileMode(QFileDialog::DirectoryOnly);
+
+            auto selected_dir = dialog.getExistingDirectory(this, tr("Set Project Directory"),
+                    QCoreApplication::applicationDirPath(), QFileDialog::DontUseNativeDialog);
+
+            if (!QDir(selected_dir).exists())
+                return;
+            std::cout << "Project dir: " << selected_dir.toStdString() << std::endl;
+            DataManager::GetInstance()->getCurrentProject()->setRootFolder(selected_dir.toStdString());
         }
+
+        DataManager::GetInstance()->getCurrentProject()->saveProject();
     }
 
     void ProjectWidget::openProject() {
         // If existing data, asks for confirmation to delete.
-        if (not DataManager::GetInstance()->isEmpty()) {
+        if (not DataManager::GetInstance()->getCurrentProject()->isProjectEmpty())
+        {
             QMessageBox mBox;
             mBox.setIcon(QMessageBox::Warning);
             mBox.setText("Opening project will erase current edits.");
@@ -218,41 +227,10 @@ namespace fast {
         std::cout << projectPath.toStdString() << std::endl;
         _projectFolderName = splitCustom(projectPath.toStdString(), "project.txt")[0].c_str();
         std::cout << _projectFolderName.toStdString() << std::endl;
-
-        // check if all relevant files and folders are in selected folder directory
-        // qDebug << "hallo";
-        // if any of the folders does not exists, create them
-        if (!QDir(_projectFolderName + "/pipelines").exists()) {
-            QDir().mkdir(_projectFolderName + "/pipelines");
-        }
-        if (!QDir(_projectFolderName + "/results").exists()) {
-            QDir().mkdir(_projectFolderName + "/results");
-        }
-        if (!QDir(_projectFolderName + "/thumbnails").exists()) {
-            QDir().mkdir(_projectFolderName + "/thumbnails");
-        }
-
-        // now, parse project.txt-file and add if there are any WSIs in the project
-        // create file for saving which WSIs exist in folder
-        QList<QString> fileNames;
-        QString projectFileName = "project.txt";
-        QFile file(_projectFolderName + projectFileName);
-        if (file.open(QIODevice::ReadOnly)) {
-            QTextStream in(&file);
-            while (!in.atEnd()) {
-                QString line = in.readLine();
-                fileNames.push_back(line);
-            }
-        }
-
-        if (fileNames.empty()) {
-            // prompt if no valid WSI was found in project-file
-//            simpleInfoPrompt("There was found no valid WSI in the project file.");
-            std::cout<<"There was found no valid WSI in the project file.\n";
-        }
+        DataManager::GetInstance()->getCurrentProject()->setRootFolder(_projectFolderName.toStdString());
 
         auto progDialog = QProgressDialog(this);
-        progDialog.setRange(0, fileNames.count()-1);
+        progDialog.setRange(0, DataManager::GetInstance()->getCurrentProject()->getWSICountInProject()-1);
         //progDialog.setContentsMargins(0, 0, 0, 0);
         progDialog.setVisible(true);
         progDialog.setModal(false);
@@ -260,34 +238,31 @@ namespace fast {
         //QRect screenrect = mWidget->screen()[0].geometry();
         progDialog.move(this->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
         progDialog.show();
-
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
-        for (QString &fileName : fileNames) {
-            if (fileName == "")
-                return;
-            auto currFileName = fileName.toStdString();
-            std::cout << "Selected file: " << currFileName << std::endl;
-            const std::string id_name = DataManager::GetInstance()->IncludeImage(currFileName);
+        DataManager::GetInstance()->getCurrentProject()->loadProject();
 
-            auto button = new ProjectThumbnailPushButton(id_name, this);
+        for (std::string uid: DataManager::GetInstance()->getCurrentProject()->getAllWsiUids())
+        {
+            std::cout << "Selected file: " << uid << std::endl;
+            auto button = new ProjectThumbnailPushButton(uid, this);
             int width_val = 100;
             int height_val = 150;
             auto listItem = new QListWidgetItem;
             listItem->setSizeHint(QSize(width_val, height_val));
-            QObject::connect(button, &ProjectThumbnailPushButton::clicked, this, &ProjectWidget::selectNewDisplay);
+            QObject::connect(button, &ProjectThumbnailPushButton::clicked, this, &ProjectWidget::changeWSIDisplayReceived);
             QObject::connect(button, &ProjectThumbnailPushButton::rightClicked, this, &ProjectWidget::removeImage);
             _wsi_scroll_listwidget->addItem(listItem);
             _wsi_scroll_listwidget->setItemWidget(listItem, button);
-            _wsi_thumbnails_listitem[id_name] = listItem;
-            _thumbnail_qpushbutton_map[id_name] = button;
+            _wsi_thumbnails_listitem[uid] = listItem;
+            _thumbnail_qpushbutton_map[uid] = button;
             QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
         }
     }
 
     void ProjectWidget::selectFile() {
         // check if view object list is empty, if not, prompt to save results or not, if not clear
-        if (not DataManager::GetInstance()->isEmpty())
+        if (not DataManager::GetInstance()->getCurrentProject()->isProjectEmpty())
         {
             // prompt
             QMessageBox mBox;
@@ -363,7 +338,8 @@ namespace fast {
             //filename = fileName.toStdString();
             auto currFileName = fileName.toStdString();
             std::cout << "Selected file: " << currFileName << std::endl;
-            const std::string id_name = DataManager::GetInstance()->IncludeImage(currFileName);
+            //const std::string id_name = DataManager::GetInstance()->IncludeImage(currFileName);
+            const std::string id_name = DataManager::GetInstance()->getCurrentProject()->includeImage(currFileName);
 
             // @TODO. Shouldn't we keep a class attribute list with those buttons, so that it's easier to retrieve them
             // and delete them on the fly?
@@ -384,7 +360,7 @@ namespace fast {
             int height_val = 150;
             auto listItem = new QListWidgetItem;
             listItem->setSizeHint(QSize(width_val, height_val));
-            QObject::connect(button, &ProjectThumbnailPushButton::clicked, this, &ProjectWidget::selectNewDisplay);
+            QObject::connect(button, &ProjectThumbnailPushButton::clicked, this, &ProjectWidget::changeWSIDisplayReceived);
             QObject::connect(button, &ProjectThumbnailPushButton::rightClicked, this, &ProjectWidget::removeImage);
             _wsi_scroll_listwidget->addItem(listItem);
             _wsi_scroll_listwidget->setItemWidget(listItem, button);
@@ -403,12 +379,12 @@ namespace fast {
         _wsi_thumbnails_listitem.erase(uid);
         _thumbnail_qpushbutton_map.erase(uid);
         _wsi_scroll_listwidget->update();
-        emit newImageDisplay(uid, false);
-        DataManager::GetInstance()->RemoveImage(uid); //@TODO. To check, might be some memory leak here again.
+        emit changeWSIDisplayTriggered(uid, false);
+        DataManager::GetInstance()->getCurrentProject()->removeImage(uid);
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
     }
 
-    void ProjectWidget::selectNewDisplay(std::string id_name, bool state)
+    void ProjectWidget::changeWSIDisplayReceived(std::string id_name, bool state)
     {
         if(state)
         {
@@ -418,7 +394,7 @@ namespace fast {
                     it->second->setCheckedState(false);
             }
         }
-        emit newImageDisplay(id_name, state);
+        emit changeWSIDisplayTriggered(id_name, state);
     }
 
     void ProjectWidget::downloadAndAddTestData() {
@@ -524,46 +500,46 @@ namespace fast {
         selectFileDrag(fileNames);
     }
 
-    void ProjectWidget::selectFileDrag(const QList<QString> &fileNames) {
+    void ProjectWidget::selectFileDrag(const QList<QString> &fileNames)
+    {
+//        // check if view object list is empty, if not, prompt to save results or not, if not clear
+//        if (!DataManager::GetInstance()->isEmpty()) {
+//            QMessageBox mBox;
+//            mBox.setIcon(QMessageBox::Warning);
+//            mBox.setStyleSheet(this->styleSheet());
+//            mBox.setText("There are unsaved results.");
+//            mBox.setInformativeText("Do you wish to save them?");
+//            mBox.setDefaultButton(QMessageBox::Save);
+//            mBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+//            int ret = mBox.exec();
 
-        // check if view object list is empty, if not, prompt to save results or not, if not clear
-        if (!DataManager::GetInstance()->isEmpty()) {
-            QMessageBox mBox;
-            mBox.setIcon(QMessageBox::Warning);
-            mBox.setStyleSheet(this->styleSheet());
-            mBox.setText("There are unsaved results.");
-            mBox.setInformativeText("Do you wish to save them?");
-            mBox.setDefaultButton(QMessageBox::Save);
-            mBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-            int ret = mBox.exec();
-
-            switch (ret) {
-                case QMessageBox::Save:
-                    std::cout << "Results not saved yet. Just cancelled the switch!" << std::endl;
-                    // Save was clicked
-                    return;
-                case QMessageBox::Discard:
-                    // Don't Save was clicked
-                    std::cout << "Discarded!" << std::endl;
-                    break;
-                case QMessageBox::Cancel:
-                    // Cancel was clicked
-                    std::cout << "Cancelled!" << std::endl;
-                    return;
-                default:
-                    // should never be reached
-                    break;
-            }
-        }
-        /*
-        if (pageComboBox->count() != 0) { // if not empty, clear
-            pageComboBox->clear();
-            exportComboBox->clear();
-        }
-         */
+//            switch (ret) {
+//                case QMessageBox::Save:
+//                    std::cout << "Results not saved yet. Just cancelled the switch!" << std::endl;
+//                    // Save was clicked
+//                    return;
+//                case QMessageBox::Discard:
+//                    // Don't Save was clicked
+//                    std::cout << "Discarded!" << std::endl;
+//                    break;
+//                case QMessageBox::Cancel:
+//                    // Cancel was clicked
+//                    std::cout << "Cancelled!" << std::endl;
+//                    return;
+//                default:
+//                    // should never be reached
+//                    break;
+//            }
+//        }
+//        /*
+//        if (pageComboBox->count() != 0) { // if not empty, clear
+//            pageComboBox->clear();
+//            exportComboBox->clear();
+//        }
+//         */
 
 
-        this->resetInterface();
+//        this->resetInterface();
 
         auto progDialog = QProgressDialog(this);
         progDialog.setRange(0, fileNames.count()-1);

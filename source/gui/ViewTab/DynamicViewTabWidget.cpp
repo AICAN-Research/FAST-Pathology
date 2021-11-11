@@ -167,7 +167,7 @@ namespace fast
         }
         else
         {
-            simpleInfoPrompt("Invalid renderer used...", this);
+            simpleInfoPrompt(QString::fromStdString("Invalid renderer used with type: " + DataManager::GetInstance()->get_visible_image()->get_renderer_type(this->_renderer_name)), this);
         }
 
         this->_class_selector_label = new QLabel(this);
@@ -249,9 +249,9 @@ namespace fast
         //QObject::connect(this->_opacity_slider, &QSlider::valueChanged, std::bind(&DynamicViewTabWidget::opacityRendererReceived, this, std::placeholders::_1, someName));
         QObject::connect(this->_opacity_slider, &QSlider::valueChanged, this, &DynamicViewTabWidget::opacityRendererReceived);
         QObject::connect(this->_toggle_class_pushbutton, &QPushButton::clicked, this, &DynamicViewTabWidget::hideChannelReceived);
-        //        QObject::connect(deleteButton, &QPushButton::clicked, std::bind(&MainWindow::deleteViewObject, this, someName));
         //QObject::connect(this->_class_list_combobox, &QComboBox::currentIndexChanged, this, updateCurrentClassIndexReceived);
         QObject::connect(this->_class_list_combobox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateCurrentClassIndexReceived(int)));
+        QObject::connect(this->_delete_tab_pushbutton, &QPushButton::clicked, std::bind(&DynamicViewTabWidget::deleteViewObjectTriggered, this, this->_renderer_name));
     }
 
     void DynamicViewTabWidget::updateCurrentClassIndexReceived(int index)

@@ -10,7 +10,11 @@
 #include <map>
 #include <memory>
 #include <unordered_map>
-#include "source/logic/WholeSlideImage.h"
+
+#include <QTemporaryDir>
+#include <QDir>
+#include <QTextStream>
+#include "source/logic/Project.h"
 #include "source/utils/utilities.h"
 
 namespace fast {
@@ -36,11 +40,8 @@ namespace fast {
             /**
              * @brief Contains all data pertaining to the ongoing project.
              */
-            DataManager()
-            {
-                _visible_wsi_uid = "";
-            }
-            ~DataManager() {}
+            DataManager();
+            ~DataManager();
 
         public:
             /**
@@ -57,47 +58,32 @@ namespace fast {
              * into the static field. On subsequent runs, it returns the client existing
              * object stored in the static field.
              */
-
             static DataManager *GetInstance();
 
-            inline std::vector<std::string> getProjectFilenames(){return _wsi_filenames_list;}
-            inline bool isEmpty(){return _images.empty();}
-            inline std::string getVisibleImageName(){return this->_visible_wsi_uid;}
-            inline std::map<std::string, std::shared_ptr<WholeSlideImage>> getAllImages(){return this->_images;}
-            std::shared_ptr<WholeSlideImage> get_image(std::string name){
-                return this->_images[name];
-            }
-            std::shared_ptr<WholeSlideImage> get_visible_image(){
-                if(_visible_wsi_uid != "")
-                    return this->_images[this->_visible_wsi_uid];
-                else
-                    return NULL;
-            }
-            void setVisibleImageName(std::string id_name){this->_visible_wsi_uid = id_name;}
+            inline std::shared_ptr<Project> getCurrentProject()const {return this->_project;}
 
-            void doEmpty();
-
+            inline std::string getVisibleImageName()const {return this->_visible_wsi_uid;}
             /**
-             * Instanciates an image object from the selected WSI filename.
+             * @brief get_visible_image
+             * @return
              */
-            const std::string IncludeImage(std::string currFileName);
-
+            std::shared_ptr<WholeSlideImage> get_visible_image();
             /**
-            *
-            */
-            void RemoveImage(std::string uid);
-
-//            std::shared_ptr<Renderer> get_renderer(std::string name){
-//                return this->_renderers[name];
-//            }
+             * @brief setVisibleImageName
+             * @param id_name
+             */
+            void setVisibleImageName(std::string id_name){this->_visible_wsi_uid = id_name;}
+            /**
+             * @brief doEmpty
+             */
+            void doEmpty();
 
 
         protected:
-            std::string _filename; /* ? */
-            std::string _projectFolderName; /* */
-            std::map<std::string, std::shared_ptr<WholeSlideImage>> _images; /* Loaded image objects. */
-            std::vector<std::string> _wsi_filenames_list;/* Filenames of the loaded images, project-info. */
             std::string _visible_wsi_uid; /* Unique id_name of the currently rendered (hence visible) WSI. */
+            // @TODO. If making the above member a unique_ptr, all of its methods should be forwarded from here, maybe too annoying/code-redundant.
+            std::shared_ptr<Project> _project; /* Current project instance to which all images/results are linked. */
+
         private:
             static DataManager * _pinstance;
             static std::mutex _mutex;

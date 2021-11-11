@@ -20,7 +20,7 @@ namespace fast{
 
     void ProjectThumbnailPushButton::SetupInterface()
     {
-        auto thumbnail_image = DataManager::GetInstance()->get_image(_name)->get_thumbnail();
+        auto thumbnail_image = DataManager::GetInstance()->getCurrentProject()->getImage(_name)->get_thumbnail();
         auto m_NewPixMap = QPixmap::fromImage(thumbnail_image);
         QIcon ButtonIcon(m_NewPixMap);
         this->setIcon(ButtonIcon);

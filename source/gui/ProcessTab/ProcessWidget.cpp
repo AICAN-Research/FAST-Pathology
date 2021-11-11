@@ -234,7 +234,7 @@ namespace fast {
         // @TODO. All of it should be within a ProcessManager most likely, no reason to have it inside here.
 
         // @TODO. Does the segmentation run only on the visible WSI, or on all loaded WSIs showing on the side list?
-        if (DataManager::GetInstance()->isEmpty()) {
+        if (DataManager::GetInstance()->getCurrentProject()->isProjectEmpty()) {
             std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
             return false;
         }
@@ -260,7 +260,7 @@ namespace fast {
 
     bool ProcessWidget::processStartEventReceived(std::string process_name)
     {
-        if (DataManager::GetInstance()->isEmpty()) {
+        if (DataManager::GetInstance()->getCurrentProject()->isProjectEmpty()) {
             std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
             return false;
         }

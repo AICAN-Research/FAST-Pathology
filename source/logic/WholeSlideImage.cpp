@@ -19,6 +19,17 @@ namespace fast{
 ////        this->memory_unload();
     }
 
+    WholeSlideImage::WholeSlideImage(const std::string filename, const QImage thumbnail):_filename(filename), _thumbnail(thumbnail)
+    {
+        auto importer = WholeSlideImageImporter::New();
+        importer->setFilename(this->_filename);
+        auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
+        this->_image = currImage;
+        this->_metadata = this->_image->getMetadata(); // Can be dropped?
+        this->_format = this->_metadata["openslide.vendor"];
+        this->compute_magnification_level();
+    }
+
     WholeSlideImage::~WholeSlideImage()
     {
         // @FIXME. Only uncommented for debugging purposes, the same process happens by default regardless.
@@ -174,4 +185,14 @@ namespace fast{
         this->_renderers_types[renderer_name] = renderer_type;
         this->_renderers[renderer_name] = renderer;
     }
+
+    void WholeSlideImage::remove_renderer(std::string renderer_name)
+    {
+        if(has_renderer(renderer_name))
+        {
+            this->_renderers.erase(this->_renderers.find(renderer_name));
+            this->_renderers_types.erase(this->_renderers_types.find(renderer_name));
+        }
+    }
+
 } // End of namespace fast

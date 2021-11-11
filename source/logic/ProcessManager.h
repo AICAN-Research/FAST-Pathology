@@ -78,8 +78,30 @@ namespace fast {
             void set_advanced_mode_status(bool status);
 
             void importModel(const std::string& name);
+            /**
+             * Simple wrapper of the inference method, pixelClassifier. If ran with Projects enabled, it will be ran in a
+             * non-blocking background thread and will not render any results. Otherwise the rendered results will be
+             * streamed on the fly, but no results will be stored (relevant for simple demonstrations). If advanced mode
+             * is enabled, a parameter dialog will be prompted for setting parameters before inference is ran.
+             * @param someModelName
+             */
             void runProcess(const std::string image_uid, const std::string process_name);
+            /**
+             * Runs inference of a selected pipeline. If ran with Projects enabled, it will be ran in a non-blocking
+             * background thread and will not render any results. Otherwise the rendered results will be streamed on the
+             * fly, but no results will be stored (relevant for simple demonstrations).
+             * @param someModelName
+             * @param modelMetadata
+             */
             void pixelClassifier(std::string process_name);
+
+        private:
+            /**
+             * Get the specifications of the current Operating System used to run FastPathology.
+             */
+            void identifySystem();
+
+            const std::pair<std::string, std::string> selectOptimalInferenceEngine(const std::string& model_name) const;
 
         private:
             static ProcessManager * _pinstance;
@@ -89,6 +111,9 @@ namespace fast {
             std::string _models_filepath; /* @TODO. Can we consider models and pipelines to be inside the same root folder on disk? */
             std::string _pipelines_filepath; /* */
             std::map<std::string, std::shared_ptr<LogicRuntimeModel>> _models; /* Loaded model objects. */
+            std::string _operating_system; /* Operating system of the user's computer. */
+            std::string _kernel; /* Operating system kernel of the user's computer. */
+            std::list<std::string> _inference_engines; /* List of inference engines available on the user's computer. */
     };
 }
 #endif //FASTPATHOLOGY_PROCESSMANAGER_H

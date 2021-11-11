@@ -6,7 +6,9 @@
 #include <QDialog>
 #include <QObject>
 #include <QWidget>
+#include <QCloseEvent>
 #include <QNetworkReply>
+#include <QMessageBox>
 #include <QProgressDialog>
 #include "source/utils/utilities.h"
 #include "source/gui/MainSidePanelWidget.h"
@@ -268,22 +270,6 @@ class MainWindow : public Window {
 
         // PROCESS WIDGET RELATED STUFF
         /**
-         * Runs inference of a selected pipeline. If ran with Projects enabled, it will be ran in a non-blocking
-         * background thread and will not render any results. Otherwise the rendered results will be streamed on the
-         * fly, but no results will be stored (relevant for simple demonstrations).
-         * @param someModelName
-         * @param modelMetadata
-         */
-        void pixelClassifier(std::string someModelName, std::map<std::string, std::string> modelMetadata);
-        /**
-         * Simple wrapper of the inference method, pixelClassifier. If ran with Projects enabled, it will be ran in a
-         * non-blocking background thread and will not render any results. Otherwise the rendered results will be
-         * streamed on the fly, but no results will be stored (relevant for simple demonstrations). If advanced mode
-         * is enabled, a parameter dialog will be prompted for setting parameters before inference is ran.
-         * @param someModelName
-         */
-        void pixelClassifier_wrapper(std::string someModelName);
-        /**
          * Simple method for performing tissue segmentation through a smart morphological, thresholding filter. If
          * advanced mode is enabled, a parameter dialog will be prompted, and as values are tuned, a dynamic result
          * will be rendered showing the resultant output segmentation.
@@ -435,9 +421,10 @@ class MainWindow : public Window {
 //        void selectFilesTriggered();
 
     public slots:
+        void closeEvent (QCloseEvent *event);
         void resetDisplay();
 
-        void updateView(std::string uid_name, bool state);
+        void changeWSIDisplayReceived(std::string uid_name, bool state);
 
         void updateAppTitleReceived(std::string title_suffix);
 
@@ -446,6 +433,7 @@ class MainWindow : public Window {
          * @param name: Identifier for the renderer to add.
          */
         void addRendererToViewReceived(const std::string& name);
+        void removeRendererFromViewReceived(const std::string& name);
 
     private slots:
         void updateChannelValue(int index);

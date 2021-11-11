@@ -44,7 +44,9 @@ add_executable(fastpathology
                 source/logic/LogicRuntimeModel.cpp
                 source/logic/LogicRuntimeModel.h
                 source/logic/PipelineProcess.cpp
-                source/logic/PipelineProcess.h)
+                source/logic/PipelineProcess.h
+                source/logic/Project.cpp
+                source/logic/Project.h)
 
 add_definitions(-D_USE_MATH_DEFINES)
 add_dependencies(fastpathology fast_copy)

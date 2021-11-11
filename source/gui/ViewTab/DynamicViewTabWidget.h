@@ -51,7 +51,7 @@ protected:
     void setupConnections();
 
 private:
-    const std::string _renderer_name;
+    const std::string _renderer_name; /* Unique id/name for the current object, linked to the renderer name (model_name in model metadata)*/
     QList<QString> _classes; /* */
     uint _current_class; /* */
 
@@ -81,6 +81,9 @@ public slots:
 
 private slots:
     void updateCurrentClassIndexReceived(int index);
+
+signals:
+    void deleteViewObjectTriggered(std::string&);
 };
 
 } // End of namespace fast

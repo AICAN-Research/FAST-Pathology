@@ -72,11 +72,29 @@ namespace fast {
         QObject::connect(this->_page_combobox, SIGNAL(activated(int)), this->_stacked_layout, SLOT(setCurrentIndex(int)));
     }
 
+    void ViewWidget::deleteViewObjectReceived(std::string uid)
+    {
+        // If there was only one results in addition to the main WSI, and the said result is removed,
+        // then the WSI is also removed, hence the full interface reset.
+        if (this->_dynamic_widget_list.size() == 2)
+        {
+            this->resetInterface();
+        }
+        else
+        {
+            this->_page_combobox->removeItem(this->_page_combobox->currentIndex());
+            this->_dynamic_widget_list.erase(this->_dynamic_widget_list.find(uid));
+        }
+        emit removeRendererFromViewRequested(uid);
+        DataManager::GetInstance()->get_visible_image()->remove_renderer(uid);
+    }
+
     void ViewWidget::processTriggerUpdate(std::string process_name)
     {
         if (this->_dynamic_widget_list.empty())
         {
             auto dynamic_widget = new DynamicViewTabWidget("WSI", this);
+            // Not connecting the delete button for the WSI widget. Will be added with the first View results, and deleted if no more viewed results, automatically.
             this->_dynamic_widget_list["WSI"] = dynamic_widget;
             this->_stacked_layout->addWidget(dynamic_widget);
             this->_page_combobox->insertItem(0, "WSI");
@@ -85,6 +103,7 @@ namespace fast {
         }
 
         auto dynamic_widget = new DynamicViewTabWidget(process_name, this);
+        QObject::connect(dynamic_widget, &DynamicViewTabWidget::deleteViewObjectTriggered, this, &ViewWidget::deleteViewObjectReceived);
         this->_dynamic_widget_list[process_name] = dynamic_widget;
         this->_stacked_layout->addWidget(dynamic_widget);
         this->_page_combobox->insertItem(this->_page_combobox->count(), QString::fromStdString(process_name));
@@ -93,7 +112,6 @@ namespace fast {
     void ViewWidget::createDynamicViewWidget(std::string someName, std::string modelName)
     {
         auto dynamicViewWidget = new QWidget(this);
-
         auto imageButton = new QPushButton(dynamicViewWidget);
         imageButton->setText("Toggle image");
         imageButton->setFixedHeight(50);
