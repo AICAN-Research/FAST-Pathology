@@ -24,12 +24,15 @@ jobs:
         event: push
         name: "Archive package (zip)"
         repo: smistad/FAST
+
+    - name: Extract FAST
+      run: |
+        tar -xzf "Archive package (zip).zip"
       
     - name: Configure CMake
       run: |
-        tar -xzf ./fast_windows_4.1.0.zip
         cmake -B ${{github.workspace}}/build `
-            -DFAST_DIR=${{github.workspace}}/fast_windows_4.1.0/fast/cmake `
+            -DFAST_DIR=${{github.workspace}}/Archive package (zip)/fast_windows_4.2.0/fast/cmake `
             -G "Visual Studio 16 2019" `
             -A x64
 
