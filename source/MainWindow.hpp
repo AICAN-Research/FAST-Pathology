@@ -36,7 +36,6 @@ namespace fast {
     class NeuralNetwork;
     class PatchStitcher;
     class SegmentationRenderer;
-    //class SegmentationPyramidRenderer;
     class TissueSegmentation;
     class WholeSlideImageImporter;
     class ImagePyramid;
@@ -118,6 +117,7 @@ class MainWindow : public Window {
         void MTL_test();
         void MIL_test();
         void Kmeans_MTL_test();
+        void Refinement_test();
 
         // custom split
         std::vector<std::string> splitCustom(const std::string& s, const std::string& delimiter);

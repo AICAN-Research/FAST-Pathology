@@ -16,6 +16,7 @@
 #include <FAST/Algorithms/ImagePatch/ImageToBatchGenerator.hpp>
 #include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
 #include <FAST/Algorithms/NeuralNetwork/TensorToSegmentation.hpp>
+#include <FAST/Algorithms/NeuralNetwork/TensorToImage.hpp>
 #include <FAST/Algorithms/NeuralNetwork/BoundingBoxNetwork.hpp>
 #include <FAST/Visualization/BoundingBoxRenderer/BoundingBoxRenderer.hpp>
 #include <FAST/Algorithms/Lambda/RunLambda.hpp>
@@ -167,7 +168,7 @@ void MainWindow::receiveFileList(const QList<QString> &names) {
 void MainWindow::createOpenGLWindow() {
     // initialize view
 	view = createView();
-    //view->setSynchronizedRendering(false);
+    view->setSynchronizedRendering(false);
 	view->set2DMode();
 	view->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
 	view->setAutoUpdateCamera(true);
@@ -418,6 +419,7 @@ void MainWindow::createMenubar() {
     deployMenu->addAction("Predict Tumor");
     deployMenu->addAction("Classify Grade");
 	//deployMenu->addAction("MTL nuclei seg/detect", this, &MainWindow::MTL_test);
+    deployMenu->addAction("Refinement tumour", this, &MainWindow::Refinement_test);
     deployMenu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
     deployMenu->addAction("Deep KMeans MTL", this, &MainWindow::Kmeans_MTL_test);
     deployMenu->addSeparator();
@@ -1644,11 +1646,11 @@ void MainWindow::selectFile() {
 
     // Get old view, and remove it from Widget
     currentView = getView(0);
-    //currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
-    mWidget->clearViews();
+    currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
+    clearViews();
 
     auto tmpView = createView();
-    //tmpView->setSynchronizedRendering(false);
+    tmpView->setSynchronizedRendering(false);
     tmpView->set2DMode();
     tmpView->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
     tmpView->setAutoUpdateCamera(true);
@@ -1656,7 +1658,7 @@ void MainWindow::selectFile() {
     mainSplitter->replaceWidget(1, tmpView);
     mainSplitter->setStretchFactor(1, 1);
 
-    mWidget->addView(tmpView); // Give new view to mWidget so it is used in the computation thread
+    addView(tmpView);  // Give new view to mWidget so it is used in the computation thread
 
     int counter = 0;
     for (QString& fileName : fileNames) {
@@ -1969,11 +1971,11 @@ void MainWindow::selectFileInProject(int pos) {
 
     // Get old view, and remove it from Widget
     currentView = getView(0);
-    //currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
-    mWidget->clearViews();
+    currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
+    clearViews();
 
     auto tmpView = createView();
-    //tmpView->setSynchronizedRendering(false);
+    tmpView->setSynchronizedRendering(false);
     tmpView->set2DMode();
     tmpView->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
     tmpView->setAutoUpdateCamera(true);
@@ -1981,7 +1983,11 @@ void MainWindow::selectFileInProject(int pos) {
     mainSplitter->replaceWidget(1, tmpView);
     mainSplitter->setStretchFactor(1, 1);
 
-    mWidget->addView(tmpView); // Give new view to mWidget so it is used in the computation thread
+    //addView(tmpView);
+    //clearViews();
+
+    //mWidget->addView(tmpView);
+    addView(tmpView);  // Give new view to mWidget so it is used in the computation thread
 
     removeAllRenderers();  // VERY IMPORTANT THAT THIS IS DONE AFTER!!!
 
@@ -3356,6 +3362,100 @@ std::map<std::string, std::string> MainWindow::setParameterDialog(std::map<std::
         std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
 
     return modelMetadata;
+}
+
+void MainWindow::Refinement_test() {
+
+    auto tissueSegmentation = TissueSegmentation::New(); 
+    tissueSegmentation->setInputData(m_image);
+
+    auto generator = PatchGenerator::New();
+    generator->setPatchSize(256, 256);
+    generator->setPatchLevel(2);
+    generator->setOverlap(0.0);
+    generator->setMaskThreshold(0.1);
+    generator->setInputData(0, m_image);
+    generator->setInputConnection(1, tissueSegmentation->getOutputPort());
+
+    auto network = NeuralNetwork::New();
+    network->setInferenceEngine("OpenVINO");
+    network->load("C:/Users/andrp/workspace/FAST-Pathology/studies/tumour-study/pw_tumour_mobilenetv2_model.onnx");
+    network->setScaleFactor(0.00392156862f);
+    network->setInputConnection(generator->getOutputPort());
+
+    auto stitcher = PatchStitcher::New();
+    stitcher->setInputConnection(network->getOutputPort());
+
+    auto heatmapRenderer = HeatmapRenderer::New();
+    heatmapRenderer->setInterpolation(false);
+    heatmapRenderer->setInputConnection(stitcher->getOutputPort());
+
+    m_rendererTypeList["refinement_tumour"] = "HeatmapRenderer";
+    insertRenderer("refinement_tumour", heatmapRenderer);
+
+    //m_rendererTypeList["mil_attention"] = "HeatmapRenderer";
+    //insertRenderer("mil_attention", someRenderer2);
+
+    //createDynamicViewWidget("refinement_tumour", "refinement_tumor");
+
+    /*
+    auto start = std::chrono::high_resolution_clock::now();
+    DataObject::pointer data;
+    do {
+        data = stitcher->updateAndGetOutputData<DataObject>();
+    } while (!data->isLastFrame());  // wait until stitcher is finished before starting the refinement stage
+
+    // extract low-resolution image and resize it
+    auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
+    auto access = currImage->getAccess(ACCESS_READ);
+    auto input = access->getLevelAsImage(5);
+
+    auto resizer = ImageResizer::New();
+    resizer->setInterpolation(true);
+    resizer->setInputData(input);
+    resizer->setWidth(1024);
+    resizer->setHeight(1024);
+
+    auto port = resizer->getOutputPort();
+    resizer->update();
+
+    // resize heatmap to match size of low-res image
+    auto converter = TensorToImage::New();
+    converter->setInputConnection(stitcher->getOutputPort());
+
+    auto resizer2 = ImageResizer::New();
+    resizer2->setInterpolation(true);
+    resizer2->setInputConnection(converter->getOutputPort());
+    //resizer2->setInputData(stitcher->updateAndGetOutputData<Image>());
+    resizer2->setWidth(1024);
+    resizer2->setHeight(1024);
+
+    auto port2 = resizer2->getOutputPort();
+    resizer2->update();
+
+    // when heatmap is finished stitching, we feed both the low-resolution WSI and produced heatmap to the refinement network
+    auto refinement = SegmentationNetwork::New();
+    refinement->setInferenceEngine("TensorFlow");
+    refinement->load("C:/Users/andrp/workspace/FAST-Pathology/studies/tumour-study/unet_tumour_refinement_model.pb");
+    refinement->setScaleFactor(0.00392156862f);
+    //refinement->setScaleFactor(1.0f);
+    refinement->setInputData(1, port->getNextFrame<Image>());
+    refinement->setInputData(0, port2->getNextFrame<Image>());
+    //refinement->setInputConnection(0, stitcher->getOutputPort());
+    //refinement->setInputData(1, stitcher->updateAndGetOutputData<Image>());  // @FIXME: Input here is null
+    //refinement->update();
+
+     //auto currPred = refinement->updateAndGetOutputData<Image>();
+     //currPred->setSpacing(1.0f, 1.0f, 1.0f);
+
+     // finally, export final result to disk
+    auto finalSegExporter = ImageFileExporter::New();
+    finalSegExporter->setFilename("C:/Users/andrp/workspace/FAST-Pathology/studies/tumour-study/pred_tumour_seg_from_FP.png");
+    finalSegExporter->setInputData(refinement->updateAndGetOutputData<Image>());
+    //finalSegExporter->setInputData(currPred);
+    //finalSegExporter->setInputData(thresh->updateAndGetOutputData<Image>());
+    finalSegExporter->update();  // runs the exporter
+     */
 }
 
 void MainWindow::MIL_test() {

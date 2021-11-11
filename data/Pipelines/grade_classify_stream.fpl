@@ -5,20 +5,24 @@ PipelineDescription "asd"
 
 ProcessObject importer WholeSlideImageImporter
 Attribute filename $TEST_DATA_PATH$/WSI/A05.svs
+#Attribute filename "E:/DigitalPathology/WSI/B.tif"
 
 ProcessObject tissueSeg TissueSegmentation
 Input 0 importer 0
 
 ProcessObject patch PatchGenerator
 Attribute patch-size 512 512
-Attribute patch-level 0
+Attribute patch-level 2
 Input 0 importer 0
 Input 1 tissueSeg 0
 
 ProcessObject network NeuralNetwork
 Attribute scale-factor 0.003921568627451
-Attribute inference-engine "OpenVINO"
-Attribute model "C:/Users/andrp/fastpathology/data/Models/pw_classification_bach_mobilenet_v2.xml"
+Attribute inference-engine "TensorFlow"
+#Attribute model "/home/andrep/workspace/FAST-Pathology/fastPathology_stuff_290420/models/high_res_nuclei_unet.pb"
+#Attribute model "C:/Users/andrp/fastpathology/data/Models/pw_classification_bach_mobilenet_v2.pb"
+#Attribute model "C:/Users/andrp/fastpathology/data/Models/pw_classification_bach_mobilenet_v2.xml"
+Attribute model "C:/Users/andrp/fastpathology/data/Models/bc_grade_model_3_grades_10x_512.pb"
 Input 0 patch 0
 
 ProcessObject stitcher PatchStitcher
