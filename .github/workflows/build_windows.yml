@@ -28,11 +28,13 @@ jobs:
     - name: Extract FAST
       run: |
         tar -xzf "Archive package (zip).zip"
+        tar -xzf "Archive package (zip)/fast_windows_4.2.0.zip"
+        ls
       
     - name: Configure CMake
       run: |
         cmake -B ${{github.workspace}}/build `
-            -DFAST_DIR=${{github.workspace}}/Archive package (zip)/fast_windows_4.2.0/fast/cmake `
+            -DFAST_DIR=${{github.workspace}}/fast_windows_4.2.0/fast/cmake `
             -G "Visual Studio 16 2019" `
             -A x64
 
