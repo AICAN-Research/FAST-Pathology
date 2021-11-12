@@ -3202,7 +3202,6 @@ void MainWindow::runPipeline(std::string path) {
 
 	auto progDialog = QProgressDialog(mWidget);
 	progDialog.setRange(0, (int)currentWSIs.size() - 1);
-	//progDialog.setContentsMargins(0, 0, 0, 0);
 	progDialog.setVisible(true);
 	progDialog.setModal(false);
 	progDialog.setLabelText("Running pipeline across WSIs in project...");
@@ -3211,45 +3210,41 @@ void MainWindow::runPipeline(std::string path) {
 
 	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
-	auto counter = 0;
-	for (const auto& currWSI : currentWSIs) {
+    auto counter = 0;
+    for (const auto& currWSI : currentWSIs) {
 
         // check if folder for current WSI exists, if not, create one
         QString projectFolderName = "C:/Users/andrp/workspace/test_projects/project3";
-        QString wsiResultPath = (projectFolderName.toStdString() + "/results/" +
-            splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
+        QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
         wsiResultPath = wsiResultPath.replace("//", "/");
+
         if (!QDir(wsiResultPath).exists()) {
             QDir().mkdir(wsiResultPath);
         }
-        auto currPath =
-            wsiResultPath.toStdString() + "/" +
-            splitCustom(wsiResultPath.toStdString(), "/").back() + ".tiff";
-            //"_" + modelMetadata["name"] + "/";
 
-		// TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
-		// pipeline requires some user-defined inputs, e.g. which WSI to use (and which model?)
-		std::map<std::string, std::string> arguments;
-		arguments["filename"] = filename;
+        auto currPath = wsiResultPath.toStdString() + "/" + splitCustom(wsiResultPath.toStdString(), "/").back() + ".tiff";
+
+        // TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
+        // pipeline requires some user-defined inputs, e.g. which WSI to use (and which model?)
+        std::map<std::string, std::string> arguments;
+        arguments["filename"] = filename;
         arguments["exportPath"] = currPath;
-		//arguments["modelPath"] = path;
+        //arguments["modelPath"] = path;
 
-        std::cout << "exportPath: " << currPath << std::endl;
+        // check if folder for current WSI exists, if not, create one
+        /*
+        QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "/").c_str();
+        wsiResultPath = wsiResultPath.replace("//", "/");
+        if (!QDir(wsiResultPath).exists()) {
+	        QDir().mkdir(wsiResultPath);
+        }
 
-		// check if folder for current WSI exists, if not, create one
-		/*
-		QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "/").c_str();
-		wsiResultPath = wsiResultPath.replace("//", "/");
-		if (!QDir(wsiResultPath).exists()) {
-			QDir().mkdir(wsiResultPath);
-		}
+        QString outFile = (wsiResultPath.toStdString() + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "_heatmap.h5").c_str();
+        arguments["outPath"] = outFile.replace("//", "/").toStdString();
+         */
 
-		QString outFile = (wsiResultPath.toStdString() + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "_heatmap.h5").c_str();
-		arguments["outPath"] = outFile.replace("//", "/").toStdString();
-		 */
-
-		// parse fpl-file, and run pipeline with correspodning input arguments
-		auto pipeline = Pipeline(path, arguments);
+        // parse fpl-file, and run pipeline with corresponding input arguments
+        auto pipeline = Pipeline(path, arguments);
         pipeline.parse();
 
         /*
@@ -3258,7 +3253,7 @@ void MainWindow::runPipeline(std::string path) {
             insertRenderer("result_" + currId, pipeline.getRenderers()[1]);
             createDynamicViewWidget("result_" + currId, "result_" + currId);
         }
-         */
+        */
 
         for (auto&& po : pipeline.getProcessObjects()) {
             if (po.second->getNrOfOutputPorts() == 0 && std::dynamic_pointer_cast<Renderer>(po.second) == nullptr) {
@@ -3268,12 +3263,12 @@ void MainWindow::runPipeline(std::string path) {
             }
         }
 
-		// update progress bar
-		progDialog.setValue(counter);
-		counter++;
+        // update progress bar
+        progDialog.setValue(counter);
+        counter++;
 
-		// to render straight away (avoid waiting on all WSIs to be handled before rendering)
-		QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+        // to render straight away (avoid waiting on all WSIs to be handled before rendering)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 	}
 }
 
