@@ -2181,16 +2181,19 @@ void MainWindow::openProject() {
 
         if (fileName == "")
             return;
-        filename = fileName.toStdString();
-        wsiList.push_back(filename);
+
+        auto currFileName = fileName.toStdString();
+        wsiList.push_back(currFileName);
 
         // Import image from file using the ImageFileImporter
         auto someImporter = WholeSlideImageImporter::New();
-        someImporter->setFilename(fileName.toStdString());
+        someImporter->setFilename(currFileName);
         m_image = someImporter->updateAndGetOutputData<ImagePyramid>();
 
         // for reading of multiple WSIs, only render last one
         if (counter == fileNames.count() - 1) {
+
+            filename = fileName.toStdString();
 
             // get metadata
             metadata = m_image->getMetadata();
@@ -2214,17 +2217,17 @@ void MainWindow::openProject() {
             createDynamicViewWidget("WSI", modelName);
 
 			// check if any results exists for current WSI, if there are load them
-			std::string wsiPath = splitCustom(splitCustom(filename, "/").back(), ".")[0];
+			std::string wsiPath = splitCustom(splitCustom(currFileName, "/").back(), ".")[0];
 			auto currentResultPath = projectFolderName.toStdString() + "/results/" + wsiPath.c_str();
 
 			// update title to include name of current file
             if (advancedMode) {
-                setTitle(applicationName + " (Research mode)" + " - " + splitCustom(filename, "/").back());
+                setTitle(applicationName + " (Research mode)" + " - " + splitCustom(currFileName, "/").back());
             } else {
-                setTitle(applicationName + " - " + splitCustom(filename, "/").back());
+                setTitle(applicationName + " - " + splitCustom(currFileName, "/").back());
             }
 
-			std::cout << "Current WSI used: " << fileName.toStdString() << std::endl;
+			std::cout << "Current WSI used: " << currFileName << std::endl;
 
 			QDirIterator iter(QString::fromStdString(currentResultPath));
 			std::cout << "Current result folder path: " << currentResultPath << std::endl;
@@ -2266,7 +2269,7 @@ void MainWindow::openProject() {
         counter++;
 
         // check if thumbnail image exists for current WSI, if yes load it, else extract one
-        std::string wsiPath = splitCustom(splitCustom(filename, "/").back(), ".")[0];
+        std::string wsiPath = splitCustom(splitCustom(currFileName, "/").back(), ".")[0];
         QString fullPath = projectFolderName + "/thumbnails/" + wsiPath.c_str();
         fullPath = fullPath.replace("//", "/") + ".png";
 
@@ -3197,7 +3200,7 @@ void MainWindow::runPipeline(std::string path) {
 		currentWSIs = m_runForProjectWsis;
 	}
 	else {
-		currentWSIs.push_back(wsiList[curr_pos]);
+        currentWSIs.push_back(filename);  // wsiList[curr_pos]);
 	}
 
 	auto progDialog = QProgressDialog(mWidget);
@@ -3241,7 +3244,7 @@ void MainWindow::runPipeline(std::string path) {
 
         QString outFile = (wsiResultPath.toStdString() + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "_heatmap.h5").c_str();
         arguments["outPath"] = outFile.replace("//", "/").toStdString();
-         */
+            */
 
         // parse fpl-file, and run pipeline with corresponding input arguments
         auto pipeline = Pipeline(path, arguments);
