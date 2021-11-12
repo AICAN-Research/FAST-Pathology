@@ -8,6 +8,8 @@
 #include <FAST/Data/ImagePyramid.hpp>
 #include <FAST/Data/Image.hpp>
 #include <FAST/Algorithms/TissueSegmentation/TissueSegmentation.hpp>
+#include <FAST/Algorithms/IntensityNormalization/IntensityNormalization.hpp>
+#include <FAST/Algorithms/ImageInverter/ImageInverter.hpp>
 #include <FAST/Algorithms/ImagePatch/PatchGenerator.hpp>
 #include <FAST/Algorithms/ImagePatch/PatchStitcher.hpp>
 #include <FAST/Algorithms/NeuralNetwork/NeuralNetwork.hpp>
@@ -54,6 +56,7 @@
 #include <FAST/Exporters/HDF5TensorExporter.hpp>
 #include <FAST/Importers/ImagePyramidPatchImporter.hpp>
 #include <FAST/Exporters/ImagePyramidPatchExporter.hpp>
+#include <FAST/Exporters/TIFFImagePyramidExporter.hpp>
 #include <FAST/Data/Access/ImagePyramidAccess.hpp>
 #include <QShortcut>
 #include <FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp>
@@ -62,6 +65,8 @@
 #include <FAST/Pipeline.hpp>
 #include <FAST/Visualization/MultiViewWindow.hpp>
 #include <FAST/Algorithms/NonMaximumSuppression/NonMaximumSuppression.hpp>
+#include <FAST/Algorithms/ImagePyramidLevelExtractor/ImagePyramidLevelExtractor.hpp>
+#include <FAST/Algorithms/RunUntilFinished/RunUntilFinished.hpp>
 #include <FAST/Algorithms/Morphology/Dilation.hpp>
 #include <FAST/Algorithms/Morphology/Erosion.hpp>
 #include <QMimeData>
@@ -1647,8 +1652,9 @@ void MainWindow::selectFile() {
     // Get old view, and remove it from Widget
     currentView = getView(0);
     currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
-    clearViews();
 
+    /*
+    clearViews();
     auto tmpView = createView();
     tmpView->setSynchronizedRendering(false);
     tmpView->set2DMode();
@@ -1659,6 +1665,7 @@ void MainWindow::selectFile() {
     mainSplitter->setStretchFactor(1, 1);
 
     addView(tmpView);  // Give new view to mWidget so it is used in the computation thread
+     */
 
     int counter = 0;
     for (QString& fileName : fileNames) {
@@ -1972,6 +1979,8 @@ void MainWindow::selectFileInProject(int pos) {
     // Get old view, and remove it from Widget
     currentView = getView(0);
     currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
+
+    /*
     clearViews();
 
     auto tmpView = createView();
@@ -1988,6 +1997,7 @@ void MainWindow::selectFileInProject(int pos) {
 
     //mWidget->addView(tmpView);
     addView(tmpView);  // Give new view to mWidget so it is used in the computation thread
+     */
 
     removeAllRenderers();  // VERY IMPORTANT THAT THIS IS DONE AFTER!!!
 
@@ -3365,7 +3375,7 @@ std::map<std::string, std::string> MainWindow::setParameterDialog(std::map<std::
 }
 
 void MainWindow::Refinement_test() {
-
+       
     auto tissueSegmentation = TissueSegmentation::New(); 
     tissueSegmentation->setInputData(m_image);
 
@@ -3378,84 +3388,78 @@ void MainWindow::Refinement_test() {
     generator->setInputConnection(1, tissueSegmentation->getOutputPort());
 
     auto network = NeuralNetwork::New();
-    network->setInferenceEngine("OpenVINO");
-    network->load("C:/Users/andrp/workspace/FAST-Pathology/studies/tumour-study/pw_tumour_mobilenetv2_model.onnx");
+    network->setInferenceEngine("TensorRT");
+    network->load("C:/Users/andrp/workspace/FAST-Pathology/studies/tumour-study/pw_tumour_mobilenetv2_model.onnx"); 
     network->setScaleFactor(0.00392156862f);
     network->setInputConnection(generator->getOutputPort());
 
     auto stitcher = PatchStitcher::New();
     stitcher->setInputConnection(network->getOutputPort());
 
-    auto heatmapRenderer = HeatmapRenderer::New();
-    heatmapRenderer->setInterpolation(false);
-    heatmapRenderer->setInputConnection(stitcher->getOutputPort());
-
-    m_rendererTypeList["refinement_tumour"] = "HeatmapRenderer";
-    insertRenderer("refinement_tumour", heatmapRenderer);
-
-    //m_rendererTypeList["mil_attention"] = "HeatmapRenderer";
-    //insertRenderer("mil_attention", someRenderer2);
-
-    //createDynamicViewWidget("refinement_tumour", "refinement_tumor");
-
-    /*
-    auto start = std::chrono::high_resolution_clock::now();
+    // WAIT UNTIL FIRST STAGE IS FINISHED!
+    // /*
     DataObject::pointer data;
     do {
         data = stitcher->updateAndGetOutputData<DataObject>();
     } while (!data->isLastFrame());  // wait until stitcher is finished before starting the refinement stage
+    // */
 
-    // extract low-resolution image and resize it
-    auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
-    auto access = currImage->getAccess(ACCESS_READ);
-    auto input = access->getLevelAsImage(5);
+    //auto runUntilFinished = RunUntilFinished::create()->connect(stitcher);
+    //runUntilFinished->setInputData(stitcher->updateAndGetOutputData<Image>);
 
-    auto resizer = ImageResizer::New();
-    resizer->setInterpolation(true);
-    resizer->setInputData(input);
-    resizer->setWidth(1024);
-    resizer->setHeight(1024);
+    std::cout << "\nSTARTING NEXT STAGE IN TUMOUR SEGMENTATION (REFINEMENT!)" << std::endl;
 
-    auto port = resizer->getOutputPort();
-    resizer->update();
-
-    // resize heatmap to match size of low-res image
     auto converter = TensorToImage::New();
+    converter->setChannels({1});
     converter->setInputConnection(stitcher->getOutputPort());
+    //converter->setInputConnection(runUntilFinished->getOutputPort());
 
-    auto resizer2 = ImageResizer::New();
-    resizer2->setInterpolation(true);
-    resizer2->setInputConnection(converter->getOutputPort());
-    //resizer2->setInputData(stitcher->updateAndGetOutputData<Image>());
-    resizer2->setWidth(1024);
-    resizer2->setHeight(1024);
+    // extract tumour channel heatmap
+    auto lowresExtractor = ImagePyramidLevelExtractor::New();
+    lowresExtractor->setLevel(-1);
+    lowresExtractor->setInputData(m_image);
 
-    auto port2 = resizer2->getOutputPort();
-    resizer2->update();
+    auto scaler = IntensityNormalization::create(0, 1, 0, 255);
+    scaler->setInputConnection(lowresExtractor->getOutputPort());
 
     // when heatmap is finished stitching, we feed both the low-resolution WSI and produced heatmap to the refinement network
-    auto refinement = SegmentationNetwork::New();
-    refinement->setInferenceEngine("TensorFlow");
-    refinement->load("C:/Users/andrp/workspace/FAST-Pathology/studies/tumour-study/unet_tumour_refinement_model.pb");
-    refinement->setScaleFactor(0.00392156862f);
-    //refinement->setScaleFactor(1.0f);
-    refinement->setInputData(1, port->getNextFrame<Image>());
-    refinement->setInputData(0, port2->getNextFrame<Image>());
-    //refinement->setInputConnection(0, stitcher->getOutputPort());
-    //refinement->setInputData(1, stitcher->updateAndGetOutputData<Image>());  // @FIXME: Input here is null
-    //refinement->update();
+    auto refinement = NeuralNetwork::New();
+    refinement->setInferenceEngine("OpenVINO");
+    refinement->getInferenceEngine()->setDeviceType(InferenceDeviceType::CPU);
+    //refinement->setInferenceEngine("TensorFlow");
+    //refinement->load("C:/Users/andrp/workspace/FAST-Pathology/studies/tumour-study/unet_tumour_refinement_model.pb");
+    refinement->load("C:/Users/andrp/workspace/FAST-Pathology/studies/tumour-study/unet_tumour_refinement_model_fix.onnx");
+    refinement->setInputConnection(0, scaler->getOutputPort());
+    refinement->setInputConnection(1, converter->getOutputPort());
 
-     //auto currPred = refinement->updateAndGetOutputData<Image>();
-     //currPred->setSpacing(1.0f, 1.0f, 1.0f);
+    auto converter2 = TensorToSegmentation::New();
+    converter2->setInputConnection(refinement->getOutputPort());
 
-     // finally, export final result to disk
+    auto someRenderer2 = SegmentationRenderer::New();
+    someRenderer2->setColor(0, Color(200.0f / 255.0f, 127.0f / 255.0f, 20.0f / 255.0f));
+    someRenderer2->setColor(1, Color(50.0f / 255.0f, 127.0f / 255.0f, 255.0f / 255.0f));
+    someRenderer2->setInputConnection(converter2->getOutputPort());
+    someRenderer2->setOpacity(0.4f);
+
+    m_rendererTypeList["refined_result"] = "SegmentationRenderer";
+    insertRenderer("refined_result", someRenderer2);
+
+    // finally, export final result to disk
     auto finalSegExporter = ImageFileExporter::New();
-    finalSegExporter->setFilename("C:/Users/andrp/workspace/FAST-Pathology/studies/tumour-study/pred_tumour_seg_from_FP.png");
-    finalSegExporter->setInputData(refinement->updateAndGetOutputData<Image>());
-    //finalSegExporter->setInputData(currPred);
-    //finalSegExporter->setInputData(thresh->updateAndGetOutputData<Image>());
-    finalSegExporter->update();  // runs the exporter
+    finalSegExporter->setFilename("C:/Users/andrp/workspace/FAST-Pathology/studies/tumour-study/pred_tumour_seg_from_FP_final.png");
+    finalSegExporter->setExecuteOnLastFrameOnly(true);
+    finalSegExporter->connect(converter2->updateAndGetOutputData<Image>());
+    finalSegExporter->update();
+
+    /*
+    // finally, export result as pyramidal TIFF
+    auto tiffExporter = TIFFImagePyramidExporter::New();
+    tiffExporter->setFilename("C:/Users/andrp/workspace/FAST-Pathology/studies/tumour-study/pred_tumour_seg_from_FP_final_pyramidal.tiff");
+    tiffExporter->setExecuteOnLastFrameOnly(true);
+    tiffExporter->connect(converter2->updateAndGetOutputData<Image>());
+    tiffExporter->update();
      */
+
 }
 
 void MainWindow::MIL_test() {
