@@ -21,6 +21,8 @@ namespace fast{
         this->_process_widget = new ProcessWidget(this);
         this->_view_widget = new ViewWidget(this);
         this->_stats_widget = new StatsWidget(this);
+        this->_export_widget = new ExportWidget(this);
+
         //stackedWidget->setStyleSheet("border:1px solid rgb(0, 255, 0); ");
         //stackedWidget->setFixedWidth(200);
         //stackedWidget->setStyleSheet("border:1px solid rgb(0, 0, 255); ");
@@ -28,7 +30,7 @@ namespace fast{
         this->_container_stacked_widget->insertWidget(1, this->_process_widget);
         this->_container_stacked_widget->insertWidget(2, this->_view_widget); // @TODO.: Disable viewWidget at the start, as there is no images to visualize
         this->_container_stacked_widget->insertWidget(3, this->_stats_widget);
-//        this->_container_stacked_widget->insertWidget(4, exportWidget);
+        this->_container_stacked_widget->insertWidget(4, this->_export_widget);
         //stackedLayout->setSizeConstraint(QLayout::SetFixedSize);
         //stackedWidget->setLayout(mainLayout);
 
@@ -178,6 +180,7 @@ namespace fast{
         this->_process_widget->resetInterface();
         this->_view_widget->resetInterface();
         this->_stats_widget->resetInterface();
+        this->_export_widget->resetInterface();
     }
 
     void MainSidePanelWidget::setupConnections()

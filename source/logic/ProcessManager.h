@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include "source/logic/WholeSlideImage.h"
 #include "source/logic/SegmentationProcess.h"
+#include "source/logic/PipelineProcess.h"
 #include "source/logic/LogicRuntimeModel.h"
 #include "source/utils/utilities.h"
 #include "source/utils/qutilities.h"
@@ -70,7 +71,12 @@ namespace fast {
                 return _models.find(model_name) != _models.end();
             }
 
+            inline bool has_pipeline(std::string pipeline_name){
+                return _pipelines.find(pipeline_name) != _pipelines.end();
+            }
+
             inline std::shared_ptr<LogicRuntimeModel> get_model(std::string model_name){return this->_models[model_name];}
+            inline std::shared_ptr<PipelineProcess> get_pipeline(std::string pipeline_name){return this->_pipelines[pipeline_name];}
             inline const std::string get_models_filepath(){return this->_models_filepath;}
             inline const std::string get_pipelines_filepath(){return this->_pipelines_filepath;}
 
@@ -100,20 +106,29 @@ namespace fast {
              * Get the specifications of the current Operating System used to run FastPathology.
              */
             void identifySystem();
+            /**
+             * @brief loadModels Loading the approved inference models being located in ~/fastpathology
+             */
+            void loadApprovedModels();
+            /**
+             * @brief loadPipelines Loading the approved pipelines being located in ~/fastpathology
+             */
+            void loadApprovedPipelines();
 
             const std::pair<std::string, std::string> selectOptimalInferenceEngine(const std::string& model_name) const;
 
         private:
             static ProcessManager * _pinstance;
             static std::mutex _mutex;
-            bool _advanced_mode; /* */
+            bool _advanced_mode; /* */ //@TODO. With avanced mode, only system specific parameters can be modified. The rest is part of a pipeline and its parameters.'
             std::string _fp_root_filepath; /* @TODO. can it change from a user input?*/
             std::string _models_filepath; /* @TODO. Can we consider models and pipelines to be inside the same root folder on disk? */
             std::string _pipelines_filepath; /* */
-            std::map<std::string, std::shared_ptr<LogicRuntimeModel>> _models; /* Loaded model objects. */
             std::string _operating_system; /* Operating system of the user's computer. */
             std::string _kernel; /* Operating system kernel of the user's computer. */
             std::list<std::string> _inference_engines; /* List of inference engines available on the user's computer. */
+            std::map<std::string, std::shared_ptr<LogicRuntimeModel>> _models; /* Loaded model objects, the key is the model_name as defined in the text file. */
+            std::map<std::string, std::shared_ptr<PipelineProcess>> _pipelines; /* Loaded pipelines objects, the key will be some attribute from a text file. */
     };
 }
 #endif //FASTPATHOLOGY_PROCESSMANAGER_H

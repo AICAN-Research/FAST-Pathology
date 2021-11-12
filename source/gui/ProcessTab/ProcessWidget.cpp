@@ -262,6 +262,7 @@ namespace fast {
     {
         if (DataManager::GetInstance()->getCurrentProject()->isProjectEmpty()) {
             std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
+            simpleInfoPrompt(QString("Requires a WSI to be rendered in order to perform the analysis."), this);
             return false;
         }
 
@@ -278,6 +279,8 @@ namespace fast {
             simpleInfoPrompt("Segmentation on current WSI has already been performed.", this);
             return false;
         }
+
+//        if(ProcessManager::GetInstance()->get_advanced_mode_status())
 
         auto progDialog = QProgressDialog();
         progDialog.setRange(0, 1); //currentWSIs.size() <= total number of WSIs to process

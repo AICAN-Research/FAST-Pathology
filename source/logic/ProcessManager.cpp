@@ -38,6 +38,8 @@ namespace fast {
         this->_models_filepath = QDir::homePath().toStdString() + "/fastpathology/" + "data/Models";
         this->_pipelines_filepath = QDir::homePath().toStdString() + "/fastpathology/" + "data/Pipelines";
         this->identifySystem();
+        this->loadApprovedModels();
+        this->loadApprovedPipelines();
     }
 
 /**
@@ -99,6 +101,29 @@ namespace fast {
             std::cout
                 << "Current operating system is not using any of the supported kernels: linux and winnt. Current kernel is: "
                 << this->_kernel << std::endl;
+        }
+    }
+
+    void ProcessManager::loadApprovedModels()
+    {
+        QDir directory(QString::fromStdString(this->_models_filepath));
+        QStringList model_dirs = directory.entryList(QDir::NoDot | QDir::NoDotDot | QDir::Dirs);
+        foreach(QString model_dir, model_dirs)
+        {
+            auto model(std::make_shared<LogicRuntimeModel>(this->_models_filepath, model_dir.toStdString()));
+            this->_models[model_dir.toStdString()] = model;
+        }
+    }
+
+    void ProcessManager::loadApprovedPipelines()
+    {
+        QDir directory(QString::fromStdString(this->_pipelines_filepath));
+        QStringList pipeline_files = directory.entryList(QStringList() << "*.fpl" << "*.FPL", QDir::Files);
+        foreach(QString pipeline_file, pipeline_files)
+        {
+            auto pipeline_name = splitCustom(pipeline_file.toStdString(), ".")[0];
+            auto pipeline(std::make_shared<PipelineProcess>(this->_pipelines_filepath, pipeline_name));
+            this->_pipelines[pipeline_name] = pipeline;
         }
     }
 

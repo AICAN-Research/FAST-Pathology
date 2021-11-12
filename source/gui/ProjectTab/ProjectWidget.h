@@ -131,10 +131,6 @@ private:
 
 private:
     QString _projectFolderName;
-//    std::shared_ptr<WholeSlideImageImporter> _importer;
-//    std::shared_ptr<ImagePyramid> _image;
-//    std::map<std::string, std::shared_ptr<Renderer>> _rendererList;
-//    std::map<std::string, std::string> _rendererTypeList;
 };
 
 }

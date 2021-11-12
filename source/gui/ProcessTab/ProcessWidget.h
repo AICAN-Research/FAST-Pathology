@@ -20,6 +20,7 @@
 #include <QScrollArea>
 #include <QLabel>
 #include <QColorDialog>
+#include <QProgressDialog>
 #include <QComboBox>
 #include <QGroupBox>
 #include <QPlainTextEdit>

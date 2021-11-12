@@ -5,13 +5,34 @@
 #ifndef FASTPATHOLOGY_PIPELINEPROCESS_H
 #define FASTPATHOLOGY_PIPELINEPROCESS_H
 
+#include <iostream>
+#include <string>
+#include <map>
+#include <vector>
+#include <memory>
 
-namespace fast{
+namespace fast
+{
+    class Pipeline;
+    class Renderer;
 
-    class PipelineProcess {
+    class PipelineProcess
+    {
         public:
-            PipelineProcess();
+            PipelineProcess(const std::string& filepath, const std::string& pipeline_name);
             ~PipelineProcess();
+
+            inline std::map<std::string, std::string> getParameters() const{return this->_parameters;}
+            inline std::vector<std::shared_ptr<Renderer>> getRenderers() const{return this->_renderers;}
+            void setParameters(std::map<std::string, std::string> parameters);
+
+            void execute();
+        private:
+            std::string _name; /* Unique id for the pipeline. */
+            std::string _pipeline_filepath; /* Disk location of the current pipeline. */
+            std::map<std::string, std::string> _parameters; /* Collection of pipeline-specific parameters, some of which being user-modified (with advanced mode?). */
+
+            std::vector<std::shared_ptr<Renderer>> _renderers;
     };
 } // End of namespace fast
 

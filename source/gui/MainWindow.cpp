@@ -74,23 +74,14 @@ using namespace std;
 namespace fast {
 
 MainWindow::MainWindow() {
-    applicationName = "FastPathology";
-    advancedMode = false;
-    setTitle(applicationName);
+    this->_application_name = "FastPathology";
+    setTitle(this->_application_name);
     enableMaximized(); // <- function from Window.cpp
 
-    mWidget->setAcceptDrops(true); // to enable drag/drop events
-
-    //mWidget->setMouseTracking(true);
-    //mWidget->setFocusPolicy(Qt::StrongFocus);
-    //mWidget->setFocusPolicy(Qt::ClickFocus);  //Qt::ClickFocus);
-    
+    // @TODO. So, do you want the official models and pipelines to be stored in a ~/fastpathology folder
+    // and have some more user-defined pipelines in the user-specified project folder?
 	cwd = QDir::homePath().toStdString();
     cwd += "/fastpathology/";
-
-	// set window icon
-	mWidget->setWindowIcon(QIcon(":/data/Icons/fastpathology_logo_large.png"));
-
     // create temporary tmp folder to store stuff, and create temporary file to store history
     QTemporaryDir tmpDir;
 	tmpDirPath = tmpDir.path().toStdString();
@@ -115,10 +106,41 @@ MainWindow::MainWindow() {
 	QDir().mkdir(projectFolderName + QString::fromStdString("/pipelines"));
 	QDir().mkdir(projectFolderName + QString::fromStdString("/thumbnails"));
 
+    this->setupInterface();
+    this->setupConnections();
+
+    // Legacy stuff to remove.
+    advancedMode = false;
+}
+
+
+void MainWindow::closeEvent (QCloseEvent *event)
+{
+    QMessageBox::StandardButton resBtn = QMessageBox::question(mWidget, QString::fromStdString(this->_application_name),
+                                                                tr("Are you sure?\n"),
+                                                                QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
+                                                                QMessageBox::Yes);
+    if (resBtn != QMessageBox::Yes) {
+        event->ignore();
+    } else {
+        event->accept();
+    }
+}
+
+void MainWindow::setupInterface()
+{
+    mWidget->setAcceptDrops(true); // to enable drag/drop events
+    //mWidget->setMouseTracking(true);
+    //mWidget->setFocusPolicy(Qt::StrongFocus);
+    //mWidget->setFocusPolicy(Qt::ClickFocus);  //Qt::ClickFocus);
+
+    // set window icon
+    mWidget->setWindowIcon(QIcon(":/data/Icons/fastpathology_logo_large.png"));
+
     // changing color to the Qt background)
     //mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;"); // Current favourite
-	mWidget->setStyle(QStyleFactory::create("Fusion")); // TODO: This has to be before setStyleSheet?
-	/*
+    mWidget->setStyle(QStyleFactory::create("Fusion")); // TODO: This has to be before setStyleSheet?
+    /*
     const auto qss =
             "QToolButton:!hover{background-color: #00ff00;}"
             "QToolButton:hover{background-color: #ff0000;}"
@@ -126,12 +148,12 @@ MainWindow::MainWindow() {
             "background: rgb(221, 209, 199)"
             "color: black"
             ;
-	 */
+     */
     const auto qss = "font-size: 16px;"
                      "QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };"
                      "QMenu{background-color:palette(window);border:1px solid palette(shadow);};"
                      ;
-	//mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;");
+    //mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;");
     mWidget->setStyleSheet(qss);
 
     superLayout = new QVBoxLayout;
@@ -145,28 +167,15 @@ MainWindow::MainWindow() {
     mainLayout = new QHBoxLayout;
     mainWidget->setLayout(mainLayout);
 
-    createMainMenuWidget(); // create menu widget
     createMenubar();        // create Menubar
+    this->_side_panel_widget = new MainSidePanelWidget(mWidget); // create side panel with all user interactions
     createOpenGLWindow();   // create OpenGL window
-    this->setupConnections();
-}
-
-
-void MainWindow::closeEvent (QCloseEvent *event)
-{
-//    QMessageBox::StandardButton resBtn = QMessageBox::question( this, applicationName,
-//                                                                tr("Are you sure?\n"),
-//                                                                QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
-//                                                                QMessageBox::Yes);
-//    if (resBtn != QMessageBox::Yes) {
-//        event->ignore();
-//    } else {
-//        event->accept();
-//    }
 }
 
 void MainWindow::setupConnections()
 {
+    // @TODO. How to collect the closeEvent signal
+    QObject::connect(mWidget, &WindowWidget::closeEvent, this, &MainWindow::closeEvent);
     // Overall
     QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::newAppTitle, this, &MainWindow::updateAppTitleReceived);
     // @TODO. The drag and drop can be about anything? Images, models, pipelines, etc...?
@@ -189,7 +198,6 @@ void MainWindow::setupConnections()
     QObject::connect(this->_edit_menu_change_mode_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::setApplicationMode);
     QObject::connect(this->_edit_menu_download_testdata_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::downloadTestDataTriggered);
 
-    //QObject::connect(this->_edit_menu_download_testdata_action, &QAction::triggered, this, &MainWindow::downloadAndAddTestData);
     QObject::connect(this->_pipeline_menu_import_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::addPipelinesTriggered);
     QObject::connect(this->_pipeline_menu_editor_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::editorPipelinesTriggered);
 
@@ -198,7 +206,7 @@ void MainWindow::setupConnections()
 
 void MainWindow::updateAppTitleReceived(std::string title_suffix)
 {
-    this->setTitle(applicationName + title_suffix);
+    this->setTitle(this->_application_name + title_suffix);
 }
 
 void MainWindow::createOpenGLWindow() {
@@ -244,108 +252,6 @@ void MainWindow::helpUrl() {
     QDesktopServices::openUrl(QUrl("https://github.com/SINTEFMedtek/FAST-Pathology", QUrl::TolerantMode));
 }
 
-void MainWindow::downloadAndAddTestData() {
-	// prompt
-	auto mBox = new QMessageBox(mWidget);
-	mBox->setIcon(QMessageBox::Warning);
-	mBox->setText("This will download the test data, add the models, and open two WSIs.");
-	mBox->setInformativeText("Are you sure you want to continue?");
-	mBox->setDefaultButton(QMessageBox::Yes);
-	mBox->setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-	int ret = mBox->exec();
-
-	switch (ret) {
-	case QMessageBox::Yes:
-		// toggle and update text on button to show current mode (also default)
-		break;
-	case QMessageBox::No:
-		// if "No", do nothing
-		return;
-	case QMessageBox::Cancel:
-		// if "Cancel", do nothing
-		return;
-	default:
-		break;
-	}
-
-	// progress bar
-	auto progDialog = new QProgressDialog(mWidget);
-	progDialog->setRange(0, 0);
-	progDialog->setValue(0);
-	progDialog->setVisible(true);
-	progDialog->setModal(false);
-	progDialog->setLabelText("Downloading test data...");
-	progDialog->move(mWidget->width() - progDialog->width() * 1.1, progDialog->height() * 0.1);
-	//m_pBar.show();
-
-	QUrl url{"http://folk.ntnu.no/andpeder/FastPathology/test_data.zip"};
-
-	QNetworkAccessManager* m_NetworkMngr = new QNetworkAccessManager(this);
-	QNetworkReply *reply = m_NetworkMngr->get(QNetworkRequest(QUrl(url)));
-	QEventLoop loop;
-
-	QObject::connect(reply, &QNetworkReply::downloadProgress, [=](qint64 ist, qint64 max_) { //[=](qint64 ist, qint64 max) {
-		progDialog->setRange(0, max_);
-		progDialog->setValue(ist);
-		//if (max < 0) hideProgress();
-	});
-	QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
-
-	loop.exec();
-	QUrl aUrl(url);
-	QFileInfo fileInfo = aUrl.path();
-
-	QString downloadsFolder = QDir::homePath() + "/fastpathology/data";
-	QFile file(downloadsFolder + "/" + fileInfo.fileName());
-	file.open(QIODevice::WriteOnly);
-	file.write(reply->readAll());
-	file.close();
-	delete reply;
-
-	// unzip TODO: Is there something wrong with the include/import of this function? Might be a problem later on.
-	extractZipFile((downloadsFolder + "/" + fileInfo.fileName()).toStdString(), downloadsFolder.toStdString());
-
-	// OPTIONAL: Add Models to test if inference is working
-	QList<QString> fileNames;
-	QDirIterator it2(downloadsFolder + "/test_data/Models/", QDir::Files);
-	while (it2.hasNext()) {
-		auto tmp = it2.next();
-		fileNames.push_back(tmp);
-	}
-//	addModelsDrag(fileNames);
-
-	auto mBox2 = new QMessageBox(mWidget);
-	mBox2->setIcon(QMessageBox::Warning);
-	mBox2->setText("Download is finished.");
-	mBox2->setInformativeText("Do you wish to open the test WSIs?");
-	mBox2->setDefaultButton(QMessageBox::Yes);
-	mBox2->setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-	int ret2 = mBox2->exec();
-
-	switch (ret2) {
-	case QMessageBox::Yes:
-		// toggle and update text on button to show current mode
-		break;
-	case QMessageBox::No:
-		// if "No", do nothing (also default)
-		return;
-	case QMessageBox::Cancel:
-		// if "Cancel", do nothing
-		return;
-	default:
-		break;
-	}
-
-//	// OPTIONAL: Add WSIs to project for visualization
-//	fileNames.clear();
-//	QDirIterator it(downloadsFolder + "/test_data/WSI/", QDir::Files);
-//	while (it.hasNext()) {
-//		auto tmp = it.next();
-//		fileNames.push_back(tmp);
-//	}
-//	selectFileDrag(fileNames);
-}
-
 void MainWindow::aboutProgram() {
 
 	auto currLayout = new QVBoxLayout;
@@ -381,8 +287,8 @@ void MainWindow::aboutProgram() {
 	dialog->show();
 }
 
-void MainWindow::createMenubar() {
-
+void MainWindow::createMenubar()
+{
     // need to create a new QHBoxLayout for the menubar
     auto topFiller = new QMenuBar(mWidget);
     //topFiller->setStyleSheet("QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };"
@@ -464,19 +370,8 @@ void MainWindow::createMenubar() {
     superLayout->insertWidget(0, topFiller);
 }
 
-void MainWindow::loadPipelines() {
-    QStringList pipelines = QDir(QString::fromStdString(cwd) + "data/Pipelines").entryList(QStringList() << "*.fpl" << "*.FPL",QDir::Files);
-    foreach(QString currentFpl, pipelines) {
-        //runPipelineMenu->addAction(QString::fromStdString(splitCustom(currentFpl.toStdString(), ".")[0]), this, &MainWindow::lowresSegmenter);
-        auto currentAction = runPipelineMenu->addAction(currentFpl); //QString::fromStdString(splitCustom(splitCustom(currentFpl.toStdString(), "/")[-1], ".")[0]));
-        QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, cwd + "data/Pipelines/" + currentFpl.toStdString()));
-
-        //auto currentAction = runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]));
-        //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, someFile));
-    }
-}
-
-void MainWindow::reset() {
+void MainWindow::reset()
+{
     //first prompt warning, that it will delete all unsaved results, etc...
     if (! DataManager::GetInstance()->getCurrentProject()->isProjectEmpty())
     {
@@ -504,25 +399,23 @@ void MainWindow::reset() {
 
     // update application name to contain current WSI
     if (ProcessManager::GetInstance()->get_advanced_mode_status()) {
-        setTitle(applicationName + " (Research mode)");
+        setTitle(this->_application_name + " (Research mode)");
     } else {
-        setTitle(applicationName);
+        setTitle(this->_application_name);
     }
 
 }
 
-void MainWindow::createMainMenuWidget() {
-    // create widgets for Menu layout
-//    createFileWidget();
+void MainWindow::loadPipelines() {
+    QStringList pipelines = QDir(QString::fromStdString(cwd) + "data/Pipelines").entryList(QStringList() << "*.fpl" << "*.FPL",QDir::Files);
+    foreach(QString currentFpl, pipelines) {
+        //runPipelineMenu->addAction(QString::fromStdString(splitCustom(currentFpl.toStdString(), ".")[0]), this, &MainWindow::lowresSegmenter);
+        auto currentAction = runPipelineMenu->addAction(currentFpl); //QString::fromStdString(splitCustom(splitCustom(currentFpl.toStdString(), "/")[-1], ".")[0]));
+        QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, cwd + "data/Pipelines/" + currentFpl.toStdString()));
 
-//    createProcessWidget();
-//    createViewWidget();
-//    createStatsWidget();
-//    createExportWidget(); // TODO: MAKE IT DYNAMIC DEPENDING ON WHAT RESULTS ARE AVAILABLE
-    createMenuWidget();
-
-    // add widgets to meny layout
-    //mainLayout->insertWidget(0, menuWidget);
+        //auto currentAction = runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]));
+        //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, someFile));
+    }
 }
 
 // TODO: Don't remember if this actually worked, or if I ended up using it
@@ -540,42 +433,13 @@ void clearLayout(QLayout *layout) {
     }
 }
 
-void MainWindow::changeWSIDisplayReceived(std::string uid_name, bool state){
-    wsiList.push_back(uid_name);
-
-//    // Import image from file using the ImageFileImporter
-//    auto importer = WholeSlideImageImporter::New();
-//    importer->setFilename(currFileName);
-//    auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
-//
-//    // for reading of multiple WSIs, only render first one
-//    // current WSI (global)
-//    filename = currFileName;
-//
-//    m_image = currImage;
-//    metadata = m_image->getMetadata(); // get metadata
-//
-//    auto renderer = ImagePyramidRenderer::New();
-//    renderer->setSharpening(m_wsiSharpening);
-//    renderer->setInputData(m_image);
-//
-//    // TODO: Something here results in me not being able to run analysis on new images (after the first)
+void MainWindow::changeWSIDisplayReceived(std::string uid_name, bool state)
+{
     removeAllRenderers();
-//    m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
-//    auto image(std::make_shared<WholeSlideImage>(currFileName));
-//    image->memory_load();
-//    image->memory_unload();
-//    image->memory_load();
-
-//    DataManager::GetInstance()->IncludeImage(currFileName);
-
-//    auto renderer = DataManager::GetInstance()->get_renderer("WSI");
-//    getView(0)->addRenderer(renderer);
     if(state) {
         auto img = DataManager::GetInstance()->getCurrentProject()->getImage(uid_name);
         img->load_renderer();
         getView(0)->addRenderer(img->get_renderer("WSI"));
-//    insertRenderer("WSI", renderer);
         DataManager::GetInstance()->setVisibleImageName(uid_name);
     }
     else
@@ -584,898 +448,23 @@ void MainWindow::changeWSIDisplayReceived(std::string uid_name, bool state){
         DataManager::GetInstance()->setVisibleImageName("");
     }
     getView(0)->reinitialize(); // Must call this after removing all renderers
-    wsiFormat = metadata["openslide.vendor"]; // get WSI format
-//    magn_lvl = getMagnificationLevel(); // get magnification level of current WSI
-
-    // now make it possible to edit image in the View Widget
-//    createDynamicViewWidget("WSI", modelName);
 
     // update application name to contain current WSI
     if (advancedMode) {
-        setTitle(applicationName + " (Research mode)" + " - " + splitCustom(uid_name, "/").back());
+        setTitle(this->_application_name + " (Research mode)" + " - " + splitCustom(uid_name, "/").back());
     } else {
-        setTitle(applicationName + " - " + splitCustom(uid_name, "/").back());
+        setTitle(this->_application_name + " - " + splitCustom(uid_name, "/").back());
     }
 
     // to render straight away (avoid waiting on all WSIs to be handled before rendering)
     QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-}
 
-void MainWindow::createMenuWidget() {
-    _side_panel_widget = new MainSidePanelWidget(mWidget);
-//    QObject::connect(stackedWidget->_project_widget, &ProjectWidget::newImageFilename, this, &MainWindow::updateView);
-//    QObject::connect(stackedWidget->_project_widget, &ProjectWidget::newRenderer, this, &MainWindow::updateView);
-
-//    stackedWidget = new QStackedWidget(mWidget);
-//    //stackedWidget->setStyleSheet("border:1px solid rgb(0, 255, 0); ");
-//    //stackedWidget->setFixedWidth(200);
-//    //stackedWidget->setStyleSheet("border:1px solid rgb(0, 0, 255); ");
-//    stackedWidget->insertWidget(0, fileWidget);
-//    stackedWidget->insertWidget(1, processWidget);
-//    stackedWidget->insertWidget(2, viewWidget); // TODO: Disable viewWidget at the start, as there is no images to visualize
-//    stackedWidget->insertWidget(3, statsWidget);
-//    stackedWidget->insertWidget(4, exportWidget);
-//    //stackedLayout->setSizeConstraint(QLayout::SetFixedSize);
-//    //stackedWidget->setLayout(mainLayout);
-//
-//    int im_size = 40;
-//
-//    auto mapper = new QSignalMapper(mWidget);
-//
-//    auto spacerWidgetLeft = new QWidget(mWidget);
-//    spacerWidgetLeft->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-//    spacerWidgetLeft->setVisible(true);
-//
-//    auto spacerWidgetRight = new QWidget(mWidget);
-//    spacerWidgetRight->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-//    spacerWidgetRight->setVisible(true);
-//
-//    auto tb = new QToolBar(mWidget);
-//    //tb->setStyleSheet("QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };");
-//    //                         "border-bottom:2px solid rgba(25,25,120,75); "
-//    //                         "QMenu{background-color:palette(window);border:1px solid palette(shadow);}");
-//	//tb->setStyleSheet("{ background-color: rgb(100, 100, 200); }; QMenuBar::handle { background-color: rgb(20, 100, 20);");
-//    tb->setIconSize(QSize(im_size, im_size));
-//    //tb->setFixedWidth(200);
-//    //tb->setMovable(true);
-//    //tb->setMinimumSize(QSize(im_size, im_size));
-//    //tb->setBaseSize(QSize(im_size, im_size));
-//    tb->setFont(QFont("Times", 8)); //QFont::Bold));
-//    tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);  // adds text under icons
-//
-//	//QResource::registerResource("qtres.qrc");
-//
-//	/*
-//	std::cout << "Anything in Qt Resources: " << std::endl;
-//	QDirIterator it(":", QDir::NoFilter);
-//	while (it.hasNext()) {
-//		auto tmp = it.next();
-//		QDirIterator it2(tmp, QDir::NoFilter);
-//		std::cout << "elem: " << tmp.toStdString() << std::endl;
-//		while (it2.hasNext()) {
-//			std::cout << "elem: " << it2.next().toStdString() << std::endl;
-//		}
-//		//qDebug() << it.next();
-//	}
-//	 */
-//
-//    //auto toolBar = new QToolBar;
-//    QPixmap openPix(QString::fromStdString(":/data/Icons/import_icon_new_cropped_resized.png"));
-//	QPixmap processPix(QString::fromStdString(":/data/Icons/process_icon_new_cropped_resized.png"));
-//    QPixmap viewPix(QString::fromStdString(":/data/Icons/visualize_icon_new_cropped_resized.png"));
-//    QPixmap resultPix(QString::fromStdString(":/data/Icons/statistics_icon_new_cropped_resized.png"));
-//    QPixmap savePix(QString::fromStdString(":/data/Icons/export_icon_new_cropped_resized.png"));
-//
-//    QPainter painter(&savePix);
-//    QFont font = painter.font();
-//    font.setPixelSize(4);
-//    //font.setBold(true);
-//    font.setFamily("Arial");
-//    painter.setFont(font);
-//    painter.setPen(*(new QColor(Qt::black)));
-//    //painter.drawText(QPoint(0, 500), "Read WSI");
-//
-//    tb->addWidget(spacerWidgetLeft);
-//
-//    auto actionGroup = new QActionGroup(tb);
-//
-//    auto file_action = new QAction("Import", actionGroup);
-//    file_action->setIcon(QIcon(openPix));
-//    file_action->setCheckable(true);
-//    file_action->setChecked(true);
-//    tb->addAction(file_action);
-//    mapper->setMapping(file_action, 0);
-//    auto test2 = mapper->connect(file_action, SIGNAL(triggered(bool)), SLOT(map()));
-//
-//    auto process_action = new QAction("Process", actionGroup);
-//    process_action->setIcon(QIcon(processPix));
-//    process_action->setCheckable(true);
-//    tb->addAction(process_action);
-//    mapper->setMapping(process_action, 1);
-//    mapper->connect(process_action, SIGNAL(triggered(bool)), SLOT(map()));
-//
-//    auto view_action = new QAction("View", actionGroup);
-//    view_action->setIcon(QIcon(viewPix));
-//    view_action->setCheckable(true);
-//    tb->addAction(view_action);
-//    mapper->setMapping(view_action, 2);
-//    mapper->connect(view_action, SIGNAL(triggered(bool)), SLOT(map()));
-//
-//    auto stats_action = new QAction("Stats", actionGroup);
-//    stats_action->setIcon(QIcon(resultPix));
-//    stats_action->setCheckable(true);
-//    tb->addAction(stats_action);
-//    mapper->setMapping(stats_action, 3);
-//    mapper->connect(stats_action, SIGNAL(triggered(bool)), SLOT(map()));
-//
-//    auto save_action = new QAction("Export", actionGroup);
-//    save_action->setIcon(QIcon(savePix));
-//    save_action->setCheckable(true);
-//    tb->addAction(save_action);
-//    mapper->setMapping(save_action, 4);
-//    mapper->connect(save_action, SIGNAL(triggered(bool)), SLOT(map()));
-//
-//    tb->addWidget(spacerWidgetRight);
-//
-//    //stackedWidget->connect(&mapper, SIGNAL(mapped(int)), SLOT(setCurrentIndex(int)));
-//    connect(mapper, SIGNAL(mapped(int)), stackedWidget, SLOT(setCurrentIndex(int)));
-//
-//    auto dockLayout = new QVBoxLayout; //or any other layout type you want
-//    dockLayout->setMenuBar(tb); // <-- the interesting part
-//
-//    auto dockContent = new QWidget(mWidget);
-//    dockContent->setLayout(dockLayout);
-//
-//    /*
-//    auto pageComboBox = new QComboBox; // <- perhaps use toolbar instead?
-//    pageComboBox->setFixedWidth(100);
-//    pageComboBox->addItem(tr("File"));
-//    pageComboBox->addItem(tr("Process"));
-//    pageComboBox->addItem(tr("View"));
-//    pageComboBox->addItem(tr("Save"));
-//    connect(pageComboBox, SIGNAL(activated(int)), stackedWidget, SLOT(setCurrentIndex(int)));
-//    //pageComboBox->setCurrentIndex(0);
-//     */
-//
-//    dockLayout = new QVBoxLayout;
-//    dockLayout->insertWidget(0, dockContent); //addWidget(dockContent);
-//    //tmpLayout->addWidget(pageComboBox);
-//    dockLayout->insertWidget(1, stackedWidget);
-//
-//    menuWidget = new QWidget(mWidget);
-//    //menuWidget->setFixedWidth(300); //300);  // TODO: This was a good width for my screen, but need it to be adjustable (!)
-//    //menuWidget->set
-//    menuWidget->setMaximumWidth(700);
-//    menuWidget->setMinimumWidth(360);
-//    //tmpWidget->setStyleSheet("border:1px solid rgb(0, 255, 0); ");
-//    menuWidget->setLayout(dockLayout);
-//
-//    // add button on the bottom of widget for toggling clinical/advanced mode
-//    setModeButton = new QPushButton(mWidget);
-//    setModeButton->setText("Clinical mode");
-//    setModeButton->setFixedHeight(50);
-//    setModeButton->setStyleSheet("color: white; background-color: gray");
-//    QObject::connect(setModeButton, &QPushButton::clicked, std::bind(&MainWindow::setApplicationMode, this));
-//
-//    advancedMode = false; // true : advanced mode
-//    dockLayout->addWidget(setModeButton);
-}
-
-void MainWindow::createViewWidget() {
-
-    viewLayout = new QVBoxLayout;
-    viewLayout->setAlignment(Qt::AlignTop);
-
-    viewWidget = new QWidget;
-    viewWidget->setLayout(viewLayout);
-    //viewWidget->setFixedWidth(200);
-
-    // ComboBox in view section to set which image object to change
-    // /*
-    auto curr1PageWidget = new QWidget;
-    auto curr2PageWidget = new QWidget;
-    auto curr3PageWidget = new QWidget;
-    auto curr4PageWidget = new QWidget;
-    auto curr5PageWidget = new QWidget;
-    // */
-
-    auto wsiPageWidget = new QWidget;
-
-    stackedLayout = new QStackedLayout;
-
-    auto stackedWidget = new QWidget;
-    stackedWidget->setLayout(stackedLayout);
-
-    pageComboBox = new QComboBox;
-    pageComboBox->setFixedWidth(150);
-    connect(pageComboBox, SIGNAL(activated(int)), stackedLayout, SLOT(setCurrentIndex(int)));
-
-    auto imageNameTexts = new QLabel();
-    imageNameTexts->setText("Image: ");
-    imageNameTexts->setFixedWidth(50);
-    auto smallTextBox_imageName = new QHBoxLayout;
-    smallTextBox_imageName->addWidget(imageNameTexts);
-    smallTextBox_imageName->addWidget(pageComboBox);
-    auto smallTextBoxWidget_imageName = new QWidget;
-    smallTextBoxWidget_imageName->setFixedHeight(50);
-    smallTextBoxWidget_imageName->setLayout(smallTextBox_imageName);
-
-    viewLayout->insertWidget(0, smallTextBoxWidget_imageName);
-    viewLayout->setAlignment(Qt::AlignTop);
-
-    viewLayout->insertWidget(1, stackedWidget);
-
+    // Legacy to remove
+    wsiFormat = metadata["openslide.vendor"]; // get WSI format
 }
 
 void MainWindow::updateChannelValue(int index) {
     channel_value = (uint) index;
-}
-
-void MainWindow::createExportWidget() {
-
-    exportLayout = new QVBoxLayout;
-    exportLayout->setAlignment(Qt::AlignTop);
-
-    exportWidget = new QWidget(mWidget);
-    exportWidget->setLayout(exportLayout);
-
-    //auto wsiPageWidget = new QWidget;
-    exportStackedLayout = new QStackedLayout;
-
-    auto exportStackedWidget = new QWidget(mWidget);
-    exportStackedWidget->setLayout(exportStackedLayout);
-
-    exportComboBox = new QComboBox(mWidget);
-    exportComboBox->setFixedWidth(150);
-    connect(exportComboBox, SIGNAL(activated(int)), exportStackedLayout, SLOT(setCurrentIndex(int)));
-
-    QStringList itemsInComboBox;
-    for (int index = 0; index < pageComboBox->count(); index++) {
-        std::cout << "some item: " << pageComboBox->itemText(index).toStdString() << std::endl;
-        itemsInComboBox << pageComboBox->itemText(index);
-    }
-
-    auto saveThumbnailButton = new QPushButton(mWidget);
-    saveThumbnailButton->setText("Save thumbnail");
-    saveThumbnailButton->setFixedHeight(50);
-    QObject::connect(saveThumbnailButton, &QPushButton::clicked, std::bind(&MainWindow::saveThumbnail, this));
-
-    auto saveTissueButton = new QPushButton(mWidget);
-    saveTissueButton->setText("Save tissue mask");
-    saveTissueButton->setFixedHeight(50);
-    QObject::connect(saveTissueButton, &QPushButton::clicked, std::bind(&MainWindow::saveTissueSegmentation, this));
-
-    auto saveTumorButton = new QPushButton(mWidget);
-    saveTumorButton->setText("Save tumor mask");
-    saveTumorButton->setFixedHeight(50);
-    QObject::connect(saveTumorButton, &QPushButton::clicked, std::bind(&MainWindow::saveTumor, this));
-
-    auto imageNameTexts = new QLabel(mWidget);
-    imageNameTexts->setText("Results: ");
-    imageNameTexts->setFixedWidth(75);
-    auto smallTextBox_imageName = new QHBoxLayout;
-    smallTextBox_imageName->addWidget(imageNameTexts);
-    smallTextBox_imageName->addWidget(exportComboBox);
-    auto smallTextBoxWidget_imageName = new QWidget(mWidget);
-    smallTextBoxWidget_imageName->setFixedHeight(50);
-    smallTextBoxWidget_imageName->setLayout(smallTextBox_imageName);
-
-    //exportLayout->setAlignment(Qt::AlignTop);
-    exportLayout->addWidget(smallTextBoxWidget_imageName);
-    exportLayout->addWidget(saveThumbnailButton);
-    exportLayout->addWidget(saveTissueButton);
-    exportLayout->addWidget(saveTumorButton);
-}
-
-void MainWindow::createDynamicExportWidget(const std::string& someName) {
-    1;
-}
-
-void MainWindow::saveThumbnail() {
-
-	std::vector<std::string> currentWSIs;
-	if (m_runForProject) {
-		currentWSIs = m_runForProjectWsis;
-	} else {
-		currentWSIs.push_back(wsiList[curr_pos]);
-	}
-
-	auto progDialog = QProgressDialog(mWidget);
-	progDialog.setRange(0, (int)currentWSIs.size() - 1);
-	//progDialog.setContentsMargins(0, 0, 0, 0);
-	progDialog.setVisible(true);
-	progDialog.setModal(false);
-	progDialog.setLabelText("Saving thumbnails...");
-	//QRect screenrect = mWidget->screen()[0].geometry();
-	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
-	progDialog.show();
-
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-
-	auto counter = 0;
-	for (const auto& currWSI : currentWSIs) {
-
-		std::cout << "current WSI: " << currWSI << std::endl;
-		auto access = m_image->getAccess(ACCESS_READ);
-		auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
-		if (m_runForProject) {
-			auto someImporter = WholeSlideImageImporter::New();
-            someImporter->setFilename(currWSI);
-			auto currImage = someImporter->updateAndGetOutputData<ImagePyramid>();
-
-			access = currImage->getAccess(ACCESS_READ);
-			input = access->getLevelAsImage(currImage->getNrOfLevels() - 1);
-		}
-
-		// TODO: if only large image planes exist, should downsample the resulting thumbnails before export
-
-		// attempt to save thumbnail to disk as .png
-		ImageExporter::pointer exporter = ImageExporter::New();
-		exporter->setFilename(projectFolderName.toStdString() + "/thumbnails/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0] + ".png");
-		std::cout << "Name: " << projectFolderName.toStdString() + "/thumbnails/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0] + ".png" << std::endl;
-		exporter->setInputData(input);
-		exporter->update();
-
-		// update progress bar
-		progDialog.setValue(counter);
-		QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-        counter++;
-	}
-}
-
-void MainWindow::saveTissueSegmentation() {
-
-	std::vector<std::string> currentWSIs;
-	if (m_runForProject) {
-		currentWSIs = m_runForProjectWsis;
-	} else {
-		currentWSIs.push_back(wsiList[curr_pos]);
-	}
-
-	auto progDialog = QProgressDialog(mWidget);
-	progDialog.setRange(0, (int)currentWSIs.size() - 1);
-	//progDialog.setContentsMargins(0, 0, 0, 0);
-    progDialog.setValue(0);
-	progDialog.setVisible(true);
-	progDialog.setModal(false);
-	progDialog.setLabelText("Saving tissue segmentations...");
-	//QRect screenrect = mWidget->screen()[0].geometry();
-	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
-	progDialog.show();
-
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-
-	auto counter = 0;
-	for (const auto& currWSI : currentWSIs) {
-
-		// check if folder for current WSI exists, if not, create one
-		QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0] + "/").c_str();
-		wsiResultPath = wsiResultPath.replace("//", "/");
-		if (!QDir(wsiResultPath).exists()) {
-			QDir().mkdir(wsiResultPath);
-		}
-
-        auto someImporter = WholeSlideImageImporter::New();
-        someImporter->setFilename(currWSI);
-        auto currImage = someImporter->updateAndGetOutputData<ImagePyramid>();
-
-        auto tissueSegmentation = TissueSegmentation::New();
-        tissueSegmentation->setInputData(currImage);
-
-        QString outFile = (wsiResultPath.toStdString() + splitCustom(splitCustom(currWSI, "/").back(), ".")[0] + "_tissue.png").c_str();
-        ImageExporter::pointer exporter = ImageExporter::New();
-        exporter->setFilename(outFile.replace("//", "/").toStdString());
-        exporter->setInputData(tissueSegmentation->updateAndGetOutputData<Image>());
-        exporter->update();
-
-		// update progress bar
-		progDialog.setValue(counter);
-		counter++;
-
-		// to render straight away (avoid waiting on all WSIs to be handled before rendering)
-		QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-	}
-}
-
-void MainWindow::saveHeatmap() {
-
-	// check if folder for current WSI exists, if not, create one
-	QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "/").c_str();
-	wsiResultPath = wsiResultPath.replace("//", "/");
-	if (!QDir(wsiResultPath).exists()) {
-		QDir().mkdir(wsiResultPath);
-	}
-
-	auto exporter = HDF5TensorExporter::New();
-	exporter->setFilename(wsiResultPath.toStdString() + "tensor.h5");
-	//exporter->setInputData(tensor);
-	exporter->update();
-}
-
-void MainWindow::saveTumor() {
-    // check if folder for current WSI exists, if not, create one
-    QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "/").c_str();
-    wsiResultPath = wsiResultPath.replace("//", "/");
-    if (!QDir(wsiResultPath).exists()) {
-        QDir().mkdir(wsiResultPath);
-    }
-
-    if (std::find(savedList.begin(), savedList.end(), "tumorSeg_lr") != savedList.end()) {
-        simpleInfoPrompt("Result has already previously been saved.");
-        return;
-    }
-    savedList.emplace_back("tumorSeg_lr");
-
-    // attempt to save tissue mask to disk as .png
-    QString outFile = (wsiResultPath.toStdString() + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "_tumor_mask.png").c_str();
-
-    ImageExporter::pointer exporter = ImageExporter::New();
-    exporter->setFilename(outFile.replace("//", "/").toStdString());
-    //exporter->setInputData(intensityScaler->updateAndGetOutputData<Image>());
-    exporter->setInputData(m_tumorMap);
-    exporter->update();
-
-    simpleInfoPrompt("Tumor segmentation has been saved.");
-}
-
-void MainWindow::selectFile() {
-
-    // check if view object list is empty, if not, prompt to save results or not, if not clear
-    if (pageComboBox->count() > 1) {
-        // prompt
-        QMessageBox mBox;
-        mBox.setIcon(QMessageBox::Warning);
-        mBox.setStyleSheet(mWidget->styleSheet());
-        mBox.setText("There are unsaved results.");
-        mBox.setInformativeText("Do you wish to save them?");
-        mBox.setDefaultButton(QMessageBox::Save);
-        mBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-        int ret = mBox.exec();
-
-        switch (ret) {
-            case QMessageBox::Save:
-                std::cout << "Results not saved yet. Just cancelled the switch!" << std::endl;
-                // Save was clicked
-                return;
-            case QMessageBox::Discard:
-                // Don't Save was clicked
-				std::cout << "Discarded!" << std::endl;
-                break;
-            case QMessageBox::Cancel:
-                // Cancel was clicked
-                std::cout << "Cancelled!"  << std::endl;
-                return;
-            default:
-                // should never be reached
-                break;
-        }
-    }
-
-    // TODO: Unable to read .zvi and .scn (Zeiss and Leica). I'm wondering if they are stored in some unexpected way (not image pyramids)
-    auto fileNames = QFileDialog::getOpenFileNames(
-        mWidget,
-        tr("Select File(s)"), nullptr, tr("WSI Files (*.tiff *.tif *.svs *.ndpi *.bif *vms)"),  //*.zvi *.scn)"),
-        nullptr, QFileDialog::DontUseNativeDialog
-    );
-	
-	// return if the file dialog was cancelled without any files being selected
-	if (fileNames.count() == 0) {
-		return;
-	}
-
-	// for a new selection of wsi(s), should reset and update these QWidgets
-	pageComboBox->clear();
-	exportComboBox->clear();
-
-    auto progDialog = QProgressDialog(mWidget);
-    progDialog.setRange(0, fileNames.count()-1);
-	//progDialog.setContentsMargins(0, 0, 0, 0);
-    progDialog.setVisible(true);
-    progDialog.setModal(false);
-    progDialog.setLabelText("Loading WSIs...");
-    //QRect screenrect = mWidget->screen()[0].geometry();
-	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
-    progDialog.show();
-
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-	auto currentPosition = curr_pos;
-
-    // need to handle scenario where a WSI is added, but there already exists N WSIs from before
-    auto nb_wsis_in_list = wsiList.size();
-    if (nb_wsis_in_list != 0)
-        currentPosition = nb_wsis_in_list;
-
-    int counter = 0;
-    for (QString& fileName : fileNames) {
-        if (fileName == "")
-            return;
-        //filename = fileName.toStdString();
-        auto currFileName = fileName.toStdString();
-        std::cout << "Selected file: " << currFileName << std::endl;
-        wsiList.push_back(currFileName);
-
-        // Import image from file using the ImageFileImporter
-        auto importer = WholeSlideImageImporter::New();
-        importer->setFilename(currFileName);
-        auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
-
-        // for reading of multiple WSIs, only render first one
-        if (counter == 0) { //fileNames.count()-1) {
-
-            // current WSI (global)
-            filename = currFileName;
-
-            m_image = currImage;
-            std::cout << "count:" << counter << std::endl;
-            metadata = m_image->getMetadata(); // get metadata
-
-            auto renderer = ImagePyramidRenderer::New();
-            renderer->setSharpening(m_wsiSharpening);
-            renderer->setInputData(m_image);
-
-            // TODO: Something here results in me not being able to run analysis on new images (after the first)
-            removeAllRenderers();
-            m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
-            insertRenderer("WSI", renderer);
-            getView(0)->reinitialize(); // Must call this after removing all renderers
-
-            wsiFormat = metadata["openslide.vendor"]; // get WSI format
-            magn_lvl = getMagnificationLevel(); // get magnification level of current WSI
-
-            // now make it possible to edit image in the View Widget
-//            createDynamicViewWidget("WSI", modelName);
-
-            // update application name to contain current WSI
-            if (advancedMode) {
-                setTitle(applicationName + " (Research mode)" + " - " + splitCustom(currFileName, "/").back());
-            } else {
-                setTitle(applicationName + " - " + splitCustom(currFileName, "/").back());
-            }
-        }
-        counter ++;
-
-        // Create thumbnail image
-        // TODO: This is a little bit slow. Possible to speed it up? Bottleneck is probably the creation of thumbnails
-        auto access = currImage->getAccess(ACCESS_READ);
-        auto input = access->getLevelAsImage(currImage->getNrOfLevels() - 1);
-
-        // try to convert to FAST Image -> QImage
-        QImage image(input->getWidth(), input->getHeight(), QImage::Format_RGB32);
-
-        // TODO have to do some type conversion here, assuming float for now
-        unsigned char *pixelData = image.bits();
-
-        ImageAccess::pointer new_access = input->getImageAccess(ACCESS_READ);
-        void *inputData = new_access->get();
-        uint nrOfComponents = input->getNrOfChannels();
-
-        for (uint x = 0; x < (uint)input->getWidth(); x++) {
-            for (uint y = 0; y < (uint)input->getHeight(); y++) {
-                uint i = x + y * input->getWidth();
-                for (uint c = 0; c < (uint)input->getNrOfChannels(); c++) {
-                    float data;
-                    data = ((uchar *) inputData)[i * nrOfComponents + c]; // assumes TYPE_UINT8
-                    pixelData[i * 4 + (2-c)] = (unsigned char) data;  // TODO: NOTE (2-c) fixed BGR->RGB, but maybe there is a smarter solution?
-                    pixelData[i * 4 + 3] = 255; // Alpha
-                }
-            }
-        }
-
-        auto button = new QPushButton(mWidget);
-        auto m_NewPixMap = QPixmap::fromImage(image);
-        QIcon ButtonIcon(m_NewPixMap);
-        button->setIcon(ButtonIcon);
-        int width_val = 100;
-        int height_val = 150;
-        button->setIconSize(QSize((int) std::round(0.9 * (float) image.width() * (float) height_val / (float) image.height()), (int) std::round(0.9f * (float) height_val)));
-		button->setToolTip(QString::fromStdString(splitCustom(currFileName, "/").back()));
-
-        auto listItem = new QListWidgetItem;
-        listItem->setSizeHint(QSize(width_val, height_val));
-        QObject::connect(button, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, currentPosition));
-        scrollList->addItem(listItem);
-        scrollList->setItemWidget(listItem, button);
-
-        //curr_pos++; // this should change if we render the first WSI when loading
-		currentPosition++;
-
-        // update progress bar
-        progDialog.setValue(counter);
-
-        // to render straight away (avoid waiting on all WSIs to be handled before rendering)
-        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-    }
-}
-
-void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
-
-    // check if view object list is empty, if not, prompt to save results or not, if not clear
-    if (pageComboBox->count() > 1) {
-        // prompt
-        QMessageBox mBox;
-        mBox.setIcon(QMessageBox::Warning);
-        mBox.setStyleSheet(mWidget->styleSheet());
-        mBox.setText("There are unsaved results.");
-        mBox.setInformativeText("Do you wish to save them?");
-        mBox.setDefaultButton(QMessageBox::Save);
-        mBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-        int ret = mBox.exec();
-
-        switch (ret) {
-            case QMessageBox::Save:
-                std::cout << "Results not saved yet. Just cancelled the switch!" << std::endl;
-                // Save was clicked
-                return;
-            case QMessageBox::Discard:
-                // Don't Save was clicked
-                std::cout << "Discarded!" << std::endl;
-                break;
-            case QMessageBox::Cancel:
-                // Cancel was clicked
-                std::cout << "Cancelled!" << std::endl;
-                return;
-            default:
-                // should never be reached
-                break;
-        }
-    }
-    /*
-    if (pageComboBox->count() != 0) { // if not empty, clear
-        pageComboBox->clear();
-        exportComboBox->clear();
-    }
-     */
-
-    pageComboBox->clear();
-    exportComboBox->clear();
-
-    auto progDialog = QProgressDialog(mWidget);
-    progDialog.setRange(0, fileNames.count()-1);
-    progDialog.setVisible(true);
-    progDialog.setModal(false);
-    progDialog.setLabelText("Loading WSIs...");
-    QRect screenrect = mWidget->screen()[0].geometry();
-    progDialog.move(mWidget->width() - progDialog.width() / 2, - mWidget->width() / 2 - progDialog.width() / 2);
-    progDialog.show();
-
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-
-    int counter = 0;
-    for (const QString& fileName : fileNames) {
-
-        if (fileName == "")
-            return;
-        //filename = fileName.toStdString();
-        auto currFileName = fileName.toStdString();
-        std::cout << "Selected file: " << currFileName << std::endl;
-        wsiList.push_back(currFileName);
-
-        // Import image from file using the ImageFileImporter
-        auto importer = WholeSlideImageImporter::New();
-        importer->setFilename(currFileName);
-        auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
-
-        // for reading of multiple WSIs, only render last one
-        if (counter == 0) { //fileNames.count()-1) {
-
-            // current WSI (global)
-            filename = currFileName;
-
-            m_image = currImage;
-            std::cout << "count:" << counter << std::endl;
-            metadata = m_image->getMetadata(); // get metadata
-
-            auto renderer = ImagePyramidRenderer::New();
-            renderer->setSharpening(m_wsiSharpening);
-            renderer->setInputData(m_image);
-
-            // TODO: Something here results in me not being able to run analysis on new images (after the first)
-            removeAllRenderers();
-            m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
-            insertRenderer("WSI", renderer);
-            getView(0)->reinitialize(); // Must call this after removing all renderers
-
-            wsiFormat = metadata["openslide.vendor"]; // get WSI format
-            magn_lvl = getMagnificationLevel(); // get magnification level of current WSI
-
-            // now make it possible to edit image in the View Widget
-//            createDynamicViewWidget("WSI", modelName);
-
-            // update application name to contain current WSI
-            //setTitle(applicationName + " - " + splitCustom(filename, "/").back());
-            if (advancedMode) {
-                setTitle(applicationName + " (Research mode)" + " - " + splitCustom(currFileName, "/").back());
-            } else {
-                setTitle(applicationName + " - " + splitCustom(currFileName, "/").back());
-            }
-        }
-        counter ++;
-
-        // TODO: This is a little bit slow. Possible to speed it up? Bottleneck is probably the creation of thumbnails
-        auto access = currImage->getAccess(ACCESS_READ);
-        auto input = access->getLevelAsImage(currImage->getNrOfLevels() - 1);
-
-        // try to convert to FAST Image -> QImage
-        QImage image(input->getWidth(), input->getHeight(), QImage::Format_RGB32);
-
-        // TODO have to do some type conversion here, assuming float for now
-        unsigned char *pixelData = image.bits();
-
-        ImageAccess::pointer new_access = input->getImageAccess(ACCESS_READ);
-        void *inputData = new_access->get();
-        uint nrOfComponents = input->getNrOfChannels();
-
-        for (uint x = 0; x < (uint)input->getWidth(); x++) {
-            for (uint y = 0; y < (uint)input->getHeight(); y++) {
-                uint i = x + y * input->getWidth();
-                for (uint c = 0; c < (uint)input->getNrOfChannels(); c++) {
-                    float data;
-                    data = ((uchar *) inputData)[i * nrOfComponents + c]; // assumes TYPE_UINT8
-                    pixelData[i * 4 + (2-c)] = (unsigned char) data;  // TODO: NOTE (2-c) fixed BGR->RGB, but maybe there is a smarter solution?
-                    pixelData[i * 4 + 3] = 255; // Alpha
-                }
-            }
-        }
-
-        auto button = new QPushButton(mWidget);
-        auto m_NewPixMap = QPixmap::fromImage(image);
-        QIcon ButtonIcon(m_NewPixMap);
-        button->setIcon(ButtonIcon);
-        int width_val = 100;
-        int height_val = 150;
-        button->setIconSize(QSize((int) std::round(0.9 * (float) image.width() * (float) height_val / (float) image.height()), (int) std::round(0.9f * (float) height_val)));
-
-        auto listItem = new QListWidgetItem;
-        listItem->setSizeHint(QSize(width_val, height_val));
-        QObject::connect(button, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, curr_pos));
-        scrollList->addItem(listItem);
-        scrollList->setItemWidget(listItem, button);
-
-        curr_pos++; // this should change if we render the first WSI when loading
-
-        progDialog.setValue(counter);
-        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-    }
-}
-
-void MainWindow::selectFileInProject(int pos) {
-
-    // if you select a WSI and it's already open, do nothing
-    std::cout << "CurrentPos: " << pos << std::endl;
-    std::cout << "Length of wsiList: " << std::to_string(wsiList.size()) << std::endl;
-    if (filename == wsiList[pos]) {
-        simpleInfoPrompt("WSI is already open");
-		return;
-	}
-
-	// if there are any results created, prompt if you want to save results
-	std::cout << "counts: " << (pageComboBox->count() - savedList.size()) << std::endl;
-	if ((pageComboBox->count() - savedList.size()) > 1) {
-		QMessageBox mBox;
-		mBox.setIcon(QMessageBox::Warning);
-		mBox.setText("This will remove results on current WSI.");
-		mBox.setInformativeText("Do you want to save results?");
-		mBox.setDefaultButton(QMessageBox::Yes);
-		mBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-		int ret = mBox.exec();
-		switch (ret) {
-		case QMessageBox::Yes:
-			std::cout << "Yes was pressed." << std::endl;
-			saveTissueSegmentation(); // TODO: Need to generalize this. Check which results exists, and save all sequentially. Yes, should have a save current results method
-			break;
-		case QMessageBox::No:
-			std::cout << "No was pressed." << std::endl;
-			// remove results of current WSI
-			removeAllRenderers();
-			pageComboBox->clear();
-			exportComboBox->clear();
-			break;
-		case QMessageBox::Cancel:
-			std::cout << "Cancel was pressed." << std::endl;
-			return;
-		default:
-			std::cout << "Default was pressed." << std::endl;
-			break;
-		}
-	}
-
-	// remove results of current WSI
-	savedList.clear();
-	removeAllRenderers();
-	pageComboBox->clear();
-	exportComboBox->clear();
-	m_rendererList.clear();
-	m_rendererTypeList.clear();
-	clearLayout(stackedLayout);
-
-	// TODO: remove global segmentations. What to do about global variables/results that are stored for
-	//  the current WSI, which are not relevant for the next WSI?
-
-
-	// kill all NN pipelines and clear holders
-	for (auto const& keyValue : m_neuralNetworkList) {
-		auto neuralNetwork = keyValue.second;
-		neuralNetwork->stopPipeline();
-	}
-	m_neuralNetworkList.clear(); // finally clear map
-
-	// add WSI to project list
-	filename = wsiList[pos];
-
-	//stopComputationThread();
-	// Import image from file using the ImageFileImporter
-	importer = WholeSlideImageImporter::New();
-	std::cout << "Current filename: " << filename << std::endl;
-	importer->setFilename(filename);
-	m_image = importer->updateAndGetOutputData<ImagePyramid>();
-
-	// get metadata
-	metadata = m_image->getMetadata();
-
-	auto renderer = ImagePyramidRenderer::New();
-    renderer->setSharpening(m_wsiSharpening);
-	renderer->setInputData(m_image);
-
-	removeAllRenderers();
-	m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
-	insertRenderer("WSI", renderer);
-	getView(0)->reinitialize(); // Must call this after removing all renderers
-
-	// get WSI format
-	wsiFormat = metadata["openslide.vendor"];
-
-	// get magnification level of current WSI
-	magn_lvl = getMagnificationLevel();
-
-	// now make it possible to edit image in the View Widget
-//	createDynamicViewWidget("WSI", modelName);
-
-	// check if any results exists for current WSI, if there are load them
-	std::string wsiPath = splitCustom(splitCustom(filename, "/").back(), ".")[0];
-	auto currentResultPath = projectFolderName.toStdString() + "/results/" + wsiPath.c_str();
-
-	QDirIterator iter(QString::fromStdString(currentResultPath));
-	std::cout << "Current result folder path: " << currentResultPath << std::endl;
-	while (iter.hasNext()) {
-		auto currentResult = iter.next().toStdString();
-
-        auto tmp = splitCustom(currentResult, "/").back();
-        if ((tmp == ".") || (tmp == ".."))
-            continue;
-
-        // check if current "file" is a directory, if directly, it will assume that there exists some high-res seg results to render, else do other stuff
-        QFileInfo pathFileInfo(currentResult.c_str());
-        if (pathFileInfo.isDir()){
-            if (!QDir(currentResult.c_str()).isEmpty()) {
-                loadHighres(QString::fromStdString(currentResult), QString::fromStdString(splitCustom(splitCustom(currentResult, "/").back(), wsiPath + "_").back()));
-            } else {
-                simpleInfoPrompt("Project directory containing high-resolution result was empty.");
-            }
-        } else {
-            auto splits = splitCustom(splitCustom(currentResult.c_str(), "/").back(), ".");
-            std::cout << "Current result path: " << currentResult << std::endl;
-
-            auto str = splits.back();
-            transform(str.begin(), str.end(), str.begin(), ::tolower);
-            if (str == "png") {
-                loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(
-                        splitCustom(splitCustom(splitCustom(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
-            } else if ((str == "h5") || (str == "hd5") || (str == "hdf5")) {
-                std::cout << "heatmap chosen: " << str << std::endl;
-                loadHeatmap(QString::fromStdString(currentResult), QString::fromStdString(
-                        splitCustom(splitCustom(splitCustom(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
-            } else {
-                std::cout << "Unable to load result (format is not supported): " << currentResultPath << std::endl;
-            }
-        }
-	}
-
-    // update application name to contain current WSI
-    if (advancedMode) {
-        setTitle(applicationName + " (Research mode)" + " - " + splitCustom(filename, "/").back());
-    } else {
-        setTitle(applicationName + " - " + splitCustom(filename, "/").back());
-    }
 }
 
 void MainWindow::runForProject() {
@@ -1530,9 +519,9 @@ void MainWindow::runForProject() {
 
 	auto allFilesWidget = new QListWidget(projectDialog);
 	allFilesWidget->setSelectionMode(QAbstractItemView::MultiSelection);
-	for (const auto& item : wsiList) {
-		allFilesWidget->addItem(QString::fromStdString(item));
-	}
+//	for (const auto& item : wsiList) {
+//		allFilesWidget->addItem(QString::fromStdString(item));
+//	}
 	allFilesWidget->setMinimumWidth(allFilesWidget->sizeHintForColumn(0));
 
 	auto buttonsWidget = new QWidget(projectDialog);
@@ -1571,9 +560,9 @@ void MainWindow::runForProject() {
 	// introduce events -> signals and slots, connect and stuff
 	QObject::connect(allSelectButton, &QPushButton::clicked, [=]() {
 		selectedFilesWidget->clear();
-		for (const auto& item : wsiList) {
-			selectedFilesWidget->addItem(QString::fromStdString(item));
-		}
+//		for (const auto& item : wsiList) {
+//			selectedFilesWidget->addItem(QString::fromStdString(item));
+//		}
 		selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
 	});
 
@@ -1838,318 +827,6 @@ void MainWindow::addModels() {
     }
 }
 
-float MainWindow::getMagnificationLevel() {
-
-    float magnification_lvl = 0.0f;
-
-    // TODO: Should check which formats are supported by OpenSlide, and do this for all (in a generalized matter...)
-    if ((wsiFormat == "generic-tiff") || (wsiFormat == "philips") || (wsiFormat == "ventana")) {
-
-        int level_count = m_image->getNrOfLevels(); //(int)stof(metadata["openslide.level-count"]);
-
-        // assuming each 400X resolution correspond to 50000 cm, and thus 200x => 100000 cm ... (for .tiff format)
-        // can predict which WSI resolution image is captured with, as some models is trained on 200x images
-        std::vector<float> templateResVector;
-        float resFractionValue = 50000;
-        for (int i = 0; i < level_count; i++) {
-            templateResVector.push_back(resFractionValue * ((float) i + 1));
-        }
-
-        auto resolution = 1;  // needed to initialize outside of if statement -> set some silly dummy value
-        //auto resolution = std::stof(m_image->getMetadata("tiff.XResolution")); //(int)stof(metadata["tiff.XResolution"]);
-
-        if (wsiFormat == "generic-tiff") {
-            resolution = std::stof(m_image->getMetadata("tiff.XResolution")); //(int)stof(metadata["tiff.XResolution"]);
-        } else if ((wsiFormat == "phillips") || (wsiFormat == "ventata")) {
-            resolution = std::stof(metadata["mpp-x"]);
-        }
-
-        // find closest value => get magnification level
-        auto i = min_element(begin(templateResVector), end(templateResVector), [=](int x, int y) {
-            return abs(x - resolution) < abs(y - resolution);
-        });
-        float location = std::distance(begin(templateResVector), i);
-
-        magnification_lvl = 40.0f / pow(2.0f, location);
-
-    } else if (wsiFormat == "aperio") {
-        magnification_lvl = std::stof(metadata["aperio.AppMag"]); //atof(openslide_get_property_value(osr, "aperio.AppMag"));
-    } else if (wsiFormat == "hamamatsu") {
-		std::cout << "Vendor: hamamatsu" << std::endl;
-        magnification_lvl = std::stof(metadata["openslide.objective-power"]);
-		std::cout << "Magn lvl: " << magnification_lvl << std::endl;
-    } else {  //"TODO: Make this more general, test different image formats to see how the magn_lvl metadata vary"
-        std::cout << "WSI format not set, uses default format: " << metadata["aperio.AppMag"] << std::endl;
-        magnification_lvl = std::stof(metadata["aperio.AppMag"]);
-    }
-    return magnification_lvl;
-}
-
-bool MainWindow::segmentTissue() {
-	if (wsiList.empty()) {
-		std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
-		return false;
-	}
-
-	// prompt if you want to run the analysis again, if it has already been ran
-    if (hasRenderer("tissue")) {
-        simpleInfoPrompt("Tissue segmentation on current WSI has already been performed.");
-        return false;
-    }
-
-	// basic thresholding (with morph. post-proc.) based on euclidean distance from the color white
-    auto tissueSegmentation = TissueSegmentation::New();
-    tissueSegmentation->setInputData(m_image);
-
-    stopFlag = false;
-    if (advancedMode) {
-        // option for setting parameters
-        QDialog paramDialog;
-        paramDialog.setStyleSheet(mWidget->styleSheet()); // transfer style sheet from parent
-        QFormLayout form(&paramDialog);
-        form.addRow(new QLabel("Please, set the parameters for this analysis: "));
-
-        // threshold : for WSI this should be grayed out, shouldn't be able to change it
-        auto threshSlider = new QSlider(Qt::Horizontal, dynamicViewWidget);
-        threshSlider->setFixedWidth(150);
-        threshSlider->setMinimum(0);
-        threshSlider->setMaximum(255);
-        threshSlider->setValue(tissueSegmentation->getThreshold());
-        threshSlider->setTickInterval(1);
-        QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue){tissueSegmentation->setThreshold(newValue);});
-
-        auto currValue = new QLabel;
-        currValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getThreshold())));
-        currValue->setFixedWidth(50);
-        QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue){currValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getThreshold())));});
-
-		// threshold
-        auto threshWidget = new QWidget;
-        auto sliderLayout = new QHBoxLayout;
-        threshWidget->setLayout(sliderLayout);
-        sliderLayout->addWidget(threshSlider);
-        sliderLayout->addWidget(currValue);
-
-        std::string tempTissueName = "temporaryTissue";
-
-		QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue) {
-			const int step = 2;
-			threshSlider->setValue(newValue);
-			tissueSegmentation->setThreshold(newValue);
-			auto checkFlag = true;
-
-			if (checkFlag) {
-				auto temporaryTissueSegmentation = TissueSegmentation::New();
-				temporaryTissueSegmentation->setInputData(m_image);
-				temporaryTissueSegmentation->setThreshold(tissueSegmentation->getThreshold());
-				temporaryTissueSegmentation->setErode(tissueSegmentation->getErode());
-				temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
-
-				auto someRenderer = SegmentationRenderer::New();
-				someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
-				someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
-				someRenderer->setOpacity(0.4f);
-				someRenderer->update();
-
-				if (hasRenderer(tempTissueName)) {
-					auto currRenderer = m_rendererList[tempTissueName];
-					getView(0)->removeRenderer(currRenderer);
-					m_rendererList.erase(tempTissueName);
-				}
-				insertRenderer(tempTissueName, someRenderer);
-			}
-		});
-
-        // dilation
-        auto dilateSlider = new QSlider(Qt::Horizontal, dynamicViewWidget);
-        dilateSlider->setFixedWidth(150);
-        dilateSlider->setMinimum(1);
-        dilateSlider->setMaximum(28);
-        dilateSlider->setValue(tissueSegmentation->getDilate());
-        dilateSlider->setSingleStep(2);
-        QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue) {
-            const int step = 2;
-			bool checkFlag = false;
-            if (newValue < 3) {
-                dilateSlider->setValue(0);
-                tissueSegmentation->setDilate(0);
-				checkFlag = true;
-            } else {
-                if (newValue % 2 != 0) {
-                    dilateSlider->setValue(newValue);
-                    tissueSegmentation->setDilate(newValue);
-					checkFlag = true;
-                }
-            }
-
-			if (checkFlag) {
-				auto temporaryTissueSegmentation = TissueSegmentation::New();
-				temporaryTissueSegmentation->setInputData(m_image);
-				temporaryTissueSegmentation->setThreshold(tissueSegmentation->getThreshold());
-				temporaryTissueSegmentation->setErode(tissueSegmentation->getErode());
-				temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
-
-				auto someRenderer = SegmentationRenderer::New();
-				someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
-				someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
-				someRenderer->setOpacity(0.4f);
-				someRenderer->update();
-
-				if (hasRenderer(tempTissueName)) {
-					auto currRenderer = m_rendererList[tempTissueName];
-					getView(0)->removeRenderer(currRenderer);
-					m_rendererList.erase(tempTissueName);
-				}
-				insertRenderer(tempTissueName, someRenderer);
-			}
-        });
-
-        auto currDilateValue = new QLabel;
-        currDilateValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getDilate())));
-        currDilateValue->setFixedWidth(50);
-        QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue){currDilateValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getDilate())));});
-
-        auto dilateWidget = new QWidget;
-        auto dilateSliderLayout = new QHBoxLayout;
-        dilateWidget->setLayout(dilateSliderLayout);
-        dilateSliderLayout->addWidget(dilateSlider);
-        dilateSliderLayout->addWidget(currDilateValue);
-
-        // erosion
-        auto erodeSlider = new QSlider(Qt::Horizontal, dynamicViewWidget);
-        erodeSlider->setFixedWidth(150);
-        erodeSlider->setMinimum(1);
-        erodeSlider->setMaximum(28);
-        erodeSlider->setValue(tissueSegmentation->getErode());
-        erodeSlider->setSingleStep(2);
-        QObject::connect(erodeSlider, &QSlider::valueChanged, [=](int newValue) {
-            bool checkFlag = false;
-            if (newValue < 3) {
-                erodeSlider->setValue(0);
-                tissueSegmentation->setErode(0);
-                checkFlag = true;
-            } else {
-                if (newValue % 2 != 0) {
-                    erodeSlider->setValue(newValue);
-                    tissueSegmentation->setErode(newValue);
-                    checkFlag = true;
-                }
-            }
-            // /*
-            if (checkFlag) {
-                auto temporaryTissueSegmentation = TissueSegmentation::New();
-                temporaryTissueSegmentation->setInputData(m_image);
-                temporaryTissueSegmentation->setThreshold(tissueSegmentation->getThreshold());
-                temporaryTissueSegmentation->setErode(tissueSegmentation->getErode());
-                temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
-
-                auto someRenderer = SegmentationRenderer::New();
-                someRenderer->setColor(1, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
-                someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
-                someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
-                someRenderer->update();
-
-                if (hasRenderer(tempTissueName)) {
-					auto currRenderer = m_rendererList[tempTissueName];
-					getView(0)->removeRenderer(currRenderer);
-					m_rendererList.erase(tempTissueName);
-                }
-                insertRenderer(tempTissueName, someRenderer);
-            }
-            // */
-        });
-
-        auto currErodeValue = new QLabel;
-        currErodeValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getErode())));
-        currErodeValue->setFixedWidth(50);
-        QObject::connect(erodeSlider, &QSlider::valueChanged, [=](int newValue){currErodeValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getErode())));});
-
-        auto erodeWidget = new QWidget;
-        auto erodeSliderLayout = new QHBoxLayout;
-        erodeWidget->setLayout(erodeSliderLayout);
-        erodeSliderLayout->addWidget(erodeSlider);
-        erodeSliderLayout->addWidget(currErodeValue);
-
-        QList<QSlider *> fields;
-        QString labelThresh = "Threshold";
-        form.addRow(labelThresh, threshWidget);
-        fields << threshSlider;
-
-        QString labelDilate = "Dilation";
-        form.addRow(labelDilate, dilateWidget);
-        fields << dilateSlider;
-
-        QString labelErode = "Erosion";
-        form.addRow(labelErode, erodeWidget);
-        fields << erodeSlider;
-
-        // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
-        QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
-                Qt::Horizontal, &paramDialog);
-        buttonBox.button(QDialogButtonBox::Ok)->setText("Run");
-        form.addRow(&buttonBox);
-        QObject::connect(&buttonBox, SIGNAL(accepted()), &paramDialog, SLOT(accept()));
-        QObject::connect(&buttonBox, SIGNAL(rejected()), &paramDialog, SLOT(reject()));
-
-        // Show the dialog as modal
-        int ret = paramDialog.exec();
-
-        // should delete temporary segmentation when selecting is finished or cancelled
-        auto currRenderer = m_rendererList[tempTissueName];
-        getView(0)->removeRenderer(currRenderer);
-        m_rendererList.erase(tempTissueName);
-
-        std::cout << "Value chosen: " << ret << std::endl;
-        switch (ret) {
-            case 1:
-                std::cout << "OK was pressed, should have updated params!" << std::endl;
-                break;
-            case 0:
-                std::cout << "Cancel was pressed." << std::endl;
-                stopFlag = true;
-                return false;
-            default:
-                std::cout << "Default was pressed." << std::endl;
-                return false;
-        }
-    }
-
-    std::cout << "Thresh: " << tissueSegmentation->getThreshold() << std::endl;
-    std::cout << "Dilate: " << tissueSegmentation->getDilate() << std::endl;
-    std::cout << "Erode:  " << tissueSegmentation->getErode() << std::endl;
-
-    // finally get resulting tissueMap to be used later on
-    m_tissue = tissueSegmentation->updateAndGetOutputData<Image>();
-
-    auto someRenderer = SegmentationRenderer::New();
-    someRenderer->setColor(1, Color(255.0f/255.0f, 127.0f/255.0f, 80.0f/255.0f));
-    someRenderer->setInputData(m_tissue);
-    someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
-    someRenderer->update();
-
-	std::string currSegment = "tissue";
-
-	// TODO: should append some unique ID next to "tissue" (also really for all other results) such that multiple
-	//  runs with different hyperparamters may be ran, visualized and stored
-	/*
-    std::string origSegment = "tissue";
-    auto iter = 2;
-    while (hasRenderer(currSegment)) {
-        currSegment = origSegment + std::to_string(iter);
-        iter++;
-    }
-		*/
-
-	m_rendererTypeList[currSegment] = "SegmentationRenderer";
-//    createDynamicViewWidget(currSegment, modelName);
-    insertRenderer(currSegment, someRenderer);
-
-    availableResults[currSegment] = m_tissue;
-    exportComboBox->addItem(tr(currSegment.c_str()));
-
-    return true;
-}
-
 void MainWindow::loadHighres(QString path, QString name) {
     if (!fileExists(path.toStdString()))
         return;
@@ -2263,9 +940,6 @@ void MainWindow::runPipeline(std::string path) {
 	std::vector<std::string> currentWSIs;
 	if (m_runForProject) {
 		currentWSIs = m_runForProjectWsis;
-	}
-	else {
-		currentWSIs.push_back(wsiList[curr_pos]);
 	}
 
 	auto progDialog = QProgressDialog(mWidget);
@@ -2386,7 +1060,7 @@ void MainWindow::MIL_test() {
     int patch_lvl_model = (int)(std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) / std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
 
     if (!hasRenderer("tissue")) {
-        segmentTissue();
+//        segmentTissue();
         hideTissueMask(true);
     }
 
@@ -2521,7 +1195,7 @@ void MainWindow::MTL_test() {
 	int patch_lvl_model = (int)(std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) / std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
 
 	if (!hasRenderer("tissue")) {
-		segmentTissue();
+//		segmentTissue();
 		hideTissueMask(true);
 	}
 
@@ -2633,127 +1307,6 @@ std::vector<std::string> MainWindow::splitCustom(const std::string& s, const std
 
     res.push_back (s.substr (pos_start));
     return res;
-}
-
-const bool MainWindow::calcTissueHist() {
-    std::cout << "Calculating histogram...";
-
-    int barWidth = 9;
-    int boxWidth = 250;
-    int boxHeight = 250;
-    QPixmap pm(boxWidth, boxHeight);
-    pm.fill();
-
-    int len = 5;
-
-    //int x_vec[] = {1, 2, 3, 4, 5};
-    std::string x_vec[] = {"a", "b", "c", "d", "e"};
-    int y_vec[] = {12, 20, 43, 30, 5};
-
-    double drawMinHeight = 0.1 * (double)(boxHeight);
-    double drawMinWidth = 0.1 * (double)(boxWidth);
-
-    double newWidth = (double)(boxWidth - drawMinWidth);
-    double newHeight = (double)(boxHeight - drawMinHeight);
-
-    double maxHeight = *std::max_element(y_vec,y_vec+len);
-    double drawMaxHeight = (double)(maxHeight + maxHeight*0.1);
-
-    auto painters = new QPainter(&pm);
-    painters->setPen(QColor(140, 140, 210));
-
-    for (int i = 0; i < len; i++) {
-        std::cout << std::to_string(i) << std::endl;
-        qreal h = y_vec[i] * maxHeight;
-        // draw level
-        painters->fillRect(drawMinWidth / 2 + (double)(i + 1) * (double)(newWidth) / (double)(len + 1) - (double)((double)(barWidth)/(double)(2)),
-                           newHeight,
-                           barWidth,
-                           - (double)(y_vec[i]) / (double)(drawMaxHeight) * (double)(newHeight),
-                           Qt::blue);
-        // clear the rest of the control
-        //painters->fillRect(barWidth * i, 0, barWidth * (i + 1), maxHeight - h, Qt::black);
-    }
-
-    int lineWidth = 3;
-    int space = drawMinHeight;
-
-    //auto linePainter = new QPainter(&pm);
-    painters->setPen(QPen(QColor(0, 0, 0), lineWidth));
-    painters->drawLine(space, boxHeight - space, boxWidth - space, boxHeight - space);
-    painters->drawLine(space - 1, boxHeight - space, space - 1, space);
-
-    // add ticks on lines
-    painters->setPen(QPen(QColor(0, 0, 0), 2));
-    painters->setFont(QFont("times", 10));
-    std::string stringIter;
-    int xTextSpace = 18;
-    int numTicks = 5;
-    double tickSize = 10;
-    for (int j = 0; j < numTicks; j++) {
-        painters->drawLine(drawMinWidth / 2 + (double)(j + 1) * (double)(newWidth) / (double)(len + 1),
-                           newHeight,
-                           drawMinWidth / 2 + (double)(j + 1) * (double)(newWidth) / (double)(len + 1),
-                           newHeight + tickSize / 2);
-        painters->drawText(drawMinWidth / 2 + (double)(j + 1) * (double)(newWidth) / (double)(len + 1) - 4, newHeight + xTextSpace, QString::number(j + 1));
-
-    }
-
-    int yTextSpace = 22;
-    for (int j = 0; j < numTicks; j++) {
-        painters->drawLine(space - tickSize / 2,
-                           drawMinHeight - drawMinHeight*0.5 + (double)(j + 1) * (double)(newHeight) / (double)(len + 1),
-                           space,
-                           drawMinHeight - drawMinHeight*0.5 + (double)(j + 1) * (double)(newHeight) / (double)(len + 1));
-
-        painters->drawText(drawMinWidth - yTextSpace, drawMinHeight - drawMinHeight*0.5 + (double)(j + 1) * (double)(newHeight) / (double)(len + 1) + 4,
-                           QString::number((int)(std::round((double)(numTicks - j) * (double)(maxHeight) / (double)(len + 1) + 4))));
-        //painters->drawText(drawMinWidth - yTextSpace, drawMinHeight - drawMinHeight*0.5 + (double)(j + 1) * (double)(newHeight) / (double)(len + 1) + 4,
-        //        QString::number((int)(y_vec[numTicks - j - 1])));
-
-    }
-
-    // draw arrow heads on end of axes
-    int xArrowSize = 8;
-    int yArrowSize = 16;
-    QRectF rect = QRectF(space - xArrowSize + lineWidth, space - yArrowSize, xArrowSize, yArrowSize);
-
-    QPainterPath path;
-    path.moveTo(rect.left() + (rect.width() / 2), rect.top());
-    path.lineTo(rect.bottomLeft());
-    path.lineTo(rect.bottomRight());
-    path.lineTo(rect.left() + (rect.width() / 2), rect.top());
-
-    painters->fillPath(path, QBrush(QColor ("black")));
-
-    QTransform t;
-    t.translate(boxWidth, boxHeight - space - yArrowSize - xArrowSize);
-    t.rotate(90);
-    QPainterPath path2 = t.map(path);
-
-    // draw title of histogram
-    painters->setPen(QPen(QColor(0, 0, 0), 2));
-    painters->setFont(QFont("times", 10));
-
-    painters->fillPath(path2, QBrush(QColor ("black")));
-
-    auto histBox = new QLabel;
-    histBox->setPixmap(pm);
-    histBox->setAlignment(Qt::AlignHCenter);
-
-    statsLayout->insertWidget(2, histBox); // finally, add histogram to Widget
-
-    // add some text box that explains in words the result from the analysis or something similar...
-    auto smallTextWindowStats = new QTextEdit;
-    smallTextWindowStats->setPlainText(tr("This is some window with text that displays some relevant "
-                                          "information regarding the inference or analysis you just did."));
-    smallTextWindowStats->setReadOnly(true);
-    smallTextWindowStats->show();
-    smallTextWindowStats->setFixedHeight(smallTextWindowStats->document()->size().toSize().height() + 3);
-
-    statsLayout->insertWidget(1, smallTextWindowStats);
-	
-	return true;
 }
 
 bool MainWindow::toggleRenderer(std::string name) {

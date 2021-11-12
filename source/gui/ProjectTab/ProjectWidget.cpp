@@ -7,6 +7,7 @@
 #include <FAST/Importers/WholeSlideImageImporter.hpp>
 #include <FAST/Visualization/ImagePyramidRenderer/ImagePyramidRenderer.hpp>
 #include <FAST/Data/ImagePyramid.hpp>
+#include <FAST/Reporter.hpp>
 
 namespace fast {
     ProjectWidget::ProjectWidget(QWidget *parent): QWidget(parent){
@@ -120,7 +121,7 @@ namespace fast {
         this->_projectFolderName = dialog.getExistingDirectory(this, tr("Set Project Directory"),
                 QCoreApplication::applicationDirPath(), QFileDialog::DontUseNativeDialog);
 
-        std::cout << "Project dir: " << this->_projectFolderName.toStdString() << std::endl;
+        Reporter::info()<< "Project dir: " << this->_projectFolderName.toStdString() << Reporter::end();
         DataManager::GetInstance()->getCurrentProject()->setRootFolder(this->_projectFolderName.toStdString());
 
         // create file for saving which WSIs exist in folder
@@ -137,7 +138,8 @@ namespace fast {
 
         // check if any WSIs have been selected previously, and ask if you want to make a project and add these,
         // or make a new fresh one -> if no, need to clear all WSIs in the QListWidget
-        if (not DataManager::GetInstance()->getCurrentProject()->isProjectEmpty()) {
+        if (not DataManager::GetInstance()->getCurrentProject()->isProjectEmpty())
+        {
             // prompt
             QMessageBox mBox;
             mBox.setIcon(QMessageBox::Warning);
@@ -180,7 +182,7 @@ namespace fast {
 
             if (!QDir(selected_dir).exists())
                 return;
-            std::cout << "Project dir: " << selected_dir.toStdString() << std::endl;
+            Reporter::info() << "Project dir: " << selected_dir.toStdString() << Reporter::end();
             DataManager::GetInstance()->getCurrentProject()->setRootFolder(selected_dir.toStdString());
         }
 
@@ -244,7 +246,7 @@ namespace fast {
 
         for (std::string uid: DataManager::GetInstance()->getCurrentProject()->getAllWsiUids())
         {
-            std::cout << "Selected file: " << uid << std::endl;
+            Reporter::info() << "Selected file: " << uid << Reporter::end();
             auto button = new ProjectThumbnailPushButton(uid, this);
             int width_val = 100;
             int height_val = 150;
@@ -337,8 +339,7 @@ namespace fast {
                 return;
             //filename = fileName.toStdString();
             auto currFileName = fileName.toStdString();
-            std::cout << "Selected file: " << currFileName << std::endl;
-            //const std::string id_name = DataManager::GetInstance()->IncludeImage(currFileName);
+            Reporter::info() << "Selected file: " << currFileName << Reporter::end();
             const std::string id_name = DataManager::GetInstance()->getCurrentProject()->includeImage(currFileName);
 
             // @TODO. Shouldn't we keep a class attribute list with those buttons, so that it's easier to retrieve them
@@ -374,7 +375,6 @@ namespace fast {
 
     void ProjectWidget::removeImage(std::string uid)
     {
-        std::cout<<"Deleting current object\n";
         _wsi_scroll_listwidget->removeItemWidget(_wsi_thumbnails_listitem[uid]);
         _wsi_thumbnails_listitem.erase(uid);
         _thumbnail_qpushbutton_map.erase(uid);

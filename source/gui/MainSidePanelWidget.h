@@ -14,6 +14,7 @@
 #include "source/gui/ProcessTab/ProcessWidget.h"
 #include "source/gui/ViewTab/ViewWidget.h"
 #include "source/gui/StatsTab/StatsWidget.h"
+#include "source/gui/ExportTab/ExportWidget.h"
 #include "source/logic/ProcessManager.h"
 
 namespace fast{
@@ -63,6 +64,7 @@ namespace fast{
         ProcessWidget *_process_widget;
         ViewWidget *_view_widget;
         StatsWidget *_stats_widget;
+        ExportWidget *_export_widget;
 
     private:
         QStackedWidget *_container_stacked_widget;

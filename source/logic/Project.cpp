@@ -3,7 +3,7 @@
 //
 
 #include "Project.h"
-
+#include <FAST/Reporter.hpp>
 
 namespace fast{
     Project::Project()
@@ -12,7 +12,7 @@ namespace fast{
         auto default_dir = QTemporaryDir();
         this->_root_folder = QDir::tempPath().toStdString() + "/project_" + createRandomNumbers_(8);
         QDir().mkpath(QString::fromStdString(this->_root_folder));
-        std::cout<<"Temporary project folder is set to: "<<this->_root_folder<<std::endl;
+        Reporter::info()<<"Temporary project folder is set to: "<<this->_root_folder<<Reporter::end();
         this->_temporary_dir_flag = true;
         this->createFolderDirectoryArchitecture();
     }

@@ -64,14 +64,11 @@ class MainWindow : public Window {
         float magn_lvl;
         uint channel_value;
 
-        std::string applicationName;
         std::string modelName;
         std::string wsiFormat;
         std::string cwd;
         std::string tmpDirPath;
         QString currScript;
-
-        std::vector<std::string> wsiList;
         std::vector<std::string> savedList;
         std::vector<std::string> m_runForProjectWsis;
 
@@ -145,31 +142,6 @@ class MainWindow : public Window {
          * @return
          */
         std::map<std::string, std::string> setParameterDialog(std::map<std::string, std::string> modelMetadata, int *successFlag);
-        /**
-         * Shows a proof-of-concept that a histogram widget can be made using Qt. However, it was quite time-consuming.
-         * @return
-         */
-        const bool calcTissueHist();
-
-        // MISC
-        /**
-         * Downloads the test data (trained models, Pipelines, WSIs) currently located on the NTNU Apache server and
-         * adds them to the default functionalities in the program. When finished, the user is prompted if they want to
-         * import the WSIs and test the solutions on the data.
-         */
-        void downloadAndAddTestData();
-        /**
-         * Gets the magnification level of the current WSI.
-         * @return
-         */
-        float getMagnificationLevel();
-
-        /**
-         * Updates the current WSI dependent on which file is selected form the WSI scroll bar widget on the left. It
-         * will render the selected WSI and load all corresponding results, if a Project exists.
-         * @param pos
-         */
-        void selectFileInProject(int pos);
 
         // GUI RELATED STUFF
         /**
@@ -177,30 +149,9 @@ class MainWindow : public Window {
          */
         void createMenubar();
         /**
-         * Creates the actual main menu widget. The widget includes all the WSI pipeline modules.
-         */
-        void createMainMenuWidget();
-        /**
          * Creates the OpenGL window for rendering WSI-related stuff.
          */
         void createOpenGLWindow();
-        /**
-         * Creates the view module of the main menu widget.
-         */
-        void createViewWidget();
-        /**
-         * Creates the export module of the main menu widget.
-         */
-        void createExportWidget();
-        /**
-         * Combines all the WSI pipeline module widgets into a single widget.
-         */
-        void createMenuWidget();
-        /**
-         * Updates the export widget dependent on which results that exists.
-         * @param someName
-         */
-        void createDynamicExportWidget(const std::string &someName);
         /**
          * Opens the default browser and directs the user to the FastPathology GitHub page to seek for assistance.
          */
@@ -216,16 +167,6 @@ class MainWindow : public Window {
         void aboutProgram();
 
         // IMPORT RELATED STUFF
-        /**
-         * Opens a file explorer for selecting which WSIs from disk to import to the program.
-         * The last one will be rendered.
-         */
-        void selectFile();
-        /**
-         * Imports WSIs to the program, where selections are made from a drag-and-drop event.
-         * @param fileNames
-         */
-        void selectFileDrag(const QList<QString> &fileNames);
         /**
          * Opens a file explorer for selecting which deep learning modules from disk to import to the program.
          * All selected models will be automatically added to the Progress widget.
@@ -269,13 +210,6 @@ class MainWindow : public Window {
         void loadPipelines();
 
         // PROCESS WIDGET RELATED STUFF
-        /**
-         * Simple method for performing tissue segmentation through a smart morphological, thresholding filter. If
-         * advanced mode is enabled, a parameter dialog will be prompted, and as values are tuned, a dynamic result
-         * will be rendered showing the resultant output segmentation.
-         * @return
-         */
-        bool segmentTissue();
         /**
          * Deploys a selected pipeline, through parsing the text pipeline script and creating FAST POs before execution.
          * @param path
@@ -348,30 +282,15 @@ class MainWindow : public Window {
          */
         std::shared_ptr<Renderer> getRenderer(std::string name);
 
+    protected:
+        /**
+         * Define the interface for the current global widget.
+         */
+        void setupInterface();
         /**
          * Define the connections for all elements inside the current global widget.
          */
         void setupConnections();
-
-        // EXPORT RELATED STUFF
-        /**
-         * Creates and saves the thumbnail image as a PNG image on disk in the current Project.
-         */
-        void saveThumbnail();
-        /**
-         * Saves the tissue segmentation image result as a PNG image on disk in a the current Project.
-         */
-        void saveTissueSegmentation();
-        /**
-         * Saves a specific heatmap object (I was testing that saving tumor segmentation results did work).
-         * TODO: Remove when export is working as intended.
-         */
-        void saveHeatmap();
-        /**
-         * Saves a specific segmentation object (of tumor. I was testing that it was possible).
-         * TODO: Remove when export is working as intended.
-         */
-        void saveTumor();
 
     private:
         MainWindow();
@@ -392,7 +311,7 @@ class MainWindow : public Window {
         std::shared_ptr<Image> m_tumorMap;
 
 
-        ProjectWidget *fileWidget;
+        std::string _application_name; /* */
         MainSidePanelWidget *_side_panel_widget; /* Main widget for the left-hand panel */
         std::map<std::string, QAction*> _file_menu_actions; /* Holder for all actions in the File main menu bar */
         QMenu* _pipeline_menu; /* */

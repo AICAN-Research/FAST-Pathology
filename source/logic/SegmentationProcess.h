@@ -30,6 +30,7 @@ namespace fast{
     class ImageExporter;
 
     // @TODO. Should it be just PipelineProcess to be more generic?
+    // Especially since the FAST pipeline will be used anyway.
     class SegmentationProcess {
         public:
             SegmentationProcess(const std::string image_uid);
