@@ -2001,6 +2001,8 @@ void MainWindow::selectFileInProject(int pos) {
 
     removeAllRenderers();  // VERY IMPORTANT THAT THIS IS DONE AFTER!!!
 
+    currentView->reinitialize();
+
 	// add WSI to project list
 	filename = wsiList[pos];
 

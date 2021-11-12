@@ -16,13 +16,13 @@ jobs:
 
     - name: Download FAST
       run: |
-        curl.exe -OL https://github.com/smistad/FAST/releases/download/v4.1.0/fast_windows_4.1.0.zip
-        tar -xzf ./fast_windows_4.1.0.zip
+        curl.exe -OL https://github.com/smistad/FAST/releases/download/v4.2.0-rc2/fast_windows_4.2.0.zip
+        tar -xzf ./fast_windows_4.2.0.zip
       
     - name: Configure CMake
       run: |
         cmake -B ${{github.workspace}}/build `
-            -DFAST_DIR=${{github.workspace}}/fast_windows_4.1.0/fast/cmake `
+            -DFAST_DIR=${{github.workspace}}/fast_windows_4.2.0/fast/cmake `
             -G "Visual Studio 16 2019" `
             -A x64
 
