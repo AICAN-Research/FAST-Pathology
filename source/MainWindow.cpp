@@ -1643,29 +1643,11 @@ void MainWindow::selectFile() {
     if (nb_wsis_in_list != 0)
         currentPosition = nb_wsis_in_list;
 
-    if (m_doneFirstWSI) {
-        // Stop any pipelines running in old view and delete it!
-        currentView->stopPipeline();
-        delete currentView;
-    }
-
     // Get old view, and remove it from Widget
     currentView = getView(0);
+    currentView->stopPipeline();
     currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
-
-    /*
-    clearViews();
-    auto tmpView = createView();
-    tmpView->setSynchronizedRendering(false);
-    tmpView->set2DMode();
-    tmpView->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
-    tmpView->setAutoUpdateCamera(true);
-
-    mainSplitter->replaceWidget(1, tmpView);
-    mainSplitter->setStretchFactor(1, 1);
-
-    addView(tmpView);  // Give new view to mWidget so it is used in the computation thread
-     */
+    currentView->removeAllRenderers();  // VERY IMPORTANT THAT THIS IS DONE AFTER!!!
 
     int counter = 0;
     for (QString& fileName : fileNames) {
@@ -1972,36 +1954,11 @@ void MainWindow::selectFileInProject(int pos) {
 	m_rendererTypeList.clear();
 	clearLayout(stackedLayout);
 
-    // Stop any pipelines running in old view and delete it!
-    currentView->stopPipeline();
-    delete currentView;
-
     // Get old view, and remove it from Widget
     currentView = getView(0);
+    currentView->stopPipeline();
     currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
-
-    /*
-    clearViews();
-
-    auto tmpView = createView();
-    tmpView->setSynchronizedRendering(false);
-    tmpView->set2DMode();
-    tmpView->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
-    tmpView->setAutoUpdateCamera(true);
-
-    mainSplitter->replaceWidget(1, tmpView);
-    mainSplitter->setStretchFactor(1, 1);
-
-    //addView(tmpView);
-    //clearViews();
-
-    //mWidget->addView(tmpView);
-    addView(tmpView);  // Give new view to mWidget so it is used in the computation thread
-     */
-
-    removeAllRenderers();  // VERY IMPORTANT THAT THIS IS DONE AFTER!!!
-
-    currentView->reinitialize();
+    currentView->removeAllRenderers();  // VERY IMPORTANT THAT THIS IS DONE AFTER!!!
 
 	// add WSI to project list
 	filename = wsiList[pos];
@@ -4647,6 +4604,7 @@ void MainWindow::insertRenderer(std::string name, std::shared_ptr<Renderer> rend
     if (!hasRenderer(name)) {
         // Doesn't exist
         getView(0)->addRenderer(renderer);
+        getView(0)->reinitialize();  // @TODO: This should probably not be done every time
         m_rendererList[name] = renderer;
         std::cout << "finished insert renderer" << std::endl;
     }
