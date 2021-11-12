@@ -419,10 +419,6 @@ void MainWindow::createMenubar() {
     //deployMenu->addMenu(tr("&Deploy"));
     //deployMenu->setFixedHeight(100);
     //deployMenu->setFixedWidth(100);
-    deployMenu->addAction("Run Pipeline");
-    deployMenu->addAction("Segment Tissue");
-    deployMenu->addAction("Predict Tumor");
-    deployMenu->addAction("Classify Grade");
 	//deployMenu->addAction("MTL nuclei seg/detect", this, &MainWindow::MTL_test);
     deployMenu->addAction("Refinement tumour", this, &MainWindow::Refinement_test);
     deployMenu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
@@ -3210,13 +3206,10 @@ void MainWindow::runPipeline(std::string path) {
 	progDialog.setVisible(true);
 	progDialog.setModal(false);
 	progDialog.setLabelText("Running pipeline across WSIs in project...");
-	//QRect screenrect = mWidget->screen()[0].geometry();
 	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
 	progDialog.show();
 
 	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-
-    //std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
 
 	auto counter = 0;
 	for (const auto& currWSI : currentWSIs) {
@@ -3231,8 +3224,7 @@ void MainWindow::runPipeline(std::string path) {
         }
         auto currPath =
             wsiResultPath.toStdString() + "/" +
-            splitCustom(wsiResultPath.toStdString(), "/").back() +
-            "_" + "tubuleSegTest" + "/";
+            splitCustom(wsiResultPath.toStdString(), "/").back() + ".tiff";
             //"_" + modelMetadata["name"] + "/";
 
 		// TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
@@ -3253,7 +3245,6 @@ void MainWindow::runPipeline(std::string path) {
 		}
 
 		QString outFile = (wsiResultPath.toStdString() + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "_heatmap.h5").c_str();
-
 		arguments["outPath"] = outFile.replace("//", "/").toStdString();
 		 */
 
@@ -3261,7 +3252,6 @@ void MainWindow::runPipeline(std::string path) {
 		auto pipeline = Pipeline(path, arguments);
         pipeline.parse();
 
-        std::cout << "Before update: " << std::endl;
         /*
         for (const auto& renderer : pipeline.getRenderers()) {
             auto currId = createRandomNumbers_(8);
@@ -3269,6 +3259,14 @@ void MainWindow::runPipeline(std::string path) {
             createDynamicViewWidget("result_" + currId, "result_" + currId);
         }
          */
+
+        for (auto&& po : pipeline.getProcessObjects()) {
+            if (po.second->getNrOfOutputPorts() == 0 && std::dynamic_pointer_cast<Renderer>(po.second) == nullptr) {
+                // Process object has no output ports, must add to window to make sure it is updated.
+                reportInfo() << "Process object " << po.first << " had no output ports defined in pipeline, therefore adding to window so it is updated." << reportEnd();
+                addProcessObject(po.second);
+            }
+        }
 
 		// update progress bar
 		progDialog.setValue(counter);
