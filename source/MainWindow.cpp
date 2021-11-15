@@ -1583,37 +1583,6 @@ void MainWindow::saveTumor() {
 
 void MainWindow::selectFile() {
 
-    // check if view object list is empty, if not, prompt to save results or not, if not clear
-    if (pageComboBox->count() > 1) {
-        // prompt
-        QMessageBox mBox;
-        mBox.setIcon(QMessageBox::Warning);
-        mBox.setStyleSheet(mWidget->styleSheet());
-        mBox.setText("There are unsaved results.");
-        mBox.setInformativeText("Do you wish to save them?");
-        mBox.setDefaultButton(QMessageBox::Save);
-        mBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-        int ret = mBox.exec();
-
-        switch (ret) {
-            case QMessageBox::Save:
-                std::cout << "Results not saved yet. Just cancelled the switch!" << std::endl;
-                // Save was clicked
-                return;
-            case QMessageBox::Discard:
-                // Don't Save was clicked
-				std::cout << "Discarded!" << std::endl;
-                break;
-            case QMessageBox::Cancel:
-                // Cancel was clicked
-                std::cout << "Cancelled!"  << std::endl;
-                return;
-            default:
-                // should never be reached
-                break;
-        }
-    }
-
     // TODO: Unable to read .zvi and .scn (Zeiss and Leica). I'm wondering if they are stored in some unexpected way (not image pyramids)
     auto fileNames = QFileDialog::getOpenFileNames(
         mWidget,
@@ -1921,44 +1890,18 @@ void MainWindow::selectFileInProject(int pos) {
 		return;
 	}
 
-	// if there are any results created, prompt if you want to save results
-	std::cout << "counts: " << (pageComboBox->count() - savedList.size()) << std::endl;
-	if ((pageComboBox->count() - savedList.size()) > 1) {
-		QMessageBox mBox;
-		mBox.setIcon(QMessageBox::Warning);
-		mBox.setText("This will remove results on current WSI.");
-		mBox.setInformativeText("Do you want to save results?");
-		mBox.setDefaultButton(QMessageBox::Yes);
-		mBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-		int ret = mBox.exec();
-		switch (ret) {
-		case QMessageBox::Yes:
-			std::cout << "Yes was pressed." << std::endl;
-			saveTissueSegmentation(); // TODO: Need to generalize this. Check which results exists, and save all sequentially. Yes, should have a save current results method
-			break;
-		case QMessageBox::No:
-			std::cout << "No was pressed." << std::endl;
-			// remove results of current WSI
-			removeAllRenderers();
-			pageComboBox->clear();
-			exportComboBox->clear();
-			break;
-		case QMessageBox::Cancel:
-			std::cout << "Cancel was pressed." << std::endl;
-			return;
-		default:
-			std::cout << "Default was pressed." << std::endl;
-			break;
-		}
-	}
 
-	// remove results of current WSI
-	savedList.clear();
-	pageComboBox->clear();
-	exportComboBox->clear();
-	m_rendererList.clear();
-	m_rendererTypeList.clear();
-	clearLayout(stackedLayout);
+    // for a new selection of wsi(s), should reset and update these QWidgets
+    pageComboBox->clear();
+    exportComboBox->clear();
+    m_rendererList.clear();
+
+    auto currentPosition = pos;
+
+    // need to handle scenario where a WSI is added, but there already exists N WSIs from before
+    auto nb_wsis_in_list = wsiList.size();
+    if (nb_wsis_in_list != 0)
+        currentPosition = nb_wsis_in_list;
 
     // Get old view, and remove it from Widget
     currentView = getView(0);
