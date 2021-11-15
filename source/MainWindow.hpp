@@ -49,6 +49,7 @@ class MainWindow : public Window {
     Q_OBJECT
     public:
         bool stopFlag;
+        bool m_projectAvailable = false;
         bool m_runForProject = false;
         bool background_flag = false;
         bool advancedMode = false;

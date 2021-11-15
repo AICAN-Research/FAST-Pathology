@@ -101,7 +101,16 @@ MainWindow::MainWindow() {
     // create temporary tmp folder to store stuff, and create temporary file to store history
     QTemporaryDir tmpDir;
 	tmpDirPath = tmpDir.path().toStdString();
-	std::cout << "Temporary path: " << tmpDirPath << std::endl;
+	std::cout << "Temporary path (UPDATED!): " << tmpDirPath << std::endl;
+
+    //QDir().mkdir(QString::fromStdString(tmpDirPath));
+
+    QDir dir(QString::fromStdString(tmpDirPath));
+    dir.mkpath(".");
+    std::cout << "Does folder exist:" << dir.exists() << std::endl;
+    if (!dir.exists())
+        std::cout << "Folder does not exist, creating it!" << std::endl;
+        dir.mkpath(".");
 
     //printf("\n%d\n",__LINE__); // <- this is nice for debugging
 
@@ -111,8 +120,9 @@ MainWindow::MainWindow() {
     QDir().mkpath(QString::fromStdString(cwd) + "data/Pipelines");
 
 	// create temporary project folder
-	QString projectFolderName = QString::fromStdString(tmpDirPath) + "/project_" + QString::fromStdString(createRandomNumbers_(8));
-	QDir().mkpath(projectFolderName);
+	projectFolderName = QString::fromStdString(tmpDirPath) + "/project_" + QString::fromStdString(createRandomNumbers_(8));
+    QDir().mkdir(projectFolderName);
+    std::cout << "Current temporary project folder location:" << projectFolderName.toStdString() << std::endl;
 	QString projectFileName = "/project.txt";
 	QFile file(projectFolderName + projectFileName);
 	if (file.open(QIODevice::ReadWrite)) {
@@ -2056,6 +2066,9 @@ void MainWindow::createProject() {
         //stream << "something" << endl;
     }
 
+    // update flag
+    m_projectAvailable = true;
+
     // now create folders for saving results and such (prompt warning if name already exists)
     QDir().mkdir(projectFolderName + QString::fromStdString("/results"));
     QDir().mkdir(projectFolderName + QString::fromStdString("/pipelines"));
@@ -2118,6 +2131,9 @@ void MainWindow::openProject() {
     }
 
     curr_pos = 0; // reset
+
+    // update flag
+    m_projectAvailable = true;
 
     // select project file
     QFileDialog dialog(mWidget);
@@ -3216,15 +3232,17 @@ void MainWindow::runPipeline(std::string path) {
     auto counter = 0;
     for (const auto& currWSI : currentWSIs) {
 
-        // check if folder for current WSI exists, if not, create one
-        QString projectFolderName = "C:/Users/andrp/workspace/test_projects/project3";
+        // setup paths for saving results
+        std::cout << "Current save location: " << projectFolderName.toStdString() << std::endl;
         QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
         wsiResultPath = wsiResultPath.replace("//", "/");
 
+        // if folder does not exist, create one
         if (!QDir(wsiResultPath).exists()) {
             QDir().mkdir(wsiResultPath);
         }
 
+        // TODO: This now always saves result as TIFF, which is not correct. Need generic way of knowing which results that are exported and how to save these
         auto currPath = wsiResultPath.toStdString() + "/" + splitCustom(wsiResultPath.toStdString(), "/").back() + ".tiff";
 
         // TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
@@ -3234,36 +3252,24 @@ void MainWindow::runPipeline(std::string path) {
         arguments["exportPath"] = currPath;
         //arguments["modelPath"] = path;
 
-        // check if folder for current WSI exists, if not, create one
-        /*
-        QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "/").c_str();
-        wsiResultPath = wsiResultPath.replace("//", "/");
-        if (!QDir(wsiResultPath).exists()) {
-	        QDir().mkdir(wsiResultPath);
-        }
-
-        QString outFile = (wsiResultPath.toStdString() + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "_heatmap.h5").c_str();
-        arguments["outPath"] = outFile.replace("//", "/").toStdString();
-            */
-
         // parse fpl-file, and run pipeline with corresponding input arguments
         auto pipeline = Pipeline(path, arguments);
         pipeline.parse();
 
-        /*
-        for (const auto& renderer : pipeline.getRenderers()) {
-            auto currId = createRandomNumbers_(8);
-            insertRenderer("result_" + currId, pipeline.getRenderers()[1]);
-            createDynamicViewWidget("result_" + currId, "result_" + currId);
-        }
-        */
-
+        // get and start running POs
         for (auto&& po : pipeline.getProcessObjects()) {
             if (po.second->getNrOfOutputPorts() == 0 && std::dynamic_pointer_cast<Renderer>(po.second) == nullptr) {
                 // Process object has no output ports, must add to window to make sure it is updated.
                 reportInfo() << "Process object " << po.first << " had no output ports defined in pipeline, therefore adding to window so it is updated." << reportEnd();
                 addProcessObject(po.second);
             }
+        }
+
+        // load renderers, if any
+        for (const auto& renderer : pipeline.getRenderers()) {
+            auto currId = createRandomNumbers_(8);
+            insertRenderer("result_" + currId, renderer);
+            createDynamicViewWidget("result_" + currId, "result_" + currId);
         }
 
         // update progress bar
@@ -4141,6 +4147,29 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 
 							m_rendererTypeList[modelMetadata["name"]] = "SegmentationRenderer";
 							insertRenderer(modelMetadata["name"], someRenderer);
+
+
+                            // setup paths for saving results
+                            std::cout << "Current save location: " << projectFolderName.toStdString() << std::endl;
+                            QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
+                            wsiResultPath = wsiResultPath.replace("//", "/");
+
+                            // if folder does not exist, create one
+                            if (!QDir(wsiResultPath).exists()) {
+                                QDir().mkdir(wsiResultPath);
+                            }
+
+                            // TODO: This now always saves result as TIFF, which is not correct. Need generic way of knowing which results that are exported and how to save these
+                            auto currPath = wsiResultPath.toStdString() + "/" + splitCustom(wsiResultPath.toStdString(), "/").back() + ".tiff";
+
+                            // finally, export result as pyramidal TIFF
+                            auto tiffExporter = TIFFImagePyramidExporter::New();
+                            tiffExporter->setFilename(currPath);
+                            tiffExporter->setExecuteOnLastFrameOnly(true);
+                            tiffExporter->setInputConnection(stitcher->getOutputPort());
+
+                            // finally, add exporter PO to force exporter to run
+                            addProcessObject(tiffExporter);
 						}
 						else {
 							// check if folder for current WSI exists, if not, create one
