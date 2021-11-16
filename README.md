@@ -78,4 +78,4 @@ Development setup
    fastpathology.exe
    ```
 
-**NOTE:** Both VS 17 and 19 have been tested with both FAST and FastPathology and works well.
+**NOTE:** Visual Studio 19 have been tested with both FAST and FastPathology and works well.
