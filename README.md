@@ -19,7 +19,7 @@ Install
 -----------------------------------
 Download an appropriate installer from the [release page](https://github.com/SINTEFMedtek/FAST-Pathology/releases/). Installers for Win10, Ubuntu (18 and 20), and macOSX are available. Currently, there are only pre-releases, as there are still some features to be added/fixed, before we can say that it is ready for use. Beta-testers are much obliged.
 
-**NOTE:** FastPathology depends on OpenCL. Most Windows machines have OpenCL by default, whereas Ubuntu does not. Thus, for Ubuntu, OpenCL can be installed by installing either [NVIDIA CUDA Toolkit](https://developer.nvidia.com/cuda-10.1-download-archive-base) or [Intel OpenCL SDK](https://software.intel.com/content/www/us/en/develop/tools/opencl-sdk.html). For both operating systems CUDA is required to run inference on a dedicated GPU. CUDA 10.0 if you are using any of the releases.
+**NOTE:** FastPathology depends on OpenCL. Most Windows machines have OpenCL by default, whereas Ubuntu does not. Thus, for Ubuntu, OpenCL can be installed by installing either [NVIDIA CUDA Toolkit](https://developer.nvidia.com/cuda-11.1.0-download-archive) or [Intel OpenCL Driver](https://github.com/intel/compute-runtime). For both operating systems CUDA is required to run inference on a dedicated GPU. CUDA 11.0 if you are using any of the releases.
 
 Test data
 -----------------------------------
@@ -43,8 +43,8 @@ Very simple demonstrations of the platforms can be found on [Youtube](https://ww
 Development setup
 -----------------------------------
 1. Either
-   - [Download a release of FAST](https://github.com/smistad/FAST/releases) and install its [requirements](https://github.com/smistad/FAST/wiki/Requirements).
-   - Compile and install FAST on your system: See instructions here for [Windows](https://github.com/smistad/fast/wiki/Windows-instructions) or [Linux (Ubuntu)](https://github.com/smistad/fast/wiki/Linux-instructions).
+   - [Download and install a release of FAST](https://fast.eriksmistad.no/install.html).
+   - [Compile and install FAST on your system](https://fast.eriksmistad.no/building-fast.html).
 2. Clone this repository
    ```bash
    git clone https://github.com/SINTEFMedtek/FAST-Pathology.git
