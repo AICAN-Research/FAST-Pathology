@@ -75,8 +75,9 @@ namespace fast {
                 return _pipelines.find(pipeline_name) != _pipelines.end();
             }
 
-            inline std::shared_ptr<LogicRuntimeModel> get_model(std::string model_name){return this->_models[model_name];}
-            inline std::shared_ptr<PipelineProcess> get_pipeline(std::string pipeline_name){return this->_pipelines[pipeline_name];}
+            inline std::shared_ptr<LogicRuntimeModel> get_model(std::string model_name) {return this->_models[model_name];}
+            inline std::shared_ptr<PipelineProcess> get_pipeline(std::string pipeline_name) {return this->_pipelines[pipeline_name];}
+            inline std::map<std::string, std::shared_ptr<PipelineProcess>> getAllPipelines() const{return this->_pipelines;}
             inline const std::string get_models_filepath(){return this->_models_filepath;}
             inline const std::string get_pipelines_filepath(){return this->_pipelines_filepath;}
 
@@ -100,6 +101,8 @@ namespace fast {
              * @param modelMetadata
              */
             void pixelClassifier(std::string process_name);
+
+            void runPipeline(const std::string& pipeline_uid);
 
         private:
             /**

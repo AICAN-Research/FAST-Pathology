@@ -30,6 +30,7 @@
 #include "source/utils/utilities.h"
 #include "source/utils/qutilities.h"
 #include "source/gui/ProcessTab/PipelineScriptEditorWidget.h"
+#include "source/gui/ProcessTab/PipelineRunnerWidget.h"
 
 
 namespace fast {
@@ -72,6 +73,8 @@ public slots:
      * Defines and creates the script editor widget.
      */
     void editorPipelinesReceived();
+    void runPipelineReceived(QString pipeline_uid);
+    void deletePipelineReceived(QString pipeline_uid);
 
 private slots:
     bool processStartEventReceived(std::string process_name);
@@ -80,6 +83,7 @@ private:
     QVBoxLayout* _main_layout; /* Principal layout holder for the current custom QWidget */
     QPushButton* _tissue_seg_pushbutton; /* Specific push button for tissue segmentation */
     std::map<std::string, QPushButton*> _specific_seg_models_pushbutton_map; /* Map with custom/specific segmentation push buttons for the available models */
+    std::map<std::string, PipelineRunnerWidget*> _pipeline_runners_map;
 
 private:
     std::string _cwd; /* Holder for the main folder containing models? */

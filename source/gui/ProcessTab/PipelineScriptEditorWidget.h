@@ -29,6 +29,7 @@ class PipelineScriptEditorWidget: public QWidget {
 Q_OBJECT
 public:
     PipelineScriptEditorWidget(QWidget* parent=0);
+    PipelineScriptEditorWidget(const QString &filepath, QWidget* parent=0);
     ~PipelineScriptEditorWidget();
     /**
      * Define the interface for the current global widget.

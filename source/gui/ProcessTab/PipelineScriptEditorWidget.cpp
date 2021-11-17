@@ -13,6 +13,13 @@ namespace fast {
         this->setupConnections();
     }
 
+    PipelineScriptEditorWidget::PipelineScriptEditorWidget(const QString &filepath, QWidget* parent): QWidget(parent)
+    {
+        this->setupInterface();
+        this->setupConnections();
+        this->loadFileScript(filepath);
+    }
+
     PipelineScriptEditorWidget::~PipelineScriptEditorWidget()
     {
 

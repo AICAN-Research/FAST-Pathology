@@ -27,65 +27,37 @@ namespace fast {
         this->_main_layout->setSpacing(6);
         this->_main_layout->setAlignment(Qt::AlignTop);
 
-//        processWidget = new QWidget(this);
-//        processWidget->setLayout(processLayout);
+//        this->_tissue_seg_pushbutton = new QPushButton(this);
+//        this->_tissue_seg_pushbutton->setText("Segment Tissue");
+//        //segTissueButton->setFixedWidth(200);
+//        this->_tissue_seg_pushbutton->setFixedHeight(50);
 
-        this->_tissue_seg_pushbutton = new QPushButton(this);
-        this->_tissue_seg_pushbutton->setText("Segment Tissue");
-        //segTissueButton->setFixedWidth(200);
-        this->_tissue_seg_pushbutton->setFixedHeight(50);
+//        // add tissue segmentation to widget (should always exist as built-in FAST)
+//        this->_main_layout->insertWidget(0, this->_tissue_seg_pushbutton);
 
-        // add tissue segmentation to widget (should always exist as built-in FAST)
-        this->_main_layout->insertWidget(0, this->_tissue_seg_pushbutton);
-
-        QDir directory(QString::fromStdString(this->_cwd + "data/Models/"));
-        QStringList model_dirs = directory.entryList(QDir::NoDot | QDir::NoDotDot | QDir::Dirs);
-        int counter=1;
-        foreach(QString model_dir, model_dirs)
-        {
-            ProcessManager::GetInstance()->importModel(model_dir.toStdString());
-
-            auto someButton = new QPushButton(this);
-            someButton->setText(QString::fromStdString(ProcessManager::GetInstance()->get_model(model_dir.toStdString())->get_model_metadata()["task"]));
-            //predGradeButton->setFixedWidth(200);
-            someButton->setFixedHeight(50);
-//            QObject::connect(someButton, &QPushButton::clicked, std::bind(&MainWindow::pixelClassifier_wrapper, this, modelName));
-            someButton->show();
-
-            this->_main_layout->insertWidget(counter, someButton);
-            // @TODO. Has to be thought further, maybe not needed to store those buttons?
-            this->_specific_seg_models_pushbutton_map[std::to_string(counter)] = someButton;
-            QObject::connect(someButton, &QPushButton::clicked, std::bind(&ProcessWidget::processStartEventReceived, this, model_dir.toStdString()));
-
-            counter++;
-        }
-//        QStringList paths = directory.entryList(QStringList() << "*.txt" << "*.TXT", QDir::Files);
+//        QDir directory(QString::fromStdString(this->_cwd + "data/Models/"));
+//        QStringList model_dirs = directory.entryList(QDir::NoDot | QDir::NoDotDot | QDir::Dirs);
 //        int counter=1;
-//        foreach(QString currFile, paths)
+//        foreach(QString model_dir, model_dirs)
 //        {
-
-//            // current model
-//            std::string modelName = splitCustom(currFile.toStdString(), ".")[0];
-
-//            // get metadata of current model
-//            std::map<std::string, std::string> metadata = getModelMetadata(modelName);
+//            ProcessManager::GetInstance()->importModel(model_dir.toStdString());
 
 //            auto someButton = new QPushButton(this);
-//            someButton->setText(QString::fromStdString(metadata["task"]));
+//            someButton->setText(QString::fromStdString(ProcessManager::GetInstance()->get_model(model_dir.toStdString())->get_model_metadata()["task"]));
 //            //predGradeButton->setFixedWidth(200);
 //            someButton->setFixedHeight(50);
 ////            QObject::connect(someButton, &QPushButton::clicked, std::bind(&MainWindow::pixelClassifier_wrapper, this, modelName));
 //            someButton->show();
 
 //            this->_main_layout->insertWidget(counter, someButton);
-//            // @TODO. Has to be thought further, when I have models to run.
+//            // @TODO. Has to be thought further, maybe not needed to store those buttons?
 //            this->_specific_seg_models_pushbutton_map[std::to_string(counter)] = someButton;
-//            QObject::connect(someButton, &QPushButton::clicked, std::bind(&ProcessWidget::processStartEventReceived, this, modelName));
+//            QObject::connect(someButton, &QPushButton::clicked, std::bind(&ProcessWidget::processStartEventReceived, this, model_dir.toStdString()));
 
 //            counter++;
 //        }
 
-//        std::vector<string> modelPaths;
+        this->addPipelines();
     }
 
     void ProcessWidget::resetInterface()
@@ -95,7 +67,7 @@ namespace fast {
 
     void ProcessWidget::setupConnections()
     {
-        QObject::connect(this->_tissue_seg_pushbutton, &QPushButton::clicked, this, &ProcessWidget::segmentTissue);
+//        QObject::connect(this->_tissue_seg_pushbutton, &QPushButton::clicked, this, &ProcessWidget::segmentTissue);
     }
 
     std::map<std::string, std::string> ProcessWidget::getModelMetadata(std::string modelName) {
@@ -195,38 +167,30 @@ namespace fast {
 
     void ProcessWidget::addPipelines()
     {
-        QStringList ls = QFileDialog::getOpenFileNames(this, tr("Select Pipeline"), nullptr,
-                tr("Pipeline Files (*.fpl)"),
-                nullptr, QFileDialog::DontUseNativeDialog
-        );
+        auto counter = 1;
+        auto pipelines = ProcessManager::GetInstance()->getAllPipelines();
+        for(auto it = pipelines.begin(); it != pipelines.end(); it++)
+        {
+            std::string pipeline_uid = it->first;
+            auto runner_widget = new PipelineRunnerWidget(QString::fromStdString(pipeline_uid), this);
+            this->_main_layout->insertWidget(counter, runner_widget);
+            QObject::connect(runner_widget, &PipelineRunnerWidget::runPipelineEmitted, this, &ProcessWidget::runPipelineReceived);
+            QObject::connect(runner_widget, &PipelineRunnerWidget::deletePipelineEmitted, this, &ProcessWidget::deletePipelineReceived);
+            this->_pipeline_runners_map[pipeline_uid] = runner_widget;
+            counter++;
+        }
+    }
 
-//        // now iterate over all selected files and add selected files and corresponding ones to Pipelines/
-//        for (QString& fileName : ls) {
+    void ProcessWidget::runPipelineReceived(QString pipeline_uid)
+    {
 
-//            if (fileName == "")
-//                continue;
+    }
 
-//            std::string someFile = splitCustom(fileName.toStdString(), "/").back();
-//            std::string oldLocation = splitCustom(fileName.toStdString(), someFile)[0];
-//            std::string newLocation = cwd + "data/Pipelines/";
-//            std::string newPath = cwd + "data/Pipelines/" + someFile;
-//            if (fileExists(newPath)) {
-//                std::cout << fileName.toStdString() << " : " << "File with the same name already exists in folder, didn't transfer..." << std::endl;
-//                continue;
-//            } else {
-//                if (fileExists(fileName.toStdString())) {
-//                    QFile::copy(fileName, QString::fromStdString(newPath));
-//                }
-//            }
-//            // should update runPipelineMenu as new pipelines are being added
-//            //runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]), this, &MainWindow::runPipeline);
-//            //auto currentAction = new QAction(QString::fromStdString(splitCustom(someFile, ".")[0]));
-//            auto currentAction = runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]));
-//            QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, someFile));
-
-//            //auto currentAction = runPipelineMenu->addAction(currentFpl); //QString::fromStdString(splitCustom(splitCustom(currentFpl.toStdString(), "/")[-1], ".")[0]));
-//            //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, cwd + "data/Pipelines/" + currentFpl.toStdString()));
-//        }
+    void ProcessWidget::deletePipelineReceived(QString pipeline_uid)
+    {
+        this->_main_layout->removeWidget(this->_pipeline_runners_map[pipeline_uid.toStdString()]);
+        this->_pipeline_runners_map.erase(this->_pipeline_runners_map.find(pipeline_uid.toStdString()));
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
     }
 
     bool ProcessWidget::segmentTissue()

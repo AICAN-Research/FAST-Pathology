@@ -353,8 +353,8 @@ void MainWindow::createMenubar()
     this->_deploy_menu->addAction("Predict Tumor");
     this->_deploy_menu->addAction("Classify Grade");
     //this->_deploy_menu->addAction("MTL nuclei seg/detect", this, &MainWindow::MTL_test);
-    this->_deploy_menu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
-    this->_deploy_menu->addAction("Deep KMeans MTL", this, &MainWindow::Kmeans_MTL_test);
+//    this->_deploy_menu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
+//    this->_deploy_menu->addAction("Deep KMeans MTL", this, &MainWindow::Kmeans_MTL_test);
     this->_deploy_menu->addSeparator();
 
     this->_help_menu = topFiller->addMenu(tr("&Help"));
@@ -828,172 +828,70 @@ void MainWindow::addModels() {
 }
 
 void MainWindow::loadHighres(QString path, QString name) {
-    if (!fileExists(path.toStdString()))
-        return;
 
-    auto someName = name.toStdString();
-    std::cout << "High-res someName var: " << someName << std::endl;
-    std::cout << "path: " << path.toStdString() + "/" << std::endl;
-
-    auto someImporter = ImagePyramidPatchImporter::New();
-    someImporter->setPath(path.toStdString() + "/");
-    //someImporter->update();
-    auto result = someImporter->updateAndGetOutputData<ImagePyramid>();
-
-    auto someRenderer = SegmentationRenderer::New();
-    someRenderer->setOpacity(0.5f);
-    //someRenderer->setInputConnection(someImporter->getOutputPort()); //setInputConnection(importer->getOutputPort());
-    someRenderer->setInputData(result);
-    someRenderer->update();
-
-    m_rendererTypeList[someName] = "SegmentationRenderer";
-    insertRenderer(someName, someRenderer);
-//    createDynamicViewWidget(someName, modelName);
-    savedList.emplace_back(someName);
 }
 
 void MainWindow::loadHeatmap(QString tissuePath, QString name) {
-	if (!fileExists(tissuePath.toStdString()))
-		return;
 
-	auto someName = name.toStdString();
-	std::cout << "Heatmap someName var: " << someName << std::endl;
-
-	auto importer = HDF5TensorImporter::New();
-	importer->setFilename(tissuePath.toStdString()); //"tensor.h5");
-	importer->setDatasetName(someName);
-	auto resultTensor = importer->updateAndGetOutputData<Tensor>();
-	auto resultShape = resultTensor->getShape();
-	//importer->update();
-	//addProcessObject(importer);
-
-	std::cout << "importer shape: " << std::endl;
-	std::cout << resultShape.toString() << std::endl;
-
-	// m_tumorMap->setSpacing((float) m_image->getFullHeight() / (float) input->getHeight(), (float) m_image->getFullWidth() / (float) input->getWidth(), 1.0f);
-
-	auto someRenderer = HeatmapRenderer::New();
-	//someRenderer->glPolygonOffset(512.0f, 512.0f);
-	//someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
-	someRenderer->setInputConnection(0, importer->getOutputPort());
-	//someRenderer->setInputData(someImage);
-	someRenderer->setMaxOpacity(0.6f);
-	someRenderer->setInterpolation(false);
-	//someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
-	someRenderer->update();
-
-	m_rendererTypeList[someName] = "HeatmapRenderer";
-	insertRenderer(someName, someRenderer);
-
-	//hideTissueMask(false);
-
-	// now make it possible to edit prediction in the View Widget
-//	createDynamicViewWidget(someName, modelName);
-
-	std::cout << "Finished loading..." << std::endl;;
-	savedList.emplace_back(someName);
 }
 
 void MainWindow::loadSegmentation(QString tissuePath, QString name) {
 
-	if (!fileExists(tissuePath.toStdString()))
-		return;
-
-	auto someName = name.toStdString();
-
-	auto reader = ImageFileImporter::New();
-	reader->setFilename(tissuePath.toStdString());
-	reader->setMainDevice(Host::getInstance());
-	auto port = reader->getOutputPort();
-	reader->update();
-	auto someImage = port->getNextFrame<Image>();
-
-	//auto wsi = getInputData<ImagePyramid>();
-	auto access = m_image->getAccess(ACCESS_READ);
-	auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
-	auto currShape = someImage->getSize();
-
-	std::cout << "Dimensions info (current): " << currShape[1] << ", " << currShape[0] << std::endl;
-	std::cout << "Dimensions info (lowest): " << input->getHeight() << ", " << input->getWidth() << std::endl;
-	std::cout << "Dimensions info (WSI): " << m_image->getFullHeight() << ", " << m_image->getFullWidth() << std::endl;
-
-    // TODO: should store the corresponding model config files that contain all the information relevant for rendering
-    //  and interaction with the software, e.g. number of classes, class names, class colors, etc...
-
-	//someImage->setSpacing((float)m_image->getFullHeight() / (float)input->getHeight(), (float)m_image->getFullWidth() / (float)input->getWidth(), 1.0f);
-	someImage->setSpacing((float)m_image->getFullHeight() / (float)currShape[1], (float)m_image->getFullWidth() / (float)currShape[0], 1.0f);
-
-	auto someRenderer = SegmentationRenderer::New();
-	someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
-	someRenderer->setInputData(someImage);
-	someRenderer->setOpacity(0.4f);
-	someRenderer->update();
-
-	m_rendererTypeList[someName] = "SegmentationRenderer";
-	insertRenderer(someName, someRenderer);
-//	createDynamicViewWidget(someName, modelName);
-	savedList.emplace_back(someName);
 }
 
-void MainWindow::runPipeline(std::string path) {
+void MainWindow::runPipeline(std::string path)
+{
+    auto progDialog = QProgressDialog(mWidget);
+    progDialog.setRange(0, 1);
+    progDialog.setVisible(true);
+    progDialog.setModal(false);
+    progDialog.setLabelText("Running pipeline across WSIs in project...");
+    progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
+    progDialog.show();
 
-	std::vector<std::string> currentWSIs;
-	if (m_runForProject) {
-		currentWSIs = m_runForProjectWsis;
-	}
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
-	auto progDialog = QProgressDialog(mWidget);
-	progDialog.setRange(0, (int)currentWSIs.size() - 1);
-	//progDialog.setContentsMargins(0, 0, 0, 0);
-	progDialog.setVisible(true);
-	progDialog.setModal(false);
-	progDialog.setLabelText("Running pipeline across WSIs in project...");
-	//QRect screenrect = mWidget->screen()[0].geometry();
-	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
-	progDialog.show();
+    auto visible_wsi_uid = DataManager::GetInstance()->getVisibleImageName();
+    std::string dump_filepath = DataManager::GetInstance()->getCurrentProject()->getRootFolder() + "/results/" + visible_wsi_uid + "/";
 
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+    // if folder does not exist, create one
+    if (!QDir(QString::fromStdString(dump_filepath)).exists())
+    {
+        QDir().mkdir(QString::fromStdString(dump_filepath));
+    }
 
-	auto counter = 0;
-	for (const auto& currWSI : currentWSIs) {
+    // TODO: This now always saves result as TIFF, which is not correct. Need generic way of knowing which results that are exported and how to save these
+    dump_filepath = dump_filepath + visible_wsi_uid + ".tiff";
 
-		// TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
-		// pipeline requires some user-defined inputs, e.g. which WSI to use (and which model?)
-		std::map<std::string, std::string> arguments;
-		arguments["filename"] = filename;
-		//arguments["modelPath"] = path;
+    // TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
+    // pipeline requires some user-defined inputs, e.g. which WSI to use (and which model?)
+    std::map<std::string, std::string> arguments;
+    arguments["filename"] = DataManager::GetInstance()->get_visible_image()->get_filename();
+    arguments["exportPath"] = dump_filepath;
 
-		// check if folder for current WSI exists, if not, create one
-		/*
-		QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "/").c_str();
-		wsiResultPath = wsiResultPath.replace("//", "/");
-		if (!QDir(wsiResultPath).exists()) {
-			QDir().mkdir(wsiResultPath);
-		}
+    // parse fpl-file, and run pipeline with corresponding input arguments
+    auto pipeline = Pipeline(path, arguments);
+    pipeline.parse();
 
-		QString outFile = (wsiResultPath.toStdString() + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "_heatmap.h5").c_str();
-
-		arguments["outPath"] = outFile.replace("//", "/").toStdString();
-		 */
-
-		// parse fpl-file, and run pipeline with correspodning input arguments
-		auto pipeline = Pipeline(path, arguments);
-        pipeline.parse();
-
-        std::cout << "Before update: " << std::endl;
-        for (const auto& renderer : pipeline.getRenderers()) {
-            auto currId = createRandomNumbers_(8);
-            insertRenderer("result_" + currId, pipeline.getRenderers()[1]);
-//            createDynamicViewWidget("result_" + currId, "result_" + currId);
+    // get and start running POs
+    for (auto&& po : pipeline.getProcessObjects()) {
+        if (po.second->getNrOfOutputPorts() == 0 && std::dynamic_pointer_cast<Renderer>(po.second) == nullptr) {
+            // Process object has no output ports, must add to window to make sure it is updated.
+            reportInfo() << "Process object " << po.first << " had no output ports defined in pipeline, therefore adding to window so it is updated." << reportEnd();
+            addProcessObject(po.second);
         }
+    }
 
-		// update progress bar
-		progDialog.setValue(counter);
-		counter++;
+    // load renderers, if any
+    for (const auto& renderer : pipeline.getRenderers()) {
+        auto currId = createRandomNumbers_(8);
+        std::cout<<"Insert renderer\n";
+//        insertRenderer("result_" + currId, renderer);
+//        createDynamicViewWidget("result_" + currId, "result_" + currId);
+    }
 
-		// to render straight away (avoid waiting on all WSIs to be handled before rendering)
-		QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-	}
+    // to render straight away (avoid waiting on all WSIs to be handled before rendering)
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 }
 
 // Setting parameters for different methods
@@ -1048,217 +946,6 @@ std::map<std::string, std::string> MainWindow::setParameterDialog(std::map<std::
         std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
 
     return modelMetadata;
-}
-
-void MainWindow::MIL_test() {
-
-    std::string modelName = "custom_mil_model";
-
-    // read model metadata (txtfile)
-    std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
-
-    int patch_lvl_model = (int)(std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) / std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
-
-    if (!hasRenderer("tissue")) {
-//        segmentTissue();
-        hideTissueMask(true);
-    }
-
-    //auto generator = PatchGenerator::create(std::stoi(modelMetadata["input_img_size_x"]), std::stoi(modelMetadata["input_img_size_y"]), 1, patch_lvl_model, 0, );
-    auto generator = PatchGenerator::New();
-    generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
-    generator->setPatchLevel(patch_lvl_model);
-    generator->setInputData(0, m_image);
-    if (m_tissue)
-        generator->setInputData(1, m_tissue);
-    //if (m_tumorMap)
-    //    generator->setInputData(1, m_tumorMap);
-
-    //auto batchgen = ImageToBatchGenerator::New();  // TODO: Can't use this with TensorRT (!)
-    //batchgen->setInputConnection(generator->getOutputPort());
-    //batchgen->setMaxBatchSize(1);
-    //batchgen->setMaxBatchSize(std::stoi(modelMetadata["batch_process"])); // set 256 for testing stuff (tumor -> annotation, then grade from tumor segment)
-
-    auto network = NeuralNetwork::New();
-    network->setInferenceEngine("OpenVINO");
-    // apparently this is needed if model has unspecified input size
-    /*
-    network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
-            { 1, 256, 256, 3 })); //{1, size, size, 3}
-
-    network->setOutputNode(0, "conv2d_26/truediv", NodeType::TENSOR,
-                           TensorShape({ 1, 256, 256, 3}));
-    network->setOutputNode(1, "dense_1/Softmax", NodeType::TENSOR,
-                           TensorShape({ 1, 2 }));
-     */
-
-    std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
-
-    network->load(cwd + "data/Models/" + modelName + ".onnx");
-    //network->load(cwd + "data/Models/" + modelName + "." + getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat())); //".uff");
-    std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
-
-    network->setInputConnection(generator->getOutputPort()); //generator->getOutputPort());
-    vector scale_factor = splitCustom(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
-    network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
-
-    auto stitcher1 = PatchStitcher::New();
-    stitcher1->setInputConnection(network->getOutputPort(1));
-
-    auto stitcher2 = PatchStitcher::New();
-    stitcher2->setInputConnection(network->getOutputPort(0));
-
-    auto someRenderer1 = HeatmapRenderer::New();
-    someRenderer1->setMinConfidence(0.8);
-    someRenderer1->setInterpolation(false);
-    //someRenderer->setColor(0, Color(0.0f, 255.0f / 255.0f, 0.0f));
-    //someRenderer1->setInputData(m_tumorMap);
-    someRenderer1->setInputConnection(stitcher1->getOutputPort());
-
-    auto someRenderer2 = HeatmapRenderer::New();
-    //someRenderer2->setMinConfidence(0.5);
-    //someRenderer2->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
-    someRenderer2->setInterpolation(false);
-    someRenderer2->setInputConnection(stitcher2->getOutputPort());
-    //someRenderer2->setMaxOpacity(0.6f);
-
-    //someRenderer2->setSynchronizedRendering(false);
-    //someRenderer2->update();
-
-    m_rendererTypeList["mil_grade"] = "HeatmapRenderer";
-    insertRenderer("mil_grade", someRenderer1);
-
-    m_rendererTypeList["mil_attention"] = "HeatmapRenderer";
-    insertRenderer("mil_attention", someRenderer2);
-
-//    createDynamicViewWidget("mil_grade", modelName);
-//    createDynamicViewWidget("mil_attention", modelName);
-}
-
-void MainWindow::Kmeans_MTL_test() {
-    std::string modelName = "feature_kmeans_model";
-
-    // read model metadata (txtfile)
-    std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
-
-    int patch_lvl_model = (int)(std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) / std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
-
-    auto generator = PatchGenerator::New();
-    generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
-    generator->setPatchLevel(patch_lvl_model);
-    generator->setInputData(0, m_image);
-
-    auto tissueSegmentation = TissueSegmentation::New();
-    tissueSegmentation->setInputData(m_image);
-    tissueSegmentation->setThreshold(std::stoi(modelMetadata["tissue_threshold"]));
-
-    generator->setInputConnection(1, tissueSegmentation->getOutputPort());
-
-    auto network = NeuralNetwork::New();
-    network->setInferenceEngine("TensorFlow");
-    // apparently this is needed if model has unspecified input size
-    network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
-            { 1, 256, 256, 3 }));
-
-    network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
-                           TensorShape({ 1, 8 }));
-
-    std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
-
-    network->load(cwd + "data/Models/" + modelName + "." + getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat())); //".uff");
-    std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
-
-    network->setInputConnection(generator->getOutputPort());
-    vector scale_factor = splitCustom(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
-    network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
-
-    auto stitcher1 = PatchStitcher::New();
-    stitcher1->setInputConnection(network->getOutputPort(0));
-
-    auto heatmap1 = HeatmapRenderer::New();
-    heatmap1->setInterpolation(std::stoi(modelMetadata["interpolation"]));
-    heatmap1->setInputConnection(stitcher1->getOutputPort());
-
-    m_rendererTypeList["cluster_pw"] = "HeatmapRenderer";
-    insertRenderer("cluster_pw", heatmap1);
-
-//    createDynamicViewWidget("cluster_pw", modelName);
-}
-
-void MainWindow::MTL_test() {
-
-	std::string modelName = "model_nuclei_seg_detection_multitask";
-
-	// read model metadata (txtfile)
-	std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
-
-	int patch_lvl_model = (int)(std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) / std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
-
-	if (!hasRenderer("tissue")) {
-//		segmentTissue();
-		hideTissueMask(true);
-	}
-
-	auto generator = PatchGenerator::New();
-	generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
-	generator->setPatchLevel(patch_lvl_model);
-	generator->setInputData(0, m_image);
-	if (m_tissue)
-		generator->setInputData(1, m_tissue);
-	if (m_tumorMap)
-		generator->setInputData(1, m_tumorMap);
-
-	auto network = NeuralNetwork::New();
-	network->setInferenceEngine("TensorFlow");
-	// apparently this is needed if model has unspecified input size
-	network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
-		{ 1, 256, 256, 3 })); //{1, size, size, 3}
-
-	network->setOutputNode(0, "conv2d_26/truediv", NodeType::TENSOR,
-		TensorShape({ 1, 256, 256, 3}));
-	network->setOutputNode(1, "dense_1/Softmax", NodeType::TENSOR,
-		TensorShape({ 1, 2 }));
-
-	std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
-
-	network->load(cwd + "data/Models/" + modelName + "." + getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat())); //".uff");
-    std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
-
-	network->setInputConnection(generator->getOutputPort());
-	vector scale_factor = splitCustom(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
-	network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
-
-	auto converter = TensorToSegmentation::New();
-	converter->setInputConnection(network->getOutputPort(0));
-
-	auto stitcher1 = PatchStitcher::New();
-	stitcher1->setInputConnection(converter->getOutputPort(0));
-
-	auto stitcher2 = PatchStitcher::New();
-	stitcher2->setInputConnection(network->getOutputPort(1));
-
-	auto someRenderer1 = SegmentationRenderer::New();
-	someRenderer1->setOpacity(0.7f);
-	//someRenderer->setColor(0, Color(0.0f, 255.0f / 255.0f, 0.0f));
-	//someRenderer1->setInputData(m_tumorMap);
-	someRenderer1->setInputConnection(stitcher1->getOutputPort());
-
-	auto someRenderer2 = HeatmapRenderer::New();
-	//someRenderer2->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
-	someRenderer2->setInputConnection(stitcher2->getOutputPort());
-	//someRenderer2->setMaxOpacity(0.6f);
-
-	//someRenderer2->setSynchronizedRendering(false);
-	//someRenderer2->update();
-
-	m_rendererTypeList["nuclei_seg"] = "SegmentationRenderer";
-	insertRenderer("nuclei_seg", someRenderer1);
-
-	m_rendererTypeList["nuclei_detect"] = "HeatmapRenderer";
-	insertRenderer("nuclei_detect", someRenderer2);
-
-//	createDynamicViewWidget("nuclei_seg", modelName);
-//	createDynamicViewWidget("nuclei_detect", modelName);
 }
 
 std::map<std::string, std::string> MainWindow::getModelMetadata(std::string modelName) {

@@ -36,6 +36,14 @@ namespace fast{
             void emptyProject();
             void loadProject();
             void saveProject();
+            void saveResults(const std::string& wsi_uid);
+            /**
+             * @brief saveResult Purpose is to save on disk all results linked to one WSI.
+             * Will evolve when pipeline outputs can be properly caught.
+             * @param wsi_uid
+             * @param current_renderer_type
+             */
+            void saveResult(const std::string& wsi_uid, const std::string& current_renderer_type);
 
             /**
              * @brief includeImage Include image to the current project.
@@ -70,6 +78,8 @@ namespace fast{
              * @param wsi_uid unique id of the WSI whose thumbnail should be saved.
              */
             void saveThumbnail(const std::string& wsi_uid);
+
+            void loadSegmentation(const std::string& wsi_uid, const std::string& segmentation_path);
 
        private:
             bool _temporary_dir_flag; /* Flag indicating if a project destination folder has been chosen by the user. */

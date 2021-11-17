@@ -112,11 +112,6 @@ class MainWindow : public Window {
         QStackedLayout *stackedLayout;
         QStackedLayout *exportStackedLayout;
 
-        // EXPERIMENTAL METHODS FOR TESTING CUSTOM STUFF (Not relevant for the final program)
-        void MTL_test();
-        void MIL_test();
-        void Kmeans_MTL_test();
-
         // custom split
         std::vector<std::string> splitCustom(const std::string& s, const std::string& delimiter);
 

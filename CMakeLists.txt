@@ -27,6 +27,8 @@ add_executable(fastpathology
                 source/gui/ProcessTab/PipelineScriptEditorWidget.h
                 source/gui/ProcessTab/AdvancedModeParametersEditorWidget.cpp
                 source/gui/ProcessTab/AdvancedModeParametersEditorWidget.h
+                source/gui/ProcessTab/PipelineRunnerWidget.cpp
+                source/gui/ProcessTab/PipelineRunnerWidget.h
                 source/gui/ViewTab/ViewWidget.cpp
                 source/gui/ViewTab/ViewWidget.h
                 source/gui/ViewTab/DynamicViewTabWidget.cpp

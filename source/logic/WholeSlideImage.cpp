@@ -97,6 +97,15 @@ namespace fast{
         _image.reset();
     }
 
+    const std::vector<std::string> WholeSlideImage::get_renderer_keys()
+    {
+        std::vector<std::string> keys;
+        for(auto it=this->_renderers.begin(); it != this->_renderers.end(); it++)
+            keys.push_back(it->first);
+
+        return keys;
+    }
+
     const std::string WholeSlideImage::get_renderer_type(const std::string& name){
         if(has_renderer(name))
             return this->_renderers_types[name];

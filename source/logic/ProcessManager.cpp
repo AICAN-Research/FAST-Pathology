@@ -809,4 +809,10 @@ namespace fast {
             std::cout<<"Exception caught in the inference process: "<<e.what()<<std::endl;
         }
     }
+
+    void ProcessManager::runPipeline(const std::string& pipeline_uid)
+    {
+        this->_pipelines[pipeline_uid]->execute();
+    }
+
 } // End of namespace fast

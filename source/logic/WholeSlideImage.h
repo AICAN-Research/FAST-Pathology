@@ -61,6 +61,7 @@ namespace fast{
                 return _renderers.find(renderer_name) != _renderers.end();
             }
 
+            const std::vector<std::string> get_renderer_keys();
             std::shared_ptr<Renderer> get_renderer(std::string name){
                 return this->_renderers[name];
             }
@@ -84,11 +85,14 @@ namespace fast{
             std::unordered_map<std::string, std::string> _metadata; /* */
             float _magnification_level; /* */
             std::shared_ptr<ImagePyramid> _image; /* Loaded WSI */
-            // @TODO. For segmentation renderers, should they be kept in memory? Or dumped on disk, and only the physical location kept to reload when there is a need for display?
+            // @TODO. The key is obviously unique, and should link to how results are generated so that multiple segmentation renderers using the same model can be stored
+            // (only difference being some parameters modified by the user).
             std::map<std::string, std::shared_ptr<Renderer>> _renderers; /* List of loaded renderers associated with the image (e.g., Segmentation/HeatmapRenderer). */
             std::map<std::string, std::string> _renderers_types; /* Type of each renderer. */
             QImage _thumbnail; /* Thumbnail for the WSI */
-            std::map<std::string, std::string> _results_filenames; /* When the renderers are not in memory, the image files are dumped on disk. */
+            // @TODO. When the renderers are not in memory the image files are dumped on disk. Should we store here the text file for each pipeline that was used on this image
+            // so that reloading the results for viewing is easier to perform.
+            std::map<std::string, std::string> _results_filenames;
     };
 }
 
