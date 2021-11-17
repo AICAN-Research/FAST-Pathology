@@ -1,0 +1,58 @@
+name: Build Ubuntu
+
+on:
+  push:
+    branches: [ master gui_cleaning ]
+  pull_request:
+    branches: [ master gui_cleaning ]
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Create a subdirectory
+      run: |
+        mkdir subdir
+
+    - name: Download FAST
+      id: get_release
+      uses: dsaltares/fetch-gh-release-asset@master
+      with:
+        repo: "smistad/FAST"
+        version: "tags/v4.2.0-rc2"
+        file: "fast_ubuntu18.04_4.2.0.deb"
+        target: "subdir/fast_ubuntu18.04_4.2.0.deb"
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install dependencies  # @TODO: Reduce this
+      run: |
+        sudo snap install cmake --classic # Use snap to get more recent version of cmake on Ubuntu 18.04
+        sudo apt install g++ patchelf
+        sudo apt install '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
+        sudo apt install libopenslide-dev  # Needed for WSI module
+        sudo apt install pkgconf libusb-1.0-0-dev  # Needed for realsense
+        sudo apt install python3 libpython3-dev python3-pip python3-setuptools
+        pip3 install numpy==1.19.5 pylddwrap==1.2.0
+
+    - name: Install FAST
+      run: sudo dpkg -i subdir/fast_ubuntu18.04_4.2.0.deb
+      
+    - name: Configure CMake
+      run: cmake -B ${{github.workspace}}/build
+
+    - name: Build FastPathology
+      run: cmake --build ${{github.workspace}}/build --config Release -j 4
+
+    - name: Build Package
+      run: cmake --build ${{github.workspace}}/build --config Release --target package -j 4
+
+    - name: Upload Debian package
+      uses: actions/upload-artifact@v2
+      with:
+        name: Debian package
+        path: ${{github.workspace}}/build/fastpathology_*.deb
+        if-no-files-found: error

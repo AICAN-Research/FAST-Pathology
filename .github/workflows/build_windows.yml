@@ -1,0 +1,40 @@
+name: Build Windows
+
+on:
+  push:
+    branches: [ master gui_cleaning ]
+  pull_request:
+    branches: [ master gui_cleaning ]
+
+jobs:
+  build:
+    runs-on: windows-2019
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Download FAST
+      run: |
+        curl.exe -OL https://github.com/smistad/FAST/releases/download/v4.2.0-rc2/fast_windows_4.2.0.zip
+        tar -xzf ./fast_windows_4.2.0.zip
+      
+    - name: Configure CMake
+      run: |
+        cmake -B ${{github.workspace}}/build `
+            -DFAST_DIR=${{github.workspace}}/fast_windows_4.2.0/fast/cmake `
+            -G "Visual Studio 16 2019" `
+            -A x64
+
+    - name: Build FastPathology
+      run: cmake --build ${{github.workspace}}/build --config Release --target fastpathology -j 4
+
+    - name: Build Package
+      run: cmake --build ${{github.workspace}}/build --config Release --target package -j 4
+
+    - name: Upload Windows installer
+      uses: actions/upload-artifact@v2
+      with:
+        name: Windows package
+        path: ${{github.workspace}}/build/fastpathology_*.exe
+        if-no-files-found: error

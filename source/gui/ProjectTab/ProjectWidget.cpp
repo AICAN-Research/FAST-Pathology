@@ -138,7 +138,7 @@ namespace fast {
 
         // check if any WSIs have been selected previously, and ask if you want to make a project and add these,
         // or make a new fresh one -> if no, need to clear all WSIs in the QListWidget
-        if (not DataManager::GetInstance()->getCurrentProject()->isProjectEmpty())
+        if (!DataManager::GetInstance()->getCurrentProject()->isProjectEmpty())
         {
             // prompt
             QMessageBox mBox;
@@ -172,7 +172,7 @@ namespace fast {
             return;
 
         // If existing data, but still a temporary project directory, ask to select a valid folder
-        if (not DataManager::GetInstance()->getCurrentProject()->hasUserSelectedDestinationFolder())
+        if (!DataManager::GetInstance()->getCurrentProject()->hasUserSelectedDestinationFolder())
         {
             QFileDialog dialog(this);
             dialog.setFileMode(QFileDialog::DirectoryOnly);
@@ -191,7 +191,7 @@ namespace fast {
 
     void ProjectWidget::openProject() {
         // If existing data, asks for confirmation to delete.
-        if (not DataManager::GetInstance()->getCurrentProject()->isProjectEmpty())
+        if (!DataManager::GetInstance()->getCurrentProject()->isProjectEmpty())
         {
             QMessageBox mBox;
             mBox.setIcon(QMessageBox::Warning);
@@ -264,7 +264,7 @@ namespace fast {
 
     void ProjectWidget::selectFile() {
         // check if view object list is empty, if not, prompt to save results or not, if not clear
-        if (not DataManager::GetInstance()->getCurrentProject()->isProjectEmpty())
+        if (!DataManager::GetInstance()->getCurrentProject()->isProjectEmpty())
         {
             // prompt
             QMessageBox mBox;
