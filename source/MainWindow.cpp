@@ -452,10 +452,10 @@ void MainWindow::loadPipelines() {
     foreach(QString currentFpl, pipelines) {
         //runPipelineMenu->addAction(QString::fromStdString(splitCustom(currentFpl.toStdString(), ".")[0]), this, &MainWindow::lowresSegmenter);
         auto currentAction = runPipelineMenu->addAction(currentFpl); //QString::fromStdString(splitCustom(splitCustom(currentFpl.toStdString(), "/")[-1], ".")[0]));
-        QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, cwd + "data/Pipelines/" + currentFpl.toStdString()));
+        QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline_wrapper, this, cwd + "data/Pipelines/" + currentFpl.toStdString()));
 
         //auto currentAction = runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]));
-        //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, someFile));
+        //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline_wrapper, this, someFile));
     }
 }
 
@@ -2394,7 +2394,7 @@ void MainWindow::runForProject() {
 	for (const auto& item : m_runForProjectWsis) {
 		selectedFilesWidget->addItem(QString::fromStdString(item));
 	}
-	selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
+	selectedFilesWidget->setMinimumWidth(allFilesWidget->sizeHintForColumn(0));  // set to use allFilesWidget size such that width always match
 
 	wsiDialogLayout->addWidget(allFilesWidget);
 	wsiDialogLayout->addWidget(buttonsWidget);
@@ -2502,13 +2502,13 @@ void MainWindow::addPipelines() {
             }
         }
         // should update runPipelineMenu as new pipelines are being added
-        //runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]), this, &MainWindow::runPipeline);
+        //runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]), this, &MainWindow::runPipeline_wrapper);
         //auto currentAction = new QAction(QString::fromStdString(splitCustom(someFile, ".")[0]));
         auto currentAction = runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]));
-        QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, someFile));
+        QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline_wrapper, this, someFile));
 
         //auto currentAction = runPipelineMenu->addAction(currentFpl); //QString::fromStdString(splitCustom(splitCustom(currentFpl.toStdString(), "/")[-1], ".")[0]));
-        //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, cwd + "data/Pipelines/" + currentFpl.toStdString()));
+        //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline_wrapper, this, cwd + "data/Pipelines/" + currentFpl.toStdString()));
     }
 }
 
@@ -3097,126 +3097,120 @@ void MainWindow::runPipeline_wrapper(std::string path) {
         currentWSIs = m_runForProjectWsis;
     }
     else {
-        currentWSIs.push_back(wsiList[curr_pos]);
+        currentWSIs.push_back(filename);
     }
 
     auto progDialog = QProgressDialog(mWidget);
     progDialog.setRange(0, (int)currentWSIs.size() - 1);
-    //progDialog.setContentsMargins(0, 0, 0, 0);
     progDialog.setVisible(true);
     progDialog.setModal(false);
     progDialog.setLabelText("Running pipeline across WSIs in project...");
-    //QRect screenrect = mWidget->screen()[0].geometry();
     progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
     progDialog.show();
 
     QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
-    auto counter = 0;
-    for (const auto& currWSI : currentWSIs) {
-
-        // if run for project is enabled, run the inference-export pipeline in a background thread, else don't
-        if (m_runForProject) {
-            std::atomic_bool stopped(false);
-            std::thread inferenceThread([&, path]() {
-                runPipeline(path);
-            });
-            inferenceThread.detach();
+    // always run pipeline in background thread
+    std::atomic_bool stopped(false);
+    std::thread inferenceThread([&, path, currentWSIs]() {
+        auto counter = 0;
+        for (const auto& currWSI : currentWSIs) {
+            runPipeline(path, currWSI, counter);
         }
-        else {
-            runPipeline(path);
+    });
+    inferenceThread.detach();
 
-            // now make it possible to edit prediction in the View Widget
-            // createDynamicViewWidget(modelMetadata["name"], someModelName);
+    // now make it possible to edit prediction in the View Widget
+    // createDynamicViewWidget(modelMetadata["name"], someModelName);
+}
+
+void MainWindow::runPipeline(std::string path, std::string currWSI, int counter) {
+
+    // setup paths for saving results
+    QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
+    wsiResultPath = wsiResultPath.replace("//", "/");
+
+    // if folder does not exist, create one
+    if (!QDir(wsiResultPath).exists()) {
+        QDir().mkdir(wsiResultPath);
+    }
+
+    // TODO: This now always saves result as TIFF, which is not correct. Need generic way of knowing which results that are exported and how to save these
+    auto currPath = wsiResultPath.toStdString() + "/" + splitCustom(wsiResultPath.toStdString(), "/").back() + ".tiff";
+
+    // TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
+    // pipeline requires some user-defined inputs, e.g. which WSI to use (and which model?)
+    std::map<std::string, std::string> arguments;
+    arguments["filename"] = currWSI;
+    arguments["exportPath"] = currPath;
+    //arguments["modelPath"] = path;
+
+    // parse fpl-file, and run pipeline with corresponding input arguments
+    auto pipeline = Pipeline(path, arguments);
+    if (m_runForProject) {
+        pipeline.parse({}, false);
+    }
+    else {
+        pipeline.parse();
+    }
+
+    // get and start running POs
+    for (auto&& po : pipeline.getProcessObjects()) {
+        if (po.second->getNrOfOutputPorts() == 0 && std::dynamic_pointer_cast<Renderer>(po.second) == nullptr) {
+            // Process object has no output ports, must add to window to make sure it is updated.
+            reportInfo() << "Process object " << po.first << " had no output ports defined in pipeline, therefore adding to window so it is updated." << reportEnd();
+            addProcessObject(po.second);
         }
     }
+
+    if (!m_runForProject) {
+        // load renderers, if any
+        for (const auto& renderer : pipeline.getRenderers()) {
+            auto currId = createRandomNumbers_(8);
+            insertRenderer("result_" + currId, renderer);
+            createDynamicViewWidget("result_" + currId, "result_" + currId);
+        }
+    }
+
+    if (m_runForProject) {
+        // connect signal to update flag
+        connect(this, &MainWindow::currentPipelineFinished, this, &MainWindow::_nextPipeline);
+
+        auto data = pipeline.getAllPipelineOutputData([&, this](float progress) {
+            // this never runs? Why?
+            std::cout << "Progress: " << 100 * progress << "%" << std::endl;
+            if (int(progress) == 1) {  // run until finished
+                std::cout << "PIPELINE IS DONE --- STOP SIGNAL WAS EMITTED!" << std::endl;
+                emit currentPipelineFinished();
+            }
+        });
+        std::cout << "Done" << std::endl;
+
+        // test if signal/slot stuff works -> WORKS!
+        /*
+        std::cout << "Current stop flag value: " << m_pipelineStopped << std::endl;
+        emit currentPipelineFinished();
+        std::cout << "After emit: " << m_pipelineStopped << std::endl;
+            */
+
+            //while (!m_pipelineStopped) { QCoreApplication::processEvents(QEventLoop::AllEvents, 0); };  // perhaps need to force update if I do this? Why doesn't it update with this? Does it interact with the mainthread somehow?
+
+        m_pipelineStopped = false;  // reset when done
+    }
+
+    // update progress bar
+    //progDialog.setValue(counter);  // cannot update this in another thread -> should add some signal/slot stuff for this
+    counter++;
+
+    // to render straight away (avoid waiting on all WSIs to be handled before rendering)
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 }
 
-void MainWindow::runPipeline(std::string path) {
-
-	std::vector<std::string> currentWSIs;
-	if (m_runForProject) {
-		currentWSIs = m_runForProjectWsis;
-	}
-	else {
-        currentWSIs.push_back(filename);
-	}
-
-	auto progDialog = QProgressDialog(mWidget);
-	progDialog.setRange(0, (int)currentWSIs.size() - 1);
-	progDialog.setVisible(true);
-	progDialog.setModal(false);
-	progDialog.setLabelText("Running pipeline across WSIs in project...");
-	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
-	progDialog.show();
-
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-
-    auto counter = 0;
-    for (const auto& currWSI : currentWSIs) {
-
-        // setup paths for saving results
-        std::cout << "Current save location: " << projectFolderName.toStdString() << std::endl;
-        QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
-        wsiResultPath = wsiResultPath.replace("//", "/");
-
-        // if folder does not exist, create one
-        if (!QDir(wsiResultPath).exists()) {
-            QDir().mkdir(wsiResultPath);
-        }
-
-        // TODO: This now always saves result as TIFF, which is not correct. Need generic way of knowing which results that are exported and how to save these
-        auto currPath = wsiResultPath.toStdString() + "/" + splitCustom(wsiResultPath.toStdString(), "/").back() + ".tiff";
-
-        // TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
-        // pipeline requires some user-defined inputs, e.g. which WSI to use (and which model?)
-        std::map<std::string, std::string> arguments;
-        arguments["filename"] = filename;
-        arguments["exportPath"] = currPath;
-        //arguments["modelPath"] = path;
-
-        // parse fpl-file, and run pipeline with corresponding input arguments
-        auto pipeline = Pipeline(path, arguments);
-        if (m_runForProject) {
-            pipeline.parse({}, false);
-        }
-        else {
-            pipeline.parse();
-        }
-
-        if (m_runForProject) {
-            auto data = pipeline.getAllPipelineOutputData([](float progress) {
-                std::cout << "Progress: " << 100 * progress << "%" << std::endl;
-            });
-            std::cout << "Done" << std::endl;
-        }
-
-        // get and start running POs
-        for (auto&& po : pipeline.getProcessObjects()) {
-            if (po.second->getNrOfOutputPorts() == 0 && std::dynamic_pointer_cast<Renderer>(po.second) == nullptr) {
-                // Process object has no output ports, must add to window to make sure it is updated.
-                reportInfo() << "Process object " << po.first << " had no output ports defined in pipeline, therefore adding to window so it is updated." << reportEnd();
-                addProcessObject(po.second);
-            }
-        }
-
-        if (!m_runForProject) {
-            // load renderers, if any
-            for (const auto& renderer : pipeline.getRenderers()) {
-                auto currId = createRandomNumbers_(8);
-                insertRenderer("result_" + currId, renderer);
-                createDynamicViewWidget("result_" + currId, "result_" + currId);
-            }
-        }
-
-        // update progress bar
-        progDialog.setValue(counter);
-        counter++;
-
-        // to render straight away (avoid waiting on all WSIs to be handled before rendering)
-        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-	}
+void MainWindow::_nextPipeline() {
+    std::cout << "---FINALLY Done" << std::endl;
+    m_pipelineStopped = true;
 }
+
 
 // Setting parameters for different methods
 std::map<std::string, std::string> MainWindow::setParameterDialog(std::map<std::string, std::string> modelMetadata, int *successFlag) {

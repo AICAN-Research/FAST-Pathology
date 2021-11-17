@@ -55,6 +55,7 @@ class MainWindow : public Window {
         bool advancedMode = false;
         bool m_wsiSharpening = false;
         bool m_doneFirstWSI = false;
+        bool m_pipelineStopped = false;
 
         int curr_pos = 0;
         float magn_lvl;
@@ -342,9 +343,12 @@ class MainWindow : public Window {
         bool segmentTissue();
         /**
          * Deploys a selected pipeline, through parsing the text pipeline script and creating FAST POs before execution.
+         * Inputs the path of the FPL file, the path of the current WSIs, and the current pipeline in a list
          * @param path
+         * @param currWSI
+         * @param counter
          */
-        void runPipeline(std::string path);
+        void runPipeline(std::string path, std::string currWSI, int counter);
         /**
          * Simple wrapper of the alternative inference method, runPipeline. If ran with Projects enabled, it will be ran in a
          * non-blocking background thread and will not render any results. Otherwise the rendered results will be
@@ -532,11 +536,10 @@ class MainWindow : public Window {
         std::shared_ptr<Image> m_tumorMap;
 
     signals:
-        void inferenceFinished(std::string name);
+        void currentPipelineFinished();
 
     private slots:
         void updateChannelValue(int index);
-
+        void _nextPipeline();
     };
-
 }
