@@ -3136,7 +3136,7 @@ void MainWindow::runPipeline(std::string path, std::string currWSI, int counter)
     }
 
     // TODO: This now always saves result as TIFF, which is not correct. Need generic way of knowing which results that are exported and how to save these
-    auto currPath = wsiResultPath.toStdString() + "/" + splitCustom(wsiResultPath.toStdString(), "/").back() + ".tiff";
+    auto currPath = wsiResultPath.toStdString() + "/" + splitCustom(wsiResultPath.toStdString(), "/").back() + ".tiff"; // FIXME: Need to make this more generic, to handle different types of results
 
     // TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
     // pipeline requires some user-defined inputs, e.g. which WSI to use (and which model?)
