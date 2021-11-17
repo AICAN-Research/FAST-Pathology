@@ -681,55 +681,26 @@ void MainWindow::createMenuWidget() {
 }
 
 void MainWindow::createWSIScrollAreaWidget() {
-    //auto scrollAreaDialog = new QDialog();
-    //scrollAreaDialog->setGeometry(100, 100, 260, 260);
-
-    // TODO: Need to substitute this with QListWidget or similar as it's quite slow and memory expensive for
-    //        larger number of elements
-    scrollArea = new QScrollArea(mWidget);  //scrollAreaDialog);
+    scrollArea = new QScrollArea(mWidget);
     scrollArea->setAlignment(Qt::AlignTop);
-    //scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     scrollArea->setWidgetResizable(true);
     scrollArea->setGeometry(10, 10, 200, 200);
 
     scrollList = new QListWidget(mWidget);
-    //scrollList->setStyleSheet("border: none, padding: 0, background: white, color: none");
     scrollList->setSelectionMode(QAbstractItemView::ExtendedSelection);
     scrollList->setItemAlignment(Qt::AlignTop);
     scrollList->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     scrollList->setResizeMode(QListView::Adjust);  // resizable adaptively
     scrollList->setGeometry(10, 10, 200, 200);
-    //scrollList->setStyleSheet("*:hover {background:blue;}");  // setting color of widget when hovering
-    //scrollList->setStyleSheet("QListWidget:item:selected:active {background: blue;}; QListWidget:item:selected:!active {background: gray};");
-    //scrollList->setFocus();
-    //scrollList->setViewMode(QListWidget::IconMode);
-    //scrollList->setIconSize(QSize(100, 100));
-    //scrollList->setFlow(QListView::TopToBottom);
-    //scrollList->setResizeMode(QListWidget::Adjust);
-    //QObject::connect(scrollList, &QPushButton::clicked, std::bind(&MainWindow::selectFileInProject, this, 1));
-    //QObject::connect(scrollList, &QListWidget::itemPressed, std::bind(&MainWindow::selectFileInProject, this, 1));  // this, SLOT(onListMailItemClicked(QListWidgetItem*)));
-    //QObject::connect(scrollList,itemClicked(QListWidgetItem*), std::bind(&MainWindow::selectFileInProject, this, 1));
-    //connect(ui->listMail, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(onListMailItemClicked(QListWidgetItem*)));
-    // QListWidget::itemPressed(QListWidgetItem *item)
-    //QObject::connect(scrollList, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(&MainWindow::selectFileInProject));
-
-    //scrollList->setSelectionMode(QListWidgetItem::NoSelection);
-    //QObject::connect(scrollList, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(itemDoubleClicked(QListWidgetItem*)));
 
     scrollArea->setWidget(scrollList);
 
     scrollWidget = new QWidget(mWidget);
-    //scrollArea->setWidget(scrollWidget);
 
     scrollLayout = new QVBoxLayout;
     scrollWidget->setLayout(scrollLayout);
 
-    //connect(scrollList, SIGNAL(activated(int)), scrollLayout, SLOT(setCurrentIndex(int)));
-
-    //fileLayout->insertWidget(2, scrollArea);  //widget);
     fileLayout->addWidget(scrollArea);
-
-    //scrollAreaDialog->show();
 }
 
 void MainWindow::createFileWidget() {
@@ -739,7 +710,6 @@ void MainWindow::createFileWidget() {
 
     fileWidget = new QWidget(mWidget);
     fileWidget->setLayout(fileLayout);
-    //fileWidget->setFixedWidth(200);
 
     auto createProjectButton = new QPushButton(mWidget);
     createProjectButton->setText("Create Project");
@@ -750,52 +720,16 @@ void MainWindow::createFileWidget() {
     auto openProjectButton = new QPushButton(mWidget);
     openProjectButton->setText("Open Project");
     openProjectButton->setFixedHeight(50);
-    //openProjectButton->setStyleSheet("color: white; background-color: blue");
     QObject::connect(openProjectButton, &QPushButton::clicked, std::bind(&MainWindow::openProject, this));
 
     auto selectFileButton = new QPushButton(mWidget);
     selectFileButton->setText("Import WSIs");
-    //selectFileButton->setFixedWidth(200);
     selectFileButton->setFixedHeight(50);
-    //selectFileButton->setStyleSheet("color: white; background-color: blue");
     QObject::connect(selectFileButton, &QPushButton::clicked, std::bind(&MainWindow::selectFile, this));
-
-    /*
-    auto addModelButton = new QPushButton(fileWidget);
-    addModelButton->setText("Import model");
-    //selectFileButton->setFixedWidth(200);
-    addModelButton->setFixedHeight(50);
-    addModelButton->setStyleSheet("color: white; background-color: blue");
-    QObject::connect(addModelButton, &QPushButton::clicked, std::bind(&MainWindow::addModels, this));
-
-    auto quitButton = new QPushButton(fileWidget);
-    quitButton->setText("Quit");
-    //quitButton->setFixedWidth(200);
-    quitButton->setFixedHeight(50);
-    quitButton->setStyleSheet("color: black; background-color: red"); //; border-style: outset; border-color: black; border-width: 3px");
-    QObject::connect(quitButton, &QPushButton::clicked, std::bind(&Window::stop, this));
-
-    auto smallTextWindow = new QTextEdit;
-    smallTextWindow->setPlainText(tr("Hello, this is a prototype of the software I am developing as part of my "
-                                     "PhD project. The software is made to be simple, but still contains multiple advanced "
-                                     "options either for processing WSIs, deploying trained CNNs or visualizing WSIs and "
-                                     "segments and stuff... Have fun! :)"));
-    smallTextWindow->setReadOnly(true);
-
-    auto bigEditor = new QTextEdit;
-    bigEditor->setPlainText(tr("This widget takes up all the remaining space "
-                               "in the top-level layout."));
-    */
 
     fileLayout->addWidget(createProjectButton);
     fileLayout->addWidget(openProjectButton);
-    fileLayout->addWidget(selectFileButton); //, Qt::AlignTop);
-    /*
-    fileLayout->addWidget(addModelButton);
-    fileLayout->addWidget(smallTextWindow);
-    fileLayout->addWidget(bigEditor);
-    fileLayout->addWidget(quitButton, Qt::AlignTop);
-     */
+    fileLayout->addWidget(selectFileButton);
 
     createWSIScrollAreaWidget();
 
@@ -3092,8 +3026,12 @@ void MainWindow::loadSegmentation(QString tissuePath, QString name) {
 
 void MainWindow::runPipeline_wrapper(std::string path) {
 
+    // catch initial state of m_runForProject when this first started, as this _global_ flag might change if stuff is performed in parallel
+    auto curr_runForProject = m_runForProject;
+
+    // current WSIs, as number of WSIs might change during inference (if run in parallel)
     std::vector<std::string> currentWSIs;
-    if (m_runForProject) {
+    if (curr_runForProject) {
         currentWSIs = m_runForProjectWsis;
     }
     else {
@@ -3112,13 +3050,13 @@ void MainWindow::runPipeline_wrapper(std::string path) {
 
     // Note-to-self: Cannot run pipeline with rendering in a background thread as QOpenGLContext cannot be made in a different thread!
     // @TODO: Hmm, signal/slots solution here maybe? Might not be so easy...
-    if (m_runForProject) {
+    if (curr_runForProject) {
         // always run pipeline in background thread
         std::atomic_bool stopped(false);
         std::thread inferenceThread([&, path, currentWSIs]() {
             auto counter = 0;
             for (const auto& currWSI : currentWSIs) {
-                runPipeline(path, currWSI, counter);
+                runPipeline(path, currWSI, counter, curr_runForProject);
             }
         });
         inferenceThread.detach();
@@ -3126,7 +3064,7 @@ void MainWindow::runPipeline_wrapper(std::string path) {
     else {
         auto counter = 0;
         for (const auto& currWSI : currentWSIs) {
-            runPipeline(path, currWSI, counter);
+            runPipeline(path, currWSI, counter, curr_runForProject);
         }
     }
 
@@ -3135,7 +3073,7 @@ void MainWindow::runPipeline_wrapper(std::string path) {
     // createDynamicViewWidget(modelMetadata["name"], someModelName);
 }
 
-void MainWindow::runPipeline(std::string path, std::string currWSI, int counter) {
+void MainWindow::runPipeline(std::string path, std::string currWSI, int counter, bool RFP_flag) {
 
     // setup paths for saving results
     QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
@@ -3158,7 +3096,7 @@ void MainWindow::runPipeline(std::string path, std::string currWSI, int counter)
 
     // parse fpl-file, and run pipeline with corresponding input arguments
     auto pipeline = Pipeline(path, arguments);
-    if (m_runForProject) {
+    if (RFP_flag) {
         pipeline.parse({}, false);
     }
     else {
@@ -3174,7 +3112,7 @@ void MainWindow::runPipeline(std::string path, std::string currWSI, int counter)
         }
     }
 
-    if (!m_runForProject) {
+    if (!RFP_flag) {
         // load renderers, if any
         for (const auto& renderer : pipeline.getRenderers()) {
             auto currId = createRandomNumbers_(8);
@@ -3183,7 +3121,7 @@ void MainWindow::runPipeline(std::string path, std::string currWSI, int counter)
         }
     }
 
-    if (m_runForProject) {
+    if (RFP_flag) {
         // connect signal to update flag
         connect(this, &MainWindow::currentPipelineFinished, this, &MainWindow::_nextPipeline);
 

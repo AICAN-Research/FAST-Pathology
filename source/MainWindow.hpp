@@ -343,12 +343,14 @@ class MainWindow : public Window {
         bool segmentTissue();
         /**
          * Deploys a selected pipeline, through parsing the text pipeline script and creating FAST POs before execution.
-         * Inputs the path of the FPL file, the path of the current WSIs, and the current pipeline in a list
+         * Inputs the path of the FPL file, the path of the current WSIs, the current pipeline in a list, and the
+         * current state of the runForProject flag
          * @param path
          * @param currWSI
          * @param counter
+         * @param RFP_flag
          */
-        void runPipeline(std::string path, std::string currWSI, int counter);
+        void runPipeline(std::string path, std::string currWSI, int counter, bool RFP_flag);
         /**
          * Simple wrapper of the alternative inference method, runPipeline. If ran with Projects enabled, it will be ran in a
          * non-blocking background thread and will not render any results. Otherwise the rendered results will be
