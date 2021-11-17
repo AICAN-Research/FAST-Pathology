@@ -1731,45 +1731,11 @@ void MainWindow::selectFile() {
 
 void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
 
-    // check if view object list is empty, if not, prompt to save results or not, if not clear
-    if (pageComboBox->count() > 1) {
-        // prompt
-        QMessageBox mBox;
-        mBox.setIcon(QMessageBox::Warning);
-        mBox.setStyleSheet(mWidget->styleSheet());
-        mBox.setText("There are unsaved results.");
-        mBox.setInformativeText("Do you wish to save them?");
-        mBox.setDefaultButton(QMessageBox::Save);
-        mBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-        int ret = mBox.exec();
 
-        switch (ret) {
-            case QMessageBox::Save:
-                std::cout << "Results not saved yet. Just cancelled the switch!" << std::endl;
-                // Save was clicked
-                return;
-            case QMessageBox::Discard:
-                // Don't Save was clicked
-                std::cout << "Discarded!" << std::endl;
-                break;
-            case QMessageBox::Cancel:
-                // Cancel was clicked
-                std::cout << "Cancelled!" << std::endl;
-                return;
-            default:
-                // should never be reached
-                break;
-        }
-    }
-    /*
-    if (pageComboBox->count() != 0) { // if not empty, clear
-        pageComboBox->clear();
-        exportComboBox->clear();
-    }
-     */
-
+    // for a new selection of wsi(s), should reset and update these QWidgets
     pageComboBox->clear();
     exportComboBox->clear();
+    m_rendererList.clear();
 
     auto progDialog = QProgressDialog(mWidget);
     progDialog.setRange(0, fileNames.count()-1);
@@ -1779,6 +1745,20 @@ void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
     QRect screenrect = mWidget->screen()[0].geometry();
     progDialog.move(mWidget->width() - progDialog.width() / 2, - mWidget->width() / 2 - progDialog.width() / 2);
     progDialog.show();
+
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+    auto currentPosition = curr_pos;
+
+    // need to handle scenario where a WSI is added, but there already exists N WSIs from before
+    auto nb_wsis_in_list = wsiList.size();
+    if (nb_wsis_in_list != 0)
+        currentPosition = nb_wsis_in_list;
+
+    // Get old view, and remove it from Widget
+    currentView = getView(0);
+    currentView->stopPipeline();
+    currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
+    currentView->removeAllRenderers();  // VERY IMPORTANT THAT THIS IS DONE AFTER!!!
 
 	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
@@ -3159,7 +3139,7 @@ void MainWindow::runPipeline(std::string path) {
 		currentWSIs = m_runForProjectWsis;
 	}
 	else {
-        currentWSIs.push_back(filename);  // wsiList[curr_pos]);
+        currentWSIs.push_back(filename);
 	}
 
 	auto progDialog = QProgressDialog(mWidget);
@@ -3197,7 +3177,19 @@ void MainWindow::runPipeline(std::string path) {
 
         // parse fpl-file, and run pipeline with corresponding input arguments
         auto pipeline = Pipeline(path, arguments);
-        pipeline.parse();
+        if (m_runForProject) {
+            pipeline.parse({}, false);
+        }
+        else {
+            pipeline.parse();
+        }
+
+        if (m_runForProject) {
+            auto data = pipeline.getAllPipelineOutputData([](float progress) {
+                std::cout << "Progress: " << 100 * progress << "%" << std::endl;
+            });
+            std::cout << "Done" << std::endl;
+        }
 
         // get and start running POs
         for (auto&& po : pipeline.getProcessObjects()) {
@@ -3208,11 +3200,13 @@ void MainWindow::runPipeline(std::string path) {
             }
         }
 
-        // load renderers, if any
-        for (const auto& renderer : pipeline.getRenderers()) {
-            auto currId = createRandomNumbers_(8);
-            insertRenderer("result_" + currId, renderer);
-            createDynamicViewWidget("result_" + currId, "result_" + currId);
+        if (!m_runForProject) {
+            // load renderers, if any
+            for (const auto& renderer : pipeline.getRenderers()) {
+                auto currId = createRandomNumbers_(8);
+                insertRenderer("result_" + currId, renderer);
+                createDynamicViewWidget("result_" + currId, "result_" + currId);
+            }
         }
 
         // update progress bar
