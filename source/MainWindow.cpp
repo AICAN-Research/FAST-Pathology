@@ -3110,16 +3110,27 @@ void MainWindow::runPipeline_wrapper(std::string path) {
 
     QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
-    // always run pipeline in background thread
-    std::atomic_bool stopped(false);
-    std::thread inferenceThread([&, path, currentWSIs]() {
+    // Note-to-self: Cannot run pipeline with rendering in a background thread as QOpenGLContext cannot be made in a different thread!
+    // @TODO: Hmm, signal/slots solution here maybe? Might not be so easy...
+    if (m_runForProject) {
+        // always run pipeline in background thread
+        std::atomic_bool stopped(false);
+        std::thread inferenceThread([&, path, currentWSIs]() {
+            auto counter = 0;
+            for (const auto& currWSI : currentWSIs) {
+                runPipeline(path, currWSI, counter);
+            }
+        });
+        inferenceThread.detach();
+    }
+    else {
         auto counter = 0;
         for (const auto& currWSI : currentWSIs) {
             runPipeline(path, currWSI, counter);
         }
-    });
-    inferenceThread.detach();
+    }
 
+    // @TODO: need generic way which works well with FPLs
     // now make it possible to edit prediction in the View Widget
     // createDynamicViewWidget(modelMetadata["name"], someModelName);
 }
