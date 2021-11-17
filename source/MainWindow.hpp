@@ -91,6 +91,7 @@ class MainWindow : public Window {
         QWidget *menuWidget;
         QWidget *dynamicViewWidget;
         QWidget *scrollWidget;
+        QWidget *processScrollWidget;
         QComboBox *pageComboBox;
         QComboBox *exportComboBox;
         QStackedWidget *stackedWidget;
@@ -98,6 +99,8 @@ class MainWindow : public Window {
         QMenu *runPipelineMenu;
         QScrollArea *scrollArea;
         QListWidget *scrollList;
+        QScrollArea *processScrollArea;
+        QListWidget *processListWidget;
         QStatusBar *statusBar;
         View *view;
         View* currentView;
@@ -112,6 +115,7 @@ class MainWindow : public Window {
         QVBoxLayout *exportLayout;
         QVBoxLayout *dynamicViewLayout;
         QVBoxLayout *scrollLayout;
+        QVBoxLayout* processScrollLayout;
         QStackedLayout *stackedLayout;
         QStackedLayout *exportStackedLayout;
 

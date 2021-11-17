@@ -681,6 +681,7 @@ void MainWindow::createMenuWidget() {
 }
 
 void MainWindow::createWSIScrollAreaWidget() {
+
     scrollArea = new QScrollArea(mWidget);
     scrollArea->setAlignment(Qt::AlignTop);
     scrollArea->setWidgetResizable(true);
@@ -732,7 +733,6 @@ void MainWindow::createFileWidget() {
     fileLayout->addWidget(selectFileButton);
 
     createWSIScrollAreaWidget();
-
 }
 
 void MainWindow::createViewWidget() {
@@ -778,7 +778,6 @@ void MainWindow::createViewWidget() {
     viewLayout->setAlignment(Qt::AlignTop);
 
     viewLayout->insertWidget(1, stackedWidget);
-
 }
 
 void MainWindow::createDynamicViewWidget(const std::string& someName, std::string modelName) {
@@ -1249,12 +1248,29 @@ void MainWindow::updateChannelValue(int index) {
 
 void MainWindow::createProcessWidget() {
 
-    processLayout = new QVBoxLayout;
-    processLayout->setSpacing(6);
-    processLayout->setAlignment(Qt::AlignTop);
+    processScrollArea = new QScrollArea(mWidget);
+    processScrollArea->setAlignment(Qt::AlignTop);
+    processScrollArea->setWidgetResizable(true);
+    processScrollArea->setGeometry(10, 10, 200, 200);
+
+    processListWidget = new QListWidget(mWidget);
+    processListWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    processListWidget->setItemAlignment(Qt::AlignTop);
+    processListWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    processListWidget->setResizeMode(QListView::Adjust);  // resizable adaptively
+    processListWidget->setGeometry(10, 10, 200, 200);
+
+    processScrollArea->setWidget(processListWidget);
+
+    processScrollWidget = new QWidget(mWidget);
+
+    processScrollLayout = new QVBoxLayout;
+    processScrollWidget->setLayout(scrollLayout);
+
+    processScrollLayout->addWidget(processScrollArea);
 
     processWidget = new QWidget(mWidget);
-    processWidget->setLayout(processLayout);
+    processWidget->setLayout(processScrollLayout);
 
     auto segTissueButton = new QPushButton(mWidget);
     segTissueButton->setText("Segment Tissue");
@@ -1263,7 +1279,11 @@ void MainWindow::createProcessWidget() {
     QObject::connect(segTissueButton, &QPushButton::clicked, std::bind(&MainWindow::segmentTissue, this));
 
     // add tissue segmentation to widget (should always exist as built-in FAST)
-    processLayout->insertWidget(0, segTissueButton);
+    //processLayout->insertWidget(0, segTissueButton);
+    auto tissueListItem = new QListWidgetItem;
+    tissueListItem->setSizeHint(QSize(20, 50));
+    processListWidget->addItem(tissueListItem);
+    processListWidget->setItemWidget(tissueListItem, segTissueButton);
 
     QDir directory(QString::fromStdString(cwd + "data/Models/"));
     QStringList paths = directory.entryList(QStringList() << "*.txt" << "*.TXT",QDir::Files);
@@ -1283,7 +1303,10 @@ void MainWindow::createProcessWidget() {
         QObject::connect(someButton, &QPushButton::clicked, std::bind(&MainWindow::pixelClassifier_wrapper, this, modelName));
         someButton->show();
 
-        processLayout->insertWidget(counter, someButton);
+        auto listItem = new QListWidgetItem;
+        listItem->setSizeHint(QSize(20, 50));
+        processListWidget->addItem(listItem);
+        processListWidget->setItemWidget(listItem, someButton);
 
         counter++;
     }
@@ -2596,7 +2619,10 @@ void MainWindow::addModels() {
                          std::bind(&MainWindow::pixelClassifier_wrapper, this, modelName));
         someButton->show();
 
-        processLayout->insertWidget(processLayout->count(), someButton);
+        auto listItem = new QListWidgetItem;
+        listItem->setSizeHint(QSize(20, 50));
+        processListWidget->addItem(listItem);
+        processListWidget->setItemWidget(listItem, someButton);
 
         progDialog.setValue(counter);
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
