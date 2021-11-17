@@ -92,16 +92,16 @@ MainWindow::MainWindow() {
     //mWidget->setFocusPolicy(Qt::StrongFocus);
     //mWidget->setFocusPolicy(Qt::ClickFocus);  //Qt::ClickFocus);
     
-	cwd = QDir::homePath().toStdString();
+    cwd = QDir::homePath().toStdString();
     cwd += "/fastpathology/";
 
-	// set window icon
-	mWidget->setWindowIcon(QIcon(":/data/Icons/fastpathology_logo_large.png"));
+    // set window icon
+    mWidget->setWindowIcon(QIcon(":/data/Icons/fastpathology_logo_large.png"));
 
     // create temporary tmp folder to store stuff, and create temporary file to store history
     QTemporaryDir tmpDir;
-	tmpDirPath = tmpDir.path().toStdString();
-	std::cout << "Temporary path (UPDATED!): " << tmpDirPath << std::endl;
+    tmpDirPath = tmpDir.path().toStdString();
+    std::cout << "Temporary path (UPDATED!): " << tmpDirPath << std::endl;
 
     //QDir().mkdir(QString::fromStdString(tmpDirPath));
 
@@ -116,26 +116,26 @@ MainWindow::MainWindow() {
 
     // Create models folder platform assumes that this folder exists and contains all relevant models (and pipelines, and temporary models)
     //createDirectories(dir_str);
-	QDir().mkpath(QString::fromStdString(cwd) + "data/Models"); // <- mkpath creates the entire path recursively (convenient if subfolder dependency is missing)
+    QDir().mkpath(QString::fromStdString(cwd) + "data/Models"); // <- mkpath creates the entire path recursively (convenient if subfolder dependency is missing)
     QDir().mkpath(QString::fromStdString(cwd) + "data/Pipelines");
 
-	// create temporary project folder
-	projectFolderName = QString::fromStdString(tmpDirPath) + "/project_" + QString::fromStdString(createRandomNumbers_(8));
+    // create temporary project folder
+    projectFolderName = QString::fromStdString(tmpDirPath) + "/project_" + QString::fromStdString(createRandomNumbers_(8));
     QDir().mkdir(projectFolderName);
     std::cout << "Current temporary project folder location:" << projectFolderName.toStdString() << std::endl;
-	QString projectFileName = "/project.txt";
-	QFile file(projectFolderName + projectFileName);
-	if (file.open(QIODevice::ReadWrite)) {
-		QTextStream stream(&file);
-	}
-	QDir().mkdir(projectFolderName + QString::fromStdString("/results"));
-	QDir().mkdir(projectFolderName + QString::fromStdString("/pipelines"));
-	QDir().mkdir(projectFolderName + QString::fromStdString("/thumbnails"));
+    QString projectFileName = "/project.txt";
+    QFile file(projectFolderName + projectFileName);
+    if (file.open(QIODevice::ReadWrite)) {
+        QTextStream stream(&file);
+    }
+    QDir().mkdir(projectFolderName + QString::fromStdString("/results"));
+    QDir().mkdir(projectFolderName + QString::fromStdString("/pipelines"));
+    QDir().mkdir(projectFolderName + QString::fromStdString("/thumbnails"));
 
     // changing color to the Qt background)
     //mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;"); // Current favourite
-	mWidget->setStyle(QStyleFactory::create("Fusion")); // TODO: This has to be before setStyleSheet?
-	/*
+    mWidget->setStyle(QStyleFactory::create("Fusion")); // TODO: This has to be before setStyleSheet?
+    /*
     const auto qss =
             "QToolButton:!hover{background-color: #00ff00;}"
             "QToolButton:hover{background-color: #ff0000;}"
@@ -143,12 +143,12 @@ MainWindow::MainWindow() {
             "background: rgb(221, 209, 199)"
             "color: black"
             ;
-	 */
+     */
     const auto qss = "font-size: 16px;"
                      "QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };"
                      "QMenu{background-color:palette(window);border:1px solid palette(shadow);};"
                      ;
-	//mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;");
+    //mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;");
     mWidget->setStyleSheet(qss);
 
     superLayout = new QVBoxLayout;
@@ -168,11 +168,11 @@ MainWindow::MainWindow() {
 }
 
 std::string MainWindow::createRandomNumbers_(int n) {
-	std::string out;
-	for (int i = 0; i < n; i++) {
-		out.append(std::to_string(rand() % 10));
-	}
-	return out;
+    std::string out;
+    for (int i = 0; i < n; i++) {
+        out.append(std::to_string(rand() % 10));
+    }
+    return out;
 }
 
 void MainWindow::receiveFileList(const QList<QString> &names) {
@@ -182,19 +182,19 @@ void MainWindow::receiveFileList(const QList<QString> &names) {
 
 void MainWindow::createOpenGLWindow() {
     // initialize view
-	view = createView();
+    view = createView();
     view->setSynchronizedRendering(false);
-	view->set2DMode();
-	view->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
-	view->setAutoUpdateCamera(true);
+    view->set2DMode();
+    view->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
+    view->setAutoUpdateCamera(true);
 
-	// create QSplitter for adjustable windows
-	mainSplitter = new QSplitter(Qt::Horizontal);
-	mainSplitter->setHandleWidth(5);
-	mainSplitter->setStyleSheet("QSplitter::handle { background-color: rgb(100, 100, 200); }; QMenuBar::handle { background-color: rgb(20, 100, 20); }");
-	mainSplitter->addWidget(menuWidget);
-	mainSplitter->addWidget(view);
-	mainSplitter->setStretchFactor(1, 1);
+    // create QSplitter for adjustable windows
+    mainSplitter = new QSplitter(Qt::Horizontal);
+    mainSplitter->setHandleWidth(5);
+    mainSplitter->setStyleSheet("QSplitter::handle { background-color: rgb(100, 100, 200); }; QMenuBar::handle { background-color: rgb(20, 100, 20); }");
+    mainSplitter->addWidget(menuWidget);
+    mainSplitter->addWidget(view);
+    mainSplitter->setStretchFactor(1, 1);
 
     // finally, add widget to the main layout
     mainLayout->addWidget(mainSplitter);
@@ -246,140 +246,140 @@ void MainWindow::helpUrl() {
 }
 
 void MainWindow::downloadAndAddTestData() {
-	// prompt
-	auto mBox = new QMessageBox(mWidget);
-	mBox->setIcon(QMessageBox::Warning);
-	mBox->setText("This will download the test data, add the models, and open two WSIs.");
-	mBox->setInformativeText("Are you sure you want to continue?");
-	mBox->setDefaultButton(QMessageBox::Yes);
-	mBox->setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-	int ret = mBox->exec();
+    // prompt
+    auto mBox = new QMessageBox(mWidget);
+    mBox->setIcon(QMessageBox::Warning);
+    mBox->setText("This will download the test data, add the models, and open two WSIs.");
+    mBox->setInformativeText("Are you sure you want to continue?");
+    mBox->setDefaultButton(QMessageBox::Yes);
+    mBox->setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+    int ret = mBox->exec();
 
-	switch (ret) {
-	case QMessageBox::Yes:
-		// toggle and update text on button to show current mode (also default)
-		break;
-	case QMessageBox::No:
-		// if "No", do nothing
-		return;
-	case QMessageBox::Cancel:
-		// if "Cancel", do nothing
-		return;
-	default:
-		break;
-	}
+    switch (ret) {
+    case QMessageBox::Yes:
+        // toggle and update text on button to show current mode (also default)
+        break;
+    case QMessageBox::No:
+        // if "No", do nothing
+        return;
+    case QMessageBox::Cancel:
+        // if "Cancel", do nothing
+        return;
+    default:
+        break;
+    }
 
-	// progress bar
-	auto progDialog = new QProgressDialog(mWidget);
-	progDialog->setRange(0, 0);
-	progDialog->setValue(0);
-	progDialog->setVisible(true);
-	progDialog->setModal(false);
-	progDialog->setLabelText("Downloading test data...");
-	progDialog->move(mWidget->width() - progDialog->width() * 1.1, progDialog->height() * 0.1);
-	//m_pBar.show();
+    // progress bar
+    auto progDialog = new QProgressDialog(mWidget);
+    progDialog->setRange(0, 0);
+    progDialog->setValue(0);
+    progDialog->setVisible(true);
+    progDialog->setModal(false);
+    progDialog->setLabelText("Downloading test data...");
+    progDialog->move(mWidget->width() - progDialog->width() * 1.1, progDialog->height() * 0.1);
+    //m_pBar.show();
 
-	QUrl url{"http://folk.ntnu.no/andpeder/FastPathology/test_data.zip"};
+    QUrl url{"http://folk.ntnu.no/andpeder/FastPathology/test_data.zip"};
 
-	QNetworkAccessManager* m_NetworkMngr = new QNetworkAccessManager(this);
-	QNetworkReply *reply = m_NetworkMngr->get(QNetworkRequest(QUrl(url)));
-	QEventLoop loop;
+    QNetworkAccessManager* m_NetworkMngr = new QNetworkAccessManager(this);
+    QNetworkReply *reply = m_NetworkMngr->get(QNetworkRequest(QUrl(url)));
+    QEventLoop loop;
 
-	QObject::connect(reply, &QNetworkReply::downloadProgress, [=](qint64 ist, qint64 max_) { //[=](qint64 ist, qint64 max) {
-		progDialog->setRange(0, max_);
-		progDialog->setValue(ist);
-		//if (max < 0) hideProgress();
-	});
-	QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+    QObject::connect(reply, &QNetworkReply::downloadProgress, [=](qint64 ist, qint64 max_) { //[=](qint64 ist, qint64 max) {
+        progDialog->setRange(0, max_);
+        progDialog->setValue(ist);
+        //if (max < 0) hideProgress();
+    });
+    QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
 
-	loop.exec();
-	QUrl aUrl(url);
-	QFileInfo fileInfo = aUrl.path();
+    loop.exec();
+    QUrl aUrl(url);
+    QFileInfo fileInfo = aUrl.path();
 
-	QString downloadsFolder = QDir::homePath() + "/fastpathology/data";
-	QFile file(downloadsFolder + "/" + fileInfo.fileName());
-	file.open(QIODevice::WriteOnly);
-	file.write(reply->readAll());
-	file.close();
-	delete reply;
+    QString downloadsFolder = QDir::homePath() + "/fastpathology/data";
+    QFile file(downloadsFolder + "/" + fileInfo.fileName());
+    file.open(QIODevice::WriteOnly);
+    file.write(reply->readAll());
+    file.close();
+    delete reply;
 
-	// unzip TODO: Is there something wrong with the include/import of this function? Might be a problem later on.
-	extractZipFile((downloadsFolder + "/" + fileInfo.fileName()).toStdString(), downloadsFolder.toStdString());
+    // unzip TODO: Is there something wrong with the include/import of this function? Might be a problem later on.
+    extractZipFile((downloadsFolder + "/" + fileInfo.fileName()).toStdString(), downloadsFolder.toStdString());
 
-	// OPTIONAL: Add Models to test if inference is working
-	QList<QString> fileNames;
-	QDirIterator it2(downloadsFolder + "/test_data/Models/", QDir::Files);
-	while (it2.hasNext()) {
-		auto tmp = it2.next();
-		fileNames.push_back(tmp);
-	}
-	addModelsDrag(fileNames);
+    // OPTIONAL: Add Models to test if inference is working
+    QList<QString> fileNames;
+    QDirIterator it2(downloadsFolder + "/test_data/Models/", QDir::Files);
+    while (it2.hasNext()) {
+        auto tmp = it2.next();
+        fileNames.push_back(tmp);
+    }
+    addModelsDrag(fileNames);
 
-	auto mBox2 = new QMessageBox(mWidget);
-	mBox2->setIcon(QMessageBox::Warning);
-	mBox2->setText("Download is finished.");
-	mBox2->setInformativeText("Do you wish to open the test WSIs?");
-	mBox2->setDefaultButton(QMessageBox::Yes);
-	mBox2->setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-	int ret2 = mBox2->exec();
+    auto mBox2 = new QMessageBox(mWidget);
+    mBox2->setIcon(QMessageBox::Warning);
+    mBox2->setText("Download is finished.");
+    mBox2->setInformativeText("Do you wish to open the test WSIs?");
+    mBox2->setDefaultButton(QMessageBox::Yes);
+    mBox2->setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+    int ret2 = mBox2->exec();
 
-	switch (ret2) {
-	case QMessageBox::Yes:
-		// toggle and update text on button to show current mode
-		break;
-	case QMessageBox::No:
-		// if "No", do nothing (also default)
-		return;
-	case QMessageBox::Cancel:
-		// if "Cancel", do nothing
-		return;
-	default:
-		break;
-	}
+    switch (ret2) {
+    case QMessageBox::Yes:
+        // toggle and update text on button to show current mode
+        break;
+    case QMessageBox::No:
+        // if "No", do nothing (also default)
+        return;
+    case QMessageBox::Cancel:
+        // if "Cancel", do nothing
+        return;
+    default:
+        break;
+    }
 
-	// OPTIONAL: Add WSIs to project for visualization
-	fileNames.clear();
-	QDirIterator it(downloadsFolder + "/test_data/WSI/", QDir::Files);
-	while (it.hasNext()) {
-		auto tmp = it.next();
-		fileNames.push_back(tmp);
-	}
-	selectFileDrag(fileNames);
+    // OPTIONAL: Add WSIs to project for visualization
+    fileNames.clear();
+    QDirIterator it(downloadsFolder + "/test_data/WSI/", QDir::Files);
+    while (it.hasNext()) {
+        auto tmp = it.next();
+        fileNames.push_back(tmp);
+    }
+    selectFileDrag(fileNames);
 }
 
 void MainWindow::aboutProgram() {
 
-	auto currLayout = new QVBoxLayout;
+    auto currLayout = new QVBoxLayout;
 
-	QPixmap image(QString::fromStdString(":/data/Icons/fastpathology_logo_large.png"));
+    QPixmap image(QString::fromStdString(":/data/Icons/fastpathology_logo_large.png"));
 
-	auto label = new QLabel;
-	label->setPixmap(image);
-	label->setAlignment(Qt::AlignCenter);
-	
-	auto textBox = new QTextEdit;
-	textBox->setEnabled(false);
-	textBox->setText("<html><b>FastPathology v0.1.0</b</html>");
-	textBox->append("");
-	textBox->setAlignment(Qt::AlignCenter);
-	textBox->append("Open-source platform for deep learning-based research and decision support in digital pathology.");
-	textBox->append("");
-	textBox->append("");
-	textBox->setAlignment(Qt::AlignCenter);
-	textBox->append("Author: André Pedersen");
-	textBox->setAlignment(Qt::AlignCenter);
-	textBox->setStyleSheet("QTextEdit { border: none }");
-	//textBox->setBaseSize(150, 200);
+    auto label = new QLabel;
+    label->setPixmap(image);
+    label->setAlignment(Qt::AlignCenter);
+    
+    auto textBox = new QTextEdit;
+    textBox->setEnabled(false);
+    textBox->setText("<html><b>FastPathology v0.1.0</b</html>");
+    textBox->append("");
+    textBox->setAlignment(Qt::AlignCenter);
+    textBox->append("Open-source platform for deep learning-based research and decision support in digital pathology.");
+    textBox->append("");
+    textBox->append("");
+    textBox->setAlignment(Qt::AlignCenter);
+    textBox->append("Author: André Pedersen");
+    textBox->setAlignment(Qt::AlignCenter);
+    textBox->setStyleSheet("QTextEdit { border: none }");
+    //textBox->setBaseSize(150, 200);
 
-	currLayout->addWidget(label);
-	currLayout->addWidget(textBox);
+    currLayout->addWidget(label);
+    currLayout->addWidget(textBox);
 
-	auto dialog = new QDialog(mWidget);
-	dialog->setWindowTitle("About");
-	dialog->setLayout(currLayout);
-	//dialog->setBaseSize(QSize(800, 800));
+    auto dialog = new QDialog(mWidget);
+    dialog->setWindowTitle("About");
+    dialog->setLayout(currLayout);
+    //dialog->setBaseSize(QSize(800, 800));
 
-	dialog->show();
+    dialog->show();
 }
 
 void MainWindow::createMenubar() {
@@ -407,7 +407,7 @@ void MainWindow::createMenubar() {
     auto editMenu = topFiller->addMenu(tr("&Edit"));
     editMenu->addAction("Reset", this, &MainWindow::reset);
     editMenu->addAction("Change mode", this, &MainWindow::setApplicationMode);
-	editMenu->addAction("Download test data", this, &MainWindow::downloadAndAddTestData);
+    editMenu->addAction("Download test data", this, &MainWindow::downloadAndAddTestData);
 
     auto pipelineMenu = topFiller->addMenu(tr("&Pipelines"));
     pipelineMenu->addAction("Import pipelines", this, &MainWindow::addPipelines);
@@ -420,7 +420,7 @@ void MainWindow::createMenubar() {
     projectMenu->addAction("Create Project", this, &MainWindow::createProject);
     projectMenu->addAction("Open Project", this, &MainWindow::openProject);
     projectMenu->addAction("Save Project", this, &MainWindow::saveProject);
-	projectMenu->addAction("Run for project", this, &MainWindow::runForProject);
+    projectMenu->addAction("Run for project", this, &MainWindow::runForProject);
 
     loadPipelines(); // load pipelines that exists in the data/Pipelines directory
 
@@ -429,7 +429,7 @@ void MainWindow::createMenubar() {
     //deployMenu->addMenu(tr("&Deploy"));
     //deployMenu->setFixedHeight(100);
     //deployMenu->setFixedWidth(100);
-	//deployMenu->addAction("MTL nuclei seg/detect", this, &MainWindow::MTL_test);
+    //deployMenu->addAction("MTL nuclei seg/detect", this, &MainWindow::MTL_test);
     deployMenu->addAction("Refinement tumour", this, &MainWindow::Refinement_test);
     deployMenu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
     deployMenu->addAction("Deep KMeans MTL", this, &MainWindow::Kmeans_MTL_test);
@@ -553,7 +553,7 @@ void MainWindow::createMenuWidget() {
     //tb->setStyleSheet("QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };");
     //                         "border-bottom:2px solid rgba(25,25,120,75); "
     //                         "QMenu{background-color:palette(window);border:1px solid palette(shadow);}");
-	//tb->setStyleSheet("{ background-color: rgb(100, 100, 200); }; QMenuBar::handle { background-color: rgb(20, 100, 20);");
+    //tb->setStyleSheet("{ background-color: rgb(100, 100, 200); }; QMenuBar::handle { background-color: rgb(20, 100, 20);");
     tb->setIconSize(QSize(im_size, im_size));
     //tb->setFixedWidth(200);
     //tb->setMovable(true);
@@ -562,25 +562,25 @@ void MainWindow::createMenuWidget() {
     tb->setFont(QFont("Times", 8)); //QFont::Bold));
     tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);  // adds text under icons
 
-	//QResource::registerResource("qtres.qrc");
+    //QResource::registerResource("qtres.qrc");
 
-	/*
-	std::cout << "Anything in Qt Resources: " << std::endl;
-	QDirIterator it(":", QDir::NoFilter);
-	while (it.hasNext()) {
-		auto tmp = it.next();
-		QDirIterator it2(tmp, QDir::NoFilter);
-		std::cout << "elem: " << tmp.toStdString() << std::endl;
-		while (it2.hasNext()) {
-			std::cout << "elem: " << it2.next().toStdString() << std::endl;
-		}
-		//qDebug() << it.next();
-	}
-	 */
-		
+    /*
+    std::cout << "Anything in Qt Resources: " << std::endl;
+    QDirIterator it(":", QDir::NoFilter);
+    while (it.hasNext()) {
+        auto tmp = it.next();
+        QDirIterator it2(tmp, QDir::NoFilter);
+        std::cout << "elem: " << tmp.toStdString() << std::endl;
+        while (it2.hasNext()) {
+            std::cout << "elem: " << it2.next().toStdString() << std::endl;
+        }
+        //qDebug() << it.next();
+    }
+     */
+        
     //auto toolBar = new QToolBar;
     QPixmap openPix(QString::fromStdString(":/data/Icons/import_icon_new_cropped_resized.png"));
-	QPixmap processPix(QString::fromStdString(":/data/Icons/process_icon_new_cropped_resized.png"));
+    QPixmap processPix(QString::fromStdString(":/data/Icons/process_icon_new_cropped_resized.png"));
     QPixmap viewPix(QString::fromStdString(":/data/Icons/visualize_icon_new_cropped_resized.png"));
     QPixmap resultPix(QString::fromStdString(":/data/Icons/statistics_icon_new_cropped_resized.png"));
     QPixmap savePix(QString::fromStdString(":/data/Icons/export_icon_new_cropped_resized.png"));
@@ -699,9 +699,9 @@ void MainWindow::createWSIScrollAreaWidget() {
     scrollList->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     scrollList->setResizeMode(QListView::Adjust);  // resizable adaptively
     scrollList->setGeometry(10, 10, 200, 200);
-	//scrollList->setStyleSheet("*:hover {background:blue;}");  // setting color of widget when hovering
-	//scrollList->setStyleSheet("QListWidget:item:selected:active {background: blue;}; QListWidget:item:selected:!active {background: gray};");
-	//scrollList->setFocus();
+    //scrollList->setStyleSheet("*:hover {background:blue;}");  // setting color of widget when hovering
+    //scrollList->setStyleSheet("QListWidget:item:selected:active {background: blue;}; QListWidget:item:selected:!active {background: gray};");
+    //scrollList->setFocus();
     //scrollList->setViewMode(QListWidget::IconMode);
     //scrollList->setIconSize(QSize(100, 100));
     //scrollList->setFlow(QListView::TopToBottom);
@@ -713,8 +713,8 @@ void MainWindow::createWSIScrollAreaWidget() {
     // QListWidget::itemPressed(QListWidgetItem *item)
     //QObject::connect(scrollList, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(&MainWindow::selectFileInProject));
 
-	//scrollList->setSelectionMode(QListWidgetItem::NoSelection);
-	//QObject::connect(scrollList, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(itemDoubleClicked(QListWidgetItem*)));
+    //scrollList->setSelectionMode(QListWidgetItem::NoSelection);
+    //QObject::connect(scrollList, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this, SLOT(itemDoubleClicked(QListWidgetItem*)));
 
     scrollArea->setWidget(scrollList);
 
@@ -891,13 +891,13 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     colorSetWidget->setOption(QColorDialog::DontUseNativeDialog, true);
     //colorSetWidget->setDisabled(visible[2]);
 
-	auto colorButton = new QPushButton;
-	colorButton->setFixedHeight(50);
-	colorButton->setText("Set color");
-	colorButton->setChecked(true);
+    auto colorButton = new QPushButton;
+    colorButton->setFixedHeight(50);
+    colorButton->setText("Set color");
+    colorButton->setChecked(true);
 
-	//auto colorSquare = new QLabel;
-	//colorSquare->setStyleSheet("color: white; background-color: white");
+    //auto colorSquare = new QLabel;
+    //colorSquare->setStyleSheet("color: white; background-color: white");
 
     // to be able to set which classes to show/hide
     channel_value = 0;
@@ -935,79 +935,79 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
         currComboBox->update();
         currComboBox->insertItems(0, currentClassesInUse);
 
-		QObject::connect(colorButton, &QPushButton::clicked, [=]() {
-			auto rgb = colorSetWidget->getColor().toRgb();
+        QObject::connect(colorButton, &QPushButton::clicked, [=]() {
+            auto rgb = colorSetWidget->getColor().toRgb();
 
-			auto someRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(m_rendererList[someName]);
-			someRenderer->setChannelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
-		});
-	} else if(m_rendererTypeList[someName] == "SegmentationRenderer") {
-		// clear vector first
-		currentClassesInUse.clear();
-		for (const auto & i : { 1 }) { //{ 0, 1 }) {  // TODO: Supports only binary images (where class of interest = 1)
-			currentClassesInUse.append(QString::number(i));
-		}
-		currComboBox->clear();
-		currComboBox->update();
-		currComboBox->insertItems(0, currentClassesInUse);
+            auto someRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(m_rendererList[someName]);
+            someRenderer->setChannelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
+        });
+    } else if(m_rendererTypeList[someName] == "SegmentationRenderer") {
+        // clear vector first
+        currentClassesInUse.clear();
+        for (const auto & i : { 1 }) { //{ 0, 1 }) {  // TODO: Supports only binary images (where class of interest = 1)
+            currentClassesInUse.append(QString::number(i));
+        }
+        currComboBox->clear();
+        currComboBox->update();
+        currComboBox->insertItems(0, currentClassesInUse);
 
-		QObject::connect(colorButton, &QPushButton::clicked, [=]() {
-			auto rgb = colorSetWidget->getColor().toRgb();
-			auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(m_rendererList[someName]);
-			//auto currImage = someRenderer->updateAndGetOutputData<Image>();
-			//currImage->
-			//std::cout << "window: " << someRenderer->updateAndGetOutputData<Image>() << std::endl;
-			//auto vals = someRenderer->getIntensityWindow();
+        QObject::connect(colorButton, &QPushButton::clicked, [=]() {
+            auto rgb = colorSetWidget->getColor().toRgb();
+            auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(m_rendererList[someName]);
+            //auto currImage = someRenderer->updateAndGetOutputData<Image>();
+            //currImage->
+            //std::cout << "window: " << someRenderer->updateAndGetOutputData<Image>() << std::endl;
+            //auto vals = someRenderer->getIntensityWindow();
 
             std::cout << "\nset color was pressed! (in SegmentationRenderer)" << std::endl;
 
-			// TODO: Supports only binary images (where class of interest = 1)
-			someRenderer->setColor(currComboBox->currentIndex() + 1, Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
-		});
-	// TODO: Need to add proper options in SegmentationPyramidRenderer and SegmentationRenderer for toggling and setting which classes to show, do to this properly...
-	} else if (m_rendererTypeList[someName] == "SegmentationPyramidRenderer") {
-		// get metadata of current model
-		std::map<std::string, std::string> metadata = getModelMetadata(modelName);
-		std::vector someVector = splitCustom(metadata["class_names"], ";");
-		// clear vector first
-		currentClassesInUse.clear();
-		for (const auto & i : someVector) {
-			currentClassesInUse.append(QString::fromStdString(i));
-		}
-		currComboBox->clear();
-		currComboBox->update();
-		currComboBox->insertItems(0, currentClassesInUse);
+            // TODO: Supports only binary images (where class of interest = 1)
+            someRenderer->setColor(currComboBox->currentIndex() + 1, Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
+        });
+    // TODO: Need to add proper options in SegmentationPyramidRenderer and SegmentationRenderer for toggling and setting which classes to show, do to this properly...
+    } else if (m_rendererTypeList[someName] == "SegmentationPyramidRenderer") {
+        // get metadata of current model
+        std::map<std::string, std::string> metadata = getModelMetadata(modelName);
+        std::vector someVector = splitCustom(metadata["class_names"], ";");
+        // clear vector first
+        currentClassesInUse.clear();
+        for (const auto & i : someVector) {
+            currentClassesInUse.append(QString::fromStdString(i));
+        }
+        currComboBox->clear();
+        currComboBox->update();
+        currComboBox->insertItems(0, currentClassesInUse);
 
-		QObject::connect(colorButton, &QPushButton::clicked, [=]() {
-			auto rgb = colorSetWidget->getColor().toRgb();
-			auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(m_rendererList[someName]);
+        QObject::connect(colorButton, &QPushButton::clicked, [=]() {
+            auto rgb = colorSetWidget->getColor().toRgb();
+            auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(m_rendererList[someName]);
             std::cout << "\nset color was pressed!" << std::endl;
             someRenderer->setColor(currComboBox->currentIndex() + 1, Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
-			//someRenderer->setChannelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
-		});
-	} else if (m_rendererTypeList[someName] == "BoundingBoxRenderer") {
-		// get metadata of current model
-		std::map<std::string, std::string> metadata = getModelMetadata(modelName);
-		std::vector someVector = splitCustom(metadata["class_names"], ";");
-		// clear vector first
-		currentClassesInUse.clear();
-		for (const auto & i : someVector) {
-			currentClassesInUse.append(QString::fromStdString(i));
-		}
-		currComboBox->clear();
-		currComboBox->update();
-		currComboBox->insertItems(0, currentClassesInUse);
+            //someRenderer->setChannelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
+        });
+    } else if (m_rendererTypeList[someName] == "BoundingBoxRenderer") {
+        // get metadata of current model
+        std::map<std::string, std::string> metadata = getModelMetadata(modelName);
+        std::vector someVector = splitCustom(metadata["class_names"], ";");
+        // clear vector first
+        currentClassesInUse.clear();
+        for (const auto & i : someVector) {
+            currentClassesInUse.append(QString::fromStdString(i));
+        }
+        currComboBox->clear();
+        currComboBox->update();
+        currComboBox->insertItems(0, currentClassesInUse);
 
-		QObject::connect(colorButton, &QPushButton::clicked, [=]() {
-			auto rgb = colorSetWidget->getColor().toRgb();
-			auto someRenderer = std::dynamic_pointer_cast<BoundingBoxRenderer>(m_rendererList[someName]);
-			//someRenderer->setLabelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
-		});
-	}
+        QObject::connect(colorButton, &QPushButton::clicked, [=]() {
+            auto rgb = colorSetWidget->getColor().toRgb();
+            auto someRenderer = std::dynamic_pointer_cast<BoundingBoxRenderer>(m_rendererList[someName]);
+            //someRenderer->setLabelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
+        });
+    }
     /*
     else {
         simpleInfoPrompt("Invalid renderer used...");
-	}
+    }
      */
 
     connect(currComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateChannelValue(int)));
@@ -1026,11 +1026,11 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     biggerTextBox_imageName->addWidget(smallTextBoxWidget_imageName);
     biggerTextBox_imageName->setAlignment(Qt::AlignTop);
 
-	auto smallToggleColorBox_layout = new QHBoxLayout;
-	smallToggleColorBox_layout->addWidget(toggleShowButton);
-	smallToggleColorBox_layout->addWidget(colorButton);
-	auto smallToggleColorBox = new QWidget;
-	smallToggleColorBox->setLayout(smallToggleColorBox_layout);
+    auto smallToggleColorBox_layout = new QHBoxLayout;
+    smallToggleColorBox_layout->addWidget(toggleShowButton);
+    smallToggleColorBox_layout->addWidget(colorButton);
+    auto smallToggleColorBox = new QWidget;
+    smallToggleColorBox->setLayout(smallToggleColorBox_layout);
     auto biggerTextBoxWidget_imageName = new QWidget;
     biggerTextBoxWidget_imageName->setLayout(smallToggleColorBox_layout);
 
@@ -1039,40 +1039,40 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
         opacitySlider->setDisabled(true);
         colorSetWidget->setDisabled(true);
         biggerTextBoxWidget_imageName->setDisabled(true);
-	} else if (m_rendererTypeList[someName] == "SegmentationRenderer") {
-		toggleShowButton->setDisabled(true);
-	} else if (m_rendererTypeList[someName] == "SegmentationPyramidRenderer") {
-		toggleShowButton->setDisabled(true);
-		//colorSetWidget->setDisabled(true);
-		//biggerTextBoxWidget_imageName->setDisabled(true);
-	} else if (m_rendererTypeList[someName] == "BoundingBoxRenderer") {
+    } else if (m_rendererTypeList[someName] == "SegmentationRenderer") {
+        toggleShowButton->setDisabled(true);
+    } else if (m_rendererTypeList[someName] == "SegmentationPyramidRenderer") {
+        toggleShowButton->setDisabled(true);
+        //colorSetWidget->setDisabled(true);
+        //biggerTextBoxWidget_imageName->setDisabled(true);
+    } else if (m_rendererTypeList[someName] == "BoundingBoxRenderer") {
 
-	} else {
-		colorSetWidget->setDisabled(false);
-	}
+    } else {
+        colorSetWidget->setDisabled(false);
+    }
 
-	auto allBox = new QGroupBox(tr("Modify image"), mWidget);
-	auto classBox = new QGroupBox(tr("Modify class"), mWidget);
+    auto allBox = new QGroupBox(tr("Modify image"), mWidget);
+    auto classBox = new QGroupBox(tr("Modify class"), mWidget);
 
     dynamicViewLayout = new QVBoxLayout;
     dynamicViewLayout->setAlignment(Qt::AlignTop);
     dynamicViewWidget->setLayout(dynamicViewLayout);
 
-	auto allViewLayout = new QVBoxLayout;
-	allViewLayout->addWidget(imageButton);
-	allViewLayout->addWidget(smallTextBoxWidget_tissue);
+    auto allViewLayout = new QVBoxLayout;
+    allViewLayout->addWidget(imageButton);
+    allViewLayout->addWidget(smallTextBoxWidget_tissue);
 
-	allBox->setLayout(allViewLayout);
+    allBox->setLayout(allViewLayout);
 
-	auto classViewLayout = new QVBoxLayout;
-	classViewLayout->addWidget(smallTextBoxWidget_imageName);
-	classViewLayout->addWidget(biggerTextBoxWidget_imageName);
+    auto classViewLayout = new QVBoxLayout;
+    classViewLayout->addWidget(smallTextBoxWidget_imageName);
+    classViewLayout->addWidget(biggerTextBoxWidget_imageName);
 
-	classBox->setLayout(classViewLayout);
+    classBox->setLayout(classViewLayout);
 
-	dynamicViewLayout->addWidget(allBox);
-	dynamicViewLayout->addWidget(classBox);
-	dynamicViewLayout->addWidget(deleteButton);
+    dynamicViewLayout->addWidget(allBox);
+    dynamicViewLayout->addWidget(classBox);
+    dynamicViewLayout->addWidget(deleteButton);
 
     // add widget to QComboBox
     pageComboBox->addItem(tr(tmpSomeName.c_str()));
@@ -1101,7 +1101,7 @@ void MainWindow::customPipelineEditor() {
     QRect rect = scriptEditorWidget->geometry();
     QRect parentRect = mWidget->geometry();
     rect.moveTo(mWidget->mapToGlobal(QPoint(parentRect.x() + parentRect.width() - rect.width(), parentRect.y())));
-	scriptEditorWidget->resize(600, 800);
+    scriptEditorWidget->resize(600, 800);
 
     createActionsScript();
     scriptEditorWidget->show();
@@ -1436,87 +1436,87 @@ void MainWindow::createDynamicExportWidget(const std::string& someName) {
 
 void MainWindow::saveThumbnail() {
 
-	std::vector<std::string> currentWSIs;
-	if (m_runForProject) {
-		currentWSIs = m_runForProjectWsis;
-	} else {
-		currentWSIs.push_back(wsiList[curr_pos]);
-	}
+    std::vector<std::string> currentWSIs;
+    if (m_runForProject) {
+        currentWSIs = m_runForProjectWsis;
+    } else {
+        currentWSIs.push_back(wsiList[curr_pos]);
+    }
 
-	auto progDialog = QProgressDialog(mWidget);
-	progDialog.setRange(0, (int)currentWSIs.size() - 1);
-	//progDialog.setContentsMargins(0, 0, 0, 0);
-	progDialog.setVisible(true);
-	progDialog.setModal(false);
-	progDialog.setLabelText("Saving thumbnails...");
-	//QRect screenrect = mWidget->screen()[0].geometry();
-	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
-	progDialog.show();
+    auto progDialog = QProgressDialog(mWidget);
+    progDialog.setRange(0, (int)currentWSIs.size() - 1);
+    //progDialog.setContentsMargins(0, 0, 0, 0);
+    progDialog.setVisible(true);
+    progDialog.setModal(false);
+    progDialog.setLabelText("Saving thumbnails...");
+    //QRect screenrect = mWidget->screen()[0].geometry();
+    progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
+    progDialog.show();
 
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
-	auto counter = 0;
-	for (const auto& currWSI : currentWSIs) {
+    auto counter = 0;
+    for (const auto& currWSI : currentWSIs) {
 
-		std::cout << "current WSI: " << currWSI << std::endl;
-		auto access = m_image->getAccess(ACCESS_READ);
-		auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
-		if (m_runForProject) {
-			auto someImporter = WholeSlideImageImporter::New();
+        std::cout << "current WSI: " << currWSI << std::endl;
+        auto access = m_image->getAccess(ACCESS_READ);
+        auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
+        if (m_runForProject) {
+            auto someImporter = WholeSlideImageImporter::New();
             someImporter->setFilename(currWSI);
-			auto currImage = someImporter->updateAndGetOutputData<ImagePyramid>();
+            auto currImage = someImporter->updateAndGetOutputData<ImagePyramid>();
 
-			access = currImage->getAccess(ACCESS_READ);
-			input = access->getLevelAsImage(currImage->getNrOfLevels() - 1);
-		}
+            access = currImage->getAccess(ACCESS_READ);
+            input = access->getLevelAsImage(currImage->getNrOfLevels() - 1);
+        }
 
-		// TODO: if only large image planes exist, should downsample the resulting thumbnails before export
+        // TODO: if only large image planes exist, should downsample the resulting thumbnails before export
 
-		// attempt to save thumbnail to disk as .png
-		ImageExporter::pointer exporter = ImageExporter::New();
-		exporter->setFilename(projectFolderName.toStdString() + "/thumbnails/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0] + ".png");
-		std::cout << "Name: " << projectFolderName.toStdString() + "/thumbnails/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0] + ".png" << std::endl;
-		exporter->setInputData(input);
-		exporter->update();
+        // attempt to save thumbnail to disk as .png
+        ImageExporter::pointer exporter = ImageExporter::New();
+        exporter->setFilename(projectFolderName.toStdString() + "/thumbnails/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0] + ".png");
+        std::cout << "Name: " << projectFolderName.toStdString() + "/thumbnails/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0] + ".png" << std::endl;
+        exporter->setInputData(input);
+        exporter->update();
 
-		// update progress bar
-		progDialog.setValue(counter);
-		QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+        // update progress bar
+        progDialog.setValue(counter);
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
         counter++;
-	}
+    }
 }
 
 void MainWindow::saveTissueSegmentation() {
 
-	std::vector<std::string> currentWSIs;
-	if (m_runForProject) {
-		currentWSIs = m_runForProjectWsis;
-	} else {
-		currentWSIs.push_back(wsiList[curr_pos]);
-	}
+    std::vector<std::string> currentWSIs;
+    if (m_runForProject) {
+        currentWSIs = m_runForProjectWsis;
+    } else {
+        currentWSIs.push_back(wsiList[curr_pos]);
+    }
 
-	auto progDialog = QProgressDialog(mWidget);
-	progDialog.setRange(0, (int)currentWSIs.size() - 1);
-	//progDialog.setContentsMargins(0, 0, 0, 0);
+    auto progDialog = QProgressDialog(mWidget);
+    progDialog.setRange(0, (int)currentWSIs.size() - 1);
+    //progDialog.setContentsMargins(0, 0, 0, 0);
     progDialog.setValue(0);
-	progDialog.setVisible(true);
-	progDialog.setModal(false);
-	progDialog.setLabelText("Saving tissue segmentations...");
-	//QRect screenrect = mWidget->screen()[0].geometry();
-	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
-	progDialog.show();
+    progDialog.setVisible(true);
+    progDialog.setModal(false);
+    progDialog.setLabelText("Saving tissue segmentations...");
+    //QRect screenrect = mWidget->screen()[0].geometry();
+    progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
+    progDialog.show();
 
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
-	auto counter = 0;
-	for (const auto& currWSI : currentWSIs) {
+    auto counter = 0;
+    for (const auto& currWSI : currentWSIs) {
 
-		// check if folder for current WSI exists, if not, create one
-		QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0] + "/").c_str();
-		wsiResultPath = wsiResultPath.replace("//", "/");
-		if (!QDir(wsiResultPath).exists()) {
-			QDir().mkdir(wsiResultPath);
-		}
+        // check if folder for current WSI exists, if not, create one
+        QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0] + "/").c_str();
+        wsiResultPath = wsiResultPath.replace("//", "/");
+        if (!QDir(wsiResultPath).exists()) {
+            QDir().mkdir(wsiResultPath);
+        }
 
         auto someImporter = WholeSlideImageImporter::New();
         someImporter->setFilename(currWSI);
@@ -1531,28 +1531,28 @@ void MainWindow::saveTissueSegmentation() {
         exporter->setInputData(tissueSegmentation->updateAndGetOutputData<Image>());
         exporter->update();
 
-		// update progress bar
-		progDialog.setValue(counter);
-		counter++;
+        // update progress bar
+        progDialog.setValue(counter);
+        counter++;
 
-		// to render straight away (avoid waiting on all WSIs to be handled before rendering)
-		QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-	}
+        // to render straight away (avoid waiting on all WSIs to be handled before rendering)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+    }
 }
 
 void MainWindow::saveHeatmap() {
 
-	// check if folder for current WSI exists, if not, create one
-	QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "/").c_str();
-	wsiResultPath = wsiResultPath.replace("//", "/");
-	if (!QDir(wsiResultPath).exists()) {
-		QDir().mkdir(wsiResultPath);
-	}
+    // check if folder for current WSI exists, if not, create one
+    QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(filename, "/").back(), ".")[0] + "/").c_str();
+    wsiResultPath = wsiResultPath.replace("//", "/");
+    if (!QDir(wsiResultPath).exists()) {
+        QDir().mkdir(wsiResultPath);
+    }
 
-	auto exporter = HDF5TensorExporter::New();
-	exporter->setFilename(wsiResultPath.toStdString() + "tensor.h5");
-	//exporter->setInputData(tensor);
-	exporter->update();
+    auto exporter = HDF5TensorExporter::New();
+    exporter->setFilename(wsiResultPath.toStdString() + "tensor.h5");
+    //exporter->setInputData(tensor);
+    exporter->update();
 }
 
 void MainWindow::saveTumor() {
@@ -1589,29 +1589,29 @@ void MainWindow::selectFile() {
         tr("Select File(s)"), nullptr, tr("WSI Files (*.tiff *.tif *.svs *.ndpi *.bif *vms)"),  //*.zvi *.scn)"),
         nullptr, QFileDialog::DontUseNativeDialog
     );
-	
-	// return if the file dialog was cancelled without any files being selected
-	if (fileNames.count() == 0) {
-		return;
-	}
+    
+    // return if the file dialog was cancelled without any files being selected
+    if (fileNames.count() == 0) {
+        return;
+    }
 
-	// for a new selection of wsi(s), should reset and update these QWidgets
-	pageComboBox->clear();
-	exportComboBox->clear();
+    // for a new selection of wsi(s), should reset and update these QWidgets
+    pageComboBox->clear();
+    exportComboBox->clear();
     m_rendererList.clear();
 
     auto progDialog = QProgressDialog(mWidget);
     progDialog.setRange(0, fileNames.count()-1);
-	//progDialog.setContentsMargins(0, 0, 0, 0);
+    //progDialog.setContentsMargins(0, 0, 0, 0);
     progDialog.setVisible(true);
     progDialog.setModal(false);
     progDialog.setLabelText("Loading WSIs...");
     //QRect screenrect = mWidget->screen()[0].geometry();
-	progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
+    progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
     progDialog.show();
 
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-	auto currentPosition = curr_pos;
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+    auto currentPosition = curr_pos;
 
     // need to handle scenario where a WSI is added, but there already exists N WSIs from before
     auto nb_wsis_in_list = wsiList.size();
@@ -1706,7 +1706,7 @@ void MainWindow::selectFile() {
         int width_val = 100;
         int height_val = 150;
         button->setIconSize(QSize((int) std::round(0.9 * (float) image.width() * (float) height_val / (float) image.height()), (int) std::round(0.9f * (float) height_val)));
-		button->setToolTip(QString::fromStdString(splitCustom(currFileName, "/").back()));
+        button->setToolTip(QString::fromStdString(splitCustom(currFileName, "/").back()));
 
         auto listItem = new QListWidgetItem;
         listItem->setSizeHint(QSize(width_val, height_val));
@@ -1715,7 +1715,7 @@ void MainWindow::selectFile() {
         scrollList->setItemWidget(listItem, button);
 
         //curr_pos++; // this should change if we render the first WSI when loading
-		currentPosition++;
+        currentPosition++;
 
         // update progress bar
         progDialog.setValue(counter);
@@ -1760,7 +1760,7 @@ void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
     currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
     currentView->removeAllRenderers();  // VERY IMPORTANT THAT THIS IS DONE AFTER!!!
 
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
     int counter = 0;
     for (const QString& fileName : fileNames) {
@@ -1867,8 +1867,8 @@ void MainWindow::selectFileInProject(int pos) {
     std::cout << "Length of wsiList: " << std::to_string(wsiList.size()) << std::endl;
     if (filename == wsiList[pos]) {
         simpleInfoPrompt("WSI is already open");
-		return;
-	}
+        return;
+    }
 
 
     // for a new selection of wsi(s), should reset and update these QWidgets
@@ -1889,45 +1889,45 @@ void MainWindow::selectFileInProject(int pos) {
     currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
     currentView->removeAllRenderers();  // VERY IMPORTANT THAT THIS IS DONE AFTER!!!
 
-	// add WSI to project list
-	filename = wsiList[pos];
+    // add WSI to project list
+    filename = wsiList[pos];
 
-	//stopComputationThread();
-	// Import image from file using the ImageFileImporter
-	importer = WholeSlideImageImporter::New();
-	std::cout << "Current filename: " << filename << std::endl;
-	importer->setFilename(filename);
-	m_image = importer->updateAndGetOutputData<ImagePyramid>();
+    //stopComputationThread();
+    // Import image from file using the ImageFileImporter
+    importer = WholeSlideImageImporter::New();
+    std::cout << "Current filename: " << filename << std::endl;
+    importer->setFilename(filename);
+    m_image = importer->updateAndGetOutputData<ImagePyramid>();
 
-	// get metadata
-	metadata = m_image->getMetadata();
+    // get metadata
+    metadata = m_image->getMetadata();
 
-	auto renderer = ImagePyramidRenderer::New();
+    auto renderer = ImagePyramidRenderer::New();
     renderer->setSharpening(m_wsiSharpening);
-	renderer->setInputData(m_image);
+    renderer->setInputData(m_image);
 
-	removeAllRenderers();
-	m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
-	insertRenderer("WSI", renderer);
-	getView(0)->reinitialize(); // Must call this after removing all renderers
+    removeAllRenderers();
+    m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
+    insertRenderer("WSI", renderer);
+    getView(0)->reinitialize(); // Must call this after removing all renderers
 
-	// get WSI format
-	wsiFormat = metadata["openslide.vendor"];
+    // get WSI format
+    wsiFormat = metadata["openslide.vendor"];
 
-	// get magnification level of current WSI
-	magn_lvl = getMagnificationLevel();
+    // get magnification level of current WSI
+    magn_lvl = getMagnificationLevel();
 
-	// now make it possible to edit image in the View Widget
-	createDynamicViewWidget("WSI", modelName);
+    // now make it possible to edit image in the View Widget
+    createDynamicViewWidget("WSI", modelName);
 
-	// check if any results exists for current WSI, if there are load them
-	std::string wsiPath = splitCustom(splitCustom(filename, "/").back(), ".")[0];
-	auto currentResultPath = projectFolderName.toStdString() + "/results/" + wsiPath.c_str();
+    // check if any results exists for current WSI, if there are load them
+    std::string wsiPath = splitCustom(splitCustom(filename, "/").back(), ".")[0];
+    auto currentResultPath = projectFolderName.toStdString() + "/results/" + wsiPath.c_str();
 
-	QDirIterator iter(QString::fromStdString(currentResultPath));
-	std::cout << "Current result folder path: " << currentResultPath << std::endl;
-	while (iter.hasNext()) {
-		auto currentResult = iter.next().toStdString();
+    QDirIterator iter(QString::fromStdString(currentResultPath));
+    std::cout << "Current result folder path: " << currentResultPath << std::endl;
+    while (iter.hasNext()) {
+        auto currentResult = iter.next().toStdString();
 
         auto tmp = splitCustom(currentResult, "/").back();
         if ((tmp == ".") || (tmp == ".."))
@@ -1958,7 +1958,7 @@ void MainWindow::selectFileInProject(int pos) {
                 std::cout << "Unable to load result (format is not supported): " << currentResultPath << std::endl;
             }
         }
-	}
+    }
 
     // update application name to contain current WSI
     if (advancedMode) {
@@ -2155,32 +2155,32 @@ void MainWindow::openProject() {
             // now make it possible to edit image in the View Widget
             createDynamicViewWidget("WSI", modelName);
 
-			// check if any results exists for current WSI, if there are load them
-			std::string wsiPath = splitCustom(splitCustom(currFileName, "/").back(), ".")[0];
-			auto currentResultPath = projectFolderName.toStdString() + "/results/" + wsiPath.c_str();
+            // check if any results exists for current WSI, if there are load them
+            std::string wsiPath = splitCustom(splitCustom(currFileName, "/").back(), ".")[0];
+            auto currentResultPath = projectFolderName.toStdString() + "/results/" + wsiPath.c_str();
 
-			// update title to include name of current file
+            // update title to include name of current file
             if (advancedMode) {
                 setTitle(applicationName + " (Research mode)" + " - " + splitCustom(currFileName, "/").back());
             } else {
                 setTitle(applicationName + " - " + splitCustom(currFileName, "/").back());
             }
 
-			std::cout << "Current WSI used: " << currFileName << std::endl;
+            std::cout << "Current WSI used: " << currFileName << std::endl;
 
-			QDirIterator iter(QString::fromStdString(currentResultPath));
-			std::cout << "Current result folder path: " << currentResultPath << std::endl;
-			while (iter.hasNext()) {
-				auto currentResult = iter.next().toStdString();
+            QDirIterator iter(QString::fromStdString(currentResultPath));
+            std::cout << "Current result folder path: " << currentResultPath << std::endl;
+            while (iter.hasNext()) {
+                auto currentResult = iter.next().toStdString();
 
-				std::cout << "current file: " << currentResult << std::endl;
+                std::cout << "current file: " << currentResult << std::endl;
 
-				auto tmp = splitCustom(currentResult, "/").back();
+                auto tmp = splitCustom(currentResult, "/").back();
 
-				if ((tmp == ".") || (tmp == ".."))
-				    continue;
+                if ((tmp == ".") || (tmp == ".."))
+                    continue;
 
-				// check if current "file" is a directory, if directly, it will assume that there exists some high-res seg results to render, else do other stuff
+                // check if current "file" is a directory, if directly, it will assume that there exists some high-res seg results to render, else do other stuff
                 QFileInfo pathFileInfo(currentResult.c_str());
                 if (pathFileInfo.isDir()){
                     if (!QDir(currentResult.c_str()).isEmpty()) {
@@ -2203,7 +2203,7 @@ void MainWindow::openProject() {
                         std::cout << "Unable to load result (format is not supported): " << currentResultPath << std::endl;
                     }
                 }
-			}
+            }
         }
         counter++;
 
@@ -2288,7 +2288,7 @@ QImage MainWindow::extractThumbnail() {
                     float data;
                     data = ((uchar *) inputData)[i * nrOfComponents + c]; // assumes TYPE_UINT8
                     pixelData[i * 4 + (2-c)] = (unsigned char) data;  // TODO: NOTE (2-c) fixed BGR->RGB, but maybe there is a smarter solution?
-					//pixelData[i * 4 + c] = (unsigned char)data;  // TODO: NOTE (2-c) fixed BGR->RGB, but maybe there is a smarter solution?
+                    //pixelData[i * 4 + c] = (unsigned char)data;  // TODO: NOTE (2-c) fixed BGR->RGB, but maybe there is a smarter solution?
                 }
                 pixelData[i * 4 + 3] = 255; // Alpha
             }
@@ -2312,166 +2312,166 @@ void MainWindow::saveProject() {
 
 void MainWindow::runForProject() {
 
-	auto projectLayout = new QVBoxLayout;
-	auto projectDialog = new QDialog(mWidget);
-	projectDialog->setWindowTitle("Run for project");
+    auto projectLayout = new QVBoxLayout;
+    auto projectDialog = new QDialog(mWidget);
+    projectDialog->setWindowTitle("Run for project");
 
-	auto applyButton = new QPushButton(projectDialog);
-	applyButton->setText("Apply");
-	applyButton->setFixedWidth(100);
-	applyButton->setFixedHeight(35);
-	applyButton->setStyleSheet("color: white; background-color: blue");
+    auto applyButton = new QPushButton(projectDialog);
+    applyButton->setText("Apply");
+    applyButton->setFixedWidth(100);
+    applyButton->setFixedHeight(35);
+    applyButton->setStyleSheet("color: white; background-color: blue");
 
-	auto cancelButton = new QPushButton(projectDialog);
-	cancelButton->setText("Cancel");
-	cancelButton->setFixedWidth(100);
-	cancelButton->setStyleSheet("color: white; background-color: red");
-	cancelButton->setFixedHeight(35);
+    auto cancelButton = new QPushButton(projectDialog);
+    cancelButton->setText("Cancel");
+    cancelButton->setFixedWidth(100);
+    cancelButton->setStyleSheet("color: white; background-color: red");
+    cancelButton->setFixedHeight(35);
 
-	auto enableToggle = new QPushButton(projectDialog);
-	//enableToggle->setCheckable(true);
-	if (m_runForProject) {
-		enableToggle->setText("Enabled");
-		//enableToggle->setChecked(true);
-	} else {
-		enableToggle->setText("Disabled");
-		//enableToggle->setChecked(false);
-	}
-	enableToggle->setFixedWidth(100);
-	enableToggle->setStyleSheet("color: white; background-color: gray");
-	enableToggle->setFixedHeight(35);
+    auto enableToggle = new QPushButton(projectDialog);
+    //enableToggle->setCheckable(true);
+    if (m_runForProject) {
+        enableToggle->setText("Enabled");
+        //enableToggle->setChecked(true);
+    } else {
+        enableToggle->setText("Disabled");
+        //enableToggle->setChecked(false);
+    }
+    enableToggle->setFixedWidth(100);
+    enableToggle->setStyleSheet("color: white; background-color: gray");
+    enableToggle->setFixedHeight(35);
 
-	auto topButtonsLayout = new QHBoxLayout;
-	topButtonsLayout->setAlignment(Qt::AlignLeft);
-	topButtonsLayout->addWidget(applyButton);
-	topButtonsLayout->addWidget(cancelButton);
-	topButtonsLayout->addWidget(enableToggle);
+    auto topButtonsLayout = new QHBoxLayout;
+    topButtonsLayout->setAlignment(Qt::AlignLeft);
+    topButtonsLayout->addWidget(applyButton);
+    topButtonsLayout->addWidget(cancelButton);
+    topButtonsLayout->addWidget(enableToggle);
 
-	auto topButtonsWidget = new QWidget(projectDialog);
-	topButtonsWidget->setLayout(topButtonsLayout);
+    auto topButtonsWidget = new QWidget(projectDialog);
+    topButtonsWidget->setLayout(topButtonsLayout);
 
-	// start dialog asking which WSIs to use which exists in the current Project
-	projectDialog->setLayout(projectLayout);
+    // start dialog asking which WSIs to use which exists in the current Project
+    projectDialog->setLayout(projectLayout);
 
-	projectLayout->addWidget(topButtonsWidget);
+    projectLayout->addWidget(topButtonsWidget);
 
-	auto wsiDialogLayout = new QHBoxLayout;
-	auto wsiDialog = new QWidget(projectDialog);
-	projectLayout->addWidget(wsiDialog);
-	wsiDialog->setLayout(wsiDialogLayout);
+    auto wsiDialogLayout = new QHBoxLayout;
+    auto wsiDialog = new QWidget(projectDialog);
+    projectLayout->addWidget(wsiDialog);
+    wsiDialog->setLayout(wsiDialogLayout);
 
-	auto allFilesWidget = new QListWidget(projectDialog);
-	allFilesWidget->setSelectionMode(QAbstractItemView::MultiSelection);
-	for (const auto& item : wsiList) {
-		allFilesWidget->addItem(QString::fromStdString(item));
-	}
-	allFilesWidget->setMinimumWidth(allFilesWidget->sizeHintForColumn(0));
+    auto allFilesWidget = new QListWidget(projectDialog);
+    allFilesWidget->setSelectionMode(QAbstractItemView::MultiSelection);
+    for (const auto& item : wsiList) {
+        allFilesWidget->addItem(QString::fromStdString(item));
+    }
+    allFilesWidget->setMinimumWidth(allFilesWidget->sizeHintForColumn(0));
 
-	auto buttonsWidget = new QWidget(projectDialog);
-	auto buttonsLayout = new QVBoxLayout;
-	buttonsWidget->setLayout(buttonsLayout);
-	buttonsLayout->setAlignment(Qt::AlignVCenter);
+    auto buttonsWidget = new QWidget(projectDialog);
+    auto buttonsLayout = new QVBoxLayout;
+    buttonsWidget->setLayout(buttonsLayout);
+    buttonsLayout->setAlignment(Qt::AlignVCenter);
 
-	auto fewRemoveButton = new QPushButton(projectDialog);
-	fewRemoveButton->setText(" < ");  // make it bold (style stuff)
+    auto fewRemoveButton = new QPushButton(projectDialog);
+    fewRemoveButton->setText(" < ");  // make it bold (style stuff)
 
-	auto allRemoveButton = new QPushButton(projectDialog);
-	allRemoveButton->setText(" << ");  // make it bold
+    auto allRemoveButton = new QPushButton(projectDialog);
+    allRemoveButton->setText(" << ");  // make it bold
 
-	auto fewSelectButton = new QPushButton(projectDialog);
-	fewSelectButton->setText(" > ");  // make it bold (style stuff)
+    auto fewSelectButton = new QPushButton(projectDialog);
+    fewSelectButton->setText(" > ");  // make it bold (style stuff)
 
-	auto allSelectButton = new QPushButton(projectDialog);
-	allSelectButton->setText(" >> ");  // make it bold
+    auto allSelectButton = new QPushButton(projectDialog);
+    allSelectButton->setText(" >> ");  // make it bold
 
-	buttonsLayout->addWidget(fewSelectButton);
-	buttonsLayout->addWidget(allSelectButton);
-	buttonsLayout->addWidget(allRemoveButton);
-	buttonsLayout->addWidget(fewRemoveButton);
+    buttonsLayout->addWidget(fewSelectButton);
+    buttonsLayout->addWidget(allSelectButton);
+    buttonsLayout->addWidget(allRemoveButton);
+    buttonsLayout->addWidget(fewRemoveButton);
 
-	auto selectedFilesWidget = new QListWidget(projectDialog);
-	selectedFilesWidget->setSelectionMode(QAbstractItemView::MultiSelection);
-	for (const auto& item : m_runForProjectWsis) {
-		selectedFilesWidget->addItem(QString::fromStdString(item));
-	}
-	selectedFilesWidget->setMinimumWidth(allFilesWidget->sizeHintForColumn(0));  // set to use allFilesWidget size such that width always match
+    auto selectedFilesWidget = new QListWidget(projectDialog);
+    selectedFilesWidget->setSelectionMode(QAbstractItemView::MultiSelection);
+    for (const auto& item : m_runForProjectWsis) {
+        selectedFilesWidget->addItem(QString::fromStdString(item));
+    }
+    selectedFilesWidget->setMinimumWidth(allFilesWidget->sizeHintForColumn(0));  // set to use allFilesWidget size such that width always match
 
-	wsiDialogLayout->addWidget(allFilesWidget);
-	wsiDialogLayout->addWidget(buttonsWidget);
-	wsiDialogLayout->addWidget(selectedFilesWidget);
+    wsiDialogLayout->addWidget(allFilesWidget);
+    wsiDialogLayout->addWidget(buttonsWidget);
+    wsiDialogLayout->addWidget(selectedFilesWidget);
 
-	// introduce events -> signals and slots, connect and stuff
-	QObject::connect(allSelectButton, &QPushButton::clicked, [=]() {
-		selectedFilesWidget->clear();
-		for (const auto& item : wsiList) {
-			selectedFilesWidget->addItem(QString::fromStdString(item));
-		}
-		selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
-	});
+    // introduce events -> signals and slots, connect and stuff
+    QObject::connect(allSelectButton, &QPushButton::clicked, [=]() {
+        selectedFilesWidget->clear();
+        for (const auto& item : wsiList) {
+            selectedFilesWidget->addItem(QString::fromStdString(item));
+        }
+        selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
+    });
 
-	QObject::connect(fewSelectButton, &QPushButton::clicked, [=]() {
-		std::cout << "few select button was pressed" << std::endl;
-		auto currSelectedItems = allFilesWidget->selectedItems();
+    QObject::connect(fewSelectButton, &QPushButton::clicked, [=]() {
+        std::cout << "few select button was pressed" << std::endl;
+        auto currSelectedItems = allFilesWidget->selectedItems();
 
-		std::vector<std::string> currItemsAlreadySelected;
-		for (int row = 0; row < selectedFilesWidget->count(); row++) {
-			currItemsAlreadySelected.push_back(selectedFilesWidget->item(row)->text().toStdString());
-		}
+        std::vector<std::string> currItemsAlreadySelected;
+        for (int row = 0; row < selectedFilesWidget->count(); row++) {
+            currItemsAlreadySelected.push_back(selectedFilesWidget->item(row)->text().toStdString());
+        }
 
-		for (const auto& currItem : currSelectedItems) {
-			std::cout << "current item: " << currItem->text().toStdString() << std::endl;
-			if (std::find(currItemsAlreadySelected.begin(), currItemsAlreadySelected.end(), currItem->text().toStdString()) != currItemsAlreadySelected.end()) {
-			
-			} else {
-				selectedFilesWidget->addItem(currItem->text());
-			}
-		}
-		// adjust Widget
-		selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
-	});
+        for (const auto& currItem : currSelectedItems) {
+            std::cout << "current item: " << currItem->text().toStdString() << std::endl;
+            if (std::find(currItemsAlreadySelected.begin(), currItemsAlreadySelected.end(), currItem->text().toStdString()) != currItemsAlreadySelected.end()) {
+            
+            } else {
+                selectedFilesWidget->addItem(currItem->text());
+            }
+        }
+        // adjust Widget
+        selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
+    });
 
-	QObject::connect(allRemoveButton, &QPushButton::clicked, [=]() {
-		selectedFilesWidget->clear();
-		selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
-	});
+    QObject::connect(allRemoveButton, &QPushButton::clicked, [=]() {
+        selectedFilesWidget->clear();
+        selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
+    });
 
-	QObject::connect(fewRemoveButton, &QPushButton::clicked, [=]() {
-		auto currSelectedItems = selectedFilesWidget->selectedItems();
+    QObject::connect(fewRemoveButton, &QPushButton::clicked, [=]() {
+        auto currSelectedItems = selectedFilesWidget->selectedItems();
 
-		for (const auto& currItem : currSelectedItems) {
-			delete selectedFilesWidget->takeItem(selectedFilesWidget->row(currItem));
-		}
+        for (const auto& currItem : currSelectedItems) {
+            delete selectedFilesWidget->takeItem(selectedFilesWidget->row(currItem));
+        }
 
-		selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
-	});
+        selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
+    });
 
-	QObject::connect(cancelButton, &QPushButton::clicked, [=]() {
-		std::cout << "Cancel was clicked." << std::endl;
-		projectDialog->close();
-	});
+    QObject::connect(cancelButton, &QPushButton::clicked, [=]() {
+        std::cout << "Cancel was clicked." << std::endl;
+        projectDialog->close();
+    });
 
-	QObject::connect(applyButton, &QPushButton::clicked, [=]() {
-		std::cout << "Apply was clicked." << std::endl;
-		m_runForProjectWsis.clear();
-		for (int row = 0; row < selectedFilesWidget->count(); row++) {
-			m_runForProjectWsis.push_back(selectedFilesWidget->item(row)->text().toStdString());
-		}
-		projectDialog->accept();
-	});
+    QObject::connect(applyButton, &QPushButton::clicked, [=]() {
+        std::cout << "Apply was clicked." << std::endl;
+        m_runForProjectWsis.clear();
+        for (int row = 0; row < selectedFilesWidget->count(); row++) {
+            m_runForProjectWsis.push_back(selectedFilesWidget->item(row)->text().toStdString());
+        }
+        projectDialog->accept();
+    });
 
-	QObject::connect(enableToggle, &QPushButton::clicked, [=]() {
-		m_runForProject = !m_runForProject;
-		if (m_runForProject) {
-			enableToggle->setText("Enabled");
-			enableToggle->setChecked(true);
-		}
-		else {
-			enableToggle->setText("Disabled");
-			enableToggle->setChecked(false);
-		}
-		std::cout << "Run for project was " << enableToggle->text().toStdString() << std::endl;
-	});
-	projectDialog->exec();
+    QObject::connect(enableToggle, &QPushButton::clicked, [=]() {
+        m_runForProject = !m_runForProject;
+        if (m_runForProject) {
+            enableToggle->setText("Enabled");
+            enableToggle->setChecked(true);
+        }
+        else {
+            enableToggle->setText("Disabled");
+            enableToggle->setChecked(false);
+        }
+        std::cout << "Run for project was " << enableToggle->text().toStdString() << std::endl;
+    });
+    projectDialog->exec();
 }
 
 void MainWindow::addPipelines() {
@@ -2494,7 +2494,7 @@ void MainWindow::addPipelines() {
         std::string newLocation = cwd + "data/Pipelines/";
         std::string newPath = cwd + "data/Pipelines/" + someFile;
         if (fileExists(newPath)) {
-			std::cout << fileName.toStdString() << " : " << "File with the same name already exists in folder, didn't transfer..." << std::endl;
+            std::cout << fileName.toStdString() << " : " << "File with the same name already exists in folder, didn't transfer..." << std::endl;
             continue;
         } else {
             if (fileExists(fileName.toStdString())) {
@@ -2514,45 +2514,45 @@ void MainWindow::addPipelines() {
 
 void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
 
-	// if Models/ folder doesnt exist, create it
-	QDir().mkpath(QDir::homePath() + "fastpathology/data/Models");
+    // if Models/ folder doesnt exist, create it
+    QDir().mkpath(QDir::homePath() + "fastpathology/data/Models");
 
-	auto progDialog = QProgressDialog(mWidget);
-	progDialog.setRange(0, fileNames.count() - 1);
-	progDialog.setVisible(true);
-	progDialog.setModal(false);
-	progDialog.setLabelText("Adding models...");
-	QRect screenrect = mWidget->screen()[0].geometry();
-	progDialog.move(mWidget->width() - progDialog.width() / 2, -mWidget->width() / 2 - progDialog.width() / 2);
-	progDialog.show();
+    auto progDialog = QProgressDialog(mWidget);
+    progDialog.setRange(0, fileNames.count() - 1);
+    progDialog.setVisible(true);
+    progDialog.setModal(false);
+    progDialog.setLabelText("Adding models...");
+    QRect screenrect = mWidget->screen()[0].geometry();
+    progDialog.move(mWidget->width() - progDialog.width() / 2, -mWidget->width() / 2 - progDialog.width() / 2);
+    progDialog.show();
 
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
-	int counter = 0;
-	// now iterate over all selected files and add selected files and corresponding ones to Models/
-	for (const QString& fileName : fileNames) {
-		std::cout << fileName.toStdString() << std::endl;
+    int counter = 0;
+    // now iterate over all selected files and add selected files and corresponding ones to Models/
+    for (const QString& fileName : fileNames) {
+        std::cout << fileName.toStdString() << std::endl;
 
-		if (fileName == "")
-			return;
+        if (fileName == "")
+            return;
 
-		std::string someFile = splitCustom(fileName.toStdString(), "/").back(); // TODO: Need to make this only split on last "/"
-		std::string oldLocation = splitCustom(fileName.toStdString(), someFile)[0];
-		std::string newLocation = cwd + "data/Models/";
+        std::string someFile = splitCustom(fileName.toStdString(), "/").back(); // TODO: Need to make this only split on last "/"
+        std::string oldLocation = splitCustom(fileName.toStdString(), someFile)[0];
+        std::string newLocation = cwd + "data/Models/";
 
-		std::vector<string> names = splitCustom(someFile, ".");
-		string fileNameNoFormat = names[0];
-		string formatName = names[1];
+        std::vector<string> names = splitCustom(someFile, ".");
+        string fileNameNoFormat = names[0];
+        string formatName = names[1];
 
-		// copy selected file to Models folder
-		// check if file already exists in new folder, if yes, print warning, and continue to next one
-		string newPath = cwd + "data/Models/" + someFile;
-		if (fileExists(newPath)) {
-			std::cout << "file with the same name already exists in folder, didn't transfer... " << std::endl;
-			progDialog.setValue(counter);
-			counter++;
+        // copy selected file to Models folder
+        // check if file already exists in new folder, if yes, print warning, and continue to next one
+        string newPath = cwd + "data/Models/" + someFile;
+        if (fileExists(newPath)) {
+            std::cout << "file with the same name already exists in folder, didn't transfer... " << std::endl;
+            progDialog.setValue(counter);
+            counter++;
             QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-		} else {
+        } else {
             //QFile::copy(fileName, QString::fromStdString(newPath));
 
             // check which corresponding model files that exist, except from the one that is chosen
@@ -2587,7 +2587,7 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
             QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
             counter++;
         }
-	}
+    }
 }
 
 void MainWindow::addModels() {
@@ -2600,18 +2600,18 @@ void MainWindow::addModels() {
             nullptr, QFileDialog::DontUseNativeDialog
     ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
 
-	auto progDialog = QProgressDialog(mWidget);
-	progDialog.setRange(0, ls.count() - 1);
-	progDialog.setVisible(true);
-	progDialog.setModal(false);
-	progDialog.setLabelText("Adding models...");
-	QRect screenrect = mWidget->screen()[0].geometry();
-	progDialog.move(mWidget->width() - progDialog.width() / 2, -mWidget->width() / 2 - progDialog.width() / 2);
-	progDialog.show();
+    auto progDialog = QProgressDialog(mWidget);
+    progDialog.setRange(0, ls.count() - 1);
+    progDialog.setVisible(true);
+    progDialog.setModal(false);
+    progDialog.setLabelText("Adding models...");
+    QRect screenrect = mWidget->screen()[0].geometry();
+    progDialog.move(mWidget->width() - progDialog.width() / 2, -mWidget->width() / 2 - progDialog.width() / 2);
+    progDialog.show();
 
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
-	int counter = 0;
+    int counter = 0;
     // now iterate over all selected files and add selected files and corresponding ones to Models/
     for (QString& fileName : ls) {
 
@@ -2631,8 +2631,8 @@ void MainWindow::addModels() {
         string newPath = cwd + "data/Models/" + someFile;
         if (fileExists(newPath)) {
             std::cout << "file with the same name already exists in folder, didn't transfer... " << std::endl;
-			progDialog.setValue(counter);
-			counter++;
+            progDialog.setValue(counter);
+            counter++;
             continue;
         }
 
@@ -2664,9 +2664,9 @@ void MainWindow::addModels() {
 
         processLayout->insertWidget(processLayout->count(), someButton);
 
-		progDialog.setValue(counter);
+        progDialog.setValue(counter);
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-		counter++;
+        counter++;
     }
 }
 
@@ -2707,9 +2707,9 @@ float MainWindow::getMagnificationLevel() {
     } else if (wsiFormat == "aperio") {
         magnification_lvl = std::stof(metadata["aperio.AppMag"]); //atof(openslide_get_property_value(osr, "aperio.AppMag"));
     } else if (wsiFormat == "hamamatsu") {
-		std::cout << "Vendor: hamamatsu" << std::endl;
+        std::cout << "Vendor: hamamatsu" << std::endl;
         magnification_lvl = std::stof(metadata["openslide.objective-power"]);
-		std::cout << "Magn lvl: " << magnification_lvl << std::endl;
+        std::cout << "Magn lvl: " << magnification_lvl << std::endl;
     } else {  //"TODO: Make this more general, test different image formats to see how the magn_lvl metadata vary"
         std::cout << "WSI format not set, uses default format: " << metadata["aperio.AppMag"] << std::endl;
         magnification_lvl = std::stof(metadata["aperio.AppMag"]);
@@ -2718,18 +2718,18 @@ float MainWindow::getMagnificationLevel() {
 }
 
 bool MainWindow::segmentTissue() {
-	if (wsiList.empty()) {
-		std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
-		return false;
-	}
+    if (wsiList.empty()) {
+        std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
+        return false;
+    }
 
-	// prompt if you want to run the analysis again, if it has already been ran
+    // prompt if you want to run the analysis again, if it has already been ran
     if (hasRenderer("tissue")) {
         simpleInfoPrompt("Tissue segmentation on current WSI has already been performed.");
         return false;
     }
 
-	// basic thresholding (with morph. post-proc.) based on euclidean distance from the color white
+    // basic thresholding (with morph. post-proc.) based on euclidean distance from the color white
     auto tissueSegmentation = TissueSegmentation::New();
     tissueSegmentation->setInputData(m_image);
 
@@ -2755,7 +2755,7 @@ bool MainWindow::segmentTissue() {
         currValue->setFixedWidth(50);
         QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue){currValue->setText(QString::fromStdString(std::to_string(tissueSegmentation->getThreshold())));});
 
-		// threshold
+        // threshold
         auto threshWidget = new QWidget;
         auto sliderLayout = new QHBoxLayout;
         threshWidget->setLayout(sliderLayout);
@@ -2764,33 +2764,33 @@ bool MainWindow::segmentTissue() {
 
         std::string tempTissueName = "temporaryTissue";
 
-		QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue) {
-			const int step = 2;
-			threshSlider->setValue(newValue);
-			tissueSegmentation->setThreshold(newValue);
-			auto checkFlag = true;
+        QObject::connect(threshSlider, &QSlider::valueChanged, [=](int newValue) {
+            const int step = 2;
+            threshSlider->setValue(newValue);
+            tissueSegmentation->setThreshold(newValue);
+            auto checkFlag = true;
 
-			if (checkFlag) {
-				auto temporaryTissueSegmentation = TissueSegmentation::New();
-				temporaryTissueSegmentation->setInputData(m_image);
-				temporaryTissueSegmentation->setThreshold(tissueSegmentation->getThreshold());
-				temporaryTissueSegmentation->setErode(tissueSegmentation->getErode());
-				temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
+            if (checkFlag) {
+                auto temporaryTissueSegmentation = TissueSegmentation::New();
+                temporaryTissueSegmentation->setInputData(m_image);
+                temporaryTissueSegmentation->setThreshold(tissueSegmentation->getThreshold());
+                temporaryTissueSegmentation->setErode(tissueSegmentation->getErode());
+                temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
 
-				auto someRenderer = SegmentationRenderer::New();
-				someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
-				someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
-				someRenderer->setOpacity(0.4f);
-				someRenderer->update();
+                auto someRenderer = SegmentationRenderer::New();
+                someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
+                someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
+                someRenderer->setOpacity(0.4f);
+                someRenderer->update();
 
-				if (hasRenderer(tempTissueName)) {
-					auto currRenderer = m_rendererList[tempTissueName];
-					getView(0)->removeRenderer(currRenderer);
-					m_rendererList.erase(tempTissueName);
-				}
-				insertRenderer(tempTissueName, someRenderer);
-			}
-		});
+                if (hasRenderer(tempTissueName)) {
+                    auto currRenderer = m_rendererList[tempTissueName];
+                    getView(0)->removeRenderer(currRenderer);
+                    m_rendererList.erase(tempTissueName);
+                }
+                insertRenderer(tempTissueName, someRenderer);
+            }
+        });
 
         // dilation
         auto dilateSlider = new QSlider(Qt::Horizontal, dynamicViewWidget);
@@ -2801,39 +2801,39 @@ bool MainWindow::segmentTissue() {
         dilateSlider->setSingleStep(2);
         QObject::connect(dilateSlider, &QSlider::valueChanged, [=](int newValue) {
             const int step = 2;
-			bool checkFlag = false;
+            bool checkFlag = false;
             if (newValue < 3) {
                 dilateSlider->setValue(0);
                 tissueSegmentation->setDilate(0);
-				checkFlag = true;
+                checkFlag = true;
             } else {
                 if (newValue % 2 != 0) {
                     dilateSlider->setValue(newValue);
                     tissueSegmentation->setDilate(newValue);
-					checkFlag = true;
+                    checkFlag = true;
                 }
             }
 
-			if (checkFlag) {
-				auto temporaryTissueSegmentation = TissueSegmentation::New();
-				temporaryTissueSegmentation->setInputData(m_image);
-				temporaryTissueSegmentation->setThreshold(tissueSegmentation->getThreshold());
-				temporaryTissueSegmentation->setErode(tissueSegmentation->getErode());
-				temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
+            if (checkFlag) {
+                auto temporaryTissueSegmentation = TissueSegmentation::New();
+                temporaryTissueSegmentation->setInputData(m_image);
+                temporaryTissueSegmentation->setThreshold(tissueSegmentation->getThreshold());
+                temporaryTissueSegmentation->setErode(tissueSegmentation->getErode());
+                temporaryTissueSegmentation->setDilate(tissueSegmentation->getDilate());
 
-				auto someRenderer = SegmentationRenderer::New();
-				someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
-				someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
-				someRenderer->setOpacity(0.4f);
-				someRenderer->update();
+                auto someRenderer = SegmentationRenderer::New();
+                someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
+                someRenderer->setInputData(temporaryTissueSegmentation->updateAndGetOutputData<Image>());
+                someRenderer->setOpacity(0.4f);
+                someRenderer->update();
 
-				if (hasRenderer(tempTissueName)) {
-					auto currRenderer = m_rendererList[tempTissueName];
-					getView(0)->removeRenderer(currRenderer);
-					m_rendererList.erase(tempTissueName);
-				}
-				insertRenderer(tempTissueName, someRenderer);
-			}
+                if (hasRenderer(tempTissueName)) {
+                    auto currRenderer = m_rendererList[tempTissueName];
+                    getView(0)->removeRenderer(currRenderer);
+                    m_rendererList.erase(tempTissueName);
+                }
+                insertRenderer(tempTissueName, someRenderer);
+            }
         });
 
         auto currDilateValue = new QLabel;
@@ -2882,9 +2882,9 @@ bool MainWindow::segmentTissue() {
                 someRenderer->update();
 
                 if (hasRenderer(tempTissueName)) {
-					auto currRenderer = m_rendererList[tempTissueName];
-					getView(0)->removeRenderer(currRenderer);
-					m_rendererList.erase(tempTissueName);
+                    auto currRenderer = m_rendererList[tempTissueName];
+                    getView(0)->removeRenderer(currRenderer);
+                    m_rendererList.erase(tempTissueName);
                 }
                 insertRenderer(tempTissueName, someRenderer);
             }
@@ -2959,20 +2959,20 @@ bool MainWindow::segmentTissue() {
     someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
     someRenderer->update();
 
-	std::string currSegment = "tissue";
+    std::string currSegment = "tissue";
 
-	// TODO: should append some unique ID next to "tissue" (also really for all other results) such that multiple
-	//  runs with different hyperparamters may be ran, visualized and stored
-	/*
+    // TODO: should append some unique ID next to "tissue" (also really for all other results) such that multiple
+    //  runs with different hyperparamters may be ran, visualized and stored
+    /*
     std::string origSegment = "tissue";
     auto iter = 2;
     while (hasRenderer(currSegment)) {
         currSegment = origSegment + std::to_string(iter);
         iter++;
     }
-		*/
+        */
 
-	m_rendererTypeList[currSegment] = "SegmentationRenderer";
+    m_rendererTypeList[currSegment] = "SegmentationRenderer";
     createDynamicViewWidget(currSegment, modelName);
     insertRenderer(currSegment, someRenderer);
 
@@ -3008,86 +3008,86 @@ void MainWindow::loadHighres(QString path, QString name) {
 }
 
 void MainWindow::loadHeatmap(QString tissuePath, QString name) {
-	if (!fileExists(tissuePath.toStdString()))
-		return;
+    if (!fileExists(tissuePath.toStdString()))
+        return;
 
-	auto someName = name.toStdString();
-	std::cout << "Heatmap someName var: " << someName << std::endl;
+    auto someName = name.toStdString();
+    std::cout << "Heatmap someName var: " << someName << std::endl;
 
-	auto importer = HDF5TensorImporter::New();
-	importer->setFilename(tissuePath.toStdString()); //"tensor.h5");
-	importer->setDatasetName(someName);
-	auto resultTensor = importer->updateAndGetOutputData<Tensor>();
-	auto resultShape = resultTensor->getShape();
-	//importer->update();
-	//addProcessObject(importer);
+    auto importer = HDF5TensorImporter::New();
+    importer->setFilename(tissuePath.toStdString()); //"tensor.h5");
+    importer->setDatasetName(someName);
+    auto resultTensor = importer->updateAndGetOutputData<Tensor>();
+    auto resultShape = resultTensor->getShape();
+    //importer->update();
+    //addProcessObject(importer);
 
-	std::cout << "importer shape: " << std::endl;
-	std::cout << resultShape.toString() << std::endl;
+    std::cout << "importer shape: " << std::endl;
+    std::cout << resultShape.toString() << std::endl;
 
-	// m_tumorMap->setSpacing((float) m_image->getFullHeight() / (float) input->getHeight(), (float) m_image->getFullWidth() / (float) input->getWidth(), 1.0f);
+    // m_tumorMap->setSpacing((float) m_image->getFullHeight() / (float) input->getHeight(), (float) m_image->getFullWidth() / (float) input->getWidth(), 1.0f);
 
-	auto someRenderer = HeatmapRenderer::New();
-	//someRenderer->glPolygonOffset(512.0f, 512.0f);
-	//someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
-	someRenderer->setInputConnection(0, importer->getOutputPort());
-	//someRenderer->setInputData(someImage);
-	someRenderer->setMaxOpacity(0.6f);
-	someRenderer->setInterpolation(false);
-	//someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
-	someRenderer->update();
+    auto someRenderer = HeatmapRenderer::New();
+    //someRenderer->glPolygonOffset(512.0f, 512.0f);
+    //someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
+    someRenderer->setInputConnection(0, importer->getOutputPort());
+    //someRenderer->setInputData(someImage);
+    someRenderer->setMaxOpacity(0.6f);
+    someRenderer->setInterpolation(false);
+    //someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
+    someRenderer->update();
 
-	m_rendererTypeList[someName] = "HeatmapRenderer";
-	insertRenderer(someName, someRenderer);
+    m_rendererTypeList[someName] = "HeatmapRenderer";
+    insertRenderer(someName, someRenderer);
 
-	//hideTissueMask(false);
+    //hideTissueMask(false);
 
-	// now make it possible to edit prediction in the View Widget
-	createDynamicViewWidget(someName, modelName);
+    // now make it possible to edit prediction in the View Widget
+    createDynamicViewWidget(someName, modelName);
 
-	std::cout << "Finished loading..." << std::endl;;
-	savedList.emplace_back(someName);
+    std::cout << "Finished loading..." << std::endl;;
+    savedList.emplace_back(someName);
 }
 
 void MainWindow::loadSegmentation(QString tissuePath, QString name) {
 
-	if (!fileExists(tissuePath.toStdString()))
-		return;
+    if (!fileExists(tissuePath.toStdString()))
+        return;
 
-	auto someName = name.toStdString();
+    auto someName = name.toStdString();
 
-	auto reader = ImageFileImporter::New();
-	reader->setFilename(tissuePath.toStdString());
-	reader->setMainDevice(Host::getInstance());
-	auto port = reader->getOutputPort();
-	reader->update();
-	auto someImage = port->getNextFrame<Image>();
+    auto reader = ImageFileImporter::New();
+    reader->setFilename(tissuePath.toStdString());
+    reader->setMainDevice(Host::getInstance());
+    auto port = reader->getOutputPort();
+    reader->update();
+    auto someImage = port->getNextFrame<Image>();
 
-	//auto wsi = getInputData<ImagePyramid>();
-	auto access = m_image->getAccess(ACCESS_READ);
-	auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
-	auto currShape = someImage->getSize();
+    //auto wsi = getInputData<ImagePyramid>();
+    auto access = m_image->getAccess(ACCESS_READ);
+    auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
+    auto currShape = someImage->getSize();
 
-	std::cout << "Dimensions info (current): " << currShape[1] << ", " << currShape[0] << std::endl;
-	std::cout << "Dimensions info (lowest): " << input->getHeight() << ", " << input->getWidth() << std::endl;
-	std::cout << "Dimensions info (WSI): " << m_image->getFullHeight() << ", " << m_image->getFullWidth() << std::endl;
+    std::cout << "Dimensions info (current): " << currShape[1] << ", " << currShape[0] << std::endl;
+    std::cout << "Dimensions info (lowest): " << input->getHeight() << ", " << input->getWidth() << std::endl;
+    std::cout << "Dimensions info (WSI): " << m_image->getFullHeight() << ", " << m_image->getFullWidth() << std::endl;
 
     // TODO: should store the corresponding model config files that contain all the information relevant for rendering
     //  and interaction with the software, e.g. number of classes, class names, class colors, etc...
 
-	//someImage->setSpacing((float)m_image->getFullHeight() / (float)input->getHeight(), (float)m_image->getFullWidth() / (float)input->getWidth(), 1.0f);
-	someImage->setSpacing((float)m_image->getFullHeight() / (float)currShape[1], (float)m_image->getFullWidth() / (float)currShape[0], 1.0f);
+    //someImage->setSpacing((float)m_image->getFullHeight() / (float)input->getHeight(), (float)m_image->getFullWidth() / (float)input->getWidth(), 1.0f);
+    someImage->setSpacing((float)m_image->getFullHeight() / (float)currShape[1], (float)m_image->getFullWidth() / (float)currShape[0], 1.0f);
 
-	auto someRenderer = SegmentationRenderer::New();
-	someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
-	someRenderer->setInputData(someImage);
-	someRenderer->setOpacity(0.4f);
-	someRenderer->update();
+    auto someRenderer = SegmentationRenderer::New();
+    someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
+    someRenderer->setInputData(someImage);
+    someRenderer->setOpacity(0.4f);
+    someRenderer->update();
 
-	m_rendererTypeList[someName] = "SegmentationRenderer";
-	insertRenderer(someName, someRenderer);
-	createDynamicViewWidget(someName, modelName);
-	savedList.emplace_back(someName);
+    m_rendererTypeList[someName] = "SegmentationRenderer";
+    insertRenderer(someName, someRenderer);
+    createDynamicViewWidget(someName, modelName);
+    savedList.emplace_back(someName);
 }
 
 void MainWindow::runPipeline_wrapper(std::string path) {
@@ -3244,20 +3244,20 @@ std::map<std::string, std::string> MainWindow::setParameterDialog(std::map<std::
 
     // Show the dialog as modal
     int ret = paramDialog.exec();
-	*successFlag = ret;
+    *successFlag = ret;
     std::cout << "Ret value: " << ret << std::endl;
-	switch (ret) {
-	case 1: //QMessageBox::Ok:
-		std::cout << "OK was pressed: " << std::endl;
-		for (auto const&[key, val] : modelMetadata) {
-			modelMetadata[key] = fields.takeFirst()->text().toStdString(); //fields.takeAt(cnt)->text().toStdString();
-		}
-	case 0: //QMessageBox::Cancel:
-		std::cout << "CANCEL was pressed: " << std::endl;
-		stopFlag = true;
-	default:
-		std::cout << "Default..." << std::endl;
-	}
+    switch (ret) {
+    case 1: //QMessageBox::Ok:
+        std::cout << "OK was pressed: " << std::endl;
+        for (auto const&[key, val] : modelMetadata) {
+            modelMetadata[key] = fields.takeFirst()->text().toStdString(); //fields.takeAt(cnt)->text().toStdString();
+        }
+    case 0: //QMessageBox::Cancel:
+        std::cout << "CANCEL was pressed: " << std::endl;
+        stopFlag = true;
+    default:
+        std::cout << "Default..." << std::endl;
+    }
 
     std::cout << "After update: " << std::endl;
     for (const auto &[k, v] : modelMetadata)
@@ -3491,78 +3491,78 @@ void MainWindow::Kmeans_MTL_test() {
 
 void MainWindow::MTL_test() {
 
-	std::string modelName = "model_nuclei_seg_detection_multitask";
+    std::string modelName = "model_nuclei_seg_detection_multitask";
 
-	// read model metadata (txtfile)
-	std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
+    // read model metadata (txtfile)
+    std::map<std::string, std::string> modelMetadata = getModelMetadata(modelName);
 
-	int patch_lvl_model = (int)(std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) / std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
+    int patch_lvl_model = (int)(std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) / std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
 
-	if (!hasRenderer("tissue")) {
-		segmentTissue();
-		hideTissueMask(true);
-	}
+    if (!hasRenderer("tissue")) {
+        segmentTissue();
+        hideTissueMask(true);
+    }
 
-	auto generator = PatchGenerator::New();
-	generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
-	generator->setPatchLevel(patch_lvl_model);
-	generator->setInputData(0, m_image);
-	if (m_tissue)
-		generator->setInputData(1, m_tissue);
-	if (m_tumorMap)
-		generator->setInputData(1, m_tumorMap);
+    auto generator = PatchGenerator::New();
+    generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]), std::stoi(modelMetadata["input_img_size_x"]));
+    generator->setPatchLevel(patch_lvl_model);
+    generator->setInputData(0, m_image);
+    if (m_tissue)
+        generator->setInputData(1, m_tissue);
+    if (m_tumorMap)
+        generator->setInputData(1, m_tumorMap);
 
-	auto network = NeuralNetwork::New();
-	network->setInferenceEngine("TensorFlow");
-	// apparently this is needed if model has unspecified input size
-	network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
-		{ 1, 256, 256, 3 })); //{1, size, size, 3}
+    auto network = NeuralNetwork::New();
+    network->setInferenceEngine("TensorFlow");
+    // apparently this is needed if model has unspecified input size
+    network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
+        { 1, 256, 256, 3 })); //{1, size, size, 3}
 
-	network->setOutputNode(0, "conv2d_26/truediv", NodeType::TENSOR,
-		TensorShape({ 1, 256, 256, 3}));
-	network->setOutputNode(1, "dense_1/Softmax", NodeType::TENSOR,
-		TensorShape({ 1, 2 }));
+    network->setOutputNode(0, "conv2d_26/truediv", NodeType::TENSOR,
+        TensorShape({ 1, 256, 256, 3}));
+    network->setOutputNode(1, "dense_1/Softmax", NodeType::TENSOR,
+        TensorShape({ 1, 2 }));
 
-	std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
-
-	network->load(cwd + "data/Models/" + modelName + "." + getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat())); //".uff");
     std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
 
-	network->setInputConnection(generator->getOutputPort());
-	vector scale_factor = splitCustom(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
-	network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
+    network->load(cwd + "data/Models/" + modelName + "." + getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat())); //".uff");
+    std::cout << "Current Inference Engine: " << network->getInferenceEngine() << std::endl;
 
-	auto converter = TensorToSegmentation::New();
-	converter->setInputConnection(network->getOutputPort(0));
+    network->setInputConnection(generator->getOutputPort());
+    vector scale_factor = splitCustom(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
+    network->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
 
-	auto stitcher1 = PatchStitcher::New();
-	stitcher1->setInputConnection(converter->getOutputPort(0));
+    auto converter = TensorToSegmentation::New();
+    converter->setInputConnection(network->getOutputPort(0));
 
-	auto stitcher2 = PatchStitcher::New();
-	stitcher2->setInputConnection(network->getOutputPort(1));
+    auto stitcher1 = PatchStitcher::New();
+    stitcher1->setInputConnection(converter->getOutputPort(0));
 
-	auto someRenderer1 = SegmentationRenderer::New();
-	someRenderer1->setOpacity(0.7f);
-	//someRenderer->setColor(0, Color(0.0f, 255.0f / 255.0f, 0.0f));
-	//someRenderer1->setInputData(m_tumorMap);
-	someRenderer1->setInputConnection(stitcher1->getOutputPort());
+    auto stitcher2 = PatchStitcher::New();
+    stitcher2->setInputConnection(network->getOutputPort(1));
 
-	auto someRenderer2 = HeatmapRenderer::New();
-	//someRenderer2->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
-	someRenderer2->setInputConnection(stitcher2->getOutputPort());
-	//someRenderer2->setMaxOpacity(0.6f);
+    auto someRenderer1 = SegmentationRenderer::New();
+    someRenderer1->setOpacity(0.7f);
+    //someRenderer->setColor(0, Color(0.0f, 255.0f / 255.0f, 0.0f));
+    //someRenderer1->setInputData(m_tumorMap);
+    someRenderer1->setInputConnection(stitcher1->getOutputPort());
 
-	//someRenderer2->setSynchronizedRendering(false);
-	//someRenderer2->update();
+    auto someRenderer2 = HeatmapRenderer::New();
+    //someRenderer2->setInterpolation(std::stoi(modelMetadata["interpolation"].c_str()));
+    someRenderer2->setInputConnection(stitcher2->getOutputPort());
+    //someRenderer2->setMaxOpacity(0.6f);
 
-	m_rendererTypeList["nuclei_seg"] = "SegmentationRenderer";
-	insertRenderer("nuclei_seg", someRenderer1);
+    //someRenderer2->setSynchronizedRendering(false);
+    //someRenderer2->update();
 
-	m_rendererTypeList["nuclei_detect"] = "HeatmapRenderer";
-	insertRenderer("nuclei_detect", someRenderer2);
+    m_rendererTypeList["nuclei_seg"] = "SegmentationRenderer";
+    insertRenderer("nuclei_seg", someRenderer1);
 
-	createDynamicViewWidget("nuclei_seg", modelName);
-	createDynamicViewWidget("nuclei_detect", modelName);
+    m_rendererTypeList["nuclei_detect"] = "HeatmapRenderer";
+    insertRenderer("nuclei_detect", someRenderer2);
+
+    createDynamicViewWidget("nuclei_seg", modelName);
+    createDynamicViewWidget("nuclei_detect", modelName);
 }
 
 void MainWindow::pixelClassifier_wrapper(std::string someModelName) {
@@ -3576,10 +3576,10 @@ void MainWindow::pixelClassifier_wrapper(std::string someModelName) {
 
     // set parameters yourself (only enabled if advanced mode is ON)
     if (advancedMode) {
-		auto successFlag = 1;
+        auto successFlag = 1;
         modelMetadata = setParameterDialog(modelMetadata, &successFlag);
-		if (successFlag != 1)
-			return;
+        if (successFlag != 1)
+            return;
         for (const auto &[k, v] : modelMetadata)
             std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
     }
@@ -3612,192 +3612,192 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 
     // try {
     if (true) {
-		// if no WSI is currently being rendered,
-		if (wsiList.empty()) {
-			std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
-			return;
-		}
+        // if no WSI is currently being rendered,
+        if (wsiList.empty()) {
+            std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
+            return;
+        }
 
-		std::cout << "Current model: " << someModelName << std::endl;
-		stopFlag = false;
+        std::cout << "Current model: " << someModelName << std::endl;
+        stopFlag = false;
 
-		// for run-for-project
-		std::vector<std::string> currentWSIs;
-		if (m_runForProject) {
-			currentWSIs = m_runForProjectWsis;
-		}
-		else {
-			currentWSIs.push_back(filename);
-		}
+        // for run-for-project
+        std::vector<std::string> currentWSIs;
+        if (m_runForProject) {
+            currentWSIs = m_runForProjectWsis;
+        }
+        else {
+            currentWSIs.push_back(filename);
+        }
 
-		// add current model name to map
-		modelNames[someModelName] = someModelName;
+        // add current model name to map
+        modelNames[someModelName] = someModelName;
 
-		if (stopFlag) { // if "Cancel" is selected in advanced mode in parameter selection, don't run analysis
-			return;
-		}
+        if (stopFlag) { // if "Cancel" is selected in advanced mode in parameter selection, don't run analysis
+            return;
+        }
 
-		auto progDialog = QProgressDialog();
-		progDialog.setRange(0, currentWSIs.size());
-		//progDialog.setContentsMargins(0, 0, 0, 0);
-		progDialog.setValue(0);
-		progDialog.setVisible(true);
-		progDialog.setModal(false);
-		progDialog.setLabelText("Running inference...");
-		//QRect screenrect = mWidget->screen()[0].geometry();
-		progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
-		progDialog.show();
+        auto progDialog = QProgressDialog();
+        progDialog.setRange(0, currentWSIs.size());
+        //progDialog.setContentsMargins(0, 0, 0, 0);
+        progDialog.setValue(0);
+        progDialog.setVisible(true);
+        progDialog.setModal(false);
+        progDialog.setLabelText("Running inference...");
+        //QRect screenrect = mWidget->screen()[0].geometry();
+        progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
+        progDialog.show();
 
-		QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
-		auto counter = 1;
-		for (const auto &currWSI : currentWSIs) {
+        auto counter = 1;
+        for (const auto &currWSI : currentWSIs) {
 
-			std::cout << "current WSI: " << currWSI << std::endl;
-			if (!hasRenderer(modelMetadata["name"])) { // only run analysis if it has not been ran previously on current WSI
+            std::cout << "current WSI: " << currWSI << std::endl;
+            if (!hasRenderer(modelMetadata["name"])) { // only run analysis if it has not been ran previously on current WSI
 
-				 // based on predicted magnification level of WSI, set magnificiation level for optimal input to model based on predicted resolution of WSI
-				int patch_lvl_model = 0; // defaults to 0
-				if (!modelMetadata["magnification_level"].empty()) {
-					patch_lvl_model = (int)(
-						std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) /
-						std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
-				}
-				else {
-					std::cout << "magnification_level was not properly defined in the model config file. Defaults to using image plane 0." << std::endl;
-				}
+                 // based on predicted magnification level of WSI, set magnificiation level for optimal input to model based on predicted resolution of WSI
+                int patch_lvl_model = 0; // defaults to 0
+                if (!modelMetadata["magnification_level"].empty()) {
+                    patch_lvl_model = (int)(
+                        std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) /
+                        std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
+                }
+                else {
+                    std::cout << "magnification_level was not properly defined in the model config file. Defaults to using image plane 0." << std::endl;
+                }
 
-				std::cout << "Curr patch level: " << patch_lvl_model << std::endl;
+                std::cout << "Curr patch level: " << patch_lvl_model << std::endl;
 
-				// read current wsi
-				std::cout << "current WSI: " << currWSI << std::endl;
-				auto someImporter = WholeSlideImageImporter::New();
-				someImporter->setFilename(currWSI);
-				auto currImage = someImporter->updateAndGetOutputData<ImagePyramid>();
+                // read current wsi
+                std::cout << "current WSI: " << currWSI << std::endl;
+                auto someImporter = WholeSlideImageImporter::New();
+                someImporter->setFilename(currWSI);
+                auto currImage = someImporter->updateAndGetOutputData<ImagePyramid>();
 
-				if (!m_runForProject) {
-					currImage = m_image;
-				}
+                if (!m_runForProject) {
+                    currImage = m_image;
+                }
 
-				auto access = currImage->getAccess(ACCESS_READ);
+                auto access = currImage->getAccess(ACCESS_READ);
 
-				ImageResizer::pointer resizer = ImageResizer::New();
-				int currLvl;
-				if (modelMetadata["resolution"] == "low") {
-					//auto access = currImage->getAccess(ACCESS_READ);
-					// TODO: Should automatically find best suitable magn.lvl. (NOTE: 2x the image size as for selecting lvl!)
+                ImageResizer::pointer resizer = ImageResizer::New();
+                int currLvl;
+                if (modelMetadata["resolution"] == "low") {
+                    //auto access = currImage->getAccess(ACCESS_READ);
+                    // TODO: Should automatically find best suitable magn.lvl. (NOTE: 2x the image size as for selecting lvl!)
 
-					int levelCount = std::stoi(metadata["openslide.level-count"]);
-					int inputWidth = std::stoi(modelMetadata["input_img_size_x"]);
-					int inputHeight = std::stoi(modelMetadata["input_img_size_y"]);
-					bool breakFlag = false;
-					for (int i = 0; i < levelCount; i++) {
-						if ((std::stoi(metadata["openslide.level[" + std::to_string(i) + "].width"]) <=
-							inputWidth * 2) ||
-							(std::stoi(metadata["openslide.level[" + std::to_string(i) + "].height"]) <=
-								inputHeight * 2)) {
-							currLvl = i - 1;
-							breakFlag = true;
-							break;
-						}
-					}
-					if (!breakFlag)
-						currLvl = levelCount - 1;
+                    int levelCount = std::stoi(metadata["openslide.level-count"]);
+                    int inputWidth = std::stoi(modelMetadata["input_img_size_x"]);
+                    int inputHeight = std::stoi(modelMetadata["input_img_size_y"]);
+                    bool breakFlag = false;
+                    for (int i = 0; i < levelCount; i++) {
+                        if ((std::stoi(metadata["openslide.level[" + std::to_string(i) + "].width"]) <=
+                            inputWidth * 2) ||
+                            (std::stoi(metadata["openslide.level[" + std::to_string(i) + "].height"]) <=
+                                inputHeight * 2)) {
+                            currLvl = i - 1;
+                            breakFlag = true;
+                            break;
+                        }
+                    }
+                    if (!breakFlag)
+                        currLvl = levelCount - 1;
 
-					std::cout << "Optimal patch level: " << std::to_string(currLvl) << std::endl;
-					if (currLvl < 0) {
-						std::cout << "Automatic chosen patch level for low_res is invalid: "
-							<< std::to_string(currLvl)
-							<< std::endl;
-						return;
-					}
-					auto input = access->getLevelAsImage(currLvl);
+                    std::cout << "Optimal patch level: " << std::to_string(currLvl) << std::endl;
+                    if (currLvl < 0) {
+                        std::cout << "Automatic chosen patch level for low_res is invalid: "
+                            << std::to_string(currLvl)
+                            << std::endl;
+                        return;
+                    }
+                    auto input = access->getLevelAsImage(currLvl);
 
-					// resize
-					//ImageResizer::pointer resizer = ImageResizer::New();
-					resizer->setInputData(input);
-					resizer->setWidth(inputWidth);
-					resizer->setHeight(inputHeight);
-				}
+                    // resize
+                    //ImageResizer::pointer resizer = ImageResizer::New();
+                    resizer->setInputData(input);
+                    resizer->setWidth(inputWidth);
+                    resizer->setHeight(inputHeight);
+                }
 
-				// get available IEs as a list
-				std::list<std::string> IEsList;
-				QStringList tmpPaths = QDir(QString::fromStdString(Config::getLibraryPath())).entryList(
-					QStringList(),
-					QDir::Files);
+                // get available IEs as a list
+                std::list<std::string> IEsList;
+                QStringList tmpPaths = QDir(QString::fromStdString(Config::getLibraryPath())).entryList(
+                    QStringList(),
+                    QDir::Files);
 
-				auto currOperatingSystem = QSysInfo::productType();
-				auto currKernel = QSysInfo::kernelType();
-				std::cout << "Current OS is: " << currOperatingSystem.toStdString() << std::endl;
-				std::cout << "Current kernel is: " << currKernel.toStdString() << std::endl;
-				if (currKernel == "linux") {
-					foreach(QString filePath, tmpPaths) {
-						if (filePath.toStdString().find("libInferenceEngine") != std::string::npos) {
-							IEsList.push_back(
-								splitCustom(splitCustom(filePath.toStdString(), "libInferenceEngine").back(),
-									".so")[0]);
-						}
-					}
-				}
-				else if ((currKernel == "winnt") || (currKernel == "wince")) {
-					foreach(QString filePath, tmpPaths) {
-						if (filePath.toStdString().find("InferenceEngine") != std::string::npos) {
-							IEsList.push_back(
-								splitCustom(splitCustom(filePath.toStdString(), "InferenceEngine").back(),
-									".dll")[0]);
-						}
-					}
-				}
-				else {
-					std::cout
-						<< "Current operating system is not using any of the supported kernels: linux and winnt. Current kernel is: "
-						<< currKernel.toStdString() << std::endl;
-				}
+                auto currOperatingSystem = QSysInfo::productType();
+                auto currKernel = QSysInfo::kernelType();
+                std::cout << "Current OS is: " << currOperatingSystem.toStdString() << std::endl;
+                std::cout << "Current kernel is: " << currKernel.toStdString() << std::endl;
+                if (currKernel == "linux") {
+                    foreach(QString filePath, tmpPaths) {
+                        if (filePath.toStdString().find("libInferenceEngine") != std::string::npos) {
+                            IEsList.push_back(
+                                splitCustom(splitCustom(filePath.toStdString(), "libInferenceEngine").back(),
+                                    ".so")[0]);
+                        }
+                    }
+                }
+                else if ((currKernel == "winnt") || (currKernel == "wince")) {
+                    foreach(QString filePath, tmpPaths) {
+                        if (filePath.toStdString().find("InferenceEngine") != std::string::npos) {
+                            IEsList.push_back(
+                                splitCustom(splitCustom(filePath.toStdString(), "InferenceEngine").back(),
+                                    ".dll")[0]);
+                        }
+                    }
+                }
+                else {
+                    std::cout
+                        << "Current operating system is not using any of the supported kernels: linux and winnt. Current kernel is: "
+                        << currKernel.toStdString() << std::endl;
+                }
 
-				// check which model formats exists, before choosing inference engine
-				QDir directory(QString::fromStdString(cwd + "data/Models/"));
-				QStringList models = directory.entryList(QStringList(), QDir::Files);
+                // check which model formats exists, before choosing inference engine
+                QDir directory(QString::fromStdString(cwd + "data/Models/"));
+                QStringList models = directory.entryList(QStringList(), QDir::Files);
 
-				std::list<std::string> acceptedModels;
-				foreach(QString currentModel, models) {
-					if (currentModel.toStdString().find(someModelName) != std::string::npos) {
-						acceptedModels.push_back(
-							"." + splitCustom(currentModel.toStdString(), someModelName + ".").back());
-						std::cout
-							<< "accepted models: ." +
-							splitCustom(currentModel.toStdString(), someModelName + ".").back()
-							<< std::endl;
-					}
-				}
+                std::list<std::string> acceptedModels;
+                foreach(QString currentModel, models) {
+                    if (currentModel.toStdString().find(someModelName) != std::string::npos) {
+                        acceptedModels.push_back(
+                            "." + splitCustom(currentModel.toStdString(), someModelName + ".").back());
+                        std::cout
+                            << "accepted models: ." +
+                            splitCustom(currentModel.toStdString(), someModelName + ".").back()
+                            << std::endl;
+                    }
+                }
 
-				// init network
-				auto network = NeuralNetwork::New(); // default, need special case for high_res segmentation
-				if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
-					network = SegmentationNetwork::New();
-				}
-				else if ((modelMetadata["problem"] == "segmentation") &&
-					(modelMetadata["resolution"] == "low")) {
-					network = SegmentationNetwork::New();
-				}
+                // init network
+                auto network = NeuralNetwork::New(); // default, need special case for high_res segmentation
+                if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
+                    network = SegmentationNetwork::New();
+                }
+                else if ((modelMetadata["problem"] == "segmentation") &&
+                    (modelMetadata["resolution"] == "low")) {
+                    network = SegmentationNetwork::New();
+                }
 
-				bool checkFlag = true;
+                bool checkFlag = true;
 
-				std::cout << "Current available IEs: " << std::endl;
-				foreach(std::string elem, IEsList) {
-					std::cout << elem << ", " << std::endl;
-				}
+                std::cout << "Current available IEs: " << std::endl;
+                foreach(std::string elem, IEsList) {
+                    std::cout << elem << ", " << std::endl;
+                }
 
-				std::cout << "Which model formats are available and that there exists an IE for: " << std::endl;
-				foreach(std::string elem, acceptedModels) {
-					std::cout << elem << ", " << std::endl;
-				}
+                std::cout << "Which model formats are available and that there exists an IE for: " << std::endl;
+                foreach(std::string elem, acceptedModels) {
+                    std::cout << elem << ", " << std::endl;
+                }
 
-				std::string chosenIE;
+                std::string chosenIE;
 
-				// /*
-				// Now select best available IE based on which extensions exist for chosen model
-				// TODO: Current optimization profile is: 0. Please ensure there are no enqueued operations pending in this context prior to switching profiles
-				if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".onnx") !=
+                // /*
+                // Now select best available IE based on which extensions exist for chosen model
+                // TODO: Current optimization profile is: 0. Please ensure there are no enqueued operations pending in this context prior to switching profiles
+                if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".onnx") !=
                      acceptedModels.end()) &&
                     (std::find(IEsList.begin(), IEsList.end(), "TensorRT") != IEsList.end())) {
                     // @TODO: I don't think this works exactly how I want it to. TensorRT is still find as it is found in the lib/ directory, even though
@@ -3818,7 +3818,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                     std::cout << "OpenVINO (using ONNX) selected" << std::endl;
                     network->setInferenceEngine("OpenVINO");
                     chosenIE = "onnx";
-				}
+                }
                 else if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") !=
                           acceptedModels.end()) &&
                          (std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end())) {
@@ -3826,94 +3826,94 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                     network->setInferenceEngine("OpenVINO");
                     chosenIE = "xml";
                 }
-				else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") !=
-					acceptedModels.end() &&
-					std::find(IEsList.begin(), IEsList.end(), "TensorFlow") != IEsList.end()) {
-					std::cout << "TensorFlow selected" << std::endl;
-					network->setInferenceEngine("TensorFlow");
-				}
-				/* else {
-					std::cout << "Model does not exist in Models/ folder. Please add it using AddModels(). "
-								 "It might also be that the model exists, but the Inference Engine does not. "
-								 "Available IEs are: ";
-					foreach(std::string elem, IEsList) {
-						std::cout << elem << ", ";
-					}
-					checkFlag = false;
-				}
-				 */
+                else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") !=
+                    acceptedModels.end() &&
+                    std::find(IEsList.begin(), IEsList.end(), "TensorFlow") != IEsList.end()) {
+                    std::cout << "TensorFlow selected" << std::endl;
+                    network->setInferenceEngine("TensorFlow");
+                }
+                /* else {
+                    std::cout << "Model does not exist in Models/ folder. Please add it using AddModels(). "
+                                 "It might also be that the model exists, but the Inference Engine does not. "
+                                 "Available IEs are: ";
+                    foreach(std::string elem, IEsList) {
+                        std::cout << elem << ", ";
+                    }
+                    checkFlag = false;
+                }
+                 */
 
-				if (checkFlag) {
-					std::cout << "Model was found." << std::endl;
+                if (checkFlag) {
+                    std::cout << "Model was found." << std::endl;
 
-					// TODO: Need to handle if model is in Models/, but inference engine is not available
-					//Config::getLibraryPath();
+                    // TODO: Need to handle if model is in Models/, but inference engine is not available
+                    //Config::getLibraryPath();
 
 
-					//if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
-					//	network->setInferenceEngine("OpenVINO");
-					//}
-					if (true) {
-						// If model has CPU flag only, need to check if TensorFlowCPU is available, else run on OpenVINO, else use best available
-						if (std::stoi(modelMetadata["cpu"]) == 1) {
-							if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") !=
-								acceptedModels.end() &&
-								std::find(IEsList.begin(), IEsList.end(), "TensorFlow") != IEsList.end()) {
+                    //if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
+                    //  network->setInferenceEngine("OpenVINO");
+                    //}
+                    if (true) {
+                        // If model has CPU flag only, need to check if TensorFlowCPU is available, else run on OpenVINO, else use best available
+                        if (std::stoi(modelMetadata["cpu"]) == 1) {
+                            if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") !=
+                                acceptedModels.end() &&
+                                std::find(IEsList.begin(), IEsList.end(), "TensorFlow") != IEsList.end()) {
                                 std::cout << "GPU is disabled! (with TensorFlow)" << std::endl;
-								network->setInferenceEngine("TensorFlow");
+                                network->setInferenceEngine("TensorFlow");
                                 network->getInferenceEngine()->setDeviceType(InferenceDeviceType::CPU);  // Andre: 0 or 1 for personal Ubuntu Desktop
-							}
-							else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") !=
-								acceptedModels.end() &&
-								std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end()) {
+                            }
+                            else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") !=
+                                acceptedModels.end() &&
+                                std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end()) {
                                 std::cout << "GPU is disabled! (with OpenVINO)" << std::endl;
-								network->setInferenceEngine("OpenVINO");
-								//network->getInferenceEngine()->setDeviceType(InferenceDeviceType::CPU);
+                                network->setInferenceEngine("OpenVINO");
+                                //network->getInferenceEngine()->setDeviceType(InferenceDeviceType::CPU);
                                 network->getInferenceEngine()->setDeviceType(InferenceDeviceType::CPU);
-							}
-							else {
-								std::cout
-									<< "CPU only was selected, but was not able to find any CPU devices..."
-									<< std::endl;
-							}
-						}
+                            }
+                            else {
+                                std::cout
+                                    << "CPU only was selected, but was not able to find any CPU devices..."
+                                    << std::endl;
+                            }
+                        }
 
-						// if stated in the model txt file, use the specified inference engine
-						if (!((modelMetadata.count("IE") == 0) || modelMetadata["IE"] == "none")) {
-							std::cout << "Preselected IE was used: " << modelMetadata["IE"] << std::endl;
-							network->setInferenceEngine(modelMetadata["IE"]);
+                        // if stated in the model txt file, use the specified inference engine
+                        if (!((modelMetadata.count("IE") == 0) || modelMetadata["IE"] == "none")) {
+                            std::cout << "Preselected IE was used: " << modelMetadata["IE"] << std::endl;
+                            network->setInferenceEngine(modelMetadata["IE"]);
                             chosenIE = getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat());
-						}
+                        }
 
-						const auto engine = network->getInferenceEngine()->getName();
-						// IEs like TF and TensorRT need to be handled differently than IEs like OpenVINO
-						if (engine.substr(0, 10) == "TensorFlow") {
-							// apparently this is needed if model has unspecified input size
-							network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
-								{ 1, std::stoi(modelMetadata["input_img_size_y"]),
-								 std::stoi(modelMetadata["input_img_size_x"]),
-								 std::stoi(modelMetadata["nb_channels"]) })); //{1, size, size, 3}
+                        const auto engine = network->getInferenceEngine()->getName();
+                        // IEs like TF and TensorRT need to be handled differently than IEs like OpenVINO
+                        if (engine.substr(0, 10) == "TensorFlow") {
+                            // apparently this is needed if model has unspecified input size
+                            network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
+                                { 1, std::stoi(modelMetadata["input_img_size_y"]),
+                                 std::stoi(modelMetadata["input_img_size_x"]),
+                                 std::stoi(modelMetadata["nb_channels"]) })); //{1, size, size, 3}
 
-						    // TensorFlow needs to know what the output node is called
-							if (modelMetadata["problem"] == "classification") {
-								network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
-									TensorShape(
-										{ 1, std::stoi(modelMetadata["nb_classes"]) }));
-							}
-							else if (modelMetadata["problem"] == "segmentation") {
-								network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
-									TensorShape(
-										{ 1, std::stoi(modelMetadata["input_img_size_y"]),
-										 std::stoi(modelMetadata["input_img_size_x"]),
-										 std::stoi(modelMetadata["nb_classes"]) }));
-							}
-							else if (modelMetadata["problem"] == "object_detection") {
-								// FIXME: This is outdated for YOLOv3, as it has multiple output nodes -> need a way of handling this!
-								network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
-									TensorShape(
-										{ 1, std::stoi(modelMetadata["nb_classes"]) }));
-							}
-						}
+                            // TensorFlow needs to know what the output node is called
+                            if (modelMetadata["problem"] == "classification") {
+                                network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
+                                    TensorShape(
+                                        { 1, std::stoi(modelMetadata["nb_classes"]) }));
+                            }
+                            else if (modelMetadata["problem"] == "segmentation") {
+                                network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
+                                    TensorShape(
+                                        { 1, std::stoi(modelMetadata["input_img_size_y"]),
+                                         std::stoi(modelMetadata["input_img_size_x"]),
+                                         std::stoi(modelMetadata["nb_classes"]) }));
+                            }
+                            else if (modelMetadata["problem"] == "object_detection") {
+                                // FIXME: This is outdated for YOLOv3, as it has multiple output nodes -> need a way of handling this!
+                                network->setOutputNode(0, modelMetadata["output_node"], NodeType::TENSOR,
+                                    TensorShape(
+                                        { 1, std::stoi(modelMetadata["nb_classes"]) }));
+                            }
+                        }
                         else if ((engine == "TensorRT") && (chosenIE == "uff")) {
                             // TensorRT needs to know everything about the input and output nodes
                             network->setInputNode(0, modelMetadata["input_node"], NodeType::IMAGE, TensorShape(
@@ -3928,134 +3928,134 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                             chosenIE = getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat());
                         }
                         network->load(cwd + "data/Models/" + someModelName + "." + chosenIE);
-					}
+                    }
 
-					auto generator = PatchGenerator::New();
-					if (modelMetadata["resolution"] == "low") { // special case handling for low_res NN inference
-						auto port = resizer->getOutputPort();
-						resizer->update();
-						network->setInputData(port->getNextFrame<Image>());
-					} else {
-						// whether or not to run tissue segmentation
-						if (modelMetadata["tissue_threshold"] == "none") {
-							std::cout
-								<< "No tissue segmentation filtering will be applied before this analysis."
-								<< std::endl;
-						} else if (!modelMetadata["tissue_threshold"].empty()) {
+                    auto generator = PatchGenerator::New();
+                    if (modelMetadata["resolution"] == "low") { // special case handling for low_res NN inference
+                        auto port = resizer->getOutputPort();
+                        resizer->update();
+                        network->setInputData(port->getNextFrame<Image>());
+                    } else {
+                        // whether or not to run tissue segmentation
+                        if (modelMetadata["tissue_threshold"] == "none") {
+                            std::cout
+                                << "No tissue segmentation filtering will be applied before this analysis."
+                                << std::endl;
+                        } else if (!modelMetadata["tissue_threshold"].empty()) {
                             std::cout << "Threshold was defined: " << modelMetadata["tissue_threshold"] << std::endl; 
-							auto tissueSegmentation = TissueSegmentation::New();
-							tissueSegmentation->setInputData(m_image);
-							tissueSegmentation->setThreshold(std::stoi(modelMetadata["tissue_threshold"]));
+                            auto tissueSegmentation = TissueSegmentation::New();
+                            tissueSegmentation->setInputData(m_image);
+                            tissueSegmentation->setThreshold(std::stoi(modelMetadata["tissue_threshold"]));
 
-							generator->setInputConnection(1, tissueSegmentation->getOutputPort());
+                            generator->setInputConnection(1, tissueSegmentation->getOutputPort());
 
-							std::cout << "tissue_threshold was defined, so is performing thresholding as preprocessing step." << std::endl;
-						}
-						else {
-							std::cout
-								<< "The tissue_threshold has not been properly defined in the model config file, and thus the method will use any existing segmentation masks as filtering (if available)."
-								<< std::endl;
-							// TODO: This should be handled more generically. For pipelines that allow the user to use
-							//   an already existing segmentation as mask for another method, they should be able to
-							//   set this method themselves from the GUI (at least in advanced mode), or perhaps where
-							//   results from previous runs may be used if available (instead through hard-coded variable
-							//   names such as m_tissue and m_tumorMap.
-							if (m_tissue) {
-								generator->setInputData(1, m_tissue);
-							} else if (m_tumorMap) {
-								generator->setInputData(1, m_tumorMap);
-							}
-						}
+                            std::cout << "tissue_threshold was defined, so is performing thresholding as preprocessing step." << std::endl;
+                        }
+                        else {
+                            std::cout
+                                << "The tissue_threshold has not been properly defined in the model config file, and thus the method will use any existing segmentation masks as filtering (if available)."
+                                << std::endl;
+                            // TODO: This should be handled more generically. For pipelines that allow the user to use
+                            //   an already existing segmentation as mask for another method, they should be able to
+                            //   set this method themselves from the GUI (at least in advanced mode), or perhaps where
+                            //   results from previous runs may be used if available (instead through hard-coded variable
+                            //   names such as m_tissue and m_tumorMap.
+                            if (m_tissue) {
+                                generator->setInputData(1, m_tissue);
+                            } else if (m_tumorMap) {
+                                generator->setInputData(1, m_tumorMap);
+                            }
+                        }
 
-						generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]),
-							std::stoi(modelMetadata["input_img_size_x"]));
-						generator->setPatchLevel(patch_lvl_model);
-						if (modelMetadata["mask_threshold"].empty()) {
-							std::cout << "No mask_threshold variable exists. Defaults to 0.5." << std::endl;
-						} else {
+                        generator->setPatchSize(std::stoi(modelMetadata["input_img_size_y"]),
+                            std::stoi(modelMetadata["input_img_size_x"]));
+                        generator->setPatchLevel(patch_lvl_model);
+                        if (modelMetadata["mask_threshold"].empty()) {
+                            std::cout << "No mask_threshold variable exists. Defaults to 0.5." << std::endl;
+                        } else {
                             std::cout << "Setting mask_threshold to: " << modelMetadata["mask_threshold"] << std::endl;
-							generator->setMaskThreshold(std::stof(modelMetadata["mask_threshold"]));
-						}
-						if (modelMetadata["patch_overlap"].empty()) {
-							std::cout << "No patch_overlap variable exists. Defaults to 0." << std::endl;
-						} else {
-							generator->setOverlap(std::stof(modelMetadata["patch_overlap"]));
-						}
-						generator->setInputData(0, currImage);
+                            generator->setMaskThreshold(std::stof(modelMetadata["mask_threshold"]));
+                        }
+                        if (modelMetadata["patch_overlap"].empty()) {
+                            std::cout << "No patch_overlap variable exists. Defaults to 0." << std::endl;
+                        } else {
+                            generator->setOverlap(std::stof(modelMetadata["patch_overlap"]));
+                        }
+                        generator->setInputData(0, currImage);
 
-						//auto batchgen = ImageToBatchGenerator::New();  // TODO: Can't use this with TensorRT (!)
-						//batchgen->setInputConnection(generator->getOutputPort());
-						//batchgen->setMaxBatchSize(std::stoi(modelMetadata["batch_process"])); // set 256 for testing stuff (tumor -> annotation, then grade from tumor segment)
+                        //auto batchgen = ImageToBatchGenerator::New();  // TODO: Can't use this with TensorRT (!)
+                        //batchgen->setInputConnection(generator->getOutputPort());
+                        //batchgen->setMaxBatchSize(std::stoi(modelMetadata["batch_process"])); // set 256 for testing stuff (tumor -> annotation, then grade from tumor segment)
 
-						network->setInputConnection(generator->getOutputPort());
-					}
-					if (modelMetadata["scale_factor"].empty()) {
-						std::cout << "scale_factor not defined. Defaults to using using no intensity normalization/scaling in preprocessing." << std::endl;
-					}
-					else {
-						vector scale_factor = splitCustom(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
-						network->setScaleFactor(
-							(float)std::stoi(scale_factor[0]) /
-							(float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
-					}
+                        network->setInputConnection(generator->getOutputPort());
+                    }
+                    if (modelMetadata["scale_factor"].empty()) {
+                        std::cout << "scale_factor not defined. Defaults to using using no intensity normalization/scaling in preprocessing." << std::endl;
+                    }
+                    else {
+                        vector scale_factor = splitCustom(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
+                        network->setScaleFactor(
+                            (float)std::stoi(scale_factor[0]) /
+                            (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
+                    }
 
-					// define renderer from metadata
-					if ((modelMetadata["problem"] == "classification") && (modelMetadata["resolution"] == "high")) {
-						auto stitcher = PatchStitcher::New();
-						stitcher->setInputConnection(network->getOutputPort());
+                    // define renderer from metadata
+                    if ((modelMetadata["problem"] == "classification") && (modelMetadata["resolution"] == "high")) {
+                        auto stitcher = PatchStitcher::New();
+                        stitcher->setInputConnection(network->getOutputPort());
 
-						auto currentHeatmapName = modelMetadata["name"];
-						std::cout << "currentHeatmapName: " << currentHeatmapName << ", currWSI: " << currWSI << std::endl;
+                        auto currentHeatmapName = modelMetadata["name"];
+                        std::cout << "currentHeatmapName: " << currentHeatmapName << ", currWSI: " << currWSI << std::endl;
 
-						if (!m_runForProject) {
-							m_patchStitcherList[modelMetadata["name"]] = stitcher;
+                        if (!m_runForProject) {
+                            m_patchStitcherList[modelMetadata["name"]] = stitcher;
 
-							auto someRenderer = HeatmapRenderer::New();
+                            auto someRenderer = HeatmapRenderer::New();
                             someRenderer->setChannelHidden(0, false);
-							someRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"]));
-							someRenderer->setInputConnection(stitcher->getOutputPort());
-							someRenderer->setMaxOpacity(0.6f);
-							vector<string> colors = splitCustom(modelMetadata["class_colors"], ";");
-							for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
-								vector<string> rgb = splitCustom(colors[i], ",");
-								someRenderer->setChannelColor(i, Color((float)std::stoi(rgb[0]) / 255.0f,
-									(float)std::stoi(rgb[1]) / 255.0f,
-									(float)std::stoi(rgb[2]) / 255.0f));
-							}
+                            someRenderer->setInterpolation(std::stoi(modelMetadata["interpolation"]));
+                            someRenderer->setInputConnection(stitcher->getOutputPort());
+                            someRenderer->setMaxOpacity(0.6f);
+                            vector<string> colors = splitCustom(modelMetadata["class_colors"], ";");
+                            for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
+                                vector<string> rgb = splitCustom(colors[i], ",");
+                                someRenderer->setChannelColor(i, Color((float)std::stoi(rgb[0]) / 255.0f,
+                                    (float)std::stoi(rgb[1]) / 255.0f,
+                                    (float)std::stoi(rgb[2]) / 255.0f));
+                            }
 
-							m_rendererTypeList[modelMetadata["name"]] = "HeatmapRenderer";
-							insertRenderer(modelMetadata["name"], someRenderer);
-						}
+                            m_rendererTypeList[modelMetadata["name"]] = "HeatmapRenderer";
+                            insertRenderer(modelMetadata["name"], someRenderer);
+                        }
 
-						if (m_runForProject) {
+                        if (m_runForProject) {
 
-							//auto start = std::chrono::high_resolution_clock::now();
-							DataObject::pointer data;
-							do {
-								data = stitcher->updateAndGetOutputData<Tensor>();
+                            //auto start = std::chrono::high_resolution_clock::now();
+                            DataObject::pointer data;
+                            do {
+                                data = stitcher->updateAndGetOutputData<Tensor>();
 
-							} while (!data->isLastFrame());
-							// check if folder for current WSI exists, if not, create one
-							QString wsiResultPath = (projectFolderName.toStdString() + "/results/" +
-								splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
-							wsiResultPath = wsiResultPath.replace("//", "/");
-							if (!QDir(wsiResultPath).exists()) {
-								QDir().mkdir(wsiResultPath);
-							}
+                            } while (!data->isLastFrame());
+                            // check if folder for current WSI exists, if not, create one
+                            QString wsiResultPath = (projectFolderName.toStdString() + "/results/" +
+                                splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
+                            wsiResultPath = wsiResultPath.replace("//", "/");
+                            if (!QDir(wsiResultPath).exists()) {
+                                QDir().mkdir(wsiResultPath);
+                            }
 
-							auto exporter = HDF5TensorExporter::New();
-							exporter->setFilename(wsiResultPath.toStdString() + "/" + splitCustom(wsiResultPath.toStdString(), "/").back() + "_" + currentHeatmapName + ".h5");
-							exporter->setDatasetName(currentHeatmapName);
-							exporter->setInputData(data);
-							exporter->update();
-						}
+                            auto exporter = HDF5TensorExporter::New();
+                            exporter->setFilename(wsiResultPath.toStdString() + "/" + splitCustom(wsiResultPath.toStdString(), "/").back() + "_" + currentHeatmapName + ".h5");
+                            exporter->setDatasetName(currentHeatmapName);
+                            exporter->setInputData(data);
+                            exporter->update();
+                        }
 
-					}
-					else if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
-						if (!m_runForProject) {
-							auto stitcher = PatchStitcher::New();
-							stitcher->setInputConnection(network->getOutputPort());
-							auto port = stitcher->getOutputPort();
+                    }
+                    else if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
+                        if (!m_runForProject) {
+                            auto stitcher = PatchStitcher::New();
+                            stitcher->setInputConnection(network->getOutputPort());
+                            auto port = stitcher->getOutputPort();
 
                             /*
                             auto start = std::chrono::high_resolution_clock::now();
@@ -4065,19 +4065,19 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                             } while (!data->isLastFrame());
                              */
 
-							auto someRenderer = SegmentationRenderer::New();
-							someRenderer->setOpacity(0.7f, 1.0f);
-							vector<string> colors = splitCustom(modelMetadata["class_colors"], ";");
-							for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
-								vector<string> rgb = splitCustom(colors[i], ",");
-								someRenderer->setColor(i, Color((float)std::stoi(rgb[0]) / 255.0f,
-									(float)std::stoi(rgb[1]) / 255.0f,
-									(float)std::stoi(rgb[2]) / 255.0f));
-							}
-							someRenderer->setInputConnection(stitcher->getOutputPort());
+                            auto someRenderer = SegmentationRenderer::New();
+                            someRenderer->setOpacity(0.7f, 1.0f);
+                            vector<string> colors = splitCustom(modelMetadata["class_colors"], ";");
+                            for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
+                                vector<string> rgb = splitCustom(colors[i], ",");
+                                someRenderer->setColor(i, Color((float)std::stoi(rgb[0]) / 255.0f,
+                                    (float)std::stoi(rgb[1]) / 255.0f,
+                                    (float)std::stoi(rgb[2]) / 255.0f));
+                            }
+                            someRenderer->setInputConnection(stitcher->getOutputPort());
 
-							m_rendererTypeList[modelMetadata["name"]] = "SegmentationRenderer";
-							insertRenderer(modelMetadata["name"], someRenderer);
+                            m_rendererTypeList[modelMetadata["name"]] = "SegmentationRenderer";
+                            insertRenderer(modelMetadata["name"], someRenderer);
 
 
                             // setup paths for saving results
@@ -4101,40 +4101,40 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 
                             // finally, add exporter PO to force exporter to run
                             addProcessObject(tiffExporter);
-						}
-						else {
-							// check if folder for current WSI exists, if not, create one
-							QString wsiResultPath = (projectFolderName.toStdString() + "/results/" +
-								splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
-							wsiResultPath = wsiResultPath.replace("//", "/");
-							if (!QDir(wsiResultPath).exists()) {
-								QDir().mkdir(wsiResultPath);
-							}
-							auto currPath =
-								wsiResultPath.toStdString() + "/" +
-								splitCustom(wsiResultPath.toStdString(), "/").back() +
-								"_" + modelMetadata["name"] + "/";
-							std::cout << "current high-res result path: " << currPath << std::endl;
+                        }
+                        else {
+                            // check if folder for current WSI exists, if not, create one
+                            QString wsiResultPath = (projectFolderName.toStdString() + "/results/" +
+                                splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
+                            wsiResultPath = wsiResultPath.replace("//", "/");
+                            if (!QDir(wsiResultPath).exists()) {
+                                QDir().mkdir(wsiResultPath);
+                            }
+                            auto currPath =
+                                wsiResultPath.toStdString() + "/" +
+                                splitCustom(wsiResultPath.toStdString(), "/").back() +
+                                "_" + modelMetadata["name"] + "/";
+                            std::cout << "current high-res result path: " << currPath << std::endl;
 
-							auto exporter = ImagePyramidPatchExporter::New();
-							//exporter->setInputData(network->updateAndGetOutputData<Image>());
-							exporter->setInputConnection(network->getOutputPort());
-							exporter->setPath(currPath);
+                            auto exporter = ImagePyramidPatchExporter::New();
+                            //exporter->setInputData(network->updateAndGetOutputData<Image>());
+                            exporter->setInputConnection(network->getOutputPort());
+                            exporter->setPath(currPath);
 
-							//addProcessObject(exporter);  // TODO: Is this required when running the analysis without multi-threading? If included it seems like the segmentation is off-by-one (right-skewed)?
+                            //addProcessObject(exporter);  // TODO: Is this required when running the analysis without multi-threading? If included it seems like the segmentation is off-by-one (right-skewed)?
 
-							auto port = network->getOutputPort();
-							DataObject::pointer data;
-							do {
-								exporter->update();
-								data = port->getNextFrame<DataObject>();
-							} while (!data->isLastFrame());
-						}
-					}
-					else if ((modelMetadata["problem"] == "object_detection") && (modelMetadata["resolution"] == "high")) {  // TODO: Perhaps use switch() instead of tons of if-statements?
-					    // FIXME: Currently, need to do special handling for object detection as setThreshold and setAnchors only exist for BBNetwork and not NeuralNetwork
+                            auto port = network->getOutputPort();
+                            DataObject::pointer data;
+                            do {
+                                exporter->update();
+                                data = port->getNextFrame<DataObject>();
+                            } while (!data->isLastFrame());
+                        }
+                    }
+                    else if ((modelMetadata["problem"] == "object_detection") && (modelMetadata["resolution"] == "high")) {  // TODO: Perhaps use switch() instead of tons of if-statements?
+                        // FIXME: Currently, need to do special handling for object detection as setThreshold and setAnchors only exist for BBNetwork and not NeuralNetwork
 
-						auto currNetwork = BoundingBoxNetwork::New();
+                        auto currNetwork = BoundingBoxNetwork::New();
                         if (modelMetadata["pred_threshold"].empty()) {
                             std::cout << "No pred_threshold variable exists. Defaults to 0.1." << std::endl;
                         }
@@ -4142,140 +4142,140 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                             currNetwork->setThreshold(std::stof(modelMetadata["nms_threshold"])); //0.01); // default: 0.5
                         }
 
-						std::cout << "Current anchor file path: "
-							<< cwd + "data/Models/" + someModelName + ".anchors"
-							<< std::endl;
+                        std::cout << "Current anchor file path: "
+                            << cwd + "data/Models/" + someModelName + ".anchors"
+                            << std::endl;
 
-						// read anchors from corresponding anchor file
-						std::vector<std::vector<Vector2f> > anchors;
-						std::ifstream infile(cwd + "data/Models/" + someModelName + ".anchors");
-						std::string anchorStr;
-						while (std::getline(infile, anchorStr)) {
-							std::vector<std::string> anchorVector = splitCustom(anchorStr, " ");
-							anchorVector.resize(
-								6); // for TinyYOLOv3 should only be 6 pairs, 3 for each level (2 levels)
-							int cntr = 0;
-							for (int i = 1; i < 3; i++) { // assumes TinyYOLOv3 (only two output layers)
-								std::vector<Vector2f> levelAnchors;
-								for (int j = 0; j < 3; j++) {
-									auto currentPair = splitCustom(anchorVector[cntr], ",");
-									levelAnchors.push_back(
-										Vector2f(std::stoi(currentPair[0]), std::stoi(currentPair[1])));
-									cntr++;
-								}
-								anchors.push_back(levelAnchors);
-							}
-						}
-						currNetwork->setAnchors(anchors); // finally set anchors
+                        // read anchors from corresponding anchor file
+                        std::vector<std::vector<Vector2f> > anchors;
+                        std::ifstream infile(cwd + "data/Models/" + someModelName + ".anchors");
+                        std::string anchorStr;
+                        while (std::getline(infile, anchorStr)) {
+                            std::vector<std::string> anchorVector = splitCustom(anchorStr, " ");
+                            anchorVector.resize(
+                                6); // for TinyYOLOv3 should only be 6 pairs, 3 for each level (2 levels)
+                            int cntr = 0;
+                            for (int i = 1; i < 3; i++) { // assumes TinyYOLOv3 (only two output layers)
+                                std::vector<Vector2f> levelAnchors;
+                                for (int j = 0; j < 3; j++) {
+                                    auto currentPair = splitCustom(anchorVector[cntr], ",");
+                                    levelAnchors.push_back(
+                                        Vector2f(std::stoi(currentPair[0]), std::stoi(currentPair[1])));
+                                    cntr++;
+                                }
+                                anchors.push_back(levelAnchors);
+                            }
+                        }
+                        currNetwork->setAnchors(anchors); // finally set anchors
 
-						auto scale_factor = splitCustom(modelMetadata["scale_factor"],
-							"/"); // get scale factor from metadata
-						currNetwork->setScaleFactor((float)std::stoi(scale_factor[0]) /
-							(float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
-						currNetwork->setInferenceEngine(
-							"OpenVINO"); // FIXME: OpenVINO only currently, as I haven't generalized multiple output nodes case
-						currNetwork->load(cwd + "data/Models/" + someModelName + "." + getModelFileExtension(
-							currNetwork->getInferenceEngine()->getPreferredModelFormat())); //".uff");
-						currNetwork->setInputConnection(generator->getOutputPort());
+                        auto scale_factor = splitCustom(modelMetadata["scale_factor"],
+                            "/"); // get scale factor from metadata
+                        currNetwork->setScaleFactor((float)std::stoi(scale_factor[0]) /
+                            (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
+                        currNetwork->setInferenceEngine(
+                            "OpenVINO"); // FIXME: OpenVINO only currently, as I haven't generalized multiple output nodes case
+                        currNetwork->load(cwd + "data/Models/" + someModelName + "." + getModelFileExtension(
+                            currNetwork->getInferenceEngine()->getPreferredModelFormat())); //".uff");
+                        currNetwork->setInputConnection(generator->getOutputPort());
 
-						auto nms = NonMaximumSuppression::New();
+                        auto nms = NonMaximumSuppression::New();
                         if (modelMetadata["nms_threshold"].empty()) {
                             std::cout << "No nms_threshold variable exists. Defaults to 0.5." << std::endl;
                         }
                         else {
                             nms->setThreshold(std::stof(modelMetadata["nms_threshold"]));
                         }
-						nms->setInputConnection(currNetwork->getOutputPort());
+                        nms->setInputConnection(currNetwork->getOutputPort());
 
-						auto boxAccum = BoundingBoxSetAccumulator::New();
-						boxAccum->setInputConnection(nms->getOutputPort());
-						//boxAccum->setInputConnection(currNetwork->getOutputPort());
+                        auto boxAccum = BoundingBoxSetAccumulator::New();
+                        boxAccum->setInputConnection(nms->getOutputPort());
+                        //boxAccum->setInputConnection(currNetwork->getOutputPort());
 
-						auto boxRenderer = BoundingBoxRenderer::New();
-						boxRenderer->setInputConnection(boxAccum->getOutputPort());
+                        auto boxRenderer = BoundingBoxRenderer::New();
+                        boxRenderer->setInputConnection(boxAccum->getOutputPort());
 
-						m_rendererTypeList[modelMetadata["name"]] = "BoundingBoxRenderer";
-						insertRenderer(modelMetadata["name"], boxRenderer);
-					}
-					else if ((modelMetadata["problem"] == "segmentation") &&
-						(modelMetadata["resolution"] == "low")) {
+                        m_rendererTypeList[modelMetadata["name"]] = "BoundingBoxRenderer";
+                        insertRenderer(modelMetadata["name"], boxRenderer);
+                    }
+                    else if ((modelMetadata["problem"] == "segmentation") &&
+                        (modelMetadata["resolution"] == "low")) {
 
-						//auto converter = TensorToSegmentation::New();
-						//converter->setInputConnection(network->getOutputPort());
+                        //auto converter = TensorToSegmentation::New();
+                        //converter->setInputConnection(network->getOutputPort());
 
-						// resize back
-						//auto access = currImage->getAccess(ACCESS_READ);
-						auto input = access->getLevelAsImage(currLvl);
+                        // resize back
+                        //auto access = currImage->getAccess(ACCESS_READ);
+                        auto input = access->getLevelAsImage(currLvl);
 
-						ImageResizer::pointer resizer2 = ImageResizer::New();
-						//resizer2->setInputData(converter->updateAndGetOutputData<Image>());
-						resizer2->setInputConnection(network->getOutputPort());
-						resizer2->setWidth(input->getWidth());
-						resizer2->setHeight(input->getHeight());
+                        ImageResizer::pointer resizer2 = ImageResizer::New();
+                        //resizer2->setInputData(converter->updateAndGetOutputData<Image>());
+                        resizer2->setInputConnection(network->getOutputPort());
+                        resizer2->setWidth(input->getWidth());
+                        resizer2->setHeight(input->getHeight());
 
 
-						auto port2 = resizer2->getOutputPort();
-						//m_tumorMap = port2->getNextFrame<Image>();
-						resizer2->update();
+                        auto port2 = resizer2->getOutputPort();
+                        //m_tumorMap = port2->getNextFrame<Image>();
+                        resizer2->update();
 
-						auto currMap = port2->getNextFrame<Image>();
-						m_tumorMap = currMap;
-						//auto currMap = m_tumorMap;
+                        auto currMap = port2->getNextFrame<Image>();
+                        m_tumorMap = currMap;
+                        //auto currMap = m_tumorMap;
 
-						if (!m_runForProject) {
-							//m_tumorMap = currMap;
+                        if (!m_runForProject) {
+                            //m_tumorMap = currMap;
 
-							currMap->setSpacing((float)currImage->getFullWidth() / (float)input->getWidth(),
-								(float)currImage->getFullHeight() / (float)input->getHeight(),
-								1.0f);
+                            currMap->setSpacing((float)currImage->getFullWidth() / (float)input->getWidth(),
+                                (float)currImage->getFullHeight() / (float)input->getHeight(),
+                                1.0f);
 
-							auto someRenderer = SegmentationRenderer::New();
-							someRenderer->setOpacity(0.4f);
-							vector<string> colors = splitCustom(modelMetadata["class_colors"], ";");
-							for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
-								vector<string> rgb = splitCustom(colors[i], ",");
-								someRenderer->setColor(i, Color((float)std::stoi(rgb[0]) / 255.0f,
-									(float)std::stoi(rgb[1]) / 255.0f,
-									(float)std::stoi(rgb[2]) / 255.0f));
-							}
-							someRenderer->setInputData(currMap);
-							//someRenderer->setInterpolation(false);
-							someRenderer->update();
+                            auto someRenderer = SegmentationRenderer::New();
+                            someRenderer->setOpacity(0.4f);
+                            vector<string> colors = splitCustom(modelMetadata["class_colors"], ";");
+                            for (int i = 0; i < std::stoi(modelMetadata["nb_classes"]); i++) {
+                                vector<string> rgb = splitCustom(colors[i], ",");
+                                someRenderer->setColor(i, Color((float)std::stoi(rgb[0]) / 255.0f,
+                                    (float)std::stoi(rgb[1]) / 255.0f,
+                                    (float)std::stoi(rgb[2]) / 255.0f));
+                            }
+                            someRenderer->setInputData(currMap);
+                            //someRenderer->setInterpolation(false);
+                            someRenderer->update();
 
-							m_rendererTypeList[modelMetadata["name"]] = "SegmentationRenderer";
-							insertRenderer(modelMetadata["name"], someRenderer);
-						}
-						else {
-							// save result
-							QString wsiResultPath = (projectFolderName.toStdString() + "/results/" +
-								splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
-							wsiResultPath = wsiResultPath.replace("//", "/");
-							std::cout << "current result path: " << wsiResultPath.toStdString() << std::endl;
-							if (!QDir(wsiResultPath).exists()) {
-								QDir().mkdir(wsiResultPath);
-							}
-							currMap->setSpacing(1.0f, 1.0f, 1.0f);
+                            m_rendererTypeList[modelMetadata["name"]] = "SegmentationRenderer";
+                            insertRenderer(modelMetadata["name"], someRenderer);
+                        }
+                        else {
+                            // save result
+                            QString wsiResultPath = (projectFolderName.toStdString() + "/results/" +
+                                splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
+                            wsiResultPath = wsiResultPath.replace("//", "/");
+                            std::cout << "current result path: " << wsiResultPath.toStdString() << std::endl;
+                            if (!QDir(wsiResultPath).exists()) {
+                                QDir().mkdir(wsiResultPath);
+                            }
+                            currMap->setSpacing(1.0f, 1.0f, 1.0f);
 
-							auto exporter = ImageFileExporter::New();
-							exporter->setFilename(
-								wsiResultPath.toStdString() + "/" +
-								splitCustom(splitCustom(currWSI, "/").back(), ".")[0] +
-								"_" + modelMetadata["name"] + ".png");
-							exporter->setInputData(currMap);
-							exporter->update();
-						}
-					}
-				}
-			}
-			// update progress bar
-			// TODO: these are not updated in the main thread. Need to introduce signals such that the Qt-related stuff are properly updated in the main thread
-			progDialog.setValue(counter);
-			QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-			counter++;
-		}
+                            auto exporter = ImageFileExporter::New();
+                            exporter->setFilename(
+                                wsiResultPath.toStdString() + "/" +
+                                splitCustom(splitCustom(currWSI, "/").back(), ".")[0] +
+                                "_" + modelMetadata["name"] + ".png");
+                            exporter->setInputData(currMap);
+                            exporter->update();
+                        }
+                    }
+                }
+            }
+            // update progress bar
+            // TODO: these are not updated in the main thread. Need to introduce signals such that the Qt-related stuff are properly updated in the main thread
+            progDialog.setValue(counter);
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+            counter++;
+        }
 
-		//emit inferenceFinished(someModelName);
-		std::cout << "Inference thread is finished..." << std::endl;
+        //emit inferenceFinished(someModelName);
+        std::cout << "Inference thread is finished..." << std::endl;
     //} catch (const std::exception& e){
     //    simpleInfoPrompt("Something went wrong during inference.");
     };
@@ -4446,12 +4446,12 @@ const bool MainWindow::calcTissueHist() {
     smallTextWindowStats->setFixedHeight(smallTextWindowStats->document()->size().toSize().height() + 3);
 
     statsLayout->insertWidget(1, smallTextWindowStats);
-	
-	return true;
+    
+    return true;
 }
 
 bool MainWindow::toggleRenderer(std::string name) {
-	std::cout << "Current name: " << name << std::endl;
+    std::cout << "Current name: " << name << std::endl;
     if (!hasRenderer(name)) {
         return false;
     } else {
@@ -4508,51 +4508,51 @@ bool MainWindow::hideChannel(const std::string& name) {
 }
 
 void MainWindow::deleteViewObject(std::string name) {
-	if (m_rendererList.count(name) == 0)
-		return;
+    if (m_rendererList.count(name) == 0)
+        return;
     // need to remove from QComboBox, remove from renderer, remove potential saved results in project (need to check
     // if project is made first), and in the end, need to update ViewWidget
     //
 
-	std::cout << "Current renderer: " << name << " , " << m_rendererList[name] << std::endl;
+    std::cout << "Current renderer: " << name << " , " << m_rendererList[name] << std::endl;
 
-	//view->removeRenderer(m_rendererList[name]); //->resetRenderers();
+    //view->removeRenderer(m_rendererList[name]); //->resetRenderers();
 
-	auto someRenderer = m_rendererList[name];
-	getView(0)->removeRenderer(someRenderer);
-	for (auto const&[key, val] : m_rendererList) {
-		std::cout << "before: " << key << ": " << val << std::endl;
-	}
-	m_rendererList.erase(name);
-	pageComboBox->removeItem(pageComboBox->findData(QString::fromStdString(name))); //pageComboBox->currentIndex());
+    auto someRenderer = m_rendererList[name];
+    getView(0)->removeRenderer(someRenderer);
+    for (auto const&[key, val] : m_rendererList) {
+        std::cout << "before: " << key << ": " << val << std::endl;
+    }
+    m_rendererList.erase(name);
+    pageComboBox->removeItem(pageComboBox->findData(QString::fromStdString(name))); //pageComboBox->currentIndex());
 
-	for (auto const& [key, val] : m_rendererList) {
-		std::cout << "after: " << key << ": " << val << std::endl;
-	}
+    for (auto const& [key, val] : m_rendererList) {
+        std::cout << "after: " << key << ": " << val << std::endl;
+    }
 
-	// need to update QComboBox as an element has been removed, to still keep the renderers mapped by index without any holes
-	pageComboBox->clear();
+    // need to update QComboBox as an element has been removed, to still keep the renderers mapped by index without any holes
+    pageComboBox->clear();
 
-	// then clear dynamic view widget layout, and add them again
-	clearLayout(stackedLayout);
-	for (auto const&[key, val] : m_rendererList) {
-		modelName = "";
-		if (modelNames.count(key) != 0) {
-			modelName = modelNames[key];
-		}
-		createDynamicViewWidget(key, modelName);
-	}
+    // then clear dynamic view widget layout, and add them again
+    clearLayout(stackedLayout);
+    for (auto const&[key, val] : m_rendererList) {
+        modelName = "";
+        if (modelNames.count(key) != 0) {
+            modelName = modelNames[key];
+        }
+        createDynamicViewWidget(key, modelName);
+    }
 
-	// TODO: Should store QComboBox based on name, perhaps setTooltip instead, such that I dont need to think about indices.
-	//	 But this requires that all results have unique names. Perhaps introduce this "make random unique name" for every object
-	//	 that is rendered?
+    // TODO: Should store QComboBox based on name, perhaps setTooltip instead, such that I dont need to think about indices.
+    //   But this requires that all results have unique names. Perhaps introduce this "make random unique name" for every object
+    //   that is rendered?
 
-	// perhaps need to handle case when there is only one element left in the renderer
-	std::cout << pageComboBox->count() << std::endl;
-	if (pageComboBox->count() == 1) {
-		pageComboBox->setCurrentIndex(0);
-	}
-	pageComboBox->update();
+    // perhaps need to handle case when there is only one element left in the renderer
+    std::cout << pageComboBox->count() << std::endl;
+    if (pageComboBox->count() == 1) {
+        pageComboBox->setCurrentIndex(0);
+    }
+    pageComboBox->update();
 }
 
 void MainWindow::insertRenderer(std::string name, std::shared_ptr<Renderer> renderer) {
