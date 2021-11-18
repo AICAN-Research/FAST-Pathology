@@ -357,7 +357,7 @@ void MainWindow::aboutProgram() {
     
     auto textBox = new QTextEdit;
     textBox->setEnabled(false);
-    textBox->setText("<html><b>FastPathology v0.1.0</b</html>");
+    textBox->setText("<html><b>FastPathology v0.2.0</b</html>");
     textBox->append("");
     textBox->setAlignment(Qt::AlignCenter);
     textBox->append("Open-source platform for deep learning-based research and decision support in digital pathology.");
