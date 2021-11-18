@@ -17,6 +17,7 @@
 #include <FAST/Visualization/HeatmapRenderer/HeatmapRenderer.hpp>
 #include <FAST/Algorithms/ImagePatch/ImageToBatchGenerator.hpp>
 #include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
+//#include <FAST/Visualization/SegmentationLabelRenderer/SegmentationLabelRenderer.hpp>
 #include <FAST/Algorithms/NeuralNetwork/TensorToSegmentation.hpp>
 #include <FAST/Algorithms/NeuralNetwork/TensorToImage.hpp>
 #include <FAST/Algorithms/NeuralNetwork/BoundingBoxNetwork.hpp>
@@ -802,7 +803,6 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     QObject::connect(deleteButton, &QPushButton::clicked, std::bind(&MainWindow::deleteViewObject, this, someName));
     deleteButton->setStyleSheet("color: black; background-color: red");  // "border: 1px solid red");
 
-
     auto currComboBox = new QComboBox;
 
     // additional options for setting which classes to show and colors
@@ -844,27 +844,6 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
 
             // TODO: Supports only binary images (where class of interest = 1)
             someRenderer->setColor(currComboBox->currentIndex() + 1, Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
-        });
-    // TODO: Need to add proper options in SegmentationPyramidRenderer and SegmentationRenderer for toggling and setting which classes to show, do to this properly...
-    } else if (m_rendererTypeList[someName] == "SegmentationPyramidRenderer") {
-        // get metadata of current model
-        std::map<std::string, std::string> metadata = getModelMetadata(modelName);
-        std::vector someVector = splitCustom(metadata["class_names"], ";");
-        // clear vector first
-        currentClassesInUse.clear();
-        for (const auto & i : someVector) {
-            currentClassesInUse.append(QString::fromStdString(i));
-        }
-        currComboBox->clear();
-        currComboBox->update();
-        currComboBox->insertItems(0, currentClassesInUse);
-
-        QObject::connect(colorButton, &QPushButton::clicked, [=]() {
-            auto rgb = colorSetWidget->getColor().toRgb();
-            auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(m_rendererList[someName]);
-            std::cout << "\nset color was pressed!" << std::endl;
-            someRenderer->setColor(currComboBox->currentIndex() + 1, Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
-            //someRenderer->setChannelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
         });
     } else if (m_rendererTypeList[someName] == "BoundingBoxRenderer") {
         // get metadata of current model
@@ -922,10 +901,6 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
         biggerTextBoxWidget_imageName->setDisabled(true);
     } else if (m_rendererTypeList[someName] == "SegmentationRenderer") {
         toggleShowButton->setDisabled(true);
-    } else if (m_rendererTypeList[someName] == "SegmentationPyramidRenderer") {
-        toggleShowButton->setDisabled(true);
-        //colorSetWidget->setDisabled(true);
-        //biggerTextBoxWidget_imageName->setDisabled(true);
     } else if (m_rendererTypeList[someName] == "BoundingBoxRenderer") {
 
     } else {
