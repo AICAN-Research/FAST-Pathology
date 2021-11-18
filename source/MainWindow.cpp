@@ -2573,9 +2573,7 @@ float MainWindow::getMagnificationLevel() {
             templateResVector.push_back(resFractionValue * ((float) i + 1));
         }
 
-        auto resolution = 1;  // needed to initialize outside of if statement -> set some silly dummy value
-        //auto resolution = std::stof(m_image->getMetadata("tiff.XResolution")); //(int)stof(metadata["tiff.XResolution"]);
-
+        auto resolution = 1;  // init
         if (wsiFormat == "generic-tiff") {
             resolution = std::stof(m_image->getMetadata("tiff.XResolution")); //(int)stof(metadata["tiff.XResolution"]);
         } else if ((wsiFormat == "phillips") || (wsiFormat == "ventata")) {
