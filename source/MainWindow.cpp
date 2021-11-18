@@ -424,9 +424,6 @@ void MainWindow::createMenubar() {
 
     //auto deployMenu = new QMenu();
     auto deployMenu = topFiller->addMenu(tr("&Deploy"));
-    //deployMenu->addMenu(tr("&Deploy"));
-    //deployMenu->setFixedHeight(100);
-    //deployMenu->setFixedWidth(100);
     //deployMenu->addAction("MTL nuclei seg/detect", this, &MainWindow::MTL_test);
     deployMenu->addAction("Refinement tumour", this, &MainWindow::Refinement_test);
     deployMenu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
@@ -438,9 +435,6 @@ void MainWindow::createMenubar() {
     helpMenu->addAction("Report issue", reportIssueUrl);
     helpMenu->addAction("Check for updates");  // TODO: Add function that checks if the current binary in usage is the most recent one
     helpMenu->addAction("About", this, &MainWindow::aboutProgram);
-
-    //topFiller->addMenu(fileMenu);
-    //topFiller->addMenu(deployMenu);
 
     superLayout->insertWidget(0, topFiller);
 }
@@ -507,7 +501,6 @@ void MainWindow::createMainMenuWidget() {
     //mainLayout->insertWidget(0, menuWidget);
 }
 
-// TODO: Don't remember if this actually worked, or if I ended up using it
 void clearLayout(QLayout *layout) {
     QLayoutItem *item;
     while((item = layout->takeAt(0))) {
@@ -548,35 +541,10 @@ void MainWindow::createMenuWidget() {
     spacerWidgetRight->setVisible(true);
 
     auto tb = new QToolBar(mWidget);
-    //tb->setStyleSheet("QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };");
-    //                         "border-bottom:2px solid rgba(25,25,120,75); "
-    //                         "QMenu{background-color:palette(window);border:1px solid palette(shadow);}");
-    //tb->setStyleSheet("{ background-color: rgb(100, 100, 200); }; QMenuBar::handle { background-color: rgb(20, 100, 20);");
     tb->setIconSize(QSize(im_size, im_size));
-    //tb->setFixedWidth(200);
-    //tb->setMovable(true);
-    //tb->setMinimumSize(QSize(im_size, im_size));
-    //tb->setBaseSize(QSize(im_size, im_size));
     tb->setFont(QFont("Times", 8)); //QFont::Bold));
     tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);  // adds text under icons
-
-    //QResource::registerResource("qtres.qrc");
-
-    /*
-    std::cout << "Anything in Qt Resources: " << std::endl;
-    QDirIterator it(":", QDir::NoFilter);
-    while (it.hasNext()) {
-        auto tmp = it.next();
-        QDirIterator it2(tmp, QDir::NoFilter);
-        std::cout << "elem: " << tmp.toStdString() << std::endl;
-        while (it2.hasNext()) {
-            std::cout << "elem: " << it2.next().toStdString() << std::endl;
-        }
-        //qDebug() << it.next();
-    }
-     */
         
-    //auto toolBar = new QToolBar;
     QPixmap openPix(QString::fromStdString(":/data/Icons/import_icon_new_cropped_resized.png"));
     QPixmap processPix(QString::fromStdString(":/data/Icons/process_icon_new_cropped_resized.png"));
     QPixmap viewPix(QString::fromStdString(":/data/Icons/visualize_icon_new_cropped_resized.png"));
@@ -586,11 +554,9 @@ void MainWindow::createMenuWidget() {
     QPainter painter(&savePix);
     QFont font = painter.font();
     font.setPixelSize(4);
-    //font.setBold(true);
     font.setFamily("Arial");
     painter.setFont(font);
     painter.setPen(*(new QColor(Qt::black)));
-    //painter.drawText(QPoint(0, 500), "Read WSI");
 
     tb->addWidget(spacerWidgetLeft);
 
@@ -642,17 +608,6 @@ void MainWindow::createMenuWidget() {
 
     auto dockContent = new QWidget(mWidget);
     dockContent->setLayout(dockLayout);
-
-    /*
-    auto pageComboBox = new QComboBox; // <- perhaps use toolbar instead?
-    pageComboBox->setFixedWidth(100);
-    pageComboBox->addItem(tr("File"));
-    pageComboBox->addItem(tr("Process"));
-    pageComboBox->addItem(tr("View"));
-    pageComboBox->addItem(tr("Save"));
-    connect(pageComboBox, SIGNAL(activated(int)), stackedWidget, SLOT(setCurrentIndex(int)));
-    //pageComboBox->setCurrentIndex(0);
-     */
 
     dockLayout = new QVBoxLayout;
     dockLayout->insertWidget(0, dockContent); //addWidget(dockContent);
@@ -780,8 +735,6 @@ void MainWindow::createViewWidget() {
 
 void MainWindow::createDynamicViewWidget(const std::string& someName, std::string modelName) {
 
-    //std::string someName = "tumor";
-
     dynamicViewWidget = new QWidget;
 
     auto imageButton = new QPushButton(mWidget);
@@ -885,12 +838,9 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
         QObject::connect(colorButton, &QPushButton::clicked, [=]() {
             auto rgb = colorSetWidget->getColor().toRgb();
             auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(m_rendererList[someName]);
-            //auto currImage = someRenderer->updateAndGetOutputData<Image>();
-            //currImage->
-            //std::cout << "window: " << someRenderer->updateAndGetOutputData<Image>() << std::endl;
-            //auto vals = someRenderer->getIntensityWindow();
 
-            std::cout << "\nset color was pressed! (in SegmentationRenderer)" << std::endl;
+            std::cout << "---set color was pressed! (in SegmentationRenderer)" << std::endl;
+            std::cout << "---new color: " << rgb.red() << rgb.green() << rgb.blue() << std::endl;
 
             // TODO: Supports only binary images (where class of interest = 1)
             someRenderer->setColor(currComboBox->currentIndex() + 1, Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
