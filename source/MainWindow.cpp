@@ -246,7 +246,7 @@ void MainWindow::helpUrl() {
 }
 
 void MainWindow::downloadAndAddTestData() {
-    // prompt
+
     auto mBox = new QMessageBox(mWidget);
     mBox->setIcon(QMessageBox::Warning);
     mBox->setText("This will download the test data, add the models, and open two WSIs.");
@@ -257,13 +257,10 @@ void MainWindow::downloadAndAddTestData() {
 
     switch (ret) {
     case QMessageBox::Yes:
-        // toggle and update text on button to show current mode (also default)
         break;
     case QMessageBox::No:
-        // if "No", do nothing
         return;
     case QMessageBox::Cancel:
-        // if "Cancel", do nothing
         return;
     default:
         break;
@@ -277,7 +274,7 @@ void MainWindow::downloadAndAddTestData() {
     progDialog->setModal(false);
     progDialog->setLabelText("Downloading test data...");
     progDialog->move(mWidget->width() - progDialog->width() * 1.1, progDialog->height() * 0.1);
-    //m_pBar.show();
+    progDialog->show();
 
     QUrl url{"http://folk.ntnu.no/andpeder/FastPathology/test_data.zip"};
 
@@ -301,7 +298,8 @@ void MainWindow::downloadAndAddTestData() {
     file.open(QIODevice::WriteOnly);
     file.write(reply->readAll());
     file.close();
-    delete reply;
+
+    std::cout << "input path | destination zip: " << downloadsFolder.toStdString() + "/" + fileInfo.fileName().toStdString() + " | " + downloadsFolder.toStdString() << std::endl;
 
     // unzip TODO: Is there something wrong with the include/import of this function? Might be a problem later on.
     extractZipFile((downloadsFolder + "/" + fileInfo.fileName()).toStdString(), downloadsFolder.toStdString());
@@ -2538,7 +2536,10 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
                              std::bind(&MainWindow::pixelClassifier_wrapper, this, modelName));
             someButton->show();
 
-            processLayout->insertWidget(processLayout->count(), someButton);
+            auto listItem = new QListWidgetItem;
+            listItem->setSizeHint(QSize(20, 50));
+            processListWidget->addItem(listItem);
+            processListWidget->setItemWidget(listItem, someButton);
 
             progDialog.setValue(counter);
             QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
