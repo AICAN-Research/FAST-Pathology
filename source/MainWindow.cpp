@@ -753,7 +753,6 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     //opacitySlider->setFixedWidth(200);
     opacitySlider->setMinimum(0);
     opacitySlider->setMaximum(20);
-    //opacityTissueSlider->setText("Tissue");
     opacitySlider->setValue(8);
     opacitySlider->setTickInterval(1);
     QObject::connect(opacitySlider, &QSlider::valueChanged, std::bind(&MainWindow::opacityRenderer, this, std::placeholders::_1, someName));
@@ -810,27 +809,36 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
         // get metadata of current model
         std::map<std::string, std::string> metadata = getModelMetadata(modelName);
         std::vector someVector = splitCustom(metadata["class_names"], ";");
-        // clear vector first
+
         currentClassesInUse.clear();
         for (const auto & i : someVector){
             currentClassesInUse.append(QString::fromStdString(i));
         }
+
         currComboBox->clear();
         currComboBox->update();
         currComboBox->insertItems(0, currentClassesInUse);
 
         QObject::connect(colorButton, &QPushButton::clicked, [=]() {
             auto rgb = colorSetWidget->getColor().toRgb();
-
             auto someRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(m_rendererList[someName]);
             someRenderer->setChannelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
         });
     } else if(m_rendererTypeList[someName] == "SegmentationRenderer") {
-        // clear vector first
-        currentClassesInUse.clear();
-        for (const auto & i : { 1 }) { //{ 0, 1 }) {  // TODO: Supports only binary images (where class of interest = 1)
-            currentClassesInUse.append(QString::number(i));
+        // init (by default only one class, but if a model supports multiple, will update these)
+        std::vector<std::string> someVector{ "1" };
+
+        // get metadata of current model
+        std::map<std::string, std::string> metadata = getModelMetadata(modelName);
+        if (!metadata.empty()) {
+            someVector = splitCustom(metadata["class_names"], ";");
         }
+
+        currentClassesInUse.clear();
+        for (const auto & i : someVector) {
+            currentClassesInUse.append(QString::fromStdString(i));
+        }
+
         currComboBox->clear();
         currComboBox->update();
         currComboBox->insertItems(0, currentClassesInUse);
@@ -838,22 +846,18 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
         QObject::connect(colorButton, &QPushButton::clicked, [=]() {
             auto rgb = colorSetWidget->getColor().toRgb();
             auto someRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(m_rendererList[someName]);
-
-            std::cout << "---set color was pressed! (in SegmentationRenderer)" << std::endl;
-            std::cout << "---new color: " << rgb.red() << rgb.green() << rgb.blue() << std::endl;
-
-            // TODO: Supports only binary images (where class of interest = 1)
             someRenderer->setColor(currComboBox->currentIndex() + 1, Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
         });
     } else if (m_rendererTypeList[someName] == "BoundingBoxRenderer") {
         // get metadata of current model
         std::map<std::string, std::string> metadata = getModelMetadata(modelName);
         std::vector someVector = splitCustom(metadata["class_names"], ";");
-        // clear vector first
+
         currentClassesInUse.clear();
         for (const auto & i : someVector) {
             currentClassesInUse.append(QString::fromStdString(i));
         }
+
         currComboBox->clear();
         currComboBox->update();
         currComboBox->insertItems(0, currentClassesInUse);
@@ -861,14 +865,9 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
         QObject::connect(colorButton, &QPushButton::clicked, [=]() {
             auto rgb = colorSetWidget->getColor().toRgb();
             auto someRenderer = std::dynamic_pointer_cast<BoundingBoxRenderer>(m_rendererList[someName]);
-            //someRenderer->setLabelColor(currComboBox->currentIndex(), Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
+            someRenderer->setColor(currComboBox->currentIndex() + 1, Color((float)(rgb.red() / 255.0f), (float)(rgb.green() / 255.0f), (float)(rgb.blue() / 255.0f)));
         });
     }
-    /*
-    else {
-        simpleInfoPrompt("Invalid renderer used...");
-    }
-     */
 
     connect(currComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateChannelValue(int)));
 
@@ -902,7 +901,8 @@ void MainWindow::createDynamicViewWidget(const std::string& someName, std::strin
     } else if (m_rendererTypeList[someName] == "SegmentationRenderer") {
         toggleShowButton->setDisabled(true);
     } else if (m_rendererTypeList[someName] == "BoundingBoxRenderer") {
-
+        opacitySlider->setDisabled(true);
+        toggleShowButton->setDisabled(true);
     } else {
         colorSetWidget->setDisabled(false);
     }
@@ -2859,7 +2859,7 @@ bool MainWindow::segmentTissue() {
         */
 
     m_rendererTypeList[currSegment] = "SegmentationRenderer";
-    createDynamicViewWidget(currSegment, modelName);
+    createDynamicViewWidget(currSegment, currSegment);
     insertRenderer(currSegment, someRenderer);
 
     availableResults[currSegment] = m_tissue;
@@ -4183,11 +4183,18 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 }
 
 std::map<std::string, std::string> MainWindow::getModelMetadata(std::string modelName) {
+
+    // init map
+    std::map<std::string, std::string> metadata;
+
+    // check if file exists, if not return
+    if (!QFile::exists((cwd + "data/Models/" + modelName + ".txt").c_str()))
+        return metadata;
+
     // parse corresponding txt file for relevant information regarding model
     std::ifstream infile(cwd + "data/Models/" + modelName + ".txt");
     std::string key, value, str;
     std::string delimiter = ":";
-    std::map<std::string, std::string> metadata;
     while (std::getline(infile, str))
     {
         vector<string> v = split (str, delimiter);
