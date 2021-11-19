@@ -50,6 +50,7 @@ namespace fast{
         void editorPipelinesTriggered();
         void addRendererToViewRequested(const std::string&);
         void removeRendererFromViewRequested(const std::string&);
+        void runPipelineEmitted(QString);
 
     public slots:
         /**

@@ -43,6 +43,7 @@ namespace fast
             void runPipelineEmitted(QString);
             void editPipelineEmitted(QString);
             void deletePipelineEmitted(QString);
+            void addRendererToViewRequested(const std::string&);
 
         private slots:
             void runPipelineReceived();

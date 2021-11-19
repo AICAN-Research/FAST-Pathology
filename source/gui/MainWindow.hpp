@@ -348,6 +348,7 @@ class MainWindow : public Window {
          */
         void addRendererToViewReceived(const std::string& name);
         void removeRendererFromViewReceived(const std::string& name);
+        void runPipelineReceived(QString pipeline_uid);
 
     private slots:
         void updateChannelValue(int index);

@@ -49,7 +49,7 @@ namespace fast
     void PipelineRunnerWidget::setupConnections()
     {
         QObject::connect(this->_run_pushbutton, &QPushButton::clicked, this, &PipelineRunnerWidget::runPipelineReceived);
-        QObject::connect(this->_run_pushbutton, &QPushButton::clicked, std::bind(&PipelineRunnerWidget::runPipelineEmitted, this, this->_pipeline_uid));
+//        QObject::connect(this->_run_pushbutton, &QPushButton::clicked, std::bind(&PipelineRunnerWidget::runPipelineEmitted, this, this->_pipeline_uid));
         QObject::connect(this->_edit_pushbutton, &QPushButton::clicked, this, &PipelineRunnerWidget::editPipelineReceived);
         QObject::connect(this->_edit_pushbutton, &QPushButton::clicked, std::bind(&PipelineRunnerWidget::editPipelineEmitted, this, this->_pipeline_uid));
         QObject::connect(this->_delete_pushbutton, &QPushButton::clicked, std::bind(&PipelineRunnerWidget::deletePipelineEmitted, this, this->_pipeline_uid));
@@ -62,15 +62,15 @@ namespace fast
         arguments["exportPath"] = "/home/dbouget/Desktop/fp-autoexport.tiff";
         ProcessManager::GetInstance()->get_pipeline(this->_pipeline_uid.toStdString())->setParameters(arguments);
         ProcessManager::GetInstance()->runPipeline(this->_pipeline_uid.toStdString());
-
-        // @TODO. Have to forward this to the main window, and also update the renderers?
-        //        for (auto&& po : pipeline.getProcessObjects()) {
-        //            if (po.second->getNrOfOutputPorts() == 0 && std::dynamic_pointer_cast<Renderer>(po.second) == nullptr) {
-        //                // Process object has no output ports, must add to window to make sure it is updated.
-        //                reportInfo() << "Process object " << po.first << " had no output ports defined in pipeline, therefore adding to window so it is updated." << reportEnd();
-        //                addProcessObject(po.second);
-        //            }
-        //        }
+        //@TODO.Should be able to parse the Pipeline info to know how many renderers there are, and their types.
+//        auto renderers = ProcessManager::GetInstance()->get_pipeline(pipeline_uid.toStdString())->getRenderers();
+//        for (auto&& rend :renderers)
+//        {
+//            getView(0)->addRenderer(rend);
+//        }
+        DataManager::GetInstance()->get_visible_image()->insert_renderer(this->_pipeline_uid.toStdString(), "SegmentationRenderer", *ProcessManager::GetInstance()->get_pipeline(this->_pipeline_uid.toStdString())->getRenderers().begin());
+        emit runPipelineEmitted(this->_pipeline_uid);
+        emit addRendererToViewRequested(this->_pipeline_uid.toStdString());
     }
 
     void PipelineRunnerWidget::editPipelineReceived()

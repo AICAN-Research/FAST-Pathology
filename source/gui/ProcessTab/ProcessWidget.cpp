@@ -176,14 +176,10 @@ namespace fast {
             this->_main_layout->insertWidget(counter, runner_widget);
             QObject::connect(runner_widget, &PipelineRunnerWidget::runPipelineEmitted, this, &ProcessWidget::runPipelineReceived);
             QObject::connect(runner_widget, &PipelineRunnerWidget::deletePipelineEmitted, this, &ProcessWidget::deletePipelineReceived);
+            QObject::connect(runner_widget, &PipelineRunnerWidget::addRendererToViewRequested, this, &ProcessWidget::addRendererToViewRequested);
             this->_pipeline_runners_map[pipeline_uid] = runner_widget;
             counter++;
         }
-    }
-
-    void ProcessWidget::runPipelineReceived(QString pipeline_uid)
-    {
-
     }
 
     void ProcessWidget::deletePipelineReceived(QString pipeline_uid)
@@ -267,5 +263,11 @@ namespace fast {
     void ProcessWidget::editorPipelinesReceived()
     {
         auto editor = new PipelineScriptEditorWidget(this);
+    }
+
+    void ProcessWidget::runPipelineReceived(QString pipeline_uid)
+    {
+        emit processTriggered(pipeline_uid.toStdString());
+        emit runPipelineEmitted(pipeline_uid);
     }
 }

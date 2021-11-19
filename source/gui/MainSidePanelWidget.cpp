@@ -190,6 +190,7 @@ namespace fast{
         QObject::connect(_project_widget, &ProjectWidget::resetDisplay, this, &MainSidePanelWidget::resetDisplay);
         QObject::connect(this->_process_widget, &ProcessWidget::processTriggered, this->_view_widget, &ViewWidget::processTriggerUpdate);
         QObject::connect(this->_process_widget, &ProcessWidget::addRendererToViewRequested, this, &MainSidePanelWidget::addRendererToViewRequested);
+        QObject::connect(this->_process_widget, &ProcessWidget::runPipelineEmitted, this, &MainSidePanelWidget::runPipelineEmitted);
         QObject::connect(this->_view_widget, &ViewWidget::removeRendererFromViewRequested, this, &MainSidePanelWidget::removeRendererFromViewRequested);
         QObject::connect(this->_app_mode_pushbutton, &QPushButton::clicked, this, &MainSidePanelWidget::setApplicationMode);
         QObject::connect(this, &MainSidePanelWidget::createProjectTriggered, this->_project_widget, &ProjectWidget::createProject);

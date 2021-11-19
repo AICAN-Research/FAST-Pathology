@@ -184,6 +184,7 @@ void MainWindow::setupConnections()
     QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::removeRendererFromViewRequested, this, &MainWindow::removeRendererFromViewReceived);
     QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::changeWSIDisplayTriggered, this, &MainWindow::changeWSIDisplayReceived);
     QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::resetDisplay, this, &MainWindow::resetDisplay);
+    QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::runPipelineEmitted, this, &MainWindow::runPipelineReceived);
 
     // Main menu actions
     QObject::connect(this->_file_menu_create_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::createProjectTriggered);
@@ -1126,6 +1127,26 @@ void MainWindow::removeRendererFromViewReceived(const std::string& name)
         std::cout << "Removing renderer with uid: " << name << std::endl;
         getView(0)->removeRenderer(DataManager::GetInstance()->get_visible_image()->get_renderer(name));
     }
+}
+
+void MainWindow::runPipelineReceived(QString pipeline_uid)
+{
+    auto process_objects = ProcessManager::GetInstance()->get_pipeline(pipeline_uid.toStdString())->getProcessObjects();
+    for (auto&& po :process_objects)
+    {
+        if (po.second->getNrOfOutputPorts() == 0 && std::dynamic_pointer_cast<Renderer>(po.second) == nullptr)
+        {
+            // Process object has no output ports, must add to window to make sure it is updated.
+            reportInfo() << "Process object " << po.first << " had no output ports defined in pipeline, therefore adding to window so it is updated." << reportEnd();
+            addProcessObject(po.second);
+        }
+    }
+
+//    auto renderers = ProcessManager::GetInstance()->get_pipeline(pipeline_uid.toStdString())->getRenderers();
+//    for (auto&& rend :renderers)
+//    {
+//        getView(0)->addRenderer(rend);
+//    }
 }
 
 }
