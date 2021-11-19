@@ -18,6 +18,9 @@
 #include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
 #include <FAST/Data/Image.hpp>
 #include <FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp>
+#include <FAST/Algorithms/ImagePyramidLevelExtractor/ImagePyramidLevelExtractor.hpp>
+#include <FAST/Algorithms/IntensityNormalization/IntensityNormalization.hpp>
+#include <FAST/Algorithms/NeuralNetwork/TensorToSegmentation.hpp>
 
 using namespace fast;
 
@@ -27,7 +30,7 @@ int main(int argc, char** argv) {
     CommandLineParser parser("Measure neural network performance script");
     parser.addOption("disable-warmup");
     parser.parse(argc, argv);
-    const int iterations = 1;  // 10
+    const int iterations = 10;  // 10
     const bool warmupIteration = !parser.getOption("disable-warmup");
 
     std::cout << "\nPatch-wise high-res semantic segmentation...\n" << std::endl;
@@ -41,15 +44,15 @@ int main(int argc, char** argv) {
     int iter = 1;
 
     // Write header
-    file << "Engine;Device Type;Iteration;Patch generator AVG;Patch generator STD;NN input AVG;NN input STD;NN inference AVG;NN inference STD;NN output AVG;NN output STD;Patch stitcher AVG;Patch stitcher STD;Exporter AVG; Exporter STD;Total\n";
+    file << "Engine;Device Type;Iteration;Patch generator AVG;Patch generator STD;NN input AVG;NN input STD;NN inference AVG;NN inference STD;NN output AVG;NN output STD;Patch stitcher AVG;Patch stitcher STD;Stage1;Stage2;Total\n";
 
-    for (std::string engine : {"OpenVINO"}) {
+    for (std::string engine : {"TensorRT", "OpenVINO"}) {
         std::map<std::string, InferenceDeviceType> deviceTypes = {{"ANY", InferenceDeviceType::ANY}};
         if (engine == "OpenVINO") {
             // On OpenVINO, try all device types
             deviceTypes = std::map<std::string, InferenceDeviceType>{
-                    //{"CPU", InferenceDeviceType::CPU},
-                    {"GPU", InferenceDeviceType::GPU},
+                    {"CPU", InferenceDeviceType::CPU},
+                    //{"GPU", InferenceDeviceType::GPU},
             };
         }
 
@@ -59,24 +62,23 @@ int main(int argc, char** argv) {
 
             for (int iteration = 0; iteration <= iterations; ++iteration) {
 
-                auto importer = WholeSlideImageImporter::New();
-                //importer->setSynchronizedRendering(true);
-                //importer->setFilename("E:/DigitalPathology/WSI/C.tif");
-                //importer->setFilename("../../../../wsi-2_HE.ndpi");
-                //importer->setFilename("../../703.tif");
-                //importer->setFilename("../../../../A05.svs");
-                importer->setFilename("../../../../WSI/283.tif");
+                // start total runtime, from start to scratch
+                auto total_runtime_start = std::chrono::high_resolution_clock::now();
 
-                //auto tissueSegmentation = TissueSegmentation::New();
-                //tissueSegmentation->setInputConnection(importer->getOutputPort());
+                auto importer = WholeSlideImageImporter::New();
+                importer->setFilename("../../../../WSI/283.tif");
+                auto m_image = importer->updateAndGetOutputData<ImagePyramid>();
+
+                auto tissueSegmentation = TissueSegmentation::New();
+                tissueSegmentation->setInputData(m_image);
 
                 auto generator = PatchGenerator::New();
-                generator->setPatchSize(m_img_size[0], m_img_size[1]);
-                generator->setPatchLevel(m_patch_level);
+                generator->setPatchSize(256, 256);
+                generator->setPatchLevel(2);
                 generator->setOverlap(0.0);
-                generator->setMaskThreshold(m_maskThreshold);
-                generator->setInputConnection(importer->getOutputPort());
-                //generator->setInputConnection(1, tissueSegmentation->getOutputPort());
+                generator->setMaskThreshold(0.1);
+                generator->setInputData(0, m_image);
+                generator->setInputConnection(1, tissueSegmentation->getOutputPort());
                 generator->enableRuntimeMeasurements();
 
                 auto network = NeuralNetwork::New();
@@ -92,84 +94,64 @@ int main(int argc, char** argv) {
                 stitcher->setInputConnection(network->getOutputPort());
                 stitcher->enableRuntimeMeasurements();
 
-                auto start = std::chrono::high_resolution_clock::now();
+                //auto start1 = std::chrono::high_resolution_clock::now();
                 DataObject::pointer data;
                 do {
                     data = stitcher->updateAndGetOutputData<DataObject>();
                 } while (!data->isLastFrame());  // wait until stitcher is finished before starting the refinement stage
 
-                // extract low-resolution image and resize it
-                auto currImage = importer->updateAndGetOutputData<ImagePyramid>();
-                auto access = currImage->getAccess(ACCESS_READ);
-                auto input = access->getLevelAsImage(low_res_patch_level);
+                // first stage finished, catch total runtime at this stage
+                auto runtime_stage1 = std::chrono::high_resolution_clock::now() - total_runtime_start;
 
-                auto resizer = ImageResizer::New();
-                resizer->setInterpolation(true);
-                resizer->setInputData(input);
-                resizer->setWidth(1024);
-                resizer->setHeight(1024);
+                // start second stage runtime
+                auto second_runtime_start = std::chrono::high_resolution_clock::now();
 
-                auto port = resizer->getOutputPort();
-                resizer->update();
-
-                // resize heatmap to match size of low-res image
                 auto converter = TensorToImage::New();
+                converter->setChannels({ 1 });
                 converter->setInputConnection(stitcher->getOutputPort());
 
-                auto resizer2 = ImageResizer::New();
-                resizer2->setInterpolation(true);
-                resizer2->setInputConnection(converter->getOutputPort());
-                //resizer2->setInputData(stitcher->updateAndGetOutputData<Image>());
-                resizer2->setWidth(1024);
-                resizer2->setHeight(1024);
+                // extract tumour channel heatmap
+                auto lowresExtractor = ImagePyramidLevelExtractor::New();
+                lowresExtractor->setLevel(-1);
+                lowresExtractor->setInputData(m_image);
 
-                auto port2 = resizer2->getOutputPort();
-                resizer2->update();
+                auto scaler = IntensityNormalization::create(0, 1, 0, 255);
+                scaler->setInputConnection(lowresExtractor->getOutputPort());
 
-                // when heatmap is finished stitching, we feed both the low-resolution WSI and produced heatmap to the refinement network
-                auto refinement = SegmentationNetwork::New();
-                refinement->setInferenceEngine("TensorFlow");
-                refinement->load("../../unet_tumour_refinement_model.pb");
-                refinement->setScaleFactor(0.00392156862f);
-                //refinement->setScaleFactor(1.0f);
-                refinement->setInputData(1, port->getNextFrame<Image>());
-                refinement->setInputData(0, port2->getNextFrame<Image>());
-                //refinement->setInputConnection(0, stitcher->getOutputPort());
-                //refinement->setInputData(1, stitcher->updateAndGetOutputData<Image>());  // @FIXME: Input here is null
-                refinement->enableRuntimeMeasurements();
-                //refinement->update();
+                auto refinement = NeuralNetwork::New();
+                refinement->setInferenceEngine(engine);
+                if (engine == "OpenVINO") {
+                    refinement->getInferenceEngine()->setDeviceType(deviceType.second);
+                    refinement->load("C:/Users/andrp/workspace/FAST-Pathology/studies/tumour-study/unet_tumour_refinement_model_fix-opset9.onnx");
+                } else {
+                    refinement->load("C:/Users/andrp/workspace/FAST-Pathology/studies/tumour-study/unet_tumour_refinement_model_fix.onnx");
+                }
+                refinement->setInputConnection(0, scaler->getOutputPort());
+                refinement->setInputConnection(1, converter->getOutputPort());
 
-                /*
-                // threshold
-                auto thresh = BinaryThresholding::New();
-                thresh->setLowerThreshold(0.5);
-                thresh->setInputData(refinement->updateAndGetOutputData<Image>());
-                thresh->update();
-                 */
-
-                //auto currPred = refinement->updateAndGetOutputData<Image>();
-                //currPred->setSpacing(1.0f, 1.0f, 1.0f);
+                auto converter2 = TensorToSegmentation::New();
+                converter2->setInputConnection(refinement->getOutputPort());
 
                 // finally, export final result to disk
                 auto finalSegExporter = ImageFileExporter::New();
                 finalSegExporter->setFilename("../../pred_tumour_seg_" + std::to_string(iter) + ".png");
-                finalSegExporter->setInputData(refinement->updateAndGetOutputData<Image>());
-                //finalSegExporter->setInputData(currPred);
-                //finalSegExporter->setInputData(thresh->updateAndGetOutputData<Image>());
+                finalSegExporter->setExecuteOnLastFrameOnly(true);
+                finalSegExporter->connect(converter2->updateAndGetOutputData<Image>());
                 finalSegExporter->enableRuntimeMeasurements();
                 finalSegExporter->update();  // runs the exporter
 
-                /*
-                auto start2 = std::chrono::high_resolution_clock::now();
-                DataObject::pointer data2;
+                DataObject::pointer data_;
                 do {
-                    data2 = stitcher->updateAndGetOutputData<DataObject>();
-                } while (!data2->isLastFrame());
-                 */
+                    data_ = refinement->updateAndGetOutputData<DataObject>();
+                } while (!data_->isLastFrame());
 
-                std::chrono::duration<float, std::milli> timeUsed =
-                        std::chrono::high_resolution_clock::now() - start;
-                std::cout << "Total runtime: " << timeUsed.count() << std::endl;
+                // stage 2 finished
+                auto time_final = std::chrono::high_resolution_clock::now();
+                auto runtime_stage2 = time_final - second_runtime_start;
+
+                std::cout << "Total runtime: " << (time_final - total_runtime_start).count() << std::endl;
+                std::cout << "Runtime Stage 1: " << runtime_stage1.count() << std::endl;
+                std::cout << "Runtime Stage 2: " << runtime_stage2.count() << std::endl;
                 std::cout << "Patch generator runtime: " << std::endl;
                 generator->getRuntime("create patch")->print();
                 std::cout << "NN runtime: " << std::endl;
@@ -181,8 +163,8 @@ int main(int argc, char** argv) {
 
                 iter++;
 
-                //if (iteration == 0 && warmupIteration)
-                //    continue;
+                if (iteration == 0 && warmupIteration)
+                    continue;
 
                 file <<
                      engine + ";" +
@@ -198,9 +180,9 @@ int main(int argc, char** argv) {
                      std::to_string(network->getRuntime("output_processing")->getStdDeviation()) + ";" +
                      std::to_string(stitcher->getRuntime("stitch patch")->getAverage()) + ";" +
                      std::to_string(stitcher->getRuntime("stitch patch")->getStdDeviation()) + ";" +
-                     std::to_string(finalSegExporter->getRuntime()->getAverage()) + ";" +
-                     "0" + ";" +
-                     std::to_string(timeUsed.count())
+                     std::to_string(runtime_stage1.count()) + ";" +
+                     std::to_string(runtime_stage2.count()) + ";" +
+                     std::to_string((time_final - total_runtime_start).count())
                      << std::endl;
             }
         }
