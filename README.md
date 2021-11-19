@@ -17,7 +17,9 @@ FastPathology is an open-source platform for deep learning-based research and de
 
 Install
 -----------------------------------
-Download an appropriate installer from the [release page](https://github.com/SINTEFMedtek/FAST-Pathology/releases/), or the most recent one from [here](https://andreped.github.io/fastpathology.github.io/). Installers for Win10, Ubuntu (18 and 20), and macOSX are available. Currently, there are only pre-releases, as there are still some features to be added/fixed, before we can say that it is ready for use. Beta-testers are much obliged.
+**Download an appropriate installer from the [release page](https://github.com/SINTEFMedtek/FAST-Pathology/releases/), or the most recent one from [here](https://andreped.github.io/fastpathology.github.io/)**. 
+
+Installers for Win10, Ubuntu (18 and 20), and macOSX are available. Currently, there are only pre-releases, as there are still some features to be added/fixed, before we can say that it is ready for use. Beta-testers are much obliged.
 
 **NOTE:** FastPathology depends on OpenCL. Most Windows machines have OpenCL by default, whereas Ubuntu does not. Thus, for Ubuntu, OpenCL can be installed by installing either [NVIDIA CUDA Toolkit](https://developer.nvidia.com/cuda-11.1.0-download-archive) or [Intel OpenCL Driver](https://github.com/intel/compute-runtime). For both operating systems CUDA is required to run inference on a dedicated GPU. CUDA 11.0 if you are using any of the releases.
 
