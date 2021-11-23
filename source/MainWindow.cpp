@@ -57,6 +57,7 @@
 #include <FAST/Exporters/HDF5TensorExporter.hpp>
 #include <FAST/Importers/ImagePyramidPatchImporter.hpp>
 #include <FAST/Exporters/ImagePyramidPatchExporter.hpp>
+#include <FAST/Importers/TIFFImagePyramidImporter.hpp>
 #include <FAST/Exporters/TIFFImagePyramidExporter.hpp>
 #include <FAST/Data/Access/ImagePyramidAccess.hpp>
 #include <QShortcut>
@@ -1772,7 +1773,6 @@ void MainWindow::selectFileInProject(int pos) {
     // add WSI to project list
     filename = wsiList[pos];
 
-    //stopComputationThread();
     // Import image from file using the ImageFileImporter
     importer = WholeSlideImageImporter::New();
     std::cout << "Current filename: " << filename << std::endl;
@@ -1813,30 +1813,24 @@ void MainWindow::selectFileInProject(int pos) {
         if ((tmp == ".") || (tmp == ".."))
             continue;
 
-        // check if current "file" is a directory, if directly, it will assume that there exists some high-res seg results to render, else do other stuff
-        QFileInfo pathFileInfo(currentResult.c_str());
-        if (pathFileInfo.isDir()){
-            if (!QDir(currentResult.c_str()).isEmpty()) {
-                loadHighres(QString::fromStdString(currentResult), QString::fromStdString(splitCustom(splitCustom(currentResult, "/").back(), wsiPath + "_").back()));
-            } else {
-                simpleInfoPrompt("Project directory containing high-resolution result was empty.");
-            }
-        } else {
-            auto splits = splitCustom(splitCustom(currentResult.c_str(), "/").back(), ".");
-            std::cout << "Current result path: " << currentResult << std::endl;
+        auto splits = splitCustom(splitCustom(currentResult.c_str(), "/").back(), ".");
+        std::cout << "Current result path: " << currentResult << std::endl;
 
-            auto str = splits.back();
-            transform(str.begin(), str.end(), str.begin(), ::tolower);
-            if (str == "png") {
-                loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(
-                        splitCustom(splitCustom(splitCustom(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
-            } else if ((str == "h5") || (str == "hd5") || (str == "hdf5")) {
-                std::cout << "heatmap chosen: " << str << std::endl;
-                loadHeatmap(QString::fromStdString(currentResult), QString::fromStdString(
-                        splitCustom(splitCustom(splitCustom(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
-            } else {
-                std::cout << "Unable to load result (format is not supported): " << currentResultPath << std::endl;
-            }
+        auto str = splits.back();
+        std::cout << "---str: " << str << std::endl;
+        transform(str.begin(), str.end(), str.begin(), ::tolower);
+        if (str == "png") {
+            loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(
+                    splitCustom(splitCustom(splitCustom(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
+        } else if ((str == "h5") || (str == "hd5") || (str == "hdf5")) {
+            std::cout << "heatmap chosen: " << str << std::endl;
+            loadHeatmap(QString::fromStdString(currentResult), QString::fromStdString(
+                    splitCustom(splitCustom(splitCustom(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
+        } else if (str == "tiff") {
+            loadHighres(QString::fromStdString(currentResult), QString::fromStdString(
+                splitCustom(splitCustom(splitCustom(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
+        } else {
+            std::cout << "Unable to load result (format was not supported): " << currentResultPath << std::endl;
         }
     }
 
@@ -1953,7 +1947,6 @@ void MainWindow::openProject() {
     std::cout << projectFolderName.toStdString() << std::endl;
 
     // check if all relevant files and folders are in selected folder directory
-    // qDebug << "hallo";
     // if any of the folders does not exists, create them
     if (!QDir(projectFolderName + "/pipelines").exists()) {
         QDir().mkdir(projectFolderName + "/pipelines");
@@ -1984,12 +1977,10 @@ void MainWindow::openProject() {
     }
 
     auto progDialog = QProgressDialog(mWidget);
-    progDialog.setRange(0, fileNames.count()-1);
-    //progDialog.setContentsMargins(0, 0, 0, 0);
+    progDialog.setRange(0, fileNames.count() - 1);
     progDialog.setVisible(true);
     progDialog.setModal(false);
     progDialog.setLabelText("Loading WSIs...");
-    //QRect screenrect = mWidget->screen()[0].geometry();
     progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
     progDialog.show();
 
@@ -2060,28 +2051,26 @@ void MainWindow::openProject() {
                 if ((tmp == ".") || (tmp == ".."))
                     continue;
 
-                // check if current "file" is a directory, if directly, it will assume that there exists some high-res seg results to render, else do other stuff
-                QFileInfo pathFileInfo(currentResult.c_str());
-                if (pathFileInfo.isDir()){
-                    if (!QDir(currentResult.c_str()).isEmpty()) {
-                        loadHighres(QString::fromStdString(currentResult), QString::fromStdString(splitCustom(splitCustom(currentResult, "/").back(), wsiPath + "_").back()));
-                    } else {
-                        simpleInfoPrompt("Project directory containing high-resolution result was empty.");
-                    }
-                } else {
-                    auto splits = splitCustom(splitCustom(currentResult.c_str(), "/").back(), ".");
-                    std::cout << "Current result path: " << currentResult << std::endl;
-
-                    auto str = splits.back();
-                    transform(str.begin(), str.end(), str.begin(), ::tolower);
-                    if (str == "png") {
-                        // @TODO: this splitception will be handled better in the future :p
-                        loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(splitCustom(splitCustom(splitCustom(currentResult, "/").back(), splitCustom(splitCustom(fileName.toStdString(), "/").back(), ".")[0] + "_").back(), ".")[0]));
-                    } else if ((str == "h5") || (str == "hd5") || (str == "hdf5")) {
-                        loadHeatmap(QString::fromStdString(currentResult), QString::fromStdString(splitCustom(splitCustom(splitCustom(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
-                    } else {
-                        std::cout << "Unable to load result (format is not supported): " << currentResultPath << std::endl;
-                    }
+                auto splits = splitCustom(splitCustom(currentResult.c_str(), "/").back(), ".");
+                auto str = splits.back();
+                std::cout << "---str: " << str << std::endl;
+                transform(str.begin(), str.end(), str.begin(), ::tolower);
+                if (str == "png") {
+                    loadSegmentation(QString::fromStdString(currentResult), QString::fromStdString(
+                        splitCustom(splitCustom(splitCustom(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
+                }
+                else if ((str == "h5") || (str == "hd5") || (str == "hdf5")) {
+                    std::cout << "heatmap chosen: " << str << std::endl;
+                    loadHeatmap(QString::fromStdString(currentResult), QString::fromStdString(
+                        splitCustom(splitCustom(splitCustom(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
+                }
+                else if (str == "tiff") {
+                    std::cout << "currentResult: " << currentResult << " | RHS: " << splitCustom(splitCustom(splitCustom(currentResult, "/").back(), ".")[0], wsiPath + "_").back() << std::endl;
+                    loadHighres(QString::fromStdString(currentResult), QString::fromStdString(
+                        splitCustom(splitCustom(splitCustom(currentResult, "/").back(), ".")[0], wsiPath + "_").back()));
+                }
+                else {
+                    std::cout << "Unable to load result (format was not supported): " << currentResultPath << std::endl;
                 }
             }
         }
@@ -2872,18 +2861,17 @@ void MainWindow::loadHighres(QString path, QString name) {
 
     auto someName = name.toStdString();
     std::cout << "High-res someName var: " << someName << std::endl;
-    std::cout << "path: " << path.toStdString() + "/" << std::endl;
+    std::cout << "path: " << path.toStdString() << std::endl;
 
-    auto someImporter = ImagePyramidPatchImporter::New();
-    someImporter->setPath(path.toStdString() + "/");
-    //someImporter->update();
-    auto result = someImporter->updateAndGetOutputData<ImagePyramid>();
+    auto importer = TIFFImagePyramidImporter::New();
+    importer->setFilename(path.toStdString());
+    //auto result = importer->updateAndGetOutputData<ImagePyramid>();
 
     auto someRenderer = SegmentationRenderer::New();
     someRenderer->setOpacity(0.5f);
-    //someRenderer->setInputConnection(someImporter->getOutputPort()); //setInputConnection(importer->getOutputPort());
-    someRenderer->setInputData(result);
-    someRenderer->update();
+    someRenderer->setInputConnection(importer->getOutputPort());
+
+    m_tumorMap->setSpacing((float)m_image->getFullHeight() / (float)input->getHeight(), (float)m_image->getFullWidth() / (float)input->getWidth(), 1.0f);
 
     m_rendererTypeList[someName] = "SegmentationRenderer";
     insertRenderer(someName, someRenderer);
@@ -2912,19 +2900,13 @@ void MainWindow::loadHeatmap(QString tissuePath, QString name) {
     // m_tumorMap->setSpacing((float) m_image->getFullHeight() / (float) input->getHeight(), (float) m_image->getFullWidth() / (float) input->getWidth(), 1.0f);
 
     auto someRenderer = HeatmapRenderer::New();
-    //someRenderer->glPolygonOffset(512.0f, 512.0f);
-    //someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
     someRenderer->setInputConnection(0, importer->getOutputPort());
-    //someRenderer->setInputData(someImage);
     someRenderer->setMaxOpacity(0.6f);
     someRenderer->setInterpolation(false);
-    //someRenderer->setOpacity(0.4f); // <- necessary for the quick-fix temporary solution
     someRenderer->update();
 
     m_rendererTypeList[someName] = "HeatmapRenderer";
     insertRenderer(someName, someRenderer);
-
-    //hideTissueMask(false);
 
     // now make it possible to edit prediction in the View Widget
     createDynamicViewWidget(someName, modelName);
