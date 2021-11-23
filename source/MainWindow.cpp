@@ -2871,7 +2871,8 @@ void MainWindow::loadHighres(QString path, QString name) {
     someRenderer->setOpacity(0.5f);
     someRenderer->setInputConnection(importer->getOutputPort());
 
-    m_tumorMap->setSpacing((float)m_image->getFullHeight() / (float)input->getHeight(), (float)m_image->getFullWidth() / (float)input->getWidth(), 1.0f);
+    // @FIXME: Do I need to set spacing when loading these results?
+    //m_tumorMap->setSpacing((float)m_image->getFullHeight() / (float)input->getHeight(), (float)m_image->getFullWidth() / (float)input->getWidth(), 1.0f);
 
     m_rendererTypeList[someName] = "SegmentationRenderer";
     insertRenderer(someName, someRenderer);
