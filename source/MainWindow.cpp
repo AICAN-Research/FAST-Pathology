@@ -2986,7 +2986,7 @@ void MainWindow::runPipeline_wrapper(std::string path) {
     if (curr_runForProject) {
         // always run pipeline in background thread
         std::atomic_bool stopped(false);
-        std::thread inferenceThread([&, path, currentWSIs]() {
+        std::thread inferenceThread([&, path, currentWSIs, curr_runForProject]() {
             auto counter = 0;
             for (const auto& currWSI : currentWSIs) {
                 runPipeline(path, currWSI, counter, curr_runForProject);

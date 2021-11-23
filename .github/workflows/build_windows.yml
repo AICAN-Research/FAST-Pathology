@@ -16,7 +16,7 @@ jobs:
 
     - name: Download FAST
       run: |
-        curl.exe -OL https://github.com/smistad/FAST/releases/download/v4.2.0-rc2/fast_windows_4.2.0.zip
+        curl.exe -OL https://github.com/smistad/FAST/releases/download/v4.2.0-rc3/fast_windows_4.2.0.zip
         tar -xzf ./fast_windows_4.2.0.zip
       
     - name: Configure CMake
