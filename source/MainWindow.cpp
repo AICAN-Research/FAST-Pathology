@@ -2990,6 +2990,11 @@ void MainWindow::runPipeline_wrapper(std::string path) {
             auto counter = 0;
             for (const auto& currWSI : currentWSIs) {
                 runPipeline(path, currWSI, counter, curr_runForProject);
+
+                // @TODO: Have to add signal/slot solution for this, in order to be able to update progress dialog
+                //progDialog.setValue(counter);
+                //counter++;
+                //QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
             }
         });
         inferenceThread.detach();
@@ -3030,7 +3035,7 @@ void MainWindow::runPipeline(std::string path, std::string currWSI, int counter,
     // parse fpl-file, and run pipeline with corresponding input arguments
     auto pipeline = Pipeline(path, arguments);
     if (RFP_flag) {
-        pipeline.parse({}, false);
+        pipeline.parse({}, {}, false);
     }
     else {
         pipeline.parse();
