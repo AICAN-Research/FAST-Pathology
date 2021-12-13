@@ -13,10 +13,6 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-
-    - name: Create a subdirectory
-      run: |
-        mkdir subdir
     
     - name: Download FAST (artifact)
       uses: dawidd6/action-download-artifact@v2
@@ -31,7 +27,6 @@ jobs:
 
     - name: Install dependencies  # @TODO: Reduce this
       run: |
-        ls -haltr
         sudo snap install cmake --classic # Use snap to get more recent version of cmake on Ubuntu 18.04
         sudo apt install g++ patchelf
         sudo apt install '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev
@@ -41,7 +36,7 @@ jobs:
         pip3 install numpy==1.19.5 pylddwrap==1.2.0
 
     - name: Install FAST
-      run: sudo dpkg -i subdir/fast_ubuntu18.04_4.2.0.deb
+      run: sudo dpkg -i fast_ubuntu18.04_4.2.1.deb
       
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build
