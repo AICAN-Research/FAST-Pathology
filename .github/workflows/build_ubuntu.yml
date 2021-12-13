@@ -17,19 +17,21 @@ jobs:
     - name: Create a subdirectory
       run: |
         mkdir subdir
-
-    - name: Download FAST
-      id: get_release
-      uses: dsaltares/fetch-gh-release-asset@master
+    
+    - name: Download FAST (artifact)
+      uses: dawidd6/action-download-artifact@v2
       with:
-        repo: "smistad/FAST"
-        version: "tags/v4.2.0-rc3"
-        file: "fast_ubuntu18.04_4.2.0.deb"
-        target: "subdir/fast_ubuntu18.04_4.2.0.deb"
-        token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{secrets.GITHUB_TOKEN}}
+        workflow: CI-ubuntu.yml
+        workflow_conclusion: success
+        branch: master
+        event: push
+        name: "Debian package"
+        repo: smistad/FAST
 
     - name: Install dependencies  # @TODO: Reduce this
       run: |
+        ls -haltr
         sudo snap install cmake --classic # Use snap to get more recent version of cmake on Ubuntu 18.04
         sudo apt install g++ patchelf
         sudo apt install '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev

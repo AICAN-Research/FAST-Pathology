@@ -359,7 +359,7 @@ void MainWindow::aboutProgram() {
     
     auto textBox = new QTextEdit;
     textBox->setEnabled(false);
-    textBox->setText("<html><b>FastPathology v0.2.0</b</html>");
+    textBox->setText("<html><b>FastPathology v0.2.1</b</html>");
     textBox->append("");
     textBox->setAlignment(Qt::AlignCenter);
     textBox->append("Open-source platform for deep learning-based research and decision support in digital pathology.");
@@ -2978,6 +2978,8 @@ void MainWindow::runPipeline_wrapper(std::string path) {
     progDialog.setLabelText("Running pipeline across WSIs in project...");
     progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
     progDialog.show();
+
+    progDialog.setValue(0);
 
     QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
