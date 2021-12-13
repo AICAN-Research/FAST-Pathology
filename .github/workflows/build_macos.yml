@@ -21,7 +21,7 @@ jobs:
     - name: Download FAST (artifact)
       uses: dawidd6/action-download-artifact@v2
       with:
-        github_token: ${{secrets.FP}}
+        github_token: ${{secrets.GITHUB_TOKEN}}
         workflow: CI-mac.yml
         workflow_conclusion: success
         branch: master
@@ -31,13 +31,13 @@ jobs:
 
     - name: Install FAST
       run: |
-        gunzip fast_macosx10.13_4.2.0.tar.xz
-        tar -xzf ./fast_macosx10.13_4.2.0.tar
+        gunzip fast_macosx10.13_4.2.1.tar.xz
+        tar -xzf ./fast_macosx10.13_4.2.1.tar
       
     - name: Configure CMake
       run: |
         cmake -B ${{github.workspace}}/build \
-            -DFAST_DIR=${{github.workspace}}/fast_macosx10.13_4.2.0/fast/cmake/
+            -DFAST_DIR=${{github.workspace}}/fast_macosx10.13_4.2.1/fast/cmake/
 
     - name: Build FastPathology
       run: cmake --build ${{github.workspace}}/build --config Release --target fastpathology -j 4
