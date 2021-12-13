@@ -27,7 +27,7 @@ jobs:
 
     - name: Uncompress zip
       run: |
-        tar -xzf ./Archive package (zip).zip
+        tar -xzf "./Archive package (zip).zip"
         tar -xzf ./fast_windows_4.2.1.zip
       
     - name: Configure CMake
