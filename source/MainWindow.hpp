@@ -178,7 +178,7 @@ class MainWindow : public Window {
          * Gets the thumbnail image and stores it as a QImage.
          * @return
          */
-        QImage extractThumbnail();
+        QImage extractThumbnail(std::shared_ptr<ImagePyramid> curr_image);
         /**
          * Updates the current WSI dependent on which file is selected form the WSI scroll bar widget on the left. It
          * will render the selected WSI and load all corresponding results, if a Project exists.

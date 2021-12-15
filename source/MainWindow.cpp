@@ -467,19 +467,24 @@ void MainWindow::reset() {
 
         switch (ret) {
             case QMessageBox::Yes:
-                wsiList.clear();
-                savedList.clear();
-                scrollList->clear();
-                removeAllRenderers();
-                pageComboBox->clear();
-                exportComboBox->clear();
                 break;
             case QMessageBox::No:
-                break;
+                return;
             default:
-                break;
+                return;
         }
     }
+
+    // for a new selection of wsi(s), should reset and update these QWidgets
+    pageComboBox->clear();
+    exportComboBox->clear();
+    m_rendererList.clear();
+
+    // Get old view, and remove it from Widget
+    currentView = getView(0);
+    currentView->stopPipeline();
+    currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
+    currentView->removeAllRenderers();  // VERY IMPORTANT THAT THIS IS DONE AFTER!!!
 
     // update application name to contain current WSI
     if (advancedMode) {
@@ -1751,7 +1756,6 @@ void MainWindow::selectFileInProject(int pos) {
         return;
     }
 
-
     // for a new selection of wsi(s), should reset and update these QWidgets
     pageComboBox->clear();
     exportComboBox->clear();
@@ -1998,19 +2002,22 @@ void MainWindow::openProject() {
         // Import image from file using the ImageFileImporter
         auto someImporter = WholeSlideImageImporter::New();
         someImporter->setFilename(currFileName);
-        m_image = someImporter->updateAndGetOutputData<ImagePyramid>();
+        auto curr_image = someImporter->updateAndGetOutputData<ImagePyramid>();
 
         // for reading of multiple WSIs, only render last one
         if (counter == fileNames.count() - 1) {
 
             filename = fileName.toStdString();
 
+            // set current global WSI
+            //m_image = curr_image;
+
             // get metadata
-            metadata = m_image->getMetadata();
+            metadata = curr_image->getMetadata();
 
             auto renderer = ImagePyramidRenderer::New();
             renderer->setSharpening(m_wsiSharpening);
-            renderer->setInputData(m_image);
+            renderer->setInputData(curr_image);
 
             removeAllRenderers();
             m_rendererTypeList["WSI"] = "ImagePyramidRenderer";
@@ -2090,7 +2097,7 @@ void MainWindow::openProject() {
         } else {
             std::cout << "Thumbnail does not exist! Creating one from the WSI" << std::endl;
             // get thumbnail image
-            image = extractThumbnail();
+            image = extractThumbnail(curr_image);
         }
 
         // /*
@@ -2136,9 +2143,9 @@ void MainWindow::simpleInfoPrompt(const QString& str) {
     QTimer::singleShot(3000, mBox, SLOT(accept()));
 }
 
-QImage MainWindow::extractThumbnail() {
-        auto access = m_image->getAccess(ACCESS_READ);
-        auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
+QImage MainWindow::extractThumbnail(std::shared_ptr<ImagePyramid> curr_image) {
+        auto access = curr_image->getAccess(ACCESS_READ);
+        auto input = access->getLevelAsImage(curr_image->getNrOfLevels() - 1);
 
         // try to convert FAST Image -> QImage
         QImage image(input->getWidth(), input->getHeight(), QImage::Format_RGB32);
@@ -3085,6 +3092,9 @@ void MainWindow::runPipeline(std::string path, std::string currWSI, int counter,
             //while (!m_pipelineStopped) { QCoreApplication::processEvents(QEventLoop::AllEvents, 0); };  // perhaps need to force update if I do this? Why doesn't it update with this? Does it interact with the mainthread somehow?
 
         m_pipelineStopped = false;  // reset when done
+
+        // catch all outputs, and add these to View widget
+        //createDynamicViewWidget(modelMetadata["name"], someModelName);
     }
 
     // update progress bar
