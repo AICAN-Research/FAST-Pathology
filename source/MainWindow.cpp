@@ -2293,7 +2293,7 @@ void MainWindow::openProject() {
             filename = fileName.toStdString();
 
             // set current global WSI
-            //m_image = curr_image;
+            m_image = curr_image;
 
             // get metadata
             metadata = curr_image->getMetadata();
@@ -3772,11 +3772,11 @@ void MainWindow::pixelClassifier_wrapper(std::string someModelName) {
 
     // if run for project is enabled, run the inference-export pipeline in a background thread, else don't
     if (m_runForProject) {
-        std::atomic_bool stopped(false);
-        std::thread inferenceThread([&, someModelName, modelMetadata]() {
-            pixelClassifier(someModelName, modelMetadata);
-        });
-        inferenceThread.detach();
+        //std::atomic_bool stopped(false);
+        //std::thread inferenceThread([&, someModelName, modelMetadata]() {
+        pixelClassifier(someModelName, modelMetadata);
+        //});
+        //inferenceThread.detach();
     } else {
         pixelClassifier(someModelName, modelMetadata);
 
@@ -4285,32 +4285,32 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                             addProcessObject(tiffExporter);
                         }
                         else {
-                            // check if folder for current WSI exists, if not, create one
-                            QString wsiResultPath = (projectFolderName.toStdString() + "/results/" +
-                                splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
+                            auto stitcher = PatchStitcher::New();
+                            stitcher->setInputConnection(network->getOutputPort());
+                            auto port = stitcher->getOutputPort();
+
+                            // setup paths for saving results
+                            std::cout << "Current save location: " << projectFolderName.toStdString() << std::endl;
+                            QString wsiResultPath = (projectFolderName.toStdString() + "/results/" + splitCustom(splitCustom(currWSI, "/").back(), ".")[0]).c_str();
                             wsiResultPath = wsiResultPath.replace("//", "/");
+
+                            // if folder does not exist, create one
                             if (!QDir(wsiResultPath).exists()) {
                                 QDir().mkdir(wsiResultPath);
                             }
-                            auto currPath =
-                                wsiResultPath.toStdString() + "/" +
-                                splitCustom(wsiResultPath.toStdString(), "/").back() +
-                                "_" + modelMetadata["name"] + "/";
-                            std::cout << "current high-res result path: " << currPath << std::endl;
 
-                            auto exporter = ImagePyramidPatchExporter::New();
-                            //exporter->setInputData(network->updateAndGetOutputData<Image>());
-                            exporter->setInputConnection(network->getOutputPort());
-                            exporter->setPath(currPath);
+                            // TODO: This now always saves result as TIFF, which is not correct. Need generic way of knowing which results that are exported and how to save these
+                            auto currPath = wsiResultPath.toStdString() + "/" + splitCustom(wsiResultPath.toStdString(), "/").back() + ".tiff";
 
-                            //addProcessObject(exporter);  // TODO: Is this required when running the analysis without multi-threading? If included it seems like the segmentation is off-by-one (right-skewed)?
+                            // finally, export result as pyramidal TIFF
+                            auto tiffExporter = TIFFImagePyramidExporter::New();
+                            tiffExporter->setFilename(currPath);
+                            tiffExporter->setExecuteOnLastFrameOnly(true);
+                            tiffExporter->setInputConnection(stitcher->getOutputPort());
 
-                            auto port = network->getOutputPort();
-                            DataObject::pointer data;
-                            do {
-                                exporter->update();
-                                data = port->getNextFrame<DataObject>();
-                            } while (!data->isLastFrame());
+                            // finally, add exporter PO to force exporter to run
+                            addProcessObject(tiffExporter);
+                            tiffExporter->update();
                         }
                     }
                     else if ((modelMetadata["problem"] == "object_detection") && (modelMetadata["resolution"] == "high")) {  // TODO: Perhaps use switch() instead of tons of if-statements?
@@ -4394,7 +4394,6 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                         resizer2->setInputConnection(network->getOutputPort());
                         resizer2->setWidth(input->getWidth());
                         resizer2->setHeight(input->getHeight());
-
 
                         auto port2 = resizer2->getOutputPort();
                         //m_tumorMap = port2->getNextFrame<Image>();
