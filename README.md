@@ -41,6 +41,11 @@ Demos
 -----------------------------------
 Very simple demonstrations of the platforms can be found on [Youtube](https://www.youtube.com/channel/UC4GM2KW54-vEZ0M1kH5-oig). More in-depth demonstrations will be added in the future. However, some wikis and tutorials can be found in the [wiki](https://github.com/SINTEFMedtek/FAST-Pathology/wiki). More information can be found from the **pages** section on the right in the wiki home.
 
+Applications of FastPathology
+-----------------------------------
+* Pettersen et al., Code-free development and deployment of deep segmentation models for digital pathology, Frontiers in Medicine, https://www.frontiersin.org/articles/10.3389/fmed.2021.816281/abstract
+* Pedersen et al., Hybrid guiding: A multi-resolution refinement approach for semantic segmentation of gigapixel histopathological images, preprint arXiv: https://arxiv.org/abs/2112.03455
+
 Development setup
 -----------------------------------
 1. Either
@@ -81,11 +86,8 @@ Development setup
 
 **NOTE:** Visual Studio 19 have been tested with both FAST and FastPathology and works well.
 
-## Applications of FastPathology
-* Pettersen et al., Code-free development and deployment of deep segmentation models for digital pathology, Frontiers in Medicine, https://www.frontiersin.org/articles/10.3389/fmed.2021.816281/abstract
-* Pedersen et al., Hybrid guiding: A multi-resolution refinement approach for semantic segmentation of gigapixel histopathological images, preprint arXiv: https://arxiv.org/abs/2112.03455
-
-## How to cite
+How to cite
+-----------------------------------
 Please, consider citing our paper, if you find the work useful:
 <pre>
   @ARTICLE{9399433,
