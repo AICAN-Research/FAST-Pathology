@@ -2759,6 +2759,7 @@ void MainWindow::addModels() {
             mWidget,
             tr("Select Model"), nullptr,
             tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff *.anchors *.onnx *.fpl"),
+            //tr("Model Configuration Files (*.txt)"),
             nullptr, QFileDialog::DontUseNativeDialog
     ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
 
@@ -2773,14 +2774,22 @@ void MainWindow::addModels() {
 
     QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
-    int counter = 0;
-    // now iterate over all selected files and add selected files and corresponding ones to Models/
+    // filter non-txt files
+    QStringList txtFiles;
     for (QString& fileName : ls) {
+        if (fileName.endsWith(".txt")) {
+            txtFiles.append(fileName);
+        }
+    }
+
+    int counter = 0;
+    // now iterate across all selected txt files, and add selected files and corresponding ones to Models/
+    for (QString& fileName : txtFiles) {
 
         if (fileName == "")
             return;
 
-        std::string someFile = splitCustom(fileName.toStdString(), "/").back(); // TODO: Need to make this only split on last "/"
+        std::string someFile = splitCustom(fileName.toStdString(), "/").back();  // TODO: Need to make this only split on last "/"
         std::string oldLocation = splitCustom(fileName.toStdString(), someFile)[0];
         std::string newLocation = cwd + "data/Models/";
 
@@ -2798,14 +2807,17 @@ void MainWindow::addModels() {
             continue;
         }
 
-        // check which corresponding model files that exist, except from the one that is chosen
-        std::vector<std::string> allowedFileFormats{"txt", "pb", "h5", "mapping", "xml", "bin", "uff", "anchors", "onnx", "fpl"};
+        // iterate across all files that start with the same filename (except format, .txt), and add them if new
+        std::string fileNames = fileName.split(".txt");
+        std::string fileNameWithoutExtension = fileNames[0];
+        for (QString& currFile : ls) {
+            std::string currFileNameWithoutExtension = currFile.split(".txt")[0];
+            if (currFileNameWithoutExtension == fileNameWithoutExtension) {
 
-        std::cout << "Copy test" << std::endl;
-        foreach(std::string currExtension, allowedFileFormats) {
-            std::string oldPath = oldLocation + fileNameNoFormat + "." + currExtension;
-            if (fileExists(oldPath)) {
-                QFile::copy(QString::fromStdString(oldPath), QString::fromStdString(cwd + "data/Models/" + fileNameNoFormat + "." + currExtension));
+                // if file does not exist, add it
+                if (!fileExists(newPath)) {
+                    QFile::copy(currFile, cwd + "data/Models/" + currFile.split("/").back());
+                }
             }
         }
 
@@ -2818,10 +2830,8 @@ void MainWindow::addModels() {
 
         auto someButton = new QPushButton(mWidget);
         someButton->setText(QString::fromStdString(metadata["task"]));
-        //predGradeButton->setFixedWidth(200);
         someButton->setFixedHeight(50);
-        QObject::connect(someButton, &QPushButton::clicked,
-                         std::bind(&MainWindow::pixelClassifier_wrapper, this, modelName));
+        QObject::connect(someButton, &QPushButton::clicked, std::bind(&MainWindow::pixelClassifier_wrapper, this, modelName));
         someButton->show();
 
         auto listItem = new QListWidgetItem;
