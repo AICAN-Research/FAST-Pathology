@@ -2677,93 +2677,6 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
     QDir().mkpath(QDir::homePath() + "fastpathology/data/Models");
 
     auto progDialog = QProgressDialog(mWidget);
-    progDialog.setRange(0, fileNames.count() - 1);
-    progDialog.setVisible(true);
-    progDialog.setModal(false);
-    progDialog.setLabelText("Adding models...");
-    QRect screenrect = mWidget->screen()[0].geometry();
-    progDialog.move(mWidget->width() - progDialog.width() / 2, -mWidget->width() / 2 - progDialog.width() / 2);
-    progDialog.show();
-
-    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-
-    int counter = 0;
-    // now iterate over all selected files and add selected files and corresponding ones to Models/
-    for (const QString& fileName : fileNames) {
-        std::cout << fileName.toStdString() << std::endl;
-
-        if (fileName == "")
-            return;
-
-        std::string someFile = splitCustom(fileName.toStdString(), "/").back(); // TODO: Need to make this only split on last "/"
-        std::string oldLocation = splitCustom(fileName.toStdString(), someFile)[0];
-        std::string newLocation = cwd + "data/Models/";
-
-        std::vector<string> names = splitCustom(someFile, ".");
-        string fileNameNoFormat = names[0];
-        string formatName = names[1];
-
-        // copy selected file to Models folder
-        // check if file already exists in new folder, if yes, print warning, and continue to next one
-        string newPath = cwd + "data/Models/" + someFile;
-        if (fileExists(newPath)) {
-            std::cout << "file with the same name already exists in folder, didn't transfer... " << std::endl;
-            progDialog.setValue(counter);
-            counter++;
-            QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-        } else {
-            //QFile::copy(fileName, QString::fromStdString(newPath));
-
-            // check which corresponding model files that exist, except from the one that is chosen
-            std::vector<std::string> allowedFileFormats{"txt", "pb", "h5", "mapping", "xml", "bin", "uff", "anchors", "onnx"};
-
-            foreach(std::string currExtension, allowedFileFormats) {
-                std::string oldPath = oldLocation + fileNameNoFormat + "." + currExtension;
-                if (fileExists(oldPath)) {
-                    QFile::copy(QString::fromStdString(oldPath), QString::fromStdString(
-                            cwd + "data/Models/" + fileNameNoFormat + "." + currExtension));
-                }
-            }
-
-            // when models are added, ProcessWidget should be updated by adding the new widget to ProcessWidget layout
-            // current model
-            modelName = fileNameNoFormat;
-
-            // get metadata of current model
-            std::map<std::string, std::string> currMetadata = getModelMetadata(modelName);
-
-            auto someButton = new QPushButton(mWidget);
-            someButton->setText(QString::fromStdString(currMetadata["task"]));
-            //predGradeButton->setFixedWidth(200);
-            someButton->setFixedHeight(50);
-            QObject::connect(someButton, &QPushButton::clicked,
-                             std::bind(&MainWindow::pixelClassifier_wrapper, this, modelName));
-            someButton->show();
-
-            auto listItem = new QListWidgetItem;
-            listItem->setSizeHint(QSize(20, 50));
-            processListWidget->addItem(listItem);
-            processListWidget->setItemWidget(listItem, someButton);
-
-            progDialog.setValue(counter);
-            QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-            counter++;
-        }
-    }
-}
-
-void MainWindow::addModels() {
-
-    //QString fileName = QFileDialog::getOpenFileName(
-    QStringList ls = QFileDialog::getOpenFileNames(
-            mWidget,
-            tr("Select Model"), nullptr,
-            tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff *.anchors *.onnx *.fpl"),
-            //tr("Model Configuration Files (*.txt)"),
-            nullptr, QFileDialog::DontUseNativeDialog
-    ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
-
-    auto progDialog = QProgressDialog(mWidget);
     progDialog.setRange(0, ls.count() - 1);
     progDialog.setVisible(true);
     progDialog.setModal(false);
@@ -2803,6 +2716,7 @@ void MainWindow::addModels() {
         if (fileExists(newPath)) {
             std::cout << "file with the same name already exists in folder, didn't transfer... " << std::endl;
             progDialog.setValue(counter);
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
             counter++;
             continue;
         }
@@ -2842,6 +2756,21 @@ void MainWindow::addModels() {
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
         counter++;
     }
+}
+
+void MainWindow::addModels() {
+
+    //QString fileName = QFileDialog::getOpenFileName(
+    QStringList ls = QFileDialog::getOpenFileNames(
+            mWidget,
+            tr("Select Model"), nullptr,
+            tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff *.anchors *.onnx *.fpl"),
+            //tr("Model Configuration Files (*.txt)"),
+            nullptr, QFileDialog::DontUseNativeDialog
+    ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
+
+    // actually add models
+    addModelsDrag(ls);
 }
 
 float MainWindow::getMagnificationLevel() {
