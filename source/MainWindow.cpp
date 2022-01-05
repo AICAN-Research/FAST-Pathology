@@ -3284,9 +3284,9 @@ void MainWindow::runPipeline_wrapper(std::string path) {
             runPipeline(path, currWSI, counter, curr_runForProject);
 
             // @TODO: Have to add signal/slot solution for this, in order to be able to update progress dialog
-            //progDialog.setValue(counter);
-            //counter++;
-            //QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+            progDialog.setValue(counter);
+            counter++;
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
         }
         //});
         //inferenceThread.detach();
@@ -3776,6 +3776,7 @@ void MainWindow::pixelClassifier_wrapper(std::string someModelName) {
         //std::atomic_bool stopped(false);
         //std::thread inferenceThread([&, someModelName, modelMetadata]() {
         pixelClassifier(someModelName, modelMetadata);
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
         //});
         //inferenceThread.detach();
     } else {
