@@ -12,11 +12,7 @@ loc = "./results-pipeline-runtime.csv"
 df = pd.read_csv(loc, sep=";", header=0)
 
 nb_iters = 10
-
-# engines = np.unique(df["Engine"])
 IEs = ["OpenVINO", "TensorRT"]
-
-
 
 ret = []
 for i in range(2):
@@ -26,5 +22,3 @@ for i in range(2):
     print("-")
     print(np.mean(tmp, axis=0) / (10**9), np.std(tmp, axis=0) / (10**9))
     print()
-
-#print(df)

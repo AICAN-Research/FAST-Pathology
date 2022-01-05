@@ -169,6 +169,9 @@ class MainWindow : public Window {
          * import the WSIs and test the solutions on the data.
          */
         void downloadAndAddTestData();
+        /**
+         * DEPRECATED - Is kept as we will use parts of the implementation when OpenSSL is bundled with FAST/FP
+         */
         void downloadAndAddTestData_old();
         /**
          * Gets the magnification level of the current WSI.
