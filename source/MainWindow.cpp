@@ -2689,7 +2689,7 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
 
     // filter non-txt files
     QStringList txtFiles;
-    for (QString& fileName : fileNames) {
+    for (const QString& fileName : fileNames) {
         if (fileName.endsWith(".txt")) {
             txtFiles.append(fileName);
         }
@@ -2697,7 +2697,7 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
 
     int counter = 0;
     // now iterate across all selected txt files, and add selected files and corresponding ones to Models/
-    for (QString& fileName : txtFiles) {
+    for (const QString& fileName : txtFiles) {
 
         if (fileName == "")
             return;
@@ -2723,7 +2723,7 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
 
         // iterate across all files that start with the same filename (except format, .txt), and add them if new
         std::string fileNameWithoutExtension = splitCustom(fileName.toStdString(), ".txt")[0];
-        for (QString& currFile : fileNames) {
+        for (const QString& currFile : fileNames) {
             std::string currFileNameWithoutExtension = splitCustom(currFile.toStdString(), ".")[0];
             if (currFile.startsWith(QString::fromStdString(fileNameWithoutExtension))) {
 
@@ -2770,7 +2770,7 @@ void MainWindow::addModels() {
     ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
 
     // actually add models
-    addModelsDrag(ls);
+    addModelsDrag(*ls);
 }
 
 float MainWindow::getMagnificationLevel() {
