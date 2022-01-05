@@ -2808,14 +2808,14 @@ void MainWindow::addModels() {
         }
 
         // iterate across all files that start with the same filename (except format, .txt), and add them if new
-        std::string fileNameWithoutExtension = fileName.toStdString().split(".txt")[0];
+        std::string fileNameWithoutExtension = splitCustom(fileName.toStdString(), ".txt")[0];
         for (QString& currFile : ls) {
-            std::string currFileNameWithoutExtension = currFile.toStdString().split(".txt")[0];
-            if (currFileNameWithoutExtension == fileNameWithoutExtension) {
+            std::string currFileNameWithoutExtension = splitCustom(currFile.toStdString(), ".")[0];
+            if (currFile.startsWith(QString::fromStdString(fileNameWithoutExtension))) {
 
                 // if file does not exist, add it
                 if (!fileExists(newPath)) {
-                    QFile::copy(currFile, QString::fromStdString(cwd + "data/Models/" + currFile.split("/").back()));
+                    QFile::copy(currFile, QString::fromStdString(cwd + "data/Models/" + splitCustom(currFile.toStdString(), "/").back()));
                 }
             }
         }
