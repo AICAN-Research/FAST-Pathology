@@ -248,6 +248,123 @@ void MainWindow::helpUrl() {
 }
 
 void MainWindow::downloadAndAddTestData() {
+    auto mBox = new QMessageBox(mWidget);
+    mBox->setIcon(QMessageBox::Warning);
+    mBox->setText("This will download the test data, add the models, and open two WSIs.");
+    mBox->setInformativeText("Are you sure you want to continue?");
+    mBox->setDefaultButton(QMessageBox::Yes);
+    mBox->setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+    int ret = mBox->exec();
+
+    switch (ret) {
+    case QMessageBox::Yes:
+        break;
+    case QMessageBox::No:
+        return;
+    case QMessageBox::Cancel:
+        return;
+    default:
+        break;
+    }
+
+    // progress bar
+    auto dialogLayout = new QVBoxLayout(mWidget);
+
+    auto headerLabel = new QLabel(mWidget);
+    headerLabel->setText("Downloading test data...");
+
+    auto someTextDisplay = new QPlainTextEdit(mWidget);
+    someTextDisplay->setReadOnly("true");
+    someTextDisplay->setMinimumWidth(600);
+
+    dialogLayout->addWidget(headerLabel);
+    dialogLayout->addWidget(someTextDisplay);
+
+    auto someDialog = new QDialog(mWidget);
+    someDialog->setStyleSheet(headerLabel->styleSheet());
+    someDialog->setLayout(dialogLayout);
+    Qt::WindowFlags flags = someDialog->windowFlags();
+    someDialog->setWindowFlags(flags | Qt::Tool);
+    someDialog->show();
+
+    QUrl url{ "https://folk.ntnu.no/andpeder/FastPathology/test_data.zip" };
+
+    QString downloadsFolder = QDir::homePath() + "/fastpathology/data";
+
+    QProcess process;
+    process.setProcessChannelMode(QProcess::MergedChannels);
+
+    auto currKernel = QSysInfo::kernelType();
+    if ((currKernel == "linux") || (currKernel == "darwin")) {
+        auto tmp = "cd " + downloadsFolder + " && curl -o test_data.zip " + "https://folk.ntnu.no/andpeder/FastPathology/test_data.zip && unzip -y test_data.zip";
+        process.start("/bin/sh", QStringList() << "-c" << tmp);
+    }
+    else if ((currKernel == "winnt") || (currKernel == "wince")) {
+        auto tmp = "cd " + downloadsFolder + " && curl -o test_data.zip " + "https://folk.ntnu.no/andpeder/FastPathology/test_data.zip && tar -xf test_data.zip";
+        process.start("C:/windows/system32/cmd.exe", QStringList() << "/C" << tmp);
+    }
+    else {
+        reportInfo() << "Current kernel is not supported: " << currKernel.toStdString() << reportEnd();
+        return;
+    }
+
+    // Give the child process some time to start.
+    process.waitForStarted();
+    do {
+        someTextDisplay->moveCursor(QTextCursor::End);
+        someTextDisplay->insertPlainText(process.readAllStandardOutput());
+        someTextDisplay->moveCursor(QTextCursor::End);
+        QApplication::processEvents();
+
+        //system("PAUSE");
+    } while (!process.waitForFinished(100)); // Wait 100 ms and keep looping if not finished.
+
+    // when finished, close dialog
+    someDialog->close();
+    process.close();
+
+    // OPTIONAL: Add Models to test if inference is working
+    QList<QString> fileNames;
+    QDirIterator it2(downloadsFolder + "/test_data/Models/", QDir::Files);
+    while (it2.hasNext()) {
+        auto tmp = it2.next();
+        fileNames.push_back(tmp);
+    }
+    addModelsDrag(fileNames);
+
+    auto mBox2 = new QMessageBox(mWidget);
+    mBox2->setIcon(QMessageBox::Warning);
+    mBox2->setText("Download is finished.");
+    mBox2->setInformativeText("Do you wish to open the test WSIs?");
+    mBox2->setDefaultButton(QMessageBox::Yes);
+    mBox2->setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+    int ret2 = mBox2->exec();
+
+    switch (ret2) {
+    case QMessageBox::Yes:
+        // toggle and update text on button to show current mode
+        break;
+    case QMessageBox::No:
+        // if "No", do nothing (also default)
+        return;
+    case QMessageBox::Cancel:
+        // if "Cancel", do nothing
+        return;
+    default:
+        break;
+    }
+
+    // OPTIONAL: Add WSIs to project for visualization
+    fileNames.clear();
+    QDirIterator it(downloadsFolder + "/test_data/WSI/", QDir::Files);
+    while (it.hasNext()) {
+        auto tmp = it.next();
+        fileNames.push_back(tmp);
+    }
+    selectFileDrag(fileNames);
+}
+
+void MainWindow::downloadAndAddTestData_old() {
 
     auto mBox = new QMessageBox(mWidget);
     mBox->setIcon(QMessageBox::Warning);
@@ -276,22 +393,176 @@ void MainWindow::downloadAndAddTestData() {
     progDialog->setModal(false);
     progDialog->setLabelText("Downloading test data...");
     progDialog->move(mWidget->width() - progDialog->width() * 1.1, progDialog->height() * 0.1);
-    progDialog->show();
+    //progDialog->show();
 
-    QUrl url{"http://folk.ntnu.no/andpeder/FastPathology/test_data.zip"};
+    // old solution that worked! Does it still?
+    QUrl url{ "https://folk.ntnu.no/andpeder/FastPathology/test_data.zip" };
+    //QUrl url{ "http://upload.wikimedia.org/wikipedia/en/0/02/Homer_Simpson_2006.png" };
 
-    QNetworkAccessManager* m_NetworkMngr = new QNetworkAccessManager(this);
-    QNetworkReply *reply = m_NetworkMngr->get(QNetworkRequest(QUrl(url)));
-    QEventLoop loop;
+    QNetworkAccessManager m_NetworkMngr;
+    //QNetworkAccessManager* m_NetworkMngr = new QNetworkAccessManager(this);
+    //QObject::connect(m_NetworkMngr, &QNetworkAccessManager::finished, [=]() {  //this, &MyClass::replyFinished);
+    //    std::cout << "QNetworkAccessManager finished!" << std::endl;
+    //});
 
+    QNetworkRequest request;
+    //request.setHeader(QNetworkRequest::UserAgentHeader, QVariant(QString("EdAssist-Qt")));
+    request.setUrl(url);
+    //request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, true);
+    //request->NoLessSafeRedirectPolicy();
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, 1);
+
+    QNetworkReply* reply = m_NetworkMngr.get(request);  //get(QNetworkRequest(QUrl(url)));
+    //QEventLoop loop;
+
+    //reply->waitForReadyRead(true);
+
+    //QEventLoop loop;
+
+    //QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+
+    //connect(m_NetworkMngr, &QNetworkAccessManager::finished, this, &MainWindow::handleGetReply);
+
+    // before reply, we need download to start -> perhaps we need to request the download first?
+
+    // init writer
+    QUrl aUrl(url);
+    QFileInfo fileInfo = aUrl.path();
+    QString downloadsFolder = QDir::homePath() + "/fastpathology/data";
+    QFile file(downloadsFolder + "/" + fileInfo.fileName());
+    file.open(QIODevice::WriteOnly);
+
+    QObject::connect(reply, &QNetworkReply::metaDataChanged, [=]() {
+        qDebug() << "Content Length: " << reply->header(QNetworkRequest::ContentLengthHeader).toString();
+    });
+
+    QObject::connect(reply, &QNetworkReply::finished, [&]() {
+        qDebug() << "finished!";
+        if (reply->error() != QNetworkReply::NoError)
+            qDebug() << reply->errorString();
+
+        // @TODO: https://forum.qt.io/topic/105660/error-protocol-https-is-unknown
+        //  downloading from HTTPs doesn't work as it requires OpenSSL, which is not bundled with FAST nor FastPathology. Will be done in the future...
+        if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 307 || reply->rawHeaderList().contains("Location"))
+        {
+            QNetworkRequest req(reply->header(QNetworkRequest::LocationHeader).toString());
+            //this->get(req);
+            reply = m_NetworkMngr.get(request);
+            return;
+        }
+         
+        file.close();
+        reply->deleteLater();
+    });
+
+    QObject::connect(reply, &QNetworkReply::downloadProgress, [&](qint64 ist, qint64 max_) { //[=](qint64 ist, qint64 max) {
+        std::cout << ist << " | " << max_ << std::endl;
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+        progDialog->setRange(0, max_);
+        progDialog->setValue(ist);
+        //if (max < 0) hideProgress();
+    });
+
+    //QObject::connect(reply, SIGNAL(finished()), this, SLOT(finishDownload()));
+    QObject::connect(reply, &QNetworkReply::readyRead, [&]() {
+
+        std::cout << "ready read event happened!" << std::endl;
+        QByteArray ba = reply->readAll();
+        file.write(ba);
+
+        // delete reply?
+        //reply->deleteLater();
+
+        std::cout << "actually finished!" << std::endl;
+        qDebug() << "read " << ba.size() << " msecs)";
+    });
+
+    progDialog->exec();
+
+    //QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+
+    //QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+
+    //loop.exec();
+
+    /*
+    while (!reply->isFinished()) {
+        std::cout << "working..." << std::endl;
+        qApp->processEvents();
+    };
+     */
+
+    //QByteArray data = reply->readAll();
+    //reply->abort();
+
+    //progDialog->close();
+
+    //std::cout << "finished!" << std::endl;
+    //QByteArray data = reply.readAll(); // Everything already downloaded, even if files is several GB in size
+
+    /*
     QObject::connect(reply, &QNetworkReply::downloadProgress, [=](qint64 ist, qint64 max_) { //[=](qint64 ist, qint64 max) {
         progDialog->setRange(0, max_);
         progDialog->setValue(ist);
         //if (max < 0) hideProgress();
     });
+     */
+    //QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+
+    //loop.exec();
+
+
+    /*
+    //QUrl url{"http://folk.ntnu.no/andpeder/FastPathology/test_data.zip"};
+    //QString url{ "https://upload.wikimedia.org/wikipedia/en/0/02/Homer_Simpson_2006.png" };
+    //QString url{ "https://github.com/qupath/qupath/releases/download/v0.3.1/QuPath-0.3.1-Windows.msi" };
+
+
+    //auto loop = new QEventLoop;
+    QEventLoop loop;
+
+    auto m_NetworkMngr = new QNetworkAccessManager;
+    m_NetworkMngr->setNetworkAccessible(QNetworkAccessManager::Accessible);
+
+    auto request = new QNetworkRequest; //(QUrl("http://github.com/qupath/qupath/releases/download/v0.3.1/QuPath-0.3.1-Windows.msi"));
+    request->setAttribute(QNetworkRequest::FollowRedirectsAttribute, 21);
+    request->setUrl(QUrl("https://github.com/qupath/qupath/releases/download/v0.3.1/QuPath-0.3.1-Windows.msi"));
+
+    auto reply = m_NetworkMngr->get(*request);
+
     QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
 
-    loop.exec();
+    //QObject::connect(reply, &QNetworkReply::metaDataChanged, [=]() {
+    //    qDebug() << "Content Length: " << reply->header(QNetworkRequest::ContentLengthHeader).toString();
+    //});
+
+    auto max_val = reply->header(QNetworkRequest::ContentLengthHeader).toInt();
+
+    QObject::connect(reply, &QNetworkReply::downloadProgress, [=](qint64 ist, qint64 max_) { //[=](qint64 ist, qint64 max) {
+        std::cout << "download progress: " << ist << " | " << max_ << " | " << reply->header(QNetworkRequest::ContentLengthHeader).toInt() << std::endl;
+        progDialog->setRange(0, max_);
+        progDialog->setValue(ist);
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+        //if (max < 0) hideProgress();
+    });
+     */
+
+    /*
+    auto downloader = new FileDownloader(url, this);
+
+    connect(downloader, &FileDownloader::downloaded, [=]() {
+        std::cout << "\nFINISHED! " << std::endl;
+    });
+     */
+
+    //QObject::connect(reply, SIGNAL(finished()), &loop, SLOT(quit()));
+
+    //loop.exec();
+
+    //QString content = reply->readAll();
+
+    /*
+    //QUrl aUrl("https://github.com/qupath/qupath/releases/download/v0.3.1/QuPath-0.3.1-Windows.msi");
     QUrl aUrl(url);
     QFileInfo fileInfo = aUrl.path();
 
@@ -301,7 +572,18 @@ void MainWindow::downloadAndAddTestData() {
     file.write(reply->readAll());
     file.close();
 
-    std::cout << "input path | destination zip: " << downloadsFolder.toStdString() + "/" + fileInfo.fileName().toStdString() + " | " + downloadsFolder.toStdString() << std::endl;
+    // delete reply?
+    //delete reply;
+    reply->deleteLater();
+     */
+
+    //std::cout << "input path | destination zip: " << downloadsFolder.toStdString() + "/" + fileInfo.fileName().toStdString() + " | " + downloadsFolder.toStdString() << std::endl;
+
+    //QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+    //loop.exec();
+
+    //QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+    /*
 
     // unzip TODO: Is there something wrong with the include/import of this function? Might be a problem later on.
     extractZipFile((downloadsFolder + "/" + fileInfo.fileName()).toStdString(), downloadsFolder.toStdString());
@@ -345,6 +627,7 @@ void MainWindow::downloadAndAddTestData() {
         fileNames.push_back(tmp);
     }
     selectFileDrag(fileNames);
+     */
 }
 
 void MainWindow::aboutProgram() {

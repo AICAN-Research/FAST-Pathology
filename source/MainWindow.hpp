@@ -169,6 +169,7 @@ class MainWindow : public Window {
          * import the WSIs and test the solutions on the data.
          */
         void downloadAndAddTestData();
+        void downloadAndAddTestData_old();
         /**
          * Gets the magnification level of the current WSI.
          * @return
@@ -545,6 +546,9 @@ class MainWindow : public Window {
         void currentPipelineFinished();
 
     private slots:
+        //void downloadProgress(qint64 ist, qint64 max_);
+        //void downloadFinished();
+        //void downloadReadyRead();
         void updateChannelValue(int index);
         void _nextPipeline();
     };
