@@ -2677,7 +2677,7 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
     QDir().mkpath(QDir::homePath() + "fastpathology/data/Models");
 
     auto progDialog = QProgressDialog(mWidget);
-    progDialog.setRange(0, ls.count() - 1);
+    progDialog.setRange(0, fileNames.count() - 1);
     progDialog.setVisible(true);
     progDialog.setModal(false);
     progDialog.setLabelText("Adding models...");
@@ -2689,7 +2689,7 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
 
     // filter non-txt files
     QStringList txtFiles;
-    for (QString& fileName : ls) {
+    for (QString& fileName : fileNames) {
         if (fileName.endsWith(".txt")) {
             txtFiles.append(fileName);
         }
@@ -2723,7 +2723,7 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
 
         // iterate across all files that start with the same filename (except format, .txt), and add them if new
         std::string fileNameWithoutExtension = splitCustom(fileName.toStdString(), ".txt")[0];
-        for (QString& currFile : ls) {
+        for (QString& currFile : fileNames) {
             std::string currFileNameWithoutExtension = splitCustom(currFile.toStdString(), ".")[0];
             if (currFile.startsWith(QString::fromStdString(fileNameWithoutExtension))) {
 
