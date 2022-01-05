@@ -3277,19 +3277,19 @@ void MainWindow::runPipeline_wrapper(std::string path) {
     // @TODO: Hmm, signal/slots solution here maybe? Might not be so easy...
     if (curr_runForProject) {
         // always run pipeline in background thread
-        std::atomic_bool stopped(false);
-        std::thread inferenceThread([&, path, currentWSIs, curr_runForProject]() {
-            auto counter = 0;
-            for (const auto& currWSI : currentWSIs) {
-                runPipeline(path, currWSI, counter, curr_runForProject);
+        //std::atomic_bool stopped(false);
+        //std::thread inferenceThread([&, path, currentWSIs, curr_runForProject]() {
+        auto counter = 0;
+        for (const auto& currWSI : currentWSIs) {
+            runPipeline(path, currWSI, counter, curr_runForProject);
 
-                // @TODO: Have to add signal/slot solution for this, in order to be able to update progress dialog
-                //progDialog.setValue(counter);
-                //counter++;
-                //QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-            }
-        });
-        inferenceThread.detach();
+            // @TODO: Have to add signal/slot solution for this, in order to be able to update progress dialog
+            //progDialog.setValue(counter);
+            //counter++;
+            //QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+        }
+        //});
+        //inferenceThread.detach();
     }
     else {
         auto counter = 0;
@@ -3327,7 +3327,8 @@ void MainWindow::runPipeline(std::string path, std::string currWSI, int counter,
     // parse fpl-file, and run pipeline with corresponding input arguments
     auto pipeline = Pipeline(path, arguments);
     if (RFP_flag) {
-        pipeline.parse({}, {}, false);
+        //pipeline.parse({}, {}, false);  // @FIXME: This produces off-by-one issue for both x and y axes
+        pipeline.parse({}, {}, true);  // this works fine for whatever reason. Strange...
     }
     else {
         pipeline.parse();
@@ -3382,7 +3383,7 @@ void MainWindow::runPipeline(std::string path, std::string currWSI, int counter,
 
     // update progress bar
     //progDialog.setValue(counter);  // cannot update this in another thread -> should add some signal/slot stuff for this
-    counter++;
+    //counter++;
 
     // to render straight away (avoid waiting on all WSIs to be handled before rendering)
     QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
