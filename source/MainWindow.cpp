@@ -2770,7 +2770,7 @@ void MainWindow::addModels() {
     ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
 
     // actually add models
-    addModelsDrag(*ls);
+    addModelsDrag(ls);
 }
 
 float MainWindow::getMagnificationLevel() {
