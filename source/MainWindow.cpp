@@ -2794,12 +2794,12 @@ void MainWindow::addModels() {
         std::string newLocation = cwd + "data/Models/";
 
         std::vector<string> names = splitCustom(someFile, ".");
-        string fileNameNoFormat = names[0];
-        string formatName = names[1];
+        std::string fileNameNoFormat = names[0];
+        std::string formatName = names[1];
 
         // copy selected file to Models folder
         // check if file already exists in new folder, if yes, print warning, and stop
-        string newPath = cwd + "data/Models/" + someFile;
+        std::string newPath = cwd + "data/Models/" + someFile;
         if (fileExists(newPath)) {
             std::cout << "file with the same name already exists in folder, didn't transfer... " << std::endl;
             progDialog.setValue(counter);
@@ -2808,15 +2808,14 @@ void MainWindow::addModels() {
         }
 
         // iterate across all files that start with the same filename (except format, .txt), and add them if new
-        std::string fileNames = fileName.split(".txt");
-        std::string fileNameWithoutExtension = fileNames[0];
+        std::string fileNameWithoutExtension = fileName.toStdString().split(".txt")[0];
         for (QString& currFile : ls) {
-            std::string currFileNameWithoutExtension = currFile.split(".txt")[0];
+            std::string currFileNameWithoutExtension = currFile.toStdString().split(".txt")[0];
             if (currFileNameWithoutExtension == fileNameWithoutExtension) {
 
                 // if file does not exist, add it
                 if (!fileExists(newPath)) {
-                    QFile::copy(currFile, cwd + "data/Models/" + currFile.split("/").back());
+                    QFile::copy(currFile, QString::fromStdString(cwd + "data/Models/" + currFile.split("/").back()));
                 }
             }
         }
