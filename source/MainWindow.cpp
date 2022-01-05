@@ -2726,7 +2726,6 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
         for (const QString& currFile : fileNames) {
             std::string currFileNameWithoutExtension = splitCustom(currFile.toStdString(), ".")[0];
             if (currFile.startsWith(QString::fromStdString(fileNameWithoutExtension))) {
-
                 // if file does not exist, add it
                 if (!fileExists(newPath)) {
                     QFile::copy(currFile, QString::fromStdString(cwd + "data/Models/" + splitCustom(currFile.toStdString(), "/").back()));
