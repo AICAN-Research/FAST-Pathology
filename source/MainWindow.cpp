@@ -1349,7 +1349,7 @@ bool MainWindow::saveScript() {
 bool MainWindow::saveAsScript() {
     QFileDialog dialog(scriptEditorWidget);
     //dialog.DontUseNativeDialog;
-    dialog.setOption(QFileDialog::DontUseNativeDialog);
+    //dialog.setOption(QFileDialog::DontUseNativeDialog);
     dialog.setWindowModality(Qt::WindowModal);
     dialog.setAcceptMode(QFileDialog::AcceptSave);
     if (dialog.exec() != QDialog::Accepted)
@@ -1414,7 +1414,8 @@ void MainWindow::openScript() {
         auto fileName = QFileDialog::getOpenFileName(
                 mWidget,
                 tr("Open File"), nullptr, tr("WSI Files (*.fpl *.txt)"),
-                nullptr, QFileDialog::DontUseNativeDialog
+                nullptr
+                //, QFileDialog::DontUseNativeDialog
         );
         if (!fileName.isEmpty())
             loadFileScript(fileName);
@@ -1756,7 +1757,8 @@ void MainWindow::selectFile() {
     auto fileNames = QFileDialog::getOpenFileNames(
         mWidget,
         tr("Select File(s)"), nullptr, tr("WSI Files (*.tiff *.tif *.svs *.ndpi *.bif *vms)"),  //*.zvi *.scn)"),
-        nullptr, QFileDialog::DontUseNativeDialog
+        nullptr
+        //, QFileDialog::DontUseNativeDialog  // NOTE TO SELF: seems to have issue NOT using this before, but I can now safely remove it (or so it seems) - I deally I should not use anyways...
     );
     
     // return if the file dialog was cancelled without any files being selected
@@ -2136,9 +2138,8 @@ void MainWindow::createProject() {
     QFileDialog dialog(mWidget);
     dialog.setFileMode(QFileDialog::AnyFile);
 
-    projectFolderName = dialog.getExistingDirectory(
-            mWidget, tr("Set Project Directory"),
-            QCoreApplication::applicationDirPath(), QFileDialog::DontUseNativeDialog);
+    projectFolderName = dialog.getExistingDirectory(mWidget, tr("Set Project Directory"), QCoreApplication::applicationDirPath());
+        //, QFileDialog::DontUseNativeDialog);
 
     std::cout << "Project dir: " << projectFolderName.toStdString() << std::endl;
 
@@ -2226,7 +2227,8 @@ void MainWindow::openProject() {
             mWidget,
             tr("Select Project File"), nullptr,
             tr("Project (*project.txt)"),
-            nullptr, QFileDialog::DontUseNativeDialog
+            nullptr
+            //, QFileDialog::DontUseNativeDialog
     );
 
     std::cout << projectPath.toStdString() << std::endl;
@@ -2639,7 +2641,8 @@ void MainWindow::addPipelines() {
             mWidget,
             tr("Select Pipeline"), nullptr,
             tr("Pipeline Files (*.fpl)"),
-            nullptr, QFileDialog::DontUseNativeDialog
+            nullptr
+            //, QFileDialog::DontUseNativeDialog
     );
 
     // now iterate over all selected files and add selected files and corresponding ones to Pipelines/
@@ -2759,7 +2762,7 @@ void MainWindow::addModels() {
             mWidget,
             tr("Select Model"), nullptr,
             tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff *.anchors *.onnx *.fpl"),
-            nullptr, QFileDialog::DontUseNativeDialog
+            nullptr
     ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
 
     auto progDialog = QProgressDialog(mWidget);
