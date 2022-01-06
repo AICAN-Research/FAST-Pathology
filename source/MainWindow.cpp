@@ -2697,54 +2697,6 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
             txtFiles.append(fileName);
         }
     }
-<<<<<<< HEAD
-}
-
-void MainWindow::addModels() {
-
-    //QString fileName = QFileDialog::getOpenFileName(
-    QStringList ls = QFileDialog::getOpenFileNames(
-            mWidget,
-            tr("Select Model"), nullptr,
-            tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff *.anchors *.onnx *.fpl"),
-            nullptr
-    ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
-
-    auto progDialog = QProgressDialog(mWidget);
-    progDialog.setRange(0, ls.count() - 1);
-    progDialog.setVisible(true);
-    progDialog.setModal(false);
-    progDialog.setLabelText("Adding models...");
-    QRect screenrect = mWidget->screen()[0].geometry();
-    progDialog.move(mWidget->width() - progDialog.width() / 2, -mWidget->width() / 2 - progDialog.width() / 2);
-    progDialog.show();
-
-    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-||||||| 4f82bd2
-}
-
-void MainWindow::addModels() {
-
-    //QString fileName = QFileDialog::getOpenFileName(
-    QStringList ls = QFileDialog::getOpenFileNames(
-            mWidget,
-            tr("Select Model"), nullptr,
-            tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff *.anchors *.onnx *.fpl"),
-            nullptr, QFileDialog::DontUseNativeDialog
-    ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
-
-    auto progDialog = QProgressDialog(mWidget);
-    progDialog.setRange(0, ls.count() - 1);
-    progDialog.setVisible(true);
-    progDialog.setModal(false);
-    progDialog.setLabelText("Adding models...");
-    QRect screenrect = mWidget->screen()[0].geometry();
-    progDialog.move(mWidget->width() - progDialog.width() / 2, -mWidget->width() / 2 - progDialog.width() / 2);
-    progDialog.show();
-
-    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-=======
->>>>>>> 66aa73233c2390dc09430d34f6994a0e244fabe0
 
     int counter = 0;
     // now iterate across all selected txt files, and add selected files and corresponding ones to Models/
