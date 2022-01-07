@@ -1756,7 +1756,7 @@ void MainWindow::selectFile() {
     // TODO: Unable to read .zvi and .scn (Zeiss and Leica). I'm wondering if they are stored in some unexpected way (not image pyramids)
     auto fileNames = QFileDialog::getOpenFileNames(
         mWidget,
-        tr("Select File(s)"), nullptr, tr("WSI Files (*.tiff *.tif *.svs *.ndpi *.bif *vms)"),  //*.zvi *.scn)"),
+        tr("Select File(s)"), nullptr, tr("WSI Files (*.tiff *.tif *.svs *.ndpi *.bif *.vms *.mrxs)"),  //*.zvi *.scn)"),
         nullptr
         //, QFileDialog::DontUseNativeDialog  // NOTE TO SELF: seems to have issue NOT using this before, but I can now safely remove it (or so it seems) - I deally I should not use anyways...
     );
@@ -1901,7 +1901,6 @@ void MainWindow::selectFile() {
 }
 
 void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
-
 
     // for a new selection of wsi(s), should reset and update these QWidgets
     pageComboBox->clear();
@@ -2779,6 +2778,8 @@ float MainWindow::getMagnificationLevel() {
 
     float magnification_lvl = 0.0f;
 
+    std::cout << "vendor format: " << wsiFormat << std::endl;
+
     // TODO: Should check which formats are supported by OpenSlide, and do this for all (in a generalized matter...)
     if ((wsiFormat == "generic-tiff") || (wsiFormat == "philips") || (wsiFormat == "ventana")) {
 
@@ -2809,8 +2810,7 @@ float MainWindow::getMagnificationLevel() {
 
     } else if (wsiFormat == "aperio") {
         magnification_lvl = std::stof(metadata["aperio.AppMag"]); //atof(openslide_get_property_value(osr, "aperio.AppMag"));
-    } else if (wsiFormat == "hamamatsu") {
-        std::cout << "Vendor: hamamatsu" << std::endl;
+    } else if ((wsiFormat == "hamamatsu") || (wsiFormat == "mirax")) {
         magnification_lvl = std::stof(metadata["openslide.objective-power"]);
         std::cout << "Magn lvl: " << magnification_lvl << std::endl;
     } else {  //"TODO: Make this more general, test different image formats to see how the magn_lvl metadata vary"
