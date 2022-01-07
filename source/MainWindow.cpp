@@ -2781,7 +2781,7 @@ float MainWindow::getMagnificationLevel() {
     std::cout << "vendor format: " << wsiFormat << std::endl;
 
     // TODO: Should check which formats are supported by OpenSlide, and do this for all (in a generalized matter...)
-    if ((wsiFormat == "generic-tiff") || (wsiFormat == "philips") || (wsiFormat == "ventana")) {
+    if ((wsiFormat == "generic-tiff") || (wsiFormat == "philips") || (wsiFormat == "ventana") || (wsiFormat == "trestle")) {
 
         int level_count = m_image->getNrOfLevels(); //(int)stof(metadata["openslide.level-count"]);
 
@@ -2797,7 +2797,10 @@ float MainWindow::getMagnificationLevel() {
         if (wsiFormat == "generic-tiff") {
             resolution = std::stof(m_image->getMetadata("tiff.XResolution")); //(int)stof(metadata["tiff.XResolution"]);
         } else if ((wsiFormat == "phillips") || (wsiFormat == "ventata")) {
+            std::cout << "mpp-x: " << metadata["mpp-x"] << std::endl;
             resolution = std::stof(metadata["mpp-x"]);
+        } else if (wsiFormat == "trestle") {
+            resolution = std::stof(metadata["openslide.mpp-x"]);
         }
 
         // find closest value => get magnification level
