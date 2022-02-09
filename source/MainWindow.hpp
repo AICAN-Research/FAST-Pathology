@@ -333,7 +333,7 @@ class MainWindow : public Window {
          * @param someModelName
          * @param modelMetadata
          */
-        void pixelClassifier(std::string someModelName, std::map<std::string, std::string> modelMetadata);
+        bool pixelClassifier(std::string someModelName, std::map<std::string, std::string> modelMetadata);
         /**
          * Simple wrapper of the inference method, pixelClassifier. If ran with Projects enabled, it will be ran in a
          * non-blocking background thread and will not render any results. Otherwise the rendered results will be

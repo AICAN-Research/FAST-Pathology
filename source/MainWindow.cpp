@@ -3718,20 +3718,21 @@ void MainWindow::pixelClassifier_wrapper(std::string someModelName) {
     if (m_runForProject) {
         //std::atomic_bool stopped(false);
         //std::thread inferenceThread([&, someModelName, modelMetadata]() {
-        pixelClassifier(someModelName, modelMetadata);
+        auto ret = pixelClassifier(someModelName, modelMetadata);
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
         //});
         //inferenceThread.detach();
     } else {
-        pixelClassifier(someModelName, modelMetadata);
+        auto ret = pixelClassifier(someModelName, modelMetadata);
 
         // now make it possible to edit prediction in the View Widget
         //std::map<std::string, std::string> modelMetadata = getModelMetadata(someModelName);
-        createDynamicViewWidget(modelMetadata["name"], someModelName);
+        if (ret)
+            createDynamicViewWidget(modelMetadata["name"], someModelName);
     }
 }
 
-void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string, std::string> modelMetadata) {
+bool MainWindow::pixelClassifier(std::string someModelName, std::map<std::string, std::string> modelMetadata) {
 
     std::cout << "Final model metadata config WITHIN to pixelClassifier:" << std::endl;
     for (const auto &[k, v] : modelMetadata)
@@ -3742,7 +3743,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
         // if no WSI is currently being rendered,
         if (wsiList.empty()) {
             std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
-            return;
+            return false;
         }
 
         std::cout << "Current model: " << someModelName << std::endl;
@@ -3761,7 +3762,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
         modelNames[someModelName] = someModelName;
 
         if (stopFlag) { // if "Cancel" is selected in advanced mode in parameter selection, don't run analysis
-            return;
+            return false;
         }
 
         auto progDialog = QProgressDialog();
@@ -3836,7 +3837,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                         std::cout << "Automatic chosen patch level for low_res is invalid: "
                             << std::to_string(currLvl)
                             << std::endl;
-                        return;
+                        return false;
                     }
                     auto input = access->getLevelAsImage(currLvl);
 
@@ -3909,6 +3910,12 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
 
                 bool checkFlag = true;
 
+                // if CPU = "1", remove "TensorRT" from available IEs
+                if (std::stoi(modelMetadata["cpu"]) == 1) {
+                    std::cout << "cpu='1' was set, and GPU inference engines ('i.e., TensorRT') were therefore removed..." << std::endl;
+                    IEsList.remove("TensorRT");
+                }
+
                 std::cout << "Current available IEs: " << std::endl;
                 foreach(std::string elem, IEsList) {
                     std::cout << elem << ", " << std::endl;
@@ -3920,7 +3927,8 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                 }
 
                 std::string chosenIE;
-
+                std::string chosenIEname;
+                
                 // /*
                 // Now select best available IE based on which extensions exist for chosen model
                 // TODO: Current optimization profile is: 0. Please ensure there are no enqueued operations pending in this context prior to switching profiles
@@ -3930,34 +3938,39 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                     // @TODO: I don't think this works exactly how I want it to. TensorRT is still find as it is found in the lib/ directory, even though
                     //  it is not installed.
                     std::cout << "TensorRT (using ONNX) selected" << std::endl;
-                    network->setInferenceEngine("TensorRT");
+                    //network->setInferenceEngine("TensorRT");
                     chosenIE = "onnx";
+                    chosenIEname = "TensorRT";
                 }
                 else if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".uff") != acceptedModels.end()) &&
                          (std::find(IEsList.begin(), IEsList.end(), "TensorRT") != IEsList.end())) {
                     std::cout << "TensorRT selected (using UFF)" << std::endl;
-                    network->setInferenceEngine("TensorRT");
+                    //network->setInferenceEngine("TensorRT");
                     chosenIE = "uff";
+                    chosenIEname = "TensorRT";
                 }
                 else if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".onnx") !=
                     acceptedModels.end()) &&
                     (std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end())) {
                     std::cout << "OpenVINO (using ONNX) selected" << std::endl;
-                    network->setInferenceEngine("OpenVINO");
+                    //network->setInferenceEngine("OpenVINO");
                     chosenIE = "onnx";
+                    chosenIEname = "OpenVINO";
                 }
                 else if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") !=
                           acceptedModels.end()) &&
                          (std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end())) {
                     std::cout << "OpenVINO (using IR) selected" << std::endl;
-                    network->setInferenceEngine("OpenVINO");
+                    //network->setInferenceEngine("OpenVINO");
                     chosenIE = "xml";
+                    chosenIEname = "OpenVINO";
                 }
                 else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") !=
                     acceptedModels.end() &&
                     std::find(IEsList.begin(), IEsList.end(), "TensorFlow") != IEsList.end()) {
                     std::cout << "TensorFlow selected" << std::endl;
-                    network->setInferenceEngine("TensorFlow");
+                    //network->setInferenceEngine("TensorFlow");
+                    chosenIEname = "TensorFlow";
                 }
                 /* else {
                     std::cout << "Model does not exist in Models/ folder. Please add it using AddModels(). "
@@ -3970,6 +3983,9 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                 }
                  */
 
+                // now, choose the best optimal IE, if a specific IE has not been chosen
+                //network->setInferenceEngine(chosenIEname);
+
                 if (checkFlag) {
                     std::cout << "Model was found." << std::endl;
 
@@ -3981,6 +3997,7 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                     //  network->setInferenceEngine("OpenVINO");
                     //}
                     if (true) {
+                        /*
                         // If model has CPU flag only, need to check if TensorFlowCPU is available, else run on OpenVINO, else use best available
                         if (std::stoi(modelMetadata["cpu"]) == 1) {
                             if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") !=
@@ -4004,13 +4021,65 @@ void MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                                     << std::endl;
                             }
                         }
+                         */
 
                         // if stated in the model txt file, use the specified inference engine
-                        if (!((modelMetadata.count("IE") == 0) || modelMetadata["IE"] == "none")) {
-                            std::cout << "Preselected IE was used: " << modelMetadata["IE"] << std::endl;
-                            network->setInferenceEngine(modelMetadata["IE"]);
-                            chosenIE = getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat());
+                        //if (!((modelMetadata.count("IE") == 0) || modelMetadata["IE"] == "none")) {
+                        if ((modelMetadata.count("IE") != 0) && (modelMetadata["IE"] != "none")) {
+                            printf("\n%d\n", __LINE__);
+                            //chosenIE = getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat());
+
+                            // but needs to find the correct file extension (based on what is available)
+                            if ((modelMetadata["IE"] == "TensorRT") && ((std::stoi(modelMetadata["cpu"]) != 1))) {
+                                if (std::find(acceptedModels.begin(), acceptedModels.end(), ".onnx") != acceptedModels.end()) {
+                                    chosenIE = "onnx";
+                                }
+                                else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".uff") != acceptedModels.end()) {
+                                    chosenIE = "uff";
+                                }
+                                else {
+                                    std::cout << "No such model format exist for the inference engine (IE) chosen. Please, choose another." << std::endl;
+                                    return false;
+                                }
+                            }
+                            else if (modelMetadata["IE"] == "OpenVINO") {
+                                if (std::find(acceptedModels.begin(), acceptedModels.end(), ".onnx") != acceptedModels.end()) {
+                                    chosenIE = "onnx";
+                                }
+                                else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") != acceptedModels.end()) {
+                                    chosenIE = "xml";
+                                }
+                                else {
+                                    std::cout << "No such model format exist for the inference engine (IE) chosen. Please, choose another." << std::endl;
+                                    return false;
+                                }
+                            }
+                            else if (modelMetadata["IE"] == "TensorFlow") {
+                                if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") != acceptedModels.end()) {
+                                    chosenIE = "pb";
+                                }
+                                else {
+                                    std::cout << "No such model format exist for the inference engine (IE) chosen. Please, choose another." << std::endl;
+                                    return false;
+                                }
+                            }
+                            else {
+                                std::cout << "No such model format exist for the inference engine (IE) chosen. Please, choose another. Chosen IE: " << modelMetadata["IE"] << std::endl;
+                                return false;
+                            }
+                            chosenIEname = modelMetadata["IE"];
+
+                            //std::cout << "Preselected IE was used: " << modelMetadata["IE"] << std::endl;
+                            //network->setInferenceEngine(modelMetadata["IE"]);
                         }
+                        std::cout << "Preselected IE was used: " << modelMetadata["IE"] << std::endl;
+                        std::cout << "chosenIE: " << chosenIE << std::endl;
+                        std::cout << "chosenIEname: " << chosenIEname << std::endl;
+                        std::cout << "IE specified in config file: " << modelMetadata["IE"] << std::endl;
+                        printf("\n%d\n", __LINE__);
+
+                        // finally, set which IE to use
+                        network->setInferenceEngine(chosenIEname);
 
                         const auto engine = network->getInferenceEngine()->getName();
                         // IEs like TF and TensorRT need to be handled differently than IEs like OpenVINO
