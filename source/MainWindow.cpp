@@ -3974,16 +3974,11 @@ bool MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                     // TODO: Need to handle if model is in Models/, but inference engine is not available
                     //Config::getLibraryPath();
 
-                    //}
                     if (true) {
 
                         // if stated in the model txt file, use the specified inference engine
-                        //if (!((modelMetadata.count("IE") == 0) || modelMetadata["IE"] == "none")) {
                         if ((modelMetadata.count("IE") != 0) && (modelMetadata["IE"] != "none")) {
-                            printf("\n%d\n", __LINE__);
-                            //chosenIE = getModelFileExtension(network->getInferenceEngine()->getPreferredModelFormat());
-
-                            // but needs to find the correct file extension (based on what is available)
+                            // needs to find the correct file extension (based on what is available)
                             if ((modelMetadata["IE"] == "TensorRT") && ((std::stoi(modelMetadata["cpu"]) != 1))) {
                                 if (std::find(acceptedModels.begin(), acceptedModels.end(), ".onnx") != acceptedModels.end()) {
                                     chosenIE = "onnx";
@@ -4022,9 +4017,6 @@ bool MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                                 return false;
                             }
                             chosenIEname = modelMetadata["IE"];
-
-                            //std::cout << "Preselected IE was used: " << modelMetadata["IE"] << std::endl;
-                            //network->setInferenceEngine(modelMetadata["IE"]);
                         }
                         std::cout << "Preselected IE was used: " << modelMetadata["IE"] << std::endl;
                         std::cout << "chosenIE: " << chosenIE << std::endl;
