@@ -43,8 +43,8 @@ Very simple demonstrations of the platforms can be found on [Youtube](https://ww
 
 Applications of FastPathology
 -----------------------------------
-* Pettersen et al., Code-free development and deployment of deep segmentation models for digital pathology, Frontiers in Medicine, https://www.frontiersin.org/articles/10.3389/fmed.2021.816281/abstract
-* Pedersen et al., Hybrid guiding: A multi-resolution refinement approach for semantic segmentation of gigapixel histopathological images, preprint arXiv: https://arxiv.org/abs/2112.03455
+* Pettersen et al., Code-free development and deployment of deep segmentation models for digital pathology (2022), Frontiers in Medicine, https://www.frontiersin.org/articles/10.3389/fmed.2021.816281/full
+* Pedersen et al., Hybrid guiding: A multi-resolution refinement approach for semantic segmentation of gigapixel histopathological images (2021), preprint arXiv: https://arxiv.org/abs/2112.03455
 
 Development setup
 -----------------------------------
