@@ -3938,14 +3938,12 @@ bool MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                     // @TODO: I don't think this works exactly how I want it to. TensorRT is still find as it is found in the lib/ directory, even though
                     //  it is not installed.
                     std::cout << "TensorRT (using ONNX) selected" << std::endl;
-                    //network->setInferenceEngine("TensorRT");
                     chosenIE = "onnx";
                     chosenIEname = "TensorRT";
                 }
                 else if ((std::find(acceptedModels.begin(), acceptedModels.end(), ".uff") != acceptedModels.end()) &&
                          (std::find(IEsList.begin(), IEsList.end(), "TensorRT") != IEsList.end())) {
                     std::cout << "TensorRT selected (using UFF)" << std::endl;
-                    //network->setInferenceEngine("TensorRT");
                     chosenIE = "uff";
                     chosenIEname = "TensorRT";
                 }
@@ -3953,7 +3951,6 @@ bool MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                     acceptedModels.end()) &&
                     (std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end())) {
                     std::cout << "OpenVINO (using ONNX) selected" << std::endl;
-                    //network->setInferenceEngine("OpenVINO");
                     chosenIE = "onnx";
                     chosenIEname = "OpenVINO";
                 }
@@ -3961,7 +3958,6 @@ bool MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                           acceptedModels.end()) &&
                          (std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end())) {
                     std::cout << "OpenVINO (using IR) selected" << std::endl;
-                    //network->setInferenceEngine("OpenVINO");
                     chosenIE = "xml";
                     chosenIEname = "OpenVINO";
                 }
@@ -3969,22 +3965,8 @@ bool MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                     acceptedModels.end() &&
                     std::find(IEsList.begin(), IEsList.end(), "TensorFlow") != IEsList.end()) {
                     std::cout << "TensorFlow selected" << std::endl;
-                    //network->setInferenceEngine("TensorFlow");
                     chosenIEname = "TensorFlow";
                 }
-                /* else {
-                    std::cout << "Model does not exist in Models/ folder. Please add it using AddModels(). "
-                                 "It might also be that the model exists, but the Inference Engine does not. "
-                                 "Available IEs are: ";
-                    foreach(std::string elem, IEsList) {
-                        std::cout << elem << ", ";
-                    }
-                    checkFlag = false;
-                }
-                 */
-
-                // now, choose the best optimal IE, if a specific IE has not been chosen
-                //network->setInferenceEngine(chosenIEname);
 
                 if (checkFlag) {
                     std::cout << "Model was found." << std::endl;
@@ -3992,36 +3974,8 @@ bool MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                     // TODO: Need to handle if model is in Models/, but inference engine is not available
                     //Config::getLibraryPath();
 
-
-                    //if ((modelMetadata["problem"] == "segmentation") && (modelMetadata["resolution"] == "high")) {
-                    //  network->setInferenceEngine("OpenVINO");
                     //}
                     if (true) {
-                        /*
-                        // If model has CPU flag only, need to check if TensorFlowCPU is available, else run on OpenVINO, else use best available
-                        if (std::stoi(modelMetadata["cpu"]) == 1) {
-                            if (std::find(acceptedModels.begin(), acceptedModels.end(), ".pb") !=
-                                acceptedModels.end() &&
-                                std::find(IEsList.begin(), IEsList.end(), "TensorFlow") != IEsList.end()) {
-                                std::cout << "GPU is disabled! (with TensorFlow)" << std::endl;
-                                network->setInferenceEngine("TensorFlow");
-                                network->getInferenceEngine()->setDeviceType(InferenceDeviceType::CPU);  // Andre: 0 or 1 for personal Ubuntu Desktop
-                            }
-                            else if (std::find(acceptedModels.begin(), acceptedModels.end(), ".xml") !=
-                                acceptedModels.end() &&
-                                std::find(IEsList.begin(), IEsList.end(), "OpenVINO") != IEsList.end()) {
-                                std::cout << "GPU is disabled! (with OpenVINO)" << std::endl;
-                                network->setInferenceEngine("OpenVINO");
-                                //network->getInferenceEngine()->setDeviceType(InferenceDeviceType::CPU);
-                                network->getInferenceEngine()->setDeviceType(InferenceDeviceType::CPU);
-                            }
-                            else {
-                                std::cout
-                                    << "CPU only was selected, but was not able to find any CPU devices..."
-                                    << std::endl;
-                            }
-                        }
-                         */
 
                         // if stated in the model txt file, use the specified inference engine
                         //if (!((modelMetadata.count("IE") == 0) || modelMetadata["IE"] == "none")) {
