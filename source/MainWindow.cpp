@@ -1756,7 +1756,7 @@ void MainWindow::selectFile() {
     // TODO: Unable to read .zvi and .scn (Zeiss and Leica). I'm wondering if they are stored in some unexpected way (not image pyramids)
     auto fileNames = QFileDialog::getOpenFileNames(
         mWidget,
-        tr("Select File(s)"), nullptr, tr("WSI Files (*.tiff *.tif *.svs *.ndpi *.bif *.vms *.mrxs)"),  //*.zvi *.scn)"),
+        tr("Select File(s)"), nullptr, tr("WSI Files (*.tiff *.tif *.svs *.ndpi *.bif *.vms *.mrxs *.vsi)"),  //*.zvi *.scn)"),
         nullptr
         //, QFileDialog::DontUseNativeDialog  // NOTE TO SELF: seems to have issue NOT using this before, but I can now safely remove it (or so it seems) - I deally I should not use anyways...
     );
@@ -2817,8 +2817,9 @@ float MainWindow::getMagnificationLevel() {
         magnification_lvl = std::stof(metadata["openslide.objective-power"]);
         std::cout << "Magn lvl: " << magnification_lvl << std::endl;
     } else {  //"TODO: Make this more general, test different image formats to see how the magn_lvl metadata vary"
-        std::cout << "WSI format not set, uses default format: " << metadata["aperio.AppMag"] << std::endl;
-        magnification_lvl = std::stof(metadata["aperio.AppMag"]);
+        std::cout << "WSI format not recognized or not defined, assumes WSI has 40x magnification: " << std::endl;
+        //magnification_lvl = std::stof(metadata["aperio.AppMag"]);
+        magnification_lvl = 40.0;
     }
     return magnification_lvl;
 }
