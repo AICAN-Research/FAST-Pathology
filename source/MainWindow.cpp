@@ -710,9 +710,9 @@ void MainWindow::createMenubar() {
     //auto deployMenu = new QMenu();
     auto deployMenu = topFiller->addMenu(tr("&Deploy"));
     //deployMenu->addAction("MTL nuclei seg/detect", this, &MainWindow::MTL_test);
-    deployMenu->addAction("Refinement tumour", this, &MainWindow::Refinement_test);
-    deployMenu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
-    deployMenu->addAction("Deep KMeans MTL", this, &MainWindow::Kmeans_MTL_test);
+    //deployMenu->addAction("Refinement tumour", this, &MainWindow::Refinement_test);
+    //deployMenu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
+    //deployMenu->addAction("Deep KMeans MTL", this, &MainWindow::Kmeans_MTL_test);
     deployMenu->addSeparator();
 
     auto helpMenu = topFiller->addMenu(tr("&Help"));
