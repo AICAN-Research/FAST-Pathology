@@ -28,12 +28,12 @@ jobs:
     - name: Uncompress zip
       run: |
         tar -xzf "./Archive package (zip).zip"
-        tar -xzf ./fast_windows_4.2.1.zip
+        tar -xzf ./fast_windows_4.3.0.zip
       
     - name: Configure CMake
       run: |
         cmake -B ${{github.workspace}}/build `
-            -DFAST_DIR=${{github.workspace}}/fast_windows_4.2.1/fast/cmake `
+            -DFAST_DIR=${{github.workspace}}/fast_windows_4.3.0/fast/cmake `
             -G "Visual Studio 16 2019" `
             -A x64
 

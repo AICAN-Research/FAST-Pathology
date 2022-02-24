@@ -185,7 +185,6 @@ void MainWindow::receiveFileList(const QList<QString> &names) {
 void MainWindow::createOpenGLWindow() {
     // initialize view
     view = createView();
-    view->setSynchronizedRendering(false);
     view->set2DMode();
     view->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
     view->setAutoUpdateCamera(true);
@@ -766,7 +765,6 @@ void MainWindow::reset() {
     // Get old view, and remove it from Widget
     currentView = getView(0);
     currentView->stopPipeline();
-    currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
     currentView->removeAllRenderers();  // VERY IMPORTANT THAT THIS IS DONE AFTER!!!
 
     // update application name to contain current WSI
@@ -1792,7 +1790,6 @@ void MainWindow::selectFile() {
     // Get old view, and remove it from Widget
     currentView = getView(0);
     currentView->stopPipeline();
-    currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
     currentView->removeAllRenderers();  // VERY IMPORTANT THAT THIS IS DONE AFTER!!!
 
     int counter = 0;
@@ -1927,7 +1924,6 @@ void MainWindow::selectFileDrag(const QList<QString> &fileNames) {
     // Get old view, and remove it from Widget
     currentView = getView(0);
     currentView->stopPipeline();
-    currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
     currentView->removeAllRenderers();  // VERY IMPORTANT THAT THIS IS DONE AFTER!!!
 
     QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
@@ -2055,7 +2051,6 @@ void MainWindow::selectFileInProject(int pos) {
     // Get old view, and remove it from Widget
     currentView = getView(0);
     currentView->stopPipeline();
-    currentView->setSynchronizedRendering(false);  // Disable synchronized rendering
     currentView->removeAllRenderers();  // VERY IMPORTANT THAT THIS IS DONE AFTER!!!
 
     // add WSI to project list
@@ -3553,7 +3548,6 @@ void MainWindow::MIL_test() {
     someRenderer2->setInputConnection(stitcher2->getOutputPort());
     //someRenderer2->setMaxOpacity(0.6f);
 
-    //someRenderer2->setSynchronizedRendering(false);
     //someRenderer2->update();
 
     m_rendererTypeList["mil_grade"] = "HeatmapRenderer";
@@ -3679,7 +3673,6 @@ void MainWindow::MTL_test() {
     someRenderer2->setInputConnection(stitcher2->getOutputPort());
     //someRenderer2->setMaxOpacity(0.6f);
 
-    //someRenderer2->setSynchronizedRendering(false);
     //someRenderer2->update();
 
     m_rendererTypeList["nuclei_seg"] = "SegmentationRenderer";
