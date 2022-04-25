@@ -32,9 +32,16 @@ namespace fast{
     {
         // Will have to see how it goes with segfault.
 //        this->_renderers.clear();
-        auto current_path = this->_pipeline_filepath + "/" + this->_name + ".fpl";
-        this->_fast_pipeline.reset(new Pipeline(current_path, this->_parameters));
-        this->_fast_pipeline->parse();
+        try
+        {
+            auto current_path = this->_pipeline_filepath + "/" + this->_name + ".fpl";
+            this->_fast_pipeline.reset(new Pipeline(current_path, this->_parameters));
+            this->_fast_pipeline->parse();
+        }
+        catch (const std::exception& e)
+        {
+            std::cout<<"Sucks."<<std::endl;
+        }
 //        auto pipeline = Pipeline(current_path, this->_parameters);
 //        pipeline.parse();
 

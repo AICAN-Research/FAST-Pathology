@@ -27,15 +27,17 @@ namespace fast
 
         this->_edit_pushbutton = new QPushButton();
 //        auto pixmap = QPixmap(QString::fromStdString(":/data/Icons/cogwheel_process_icon.png"));
-        QPixmap editPix(QString::fromStdString(":/data/Icons/cogwheel.png"));
+        QPixmap editPix(QString::fromStdString(":/data/Icons/cogwheel_process_icon.png"));
         this->_edit_pushbutton->setIcon(QIcon(editPix));
-//        this->_edit_pushbutton->setIconSize(editPix.rect().size());
+        // this->_edit_pushbutton->setIconSize(editPix.rect().size());
+        this->_edit_pushbutton->setIconSize(QSize(40, 40));
         this->_edit_pushbutton->setFixedHeight(50);
         this->_edit_pushbutton->setFixedWidth(50);
         this->_edit_pushbutton->setToolTip(QString::fromStdString("Edit the pipeline..."));
 
         this->_delete_pushbutton = new QPushButton();
         this->_delete_pushbutton->setIcon(QIcon(QString::fromStdString(":/data/Icons/trash_delete_icon.jpeg")));
+        this->_delete_pushbutton->setIconSize(editPix.rect().size());
         this->_delete_pushbutton->setFixedHeight(50);
         this->_delete_pushbutton->setFixedWidth(50);
         this->_delete_pushbutton->setToolTip(QString::fromStdString("Delete the pipeline..."));

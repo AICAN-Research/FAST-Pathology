@@ -28,7 +28,7 @@ namespace fast
             inline std::string getPipelineFilepath()const {return this->_pipeline_filepath;}
             inline std::map<std::string, std::string> getParameters() const{return this->_parameters;}
             inline std::vector<std::shared_ptr<Renderer>> getRenderers() const{return this->_fast_pipeline->getRenderers();}
-            inline std::unordered_map<std::string, std::shared_ptr<ProcessObject>> getProcessObjects() const{return this->_fast_pipeline->getProcessObjects();}
+            inline std::map<std::string, std::shared_ptr<ProcessObject>> getProcessObjects() const{return this->_fast_pipeline->getProcessObjects();}
             std::string getPipelineFullFilename() const;
             void setParameters(std::map<std::string, std::string> parameters);
 

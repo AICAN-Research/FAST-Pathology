@@ -63,7 +63,7 @@ namespace fast{
         auto renderer = ImagePyramidRenderer::New();
         renderer->setSharpening(false); // Parameters for sharpening, coming from where?
         renderer->setInputData(this->_image);
-        renderer->setSynchronizedRendering(false);
+//        renderer->setSynchronizedRendering(false);
         _renderers["WSI"] = renderer;
         this->_renderers_types["WSI"] = "ImagePyramidRenderer";
     }
@@ -73,7 +73,7 @@ namespace fast{
         auto renderer = ImagePyramidRenderer::New();
         renderer->setSharpening(false); // Parameters for sharpening, coming from where?
         renderer->setInputData(this->_image);
-        renderer->setSynchronizedRendering(false);
+//        renderer->setSynchronizedRendering(false);
         this->_renderers["WSI"] = renderer;
         this->_renderers_types["WSI"] = "ImagePyramidRenderer";
     }
