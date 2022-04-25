@@ -3781,9 +3781,16 @@ bool MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                  // based on predicted magnification level of WSI, set magnificiation level for optimal input to model based on predicted resolution of WSI
                 int patch_lvl_model = 0; // defaults to 0
                 if (!modelMetadata["magnification_level"].empty()) {
+                    auto downsample = 0.0f;
+                    if (splitCustom(currWSI, ".")[1] == "vsi") {
+                        downsample = 2.0f;  // if CellSens VSI downsample is assumed to be 2.0.
+                    }
+                    else {
+                        downsample = std::log(std::round(stof(metadata["openslide.level[1].downsample"])));
+                    }
                     patch_lvl_model = (int)(
                         std::log(magn_lvl / (float)std::stoi(modelMetadata["magnification_level"])) /
-                        std::log(std::round(stof(metadata["openslide.level[1].downsample"]))));
+                        downsample);
                 }
                 else {
                     std::cout << "magnification_level was not properly defined in the model config file. Defaults to using image plane 0." << std::endl;
