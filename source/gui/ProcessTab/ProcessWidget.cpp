@@ -11,8 +11,10 @@
 
 namespace fast {
     ProcessWidget::ProcessWidget(QWidget *parent): QWidget(parent){
+        // @TODO. Should retrieve the path from the ProcessManager at the very least.
         this->_cwd = QDir::homePath().toStdString();
         this->_cwd += "/fastpathology/";
+
         this->setupInterface();
         this->setupConnections();
     }

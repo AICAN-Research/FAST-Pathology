@@ -62,6 +62,11 @@ namespace fast {
         this->_advanced_mode = status;
     }
 
+    void ProcessManager::set_computation_thread(std::shared_ptr<ComputationThread> thr)
+    {
+        this->_computation_thread = thr;
+    }
+
     void ProcessManager::identifySystem()
     {
         this->_inference_engines.clear();
@@ -812,7 +817,47 @@ namespace fast {
 
     void ProcessManager::runPipeline(const std::string& pipeline_uid)
     {
-        this->_pipelines[pipeline_uid]->execute();
+//        this->execute_independent();
+        // this->_pipelines[pipeline_uid]->execute();
+//        this->_pipelines[pipeline_uid]->setComputationThread(_computation_thread);
+//        this->_pipelines[pipeline_uid]->execute_independent();
+//        DataManager::GetInstance()->collectResults(this->_pipelines[pipeline_uid]->getProcessObjects());
+    }
+
+    void ProcessManager::execute_independent()
+    {
+        try
+        {
+            auto current_path = "/home/dbouget/fastpathology/data/Pipelines/CD3_UNET_256_exportTIFFwithRendering.fpl";
+            std::map<std::string, std::string> arguments;
+            arguments["filename"] = "/media/dbouget/ihda/Data/DigitalPathology/WSI/Private/11435_CD3.ndpi";
+            arguments["exportPath"] = "/home/dbouget/Desktop/fp-autoexport.tiff";
+            arguments["modelPath"] = "/home/dbouget/fastpathology/data/Models";
+
+            auto pipeline = Pipeline(current_path, arguments);
+            pipeline.parse({}, {}, true);
+
+            auto thread = this->_computation_thread;
+            thread->setPipeline(pipeline);
+
+            bool doneSignaled = false;
+            QObject::connect(thread.get(), &ComputationThread::pipelineFinished, [thread, &doneSignaled]() {
+                // This is running in QThread, not in main thread..
+                doneSignaled = true;
+                std::cout << "DONE" << std::endl;
+                thread->stopWithoutBlocking();
+            });
+
+//            auto t = thread->start();
+//            t->wait(); // Wait until finished
+    //            CHECK(doneSignaled);
+            std::cout<<"Pipeline done signal: "<<doneSignaled<<std::endl;
+        }
+        catch (const std::exception& e)
+        {
+            // @TODO. Should not crash FP but just prompt an error message
+            std::cout<<"Pipeline crashed."<<std::endl;
+        }
     }
 
 } // End of namespace fast

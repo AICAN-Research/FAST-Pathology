@@ -111,6 +111,9 @@ MainWindow::MainWindow() {
 
     // Legacy stuff to remove.
     advancedMode = false;
+//    ProcessManager::GetInstance()->set_computation_thread(mThread);
+//    ProcessManager::GetInstance()->execute_independent();
+//    this->execute_independent();
 }
 
 
@@ -1129,18 +1132,74 @@ void MainWindow::removeRendererFromViewReceived(const std::string& name)
     }
 }
 
+void MainWindow::execute_independent()
+{
+//    this->stopComputationThread();
+//    this->resetDisplay();
+
+    try
+    {
+        auto current_path = "/home/dbouget/fastpathology/data/Pipelines/CD3_UNET_256_exportTIFFwithRendering.fpl";
+        std::map<std::string, std::string> arguments;
+        arguments["filename"] = "/media/dbouget/ihda/Data/DigitalPathology/WSI/Private/11435_CD3.ndpi";
+        arguments["exportPath"] = "/home/dbouget/Desktop/fp-autoexport.tiff";
+        arguments["modelPath"] = "/home/dbouget/fastpathology/data/Models";
+
+        auto pipeline = Pipeline(current_path, arguments);
+        pipeline.parse({}, {}, true);
+
+        auto process_objects = pipeline.getProcessObjects();
+        for (auto&& po :process_objects)
+        {
+            if (po.second->getNrOfOutputPorts() == 0 && std::dynamic_pointer_cast<Renderer>(po.second) == nullptr)
+            {
+                // Process object has no output ports, must add to window to make sure it is updated.
+                reportInfo() << "Process object " << po.first << " had no output ports defined in pipeline, therefore adding to window so it is updated." << reportEnd();
+                addProcessObject(po.second);
+            }
+        }
+
+        auto thread = mThread; //ComputationThread::create();
+        thread->setPipeline(pipeline);
+
+        bool doneSignaled = false;
+        QObject::connect(thread.get(), &ComputationThread::pipelineFinished, [thread, &doneSignaled]() {
+            // This is running in QThread, not in main thread..
+            doneSignaled = true;
+            std::cout << "DONE" << std::endl;
+            thread->stopWithoutBlocking();
+        });
+
+//        auto t = thread->start();
+//        t->wait(); // Wait until finished
+//            CHECK(doneSignaled);
+//        this->startComputationThread();
+
+        std::cout<<"Pipeline done signal: "<<doneSignaled<<std::endl;
+    }
+    catch (const std::exception& e)
+    {
+        // @TODO. Should not crash FP but just prompt an error message
+        std::cout<<"Pipeline crashed."<<std::endl;
+    }
+}
+
 void MainWindow::runPipelineReceived(QString pipeline_uid)
 {
-    auto process_objects = ProcessManager::GetInstance()->get_pipeline(pipeline_uid.toStdString())->getProcessObjects();
-    for (auto&& po :process_objects)
-    {
-        if (po.second->getNrOfOutputPorts() == 0 && std::dynamic_pointer_cast<Renderer>(po.second) == nullptr)
-        {
-            // Process object has no output ports, must add to window to make sure it is updated.
-            reportInfo() << "Process object " << po.first << " had no output ports defined in pipeline, therefore adding to window so it is updated." << reportEnd();
-            addProcessObject(po.second);
-        }
-    }
+    this->execute_independent();
+//    if(false)
+//    {
+//        auto process_objects = ProcessManager::GetInstance()->get_pipeline(pipeline_uid.toStdString())->getProcessObjects();
+//        for (auto&& po :process_objects)
+//        {
+//            if (po.second->getNrOfOutputPorts() == 0 && std::dynamic_pointer_cast<Renderer>(po.second) == nullptr)
+//            {
+//                // Process object has no output ports, must add to window to make sure it is updated.
+//                reportInfo() << "Process object " << po.first << " had no output ports defined in pipeline, therefore adding to window so it is updated." << reportEnd();
+//                addProcessObject(po.second);
+//            }
+//        }
+//    }
 
 //    auto renderers = ProcessManager::GetInstance()->get_pipeline(pipeline_uid.toStdString())->getRenderers();
 //    for (auto&& rend :renderers)

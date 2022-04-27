@@ -13,6 +13,9 @@
 #include <map>
 #include <QImage>
 
+#include <FAST/Data/DataObject.hpp>
+#include <FAST/ProcessObject.hpp>
+
 namespace fast{
     class NeuralNetwork;
     class PatchStitcher;
@@ -70,6 +73,7 @@ namespace fast{
 
             void insert_renderer(std::string renderer_name, std::string renderer_type, std::shared_ptr<Renderer> renderer);
             void remove_renderer(std::string renderer_name);
+            void populate_processing_results(std::map<std::string, std::shared_ptr<ProcessObject>> pipeline_results);
 
         private:
             void compute_magnification_level();
@@ -89,6 +93,7 @@ namespace fast{
             // (only difference being some parameters modified by the user).
             std::map<std::string, std::shared_ptr<Renderer>> _renderers; /* List of loaded renderers associated with the image (e.g., Segmentation/HeatmapRenderer). */
             std::map<std::string, std::string> _renderers_types; /* Type of each renderer. */
+            std::map<std::string, DataObject::pointer> _processing_results;
             QImage _thumbnail; /* Thumbnail for the WSI */
             // @TODO. When the renderers are not in memory the image files are dumped on disk. Should we store here the text file for each pipeline that was used on this image
             // so that reloading the results for viewing is easier to perform.

@@ -14,6 +14,7 @@
 #include <QTemporaryDir>
 #include <QDir>
 #include <QTextStream>
+#include <FAST/ProcessObject.hpp>
 #include "source/logic/Project.h"
 #include "source/utils/utilities.h"
 
@@ -33,7 +34,7 @@ namespace fast {
     class DataManager {
         /**
          * The Singleton's constructor/destructor should always be private to
-         * prevent direct construction/desctruction calls with the `new`/`delete`
+         * prevent direct construction/destruction calls with the `new`/`delete`
          * operator.
          */
         protected:
@@ -78,6 +79,7 @@ namespace fast {
              */
             void doEmpty();
 
+            void collectResults(std::map<std::string, std::shared_ptr<ProcessObject>> pipeline_results);
 
         protected:
             std::string _visible_wsi_uid; /* Unique id_name of the currently rendered (hence visible) WSI. */

@@ -204,4 +204,11 @@ namespace fast{
         }
     }
 
+    void WholeSlideImage::populate_processing_results(std::map<std::string, std::shared_ptr<ProcessObject>> pipeline_results)
+    {
+        for(auto it=pipeline_results.begin(); it!=pipeline_results.end(); it++)
+        {
+            this->_processing_results[it->first] = it->second->getOutputData();
+        }
+    }
 } // End of namespace fast

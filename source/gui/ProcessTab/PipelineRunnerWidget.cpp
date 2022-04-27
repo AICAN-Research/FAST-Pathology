@@ -62,17 +62,14 @@ namespace fast
         std::map<std::string, std::string> arguments;
         arguments["filename"] = DataManager::GetInstance()->get_visible_image()->get_filename();
         arguments["exportPath"] = "/home/dbouget/Desktop/fp-autoexport.tiff";
+        arguments["modelPath"] = ProcessManager::GetInstance()->get_models_filepath();
         ProcessManager::GetInstance()->get_pipeline(this->_pipeline_uid.toStdString())->setParameters(arguments);
         ProcessManager::GetInstance()->runPipeline(this->_pipeline_uid.toStdString());
-        //@TODO.Should be able to parse the Pipeline info to know how many renderers there are, and their types.
-//        auto renderers = ProcessManager::GetInstance()->get_pipeline(pipeline_uid.toStdString())->getRenderers();
-//        for (auto&& rend :renderers)
-//        {
-//            getView(0)->addRenderer(rend);
-//        }
-        DataManager::GetInstance()->get_visible_image()->insert_renderer(this->_pipeline_uid.toStdString(), "SegmentationRenderer", *ProcessManager::GetInstance()->get_pipeline(this->_pipeline_uid.toStdString())->getRenderers().begin());
+
+//        connect(ProcessManager::GetInstance()->get_pipeline(this->_pipeline_uid.toStdString()).get(), &PipelineProcess::currentPipelineFinished, this, &PipelineRunnerWidget::onPipelineFinished);
+//        DataManager::GetInstance()->get_visible_image()->insert_renderer(this->_pipeline_uid.toStdString(), "SegmentationRenderer", *ProcessManager::GetInstance()->get_pipeline(this->_pipeline_uid.toStdString())->getRenderers().begin());
         emit runPipelineEmitted(this->_pipeline_uid);
-        emit addRendererToViewRequested(this->_pipeline_uid.toStdString());
+//        emit addRendererToViewRequested(this->_pipeline_uid.toStdString());
     }
 
     void PipelineRunnerWidget::editPipelineReceived()
@@ -81,4 +78,8 @@ namespace fast
         auto editor = new PipelineScriptEditorWidget(QString::fromStdString(ProcessManager::GetInstance()->get_pipeline(this->_pipeline_uid.toStdString())->getPipelineFullFilename()), this);
     }
 
+    void PipelineRunnerWidget::onPipelineFinished()
+    {
+        std::cout<<"The pipeline is fully finished."<<std::endl;
+    }
 } // End of namespace fast

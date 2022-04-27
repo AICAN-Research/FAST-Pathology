@@ -2,9 +2,9 @@ name: Build macOS
 
 on:
   push:
-    branches: [ master, gui_cleaning ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, gui_cleaning ]
+    branches: [ master ]
 
 jobs:
   build:

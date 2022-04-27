@@ -8,12 +8,13 @@ find_package(FAST REQUIRED)
 include(${FAST_USE_FILE})
 include_directories(${FAST_BINARY_DIR}/../include/QtNetwork)
 set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
+#set(CMAKE_AUTORCC ON)
 
 add_executable(fastpathology
         source/main.cpp
         source/gui/MainWindow.cpp
 		misc/AppIcon.rc
-		misc/qtres.qrc  # TODO: is this needed if qtres.cpp is added?
+		#misc/qtres.qrc  # TODO: is this needed if qtres.cpp is added?
                 misc/qtres.cpp
                 source/utils/utilities.h
                 source/utils/qutilities.h

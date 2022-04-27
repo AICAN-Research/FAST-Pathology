@@ -48,6 +48,7 @@ namespace fast
         private slots:
             void runPipelineReceived();
             void editPipelineReceived();
+            void onPipelineFinished();
 
         private:
             QString _pipeline_uid;

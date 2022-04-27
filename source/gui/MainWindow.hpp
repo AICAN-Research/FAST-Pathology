@@ -1,6 +1,8 @@
 #pragma once
 
 #include <FAST/Visualization/Window.hpp>
+#include <FAST/Pipeline.hpp>
+#include <FAST/Visualization/ComputationThread.hpp>
 #include <QPushButton>
 #include <QMainWindow>
 #include <QDialog>
@@ -276,6 +278,8 @@ class MainWindow : public Window {
          * @return
          */
         std::shared_ptr<Renderer> getRenderer(std::string name);
+
+        void execute_independent();
 
     protected:
         /**

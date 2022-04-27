@@ -187,6 +187,7 @@ namespace fast{
     {
 //        QObject::connect(_project_widget, SIGNAL(&ProjectWidget::newImageDisplay), this, SIGNAL(&MainSidePanelWidget::newImageDisplay));
         QObject::connect(_project_widget, &ProjectWidget::changeWSIDisplayTriggered, this, &MainSidePanelWidget::changeWSIDisplayTriggered);
+        QObject::connect(_project_widget, &ProjectWidget::changeWSIDisplayTriggered, this->_view_widget, &ViewWidget::onChangeWSIDisplay);
         QObject::connect(_project_widget, &ProjectWidget::resetDisplay, this, &MainSidePanelWidget::resetDisplay);
         QObject::connect(this->_process_widget, &ProcessWidget::processTriggered, this->_view_widget, &ViewWidget::processTriggerUpdate);
         QObject::connect(this->_process_widget, &ProcessWidget::addRendererToViewRequested, this, &MainSidePanelWidget::addRendererToViewRequested);

@@ -5,6 +5,7 @@
 #ifndef FASTPATHOLOGY_PROCESSMANAGER_H
 #define FASTPATHOLOGY_PROCESSMANAGER_H
 
+#include <FAST/Visualization/ComputationThread.hpp>
 #include <QDir>
 #include <QTemporaryDir>
 #include <iostream>
@@ -83,6 +84,8 @@ namespace fast {
 
             inline bool get_advanced_mode_status(){return this->_advanced_mode;}
             void set_advanced_mode_status(bool status);
+            void set_computation_thread(std::shared_ptr<ComputationThread> thr);
+            void execute_independent();
 
             void importModel(const std::string& name);
             /**
@@ -123,6 +126,7 @@ namespace fast {
         private:
             static ProcessManager * _pinstance;
             static std::mutex _mutex;
+            std::shared_ptr<ComputationThread> _computation_thread;
             bool _advanced_mode; /* */ //@TODO. With avanced mode, only system specific parameters can be modified. The rest is part of a pipeline and its parameters.'
             std::string _fp_root_filepath; /* @TODO. can it change from a user input?*/
             std::string _models_filepath; /* @TODO. Can we consider models and pipelines to be inside the same root folder on disk? */

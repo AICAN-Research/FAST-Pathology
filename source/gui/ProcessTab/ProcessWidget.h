@@ -40,6 +40,9 @@ namespace fast {
     class Renderer;
     class SegmentationRenderer;
 
+/**
+ * ProcessWidget holds the list of available pipelines, and offer possibilities for editing/adding/removing pipelines.
+ */
 class ProcessWidget: public QWidget {
 Q_OBJECT
 public:
@@ -67,7 +70,9 @@ signals:
     void runPipelineEmitted(QString);
 
 public slots:
+    // Deprecated
     bool segmentTissue();
+    // Deprecated? No need for models anymore, pipelines for everything.
     void addModels();
     void addPipelines();
     /**

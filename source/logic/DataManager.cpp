@@ -58,4 +58,9 @@ namespace fast {
             return NULL;
     }
 
+    void DataManager::collectResults(std::map<std::string, std::shared_ptr<ProcessObject>> pipeline_results)
+    {
+        std::cout<<"Collecting pipeline output in DataManager."<<std::endl;
+        this->_project->getImage(this->_visible_wsi_uid)->populate_processing_results(pipeline_results);
+    }
 } //End of namespace fast

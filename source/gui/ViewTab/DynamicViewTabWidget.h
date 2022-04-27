@@ -28,6 +28,10 @@ namespace fast {
     class BoundingBoxRenderer;
     class ImagePyramidRenderer;
 
+/**
+ * DynamicViewTabWidget represents the widget holding the result of a process (e.g., a segmentation),
+ * providing options for changing its appearance (e.g., opacity, color).
+ */
 class DynamicViewTabWidget: public QWidget {
 Q_OBJECT
 public:

@@ -25,6 +25,7 @@
 #include <QFileDialog>
 #include <QColorDialog>
 #include <QGroupBox>
+#include <QStackedWidget>
 #include <iostream>
 #include <FAST/Visualization/Renderer.hpp>
 #include "source/logic/DataManager.h"
@@ -62,24 +63,25 @@ protected:
     void setupConnections();
 
     /**
-     * @brief createDynamicViewWidget
-     * @param someName
-     * @param modelName
-     */
-    void createDynamicViewWidget(std::string someName, std::string modelName);
-
-    bool hideChannel(const std::string& name);
-    void toggleRenderer(std::string someName);
-    bool opacityRenderer(int value, const std::string& name);
+    * Define the visual style for all elements inside the current global widget.
+    */
+    void setupStylesheets();
 
 private:
     QVBoxLayout* _main_layout; /* Principal layout holder for the current custom QWidget */
-    QStackedLayout* _stacked_layout; /* ? */
-    QWidget* _stacked_widget; /* ? */
-    QComboBox* _page_combobox; /* ? */
-    std::map<std::string, DynamicViewTabWidget*> _dynamic_widget_list; /* */
+    QStackedWidget* _layers_stacked_widget; /* Lower part holding as many stacks as results to display */
+    QComboBox* _page_combobox; /* Combobox to easily move from one result to another and access their options */
+    std::map<std::string, DynamicViewTabWidget*> _dynamic_widget_list; /** Container list for the dynamic widgets,
+     not necessary for now as no extra-operations are needed, and the widgets can be iterated on from the stacked widget */
 
 public slots:
+    /**
+     * Update to the View panel whenever the currently displayed WSI is changed, or changes state (i.e., is untoggled)
+     * from a user click within the Project panel
+     * @param wsi_uid Unique id in the DataManager for the clicked WSI
+     * @param state true if the WSI has been toggled on and false if toggled off
+     */
+    void onChangeWSIDisplay(std::string wsi_uid, bool state);
     void processTriggerUpdate(std::string process_name);
     void deleteViewObjectReceived(std::string uid);
 
