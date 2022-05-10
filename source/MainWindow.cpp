@@ -4142,6 +4142,14 @@ bool MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                             (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
                     }
 
+                    if (modelMetadata["zeromean"].empty()) {
+                        std::cout << "zero_mean not defined. Defaults to using using no zero-mean normalization in preprocessing." << std::endl;
+                    }
+                    else {
+                        auto zero_mean = splitCustom(modelMetadata["zeromean"], ",");
+                        network->setMeanAndStandardDeviation(std::stof(zero_mean[0]), std::stof(zero_mean[1]));  // float mean, float std
+                    }
+
                     // define renderer from metadata
                     if ((modelMetadata["problem"] == "classification") && (modelMetadata["resolution"] == "high")) {
                         auto stitcher = PatchStitcher::New();
@@ -4311,10 +4319,10 @@ bool MainWindow::pixelClassifier(std::string someModelName, std::map<std::string
                         }
                         currNetwork->setAnchors(anchors); // finally set anchors
 
-                        auto scale_factor = splitCustom(modelMetadata["scale_factor"],
-                            "/"); // get scale factor from metadata
-                        currNetwork->setScaleFactor((float)std::stoi(scale_factor[0]) /
-                            (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
+                        auto scale_factor = splitCustom(modelMetadata["scale_factor"], "/"); // get scale factor from metadata
+                        currNetwork->setScaleFactor((float)std::stoi(scale_factor[0]) / (float)std::stoi(scale_factor[1]));   // 1.0f/255.0f
+                        auto zero_mean = splitCustom(modelMetadata["zeromean"], ",");
+                        currNetwork->setMeanAndStandardDeviation(std::stof(zero_mean[0]), std::stof(zero_mean[1]));  // float mean, float std
                         currNetwork->setInferenceEngine(
                             "OpenVINO"); // FIXME: OpenVINO only currently, as I haven't generalized multiple output nodes case
                         currNetwork->load(cwd + "data/Models/" + someModelName + "." + getModelFileExtension(
