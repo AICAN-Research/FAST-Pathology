@@ -102,7 +102,7 @@ namespace fast {
              */
             void pixelClassifier(std::string process_name);
 
-            void runPipeline(const std::string& pipeline_uid);
+            bool runPipeline(const std::string& pipeline_uid);
 
         private:
             /**

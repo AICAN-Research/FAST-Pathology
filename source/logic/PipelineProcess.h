@@ -32,7 +32,7 @@ namespace fast
             std::string getPipelineFullFilename() const;
             void setParameters(std::map<std::string, std::string> parameters);
 
-            void execute();
+            bool execute();
         private:
             std::string _name; /* Unique id for the pipeline. */
             std::string _pipeline_filepath; /* Disk location of the current pipeline. */

@@ -810,9 +810,9 @@ namespace fast {
         }
     }
 
-    void ProcessManager::runPipeline(const std::string& pipeline_uid)
+    bool ProcessManager::runPipeline(const std::string& pipeline_uid)
     {
-        this->_pipelines[pipeline_uid]->execute();
+        return this->_pipelines[pipeline_uid]->execute();
     }
 
 } // End of namespace fast

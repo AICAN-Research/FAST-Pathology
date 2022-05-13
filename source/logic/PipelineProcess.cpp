@@ -6,6 +6,7 @@
 #include <FAST/Visualization/Renderer.hpp>
 #include <FAST/ProcessObject.hpp>
 #include <FAST/Reporter.hpp>
+#include <QMessageBox>
 
 
 namespace fast{
@@ -28,20 +29,27 @@ namespace fast{
         this->_parameters = parameters;
     }
 
-    void PipelineProcess::execute()
+    bool PipelineProcess::execute()
     {
         // Will have to see how it goes with segfault.
 //        this->_renderers.clear();
+        this->_fast_pipeline.reset();
+        std::unique_ptr<Pipeline> pipeline;
         try
         {
             auto current_path = this->_pipeline_filepath + "/" + this->_name + ".fpl";
-            this->_fast_pipeline.reset(new Pipeline(current_path, this->_parameters));
-            this->_fast_pipeline->parse();
+            pipeline.reset(new Pipeline(current_path, this->_parameters));
+            pipeline->parse();
         }
         catch (const std::exception& e)
         {
-            std::cout<<"Sucks."<<std::endl;
+            std::string message = "Failed to parse pipeline file. Error message: " + std::string(e.what());
+            int ret = QMessageBox::critical(nullptr, "FastPathology", QString(message.c_str()));
+            std::cout<<"Parse pipeline failed: " << e.what() << std::endl;
+            return false;
         }
+        this->_fast_pipeline = std::move(pipeline);
+        return true;
 //        auto pipeline = Pipeline(current_path, this->_parameters);
 //        pipeline.parse();
 

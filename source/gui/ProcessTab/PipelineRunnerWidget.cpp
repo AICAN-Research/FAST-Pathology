@@ -63,16 +63,12 @@ namespace fast
         arguments["filename"] = DataManager::GetInstance()->get_visible_image()->get_filename();
         arguments["exportPath"] = "/home/dbouget/Desktop/fp-autoexport.tiff";
         ProcessManager::GetInstance()->get_pipeline(this->_pipeline_uid.toStdString())->setParameters(arguments);
-        ProcessManager::GetInstance()->runPipeline(this->_pipeline_uid.toStdString());
-        //@TODO.Should be able to parse the Pipeline info to know how many renderers there are, and their types.
-//        auto renderers = ProcessManager::GetInstance()->get_pipeline(pipeline_uid.toStdString())->getRenderers();
-//        for (auto&& rend :renderers)
-//        {
-//            getView(0)->addRenderer(rend);
-//        }
-        DataManager::GetInstance()->get_visible_image()->insert_renderer(this->_pipeline_uid.toStdString(), "SegmentationRenderer", *ProcessManager::GetInstance()->get_pipeline(this->_pipeline_uid.toStdString())->getRenderers().begin());
-        emit runPipelineEmitted(this->_pipeline_uid);
-        emit addRendererToViewRequested(this->_pipeline_uid.toStdString());
+        bool success = ProcessManager::GetInstance()->runPipeline(this->_pipeline_uid.toStdString());
+        if(success) {
+            DataManager::GetInstance()->get_visible_image()->insert_renderer(this->_pipeline_uid.toStdString(), "SegmentationRenderer", *ProcessManager::GetInstance()->get_pipeline(this->_pipeline_uid.toStdString())->getRenderers().begin());
+            emit runPipelineEmitted(this->_pipeline_uid);
+            emit addRendererToViewRequested(this->_pipeline_uid.toStdString());
+        }
     }
 
     void PipelineRunnerWidget::editPipelineReceived()
