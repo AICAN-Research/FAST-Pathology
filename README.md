@@ -16,11 +16,13 @@ FastPathology is an open-source platform for deep learning-based research and de
 
 Install
 -----------------------------------
-**Download an appropriate installer from the [release page](https://github.com/SINTEFMedtek/FAST-Pathology/releases/), or the most recent one from [here](https://andreped.github.io/fastpathology.github.io/)**. 
+**Download an appropriate installer from the [release page](https://github.com/SINTEFMedtek/FAST-Pathology/releases/), or the most recent one from [here](https://andreped.github.io/fastpathology.github.io/)**.
 
 Installers for Win10, Ubuntu Linux (18 and 20), and macOSX are available. The software is continuously in development. It has not reached a stable state _yet_, but we are pushing towards a major release soon. Beta-testers are much obliged.
 
-**NOTE:** FastPathology depends on OpenCL. Most Windows machines have OpenCL by default, whereas Ubuntu does not. Thus, for Ubuntu, OpenCL can be installed by installing either [NVIDIA CUDA Toolkit](https://developer.nvidia.com/cuda-11.1.0-download-archive) or [Intel OpenCL Driver](https://github.com/intel/compute-runtime). CUDA is required if you wish to perform inference using a dedicated GPU. CUDA 11.0 if you are using any of the releases.
+In addition, FastPathology requires Microsoft Visual C++ Redistributable 2015-2019 (64bit/x64) to compile the software at runtime. Click [here](https://aka.ms/vs/16/release/vc_redist.x64.exe) to download the installer for the C++ Redistributable.
+
+FastPathology also depends on OpenCL. Most Windows machines have OpenCL by default, whereas Ubuntu does not. Thus, for Ubuntu, OpenCL can be installed by installing either [NVIDIA CUDA Toolkit](https://developer.nvidia.com/cuda-11.1.0-download-archive) or [Intel OpenCL Driver](https://github.com/intel/compute-runtime). CUDA is required if you wish to perform inference using a dedicated GPU. CUDA 11.0 if you are using any of the releases.
 
 Test data
 -----------------------------------
