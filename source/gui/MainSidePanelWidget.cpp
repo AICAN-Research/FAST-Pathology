@@ -134,11 +134,6 @@ namespace fast{
 
         //stackedWidget->connect(&mapper, SIGNAL(mapped(int)), SLOT(setCurrentIndex(int)));
         connect(mapper, SIGNAL(mapped(int)), this->_container_stacked_widget, SLOT(setCurrentIndex(int)));
-        // TODO A hack for now:
-        connect(this->_container_stacked_widget, &QStackedWidget::currentChanged, [this](int i) {
-            if(_container_stacked_widget->currentWidget() == _project_widget)
-                _process_widget->updateWSIs();
-        });
 
         auto dockLayout = new QVBoxLayout; //or any other layout type you want
         dockLayout->setMenuBar(tb); // <-- the interesting part

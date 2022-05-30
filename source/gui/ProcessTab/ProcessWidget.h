@@ -33,6 +33,7 @@ namespace fast {
 class View;
 class ComputationThread;
 class MainWindow;
+class ImagePyramid;
 
 class ProcessWidget: public QWidget {
 Q_OBJECT
@@ -48,9 +49,9 @@ public:
     void done();
     void stop();
     void stopProcessing();
-    void selectWSI(int i);
+    void selectWSI(std::shared_ptr<ImagePyramid> WSI);
     void loadResults(int i);
-    void processPipeline(std::string pipelinePath);
+    void processPipeline(std::string pipelinePath, std::shared_ptr<ImagePyramid> WSI);
     void batchProcessPipeline(std::string pipelinePath);
     void saveResults();
     void showMessage(QString msg);
@@ -81,7 +82,6 @@ public slots:
     void editorPipelinesReceived();
     void deletePipelineReceived(QString pipeline_uid);
     void runPipelineReceived(QString pipeline_uid);
-    void updateWSIs();
 private slots:
     bool processStartEventReceived(std::string process_name);
 
@@ -89,14 +89,11 @@ private:
     QVBoxLayout* _main_layout; /* Principal layout holder for the current custom QWidget */
     std::map<std::string, PipelineRunnerWidget*> _pipeline_runners_map;
 
-    std::vector<std::pair<std::string, std::shared_ptr<ImagePyramid>>> m_WSIs;
-    int m_currentWSI = 0;
     bool m_procesessing = false;
     bool m_batchProcesessing = false;
+    int m_currentWSI = 0;
     std::unique_ptr<Pipeline> m_runningPipeline;
     QProgressDialog* m_progressDialog;
-
-private:
     std::string _cwd; /* Holder for the main folder containing models? */
     MainWindow* m_mainWindow;
     View* m_view;

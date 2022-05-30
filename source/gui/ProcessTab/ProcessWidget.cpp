@@ -148,12 +148,13 @@ namespace fast {
             if (runForAll) {
                 batchProcessPipeline(pipelineFilename);
             } else {
-                processPipeline(pipelineFilename);
+                processPipeline(pipelineFilename, nullptr);
             }
             context->doneCurrent(); // Must call done here for some reason..
             thread->quit();
         });
-        m_progressDialog = new QProgressDialog(("Running pipeline " + pipelineName + " ..").c_str(), "Cancel", 0, runForAll ? m_WSIs.size() : 1, this);
+        int size = m_mainWindow->getCurrentProject()->getWSICountInProject();
+        m_progressDialog = new QProgressDialog(("Running pipeline " + pipelineName + " ..").c_str(), "Cancel", 0, runForAll ? size : 1, this);
         m_progressDialog->setAutoClose(true);
         m_progressDialog->show();
         QObject::connect(m_progressDialog, &QProgressDialog::canceled, [this, thread]() {
@@ -179,9 +180,9 @@ namespace fast {
     void ProcessWidget::stop() {
         if(m_progressDialog)
             m_progressDialog->setValue(m_progressDialog->maximum()); // Close progress dialog
-            m_batchProcesessing = false;
-            stopProcessing();
-            selectWSI(m_currentWSI);
+        m_batchProcesessing = false;
+        stopProcessing();
+        selectWSI(DataManager::GetInstance()->get_visible_image()->get_image_pyramid());
     }
 
     void ProcessWidget::showMessage(QString msg) {
@@ -195,9 +196,9 @@ namespace fast {
         if(m_procesessing)
             saveResults();
         if(m_batchProcesessing) {
-            if(m_currentWSI == m_WSIs.size()-1) {
+            if(m_currentWSI == m_mainWindow->getCurrentProject()->getWSICountInProject()-1) {
                 // All processed. Stop.
-                m_progressDialog->setValue(m_WSIs.size());
+                m_progressDialog->setValue(m_mainWindow->getCurrentProject()->getWSICountInProject());
                 m_batchProcesessing = false;
                 m_procesessing = false;
                 emit messageSignal("Batch processing is done!");
@@ -206,7 +207,7 @@ namespace fast {
                 m_currentWSI += 1;
                 m_progressDialog->setValue(m_currentWSI);
                 std::cout << "Processing WSI " << m_currentWSI << std::endl;
-                processPipeline(m_runningPipeline->getFilename());
+                processPipeline(m_runningPipeline->getFilename(), m_mainWindow->getCurrentProject()->getImage(m_currentWSI)->get_image_pyramid());
             }
         } else if(m_procesessing) {
             m_progressDialog->setValue(1);
@@ -215,7 +216,7 @@ namespace fast {
         }
     }
 
-    void ProcessWidget::processPipeline(std::string pipelinePath) {
+    void ProcessWidget::processPipeline(std::string pipelinePath, std::shared_ptr<ImagePyramid> WSI) {
         std::cout << "Processing pipeline: " << pipelinePath << std::endl;
         stopProcessing();
         m_procesessing = true;
@@ -227,7 +228,10 @@ namespace fast {
         std::cout << "OK" << std::endl;
         try {
             std::cout << "parsing" << std::endl;
-            m_runningPipeline->parse({{"WSI", m_WSIs[m_currentWSI].second}});
+            if(!WSI) {
+                WSI = DataManager::GetInstance()->get_visible_image()->get_image_pyramid();
+            }
+            m_runningPipeline->parse({{"WSI", WSI}});
             std::cout << "OK" << std::endl;
         } catch(Exception &e) {
             m_procesessing = false;
@@ -249,19 +253,20 @@ namespace fast {
     void ProcessWidget::batchProcessPipeline(std::string pipelineFilename) {
         m_currentWSI = 0;
         m_batchProcesessing = true;
-        processPipeline(pipelineFilename);
+        processPipeline(m_runningPipeline->getFilename(), m_mainWindow->getCurrentProject()->getImage(m_currentWSI)->get_image_pyramid());
     }
 
-    void ProcessWidget::selectWSI(int i) {
+    void ProcessWidget::selectWSI(std::shared_ptr<ImagePyramid> WSI) {
         stopProcessing();
-        m_currentWSI = i;
         auto view = m_view;
         view->removeAllRenderers();
-        auto renderer = ImagePyramidRenderer::create()->connect(m_WSIs[m_currentWSI].second);
+        auto renderer = ImagePyramidRenderer::create()
+                ->connect(WSI);
         view->addRenderer(renderer);
     }
 
     void ProcessWidget::saveResults() {
+        /*
         auto pipelineData = m_runningPipeline->getAllPipelineOutputData();
         for(auto data : pipelineData) {
             const std::string dataTypeName = data.second->getNameOfClass();
@@ -294,10 +299,11 @@ namespace fast {
                     file << renderer->attributesToString();
             }
             file.close();
-        }
+        }*/
     }
 
     void ProcessWidget::loadResults(int i) {
+        /*
         selectWSI(i);
         auto view = m_view;
         // Load any results for current WSI
@@ -349,6 +355,7 @@ namespace fast {
                 }
             }
         }
+         */
     }
 
     void ProcessWidget::deletePipelineReceived(QString pipeline_uid)
@@ -438,19 +445,5 @@ namespace fast {
     {
         emit processTriggered(pipeline_uid.toStdString());
         emit runPipelineEmitted(pipeline_uid);
-    }
-
-    void ProcessWidget::updateWSIs() {
-        std::cout << "Running update WSIs" << std::endl;
-        auto manager = DataManager::GetInstance();
-        auto WSI = manager->get_visible_image();
-        if(WSI) {
-            std::cout << "Adding a WSI" << std::endl;
-            m_WSIs.push_back({WSI->get_filename(), WSI->get_image_pyramid()});
-        }
-        for(auto uid : manager->getCurrentProject()->getAllWsiUids()) {
-            auto WSI = manager->getCurrentProject()->getImage(uid);
-            m_WSIs.push_back({WSI->get_filename(), WSI->get_image_pyramid()});
-        }
     }
 }

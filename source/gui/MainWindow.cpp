@@ -78,10 +78,8 @@ MainWindow::MainWindow() {
     setTitle(this->_application_name);
     enableMaximized(); // <- function from Window.cpp
 
-    // @TODO. So, do you want the official models and pipelines to be stored in a ~/fastpathology folder
-    // and have some more user-defined pipelines in the user-specified project folder?
-	cwd = QDir::homePath().toStdString();
-    cwd += "/fastpathology/";
+	cwd = QDir::homePath().toStdString() + "/fastpathology/";
+
     // create temporary tmp folder to store stuff, and create temporary file to store history
     QTemporaryDir tmpDir;
 	tmpDirPath = tmpDir.path().toStdString();
@@ -1138,6 +1136,14 @@ void MainWindow::runPipelineReceived(QString pipeline_uid)
 
 std::shared_ptr<ComputationThread> MainWindow::getComputationThread() {
     return Window::getComputationThread();
+}
+
+std::string MainWindow::getRootFolder() const {
+    return cwd;
+}
+
+std::shared_ptr<Project> MainWindow::getCurrentProject() {
+    return DataManager::GetInstance()->getCurrentProject();
 }
 
 }

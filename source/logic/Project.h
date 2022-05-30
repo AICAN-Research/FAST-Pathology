@@ -1,9 +1,4 @@
-//
-// Created by dbouget on 09.11.2021.
-//
-
-#ifndef FASTPATHOLOGY_PROJECT_H
-#define FASTPATHOLOGY_PROJECT_H
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -30,6 +25,7 @@ namespace fast{
             inline int getWSICountInProject() const{return this->_images.size();}
             std::vector<std::string> getAllWsiUids() const;
             std::shared_ptr<WholeSlideImage> getImage(const std::string& name);
+            std::shared_ptr<WholeSlideImage> getImage(int i);
 
             void setRootFolder(const std::string& root_folder);
 
@@ -87,5 +83,3 @@ namespace fast{
             std::map<std::string, std::shared_ptr<WholeSlideImage>> _images; /* Loaded image objects. */
     };
 } // End of namespace fast
-
-#endif //FASTPATHOLOGY_PROJECT_H

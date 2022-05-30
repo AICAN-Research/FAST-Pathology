@@ -245,4 +245,12 @@ namespace fast{
 //        this->_images[wsi_uid]->insert_renderer(wsi_uid, renderer_type, someRenderer);
     }
 
+    std::shared_ptr<WholeSlideImage> Project::getImage(int i) {
+        if(i >= _images.size())
+            throw Exception("Out of bounds in Project::getImage");
+        auto it = _images.begin();
+        std::advance(it, i);
+        return it->second;
+    }
+
 } // End of namespace fast
