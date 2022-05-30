@@ -27,9 +27,7 @@ add_executable(fastpathology
                 source/gui/ProcessTab/PipelineScriptEditorWidget.h
                 source/gui/ProcessTab/AdvancedModeParametersEditorWidget.cpp
                 source/gui/ProcessTab/AdvancedModeParametersEditorWidget.h
-                source/gui/ProcessTab/PipelineRunnerWidget.cpp
-                source/gui/ProcessTab/PipelineRunnerWidget.h
-                source/gui/ViewTab/ViewWidget.cpp
+		source/gui/ViewTab/ViewWidget.cpp
                 source/gui/ViewTab/ViewWidget.h
                 source/gui/ViewTab/DynamicViewTabWidget.cpp
                 source/gui/ViewTab/DynamicViewTabWidget.h
@@ -43,14 +41,6 @@ add_executable(fastpathology
                 source/logic/DataManager.h
                 source/logic/WholeSlideImage.cpp
                 source/logic/WholeSlideImage.h
-                source/logic/ProcessManager.cpp
-                source/logic/ProcessManager.h
-                source/logic/SegmentationProcess.cpp
-                source/logic/SegmentationProcess.h
-                source/logic/LogicRuntimeModel.cpp
-                source/logic/LogicRuntimeModel.h
-                source/logic/PipelineProcess.cpp
-                source/logic/PipelineProcess.h
                 source/logic/Project.cpp
                 source/logic/Project.h)
 

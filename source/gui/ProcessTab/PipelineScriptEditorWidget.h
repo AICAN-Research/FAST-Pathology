@@ -1,9 +1,4 @@
-//
-// Created by dbouget on 04.11.2021.
-//
-
-#ifndef FASTPATHOLOGY_PIPELINESCRIPTEDITORWIDGET_H
-#define FASTPATHOLOGY_PIPELINESCRIPTEDITORWIDGET_H
+#pragma once
 
 #include <QWidget>
 #include <QVBoxLayout>
@@ -111,5 +106,3 @@ private:
     QAction* _edit_menu_paste_action; /* */
 };
 } // End of namespace fast
-
-#endif FASTPATHOLOGY_PIPELINESCRIPTEDITORWIDGET_H

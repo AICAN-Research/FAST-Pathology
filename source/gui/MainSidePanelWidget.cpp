@@ -223,13 +223,14 @@ namespace fast{
         switch (ret) {
             case QMessageBox::Yes:
                 // toggle and update text on button to show current mode
-                ProcessManager::GetInstance()->set_advanced_mode_status(!ProcessManager::GetInstance()->get_advanced_mode_status()); // toggle
+                //ProcessManager::GetInstance()->set_advanced_mode_status(!ProcessManager::GetInstance()->get_advanced_mode_status()); // toggle
                 if (this->_app_mode_pushbutton->text() == "Clinical mode") {
                     this->_app_mode_pushbutton->setText("Research mode");
                 } else {
                     this->_app_mode_pushbutton->setText("Clinical mode");
                 }
                 // also update title
+                /*
                 if (ProcessManager::GetInstance()->get_advanced_mode_status()) {
                     auto app_title_extension = std::string(" (Research mode)") + std::string(" - ") + splitCustom(filename, "/").back();
                     emit newAppTitle(app_title_extension);
@@ -237,7 +238,7 @@ namespace fast{
                 else {
                     auto app_title_extension = " - " + splitCustom(filename, "/").back();
                     emit newAppTitle(app_title_extension);
-                }
+                }*/
                 break;
             case QMessageBox::No:
                 1; // if "No", do nothing

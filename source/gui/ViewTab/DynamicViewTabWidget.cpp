@@ -86,7 +86,8 @@ namespace fast
         if (DataManager::GetInstance()->get_visible_image()->get_renderer_type(this->_renderer_name) == "HeatmapRenderer")
         {
             // get metadata of current model
-            std::map<std::string, std::string> metadata = ProcessManager::GetInstance()->get_model(this->_renderer_name)->get_model_metadata();
+            // TODO fix
+            std::map<std::string, std::string> metadata;// = ProcessManager::GetInstance()->get_model(this->_renderer_name)->get_model_metadata();
             std::vector someVector = splitCustom(metadata["class_names"], ";");
             for (const auto & i : someVector){
                 this->_classes.append(QString::fromStdString(i));
@@ -127,7 +128,8 @@ namespace fast
         else if (DataManager::GetInstance()->get_visible_image()->get_renderer_type(this->_renderer_name) == "SegmentationPyramidRenderer")
         {
             // get metadata of current model
-            std::map<std::string, std::string> metadata = ProcessManager::GetInstance()->get_model(this->_renderer_name)->get_model_metadata();
+            // TODO fix
+            std::map<std::string, std::string> metadata;// = ProcessManager::GetInstance()->get_model(this->_renderer_name)->get_model_metadata();
             std::vector someVector = splitCustom(metadata["class_names"], ";");
             for (const auto & i : someVector) {
                 this->_classes.append(QString::fromStdString(i));
@@ -146,7 +148,8 @@ namespace fast
         else if (DataManager::GetInstance()->get_visible_image()->get_renderer_type(this->_renderer_name) == "BoundingBoxRenderer")
         {
             // get metadata of current model
-            std::map<std::string, std::string> metadata = ProcessManager::GetInstance()->get_model(this->_renderer_name)->get_model_metadata();
+            // TODO fix
+            std::map<std::string, std::string> metadata;// = ProcessManager::GetInstance()->get_model(this->_renderer_name)->get_model_metadata();
             std::vector someVector = splitCustom(metadata["class_names"], ";");
             for (const auto & i : someVector) {
                 this->_classes.append(QString::fromStdString(i));

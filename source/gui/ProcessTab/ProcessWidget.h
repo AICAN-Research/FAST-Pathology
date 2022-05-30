@@ -21,11 +21,10 @@
 #include <QPlainTextEdit>
 #include <FAST/Visualization/Renderer.hpp>
 #include "source/logic/DataManager.h"
-#include "source/logic/ProcessManager.h"
 #include "source/utils/utilities.h"
 #include "source/utils/qutilities.h"
 #include "source/gui/ProcessTab/PipelineScriptEditorWidget.h"
-#include "source/gui/ProcessTab/PipelineRunnerWidget.h"
+#include <FAST/Pipeline.hpp>
 
 
 namespace fast {
@@ -87,7 +86,6 @@ private slots:
 
 private:
     QVBoxLayout* _main_layout; /* Principal layout holder for the current custom QWidget */
-    std::map<std::string, PipelineRunnerWidget*> _pipeline_runners_map;
 
     bool m_procesessing = false;
     bool m_batchProcesessing = false;

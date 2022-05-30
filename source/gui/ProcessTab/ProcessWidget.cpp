@@ -360,80 +360,16 @@ namespace fast {
 
     void ProcessWidget::deletePipelineReceived(QString pipeline_uid)
     {
-        this->_main_layout->removeWidget(this->_pipeline_runners_map[pipeline_uid.toStdString()]);
-        this->_pipeline_runners_map.erase(this->_pipeline_runners_map.find(pipeline_uid.toStdString()));
-        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
     }
 
     bool ProcessWidget::segmentTissue()
     {
-        // @TODO. All of it should be within a ProcessManager most likely, no reason to have it inside here.
 
-        // @TODO. Does the segmentation run only on the visible WSI, or on all loaded WSIs showing on the side list?
-        if (DataManager::GetInstance()->getCurrentProject()->isProjectEmpty()) {
-            std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
-            return false;
-        }
-
-        if (DataManager::GetInstance()->getVisibleImageName() == "")
-        {
-            std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
-            return false;
-        }
-
-        auto visible_image = DataManager::GetInstance()->get_visible_image();
-
-        // prompt if you want to run the analysis again, if it has already been ran
-        if (visible_image->has_renderer("tissue")) {
-            simpleInfoPrompt("Tissue segmentation on current WSI has already been performed.", this);
-            return false;
-        }
-
-        ProcessManager::GetInstance()->runProcess(DataManager::GetInstance()->getVisibleImageName(), "tissue");
-        emit processTriggered("tissue");
-        emit addRendererToViewRequested("tissue");
     }
 
     bool ProcessWidget::processStartEventReceived(std::string process_name)
     {
-        if (DataManager::GetInstance()->getCurrentProject()->isProjectEmpty()) {
-            std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
-            simpleInfoPrompt(QString("Requires a WSI to be rendered in order to perform the analysis."), this);
-            return false;
-        }
 
-        if (DataManager::GetInstance()->getVisibleImageName() == "")
-        {
-            std::cout << "Requires a WSI to be rendered in order to perform the analysis." << std::endl;
-            return false;
-        }
-
-        auto visible_image = DataManager::GetInstance()->get_visible_image();
-
-        // prompt if you want to run the analysis again, if it has already been ran
-        if (visible_image->has_renderer(process_name)) {
-            simpleInfoPrompt("Segmentation on current WSI has already been performed.", this);
-            return false;
-        }
-
-//        if(ProcessManager::GetInstance()->get_advanced_mode_status())
-
-        auto progDialog = QProgressDialog();
-        progDialog.setRange(0, 1); //currentWSIs.size() <= total number of WSIs to process
-        //progDialog.setContentsMargins(0, 0, 0, 0);
-        progDialog.setValue(0);
-        progDialog.setVisible(true);
-        progDialog.setModal(false);
-        progDialog.setLabelText("Running inference...");
-        //QRect screenrect = mWidget->screen()[0].geometry();
-        progDialog.move(this->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
-        progDialog.show();
-
-        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-
-        ProcessManager::GetInstance()->runProcess(DataManager::GetInstance()->getVisibleImageName(), process_name);
-        emit processTriggered(process_name);
-        emit addRendererToViewRequested(process_name);
     }
 
     void ProcessWidget::editorPipelinesReceived()
@@ -443,7 +379,5 @@ namespace fast {
 
     void ProcessWidget::runPipelineReceived(QString pipeline_uid)
     {
-        emit processTriggered(pipeline_uid.toStdString());
-        emit runPipelineEmitted(pipeline_uid);
     }
 }

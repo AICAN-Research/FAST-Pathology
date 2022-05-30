@@ -14,9 +14,6 @@
 #include <string>
 #include <unordered_map>
 #include "source/logic/WholeSlideImage.h"
-#include "source/logic/SegmentationProcess.h"
-#include "source/logic/PipelineProcess.h"
-#include "source/logic/LogicRuntimeModel.h"
 #include "source/utils/utilities.h"
 #include "source/utils/qutilities.h"
 

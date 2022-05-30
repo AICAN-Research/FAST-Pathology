@@ -384,11 +384,12 @@ void MainWindow::reset()
     }
 
     // update application name to contain current WSI
+    /*
     if (ProcessManager::GetInstance()->get_advanced_mode_status()) {
         setTitle(this->_application_name + " (Research mode)");
     } else {
         setTitle(this->_application_name);
-    }
+    }*/
 
 }
 
@@ -1116,22 +1117,6 @@ void MainWindow::removeRendererFromViewReceived(const std::string& name)
 
 void MainWindow::runPipelineReceived(QString pipeline_uid)
 {
-    auto process_objects = ProcessManager::GetInstance()->get_pipeline(pipeline_uid.toStdString())->getProcessObjects();
-    for (auto&& po :process_objects)
-    {
-        if (po.second->getNrOfOutputPorts() == 0 && std::dynamic_pointer_cast<Renderer>(po.second) == nullptr)
-        {
-            // Process object has no output ports, must add to window to make sure it is updated.
-            reportInfo() << "Process object " << po.first << " had no output ports defined in pipeline, therefore adding to window so it is updated." << reportEnd();
-            addProcessObject(po.second);
-        }
-    }
-
-//    auto renderers = ProcessManager::GetInstance()->get_pipeline(pipeline_uid.toStdString())->getRenderers();
-//    for (auto&& rend :renderers)
-//    {
-//        getView(0)->addRenderer(rend);
-//    }
 }
 
 std::shared_ptr<ComputationThread> MainWindow::getComputationThread() {

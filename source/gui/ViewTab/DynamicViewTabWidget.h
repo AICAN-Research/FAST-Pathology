@@ -17,7 +17,6 @@
 #include <QList>
 #include <QString>
 #include "source/logic/DataManager.h"
-#include "source/logic/ProcessManager.h"
 #include "source/utils/qutilities.h"
 #include "source/utils/utilities.h"
 

@@ -10,7 +10,6 @@
 #include "source/gui/ViewTab/ViewWidget.h"
 #include "source/gui/StatsTab/StatsWidget.h"
 #include "source/gui/ExportTab/ExportWidget.h"
-#include "source/logic/ProcessManager.h"
 
 namespace fast{
     class MainWindow;
