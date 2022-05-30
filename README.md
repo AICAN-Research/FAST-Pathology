@@ -35,13 +35,13 @@ The software is implemented in C++ based on [FAST](https://github.com/smistad/FA
 * **Deep learning -** Deployment and support for multi-input/output Convolutional Neural Networks (CNNs)
 * **Visualization -** Real-time streaming of predictions on top of the WSI with low memory cost
 * **Use cases -** Patch-wise classification, low and high-resolution segmentation, and object detection are supported
-* **Inference Engines -** FAST includes a variety of different inference engines, i.e. TensorFlow CPU/CUDA (support both TF v1 and v2 models), TensorRT (UFF and ONNX) and OpenVINO (CPU/GPU/VPU).
+* **Inference Engines -** FAST includes a variety of different inference engines, i.e. TensorFlow CPU/CUDA (support both TF v1 and v2 models), TensorRT (UFF and ONNX), and OpenVINO (CPU/GPU/VPU)
 * **Text pipelines -** Possibility to create your own pipelines using the built-in script editor
-* **Formats -** Through OpenSlide FastPathology supports lots of WSI formats
+* **Formats -** Through OpenSlide FastPathology supports various WSI formats, as well as additional support for the CellSens VSI format through FAST
 
 Demos
 -----------------------------------
-Very simple demonstrations of the platforms can be found on [Youtube](https://www.youtube.com/channel/UC4GM2KW54-vEZ0M1kH5-oig). More in-depth demonstrations will be added in the future. However, some wikis and tutorials can be found in the [wiki](https://github.com/SINTEFMedtek/FAST-Pathology/wiki). More information can be found from the **pages** section on the right in the wiki home.
+Very simple demonstrations of the platforms can be found on [Youtube](https://www.youtube.com/channel/UC4GM2KW54-vEZ0M1kH5-oig). More in-depth demonstrations will be added in the future. Wikis and tutorials can be found in the [wiki](https://github.com/SINTEFMedtek/FAST-Pathology/wiki). More information can be found from the **pages** section on the right in the wiki home.
 
 Applications of FastPathology
 -----------------------------------
