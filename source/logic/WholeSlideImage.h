@@ -36,7 +36,7 @@ namespace fast{
             inline std::string get_filename(){return _filename;}
             inline QImage get_thumbnail() {return _thumbnail;}
             inline std::shared_ptr<ImagePyramid> get_image_pyramid(){return _image;}
-            inline std::unordered_map<std::string, std::string> get_metadata(){return _metadata;}
+            inline std::map<std::string, std::string> get_metadata(){return _metadata;}
 
             /***
              * Load the current whole slide image in memory for display and interaction.
@@ -82,7 +82,7 @@ namespace fast{
         private:
             const std::string _filename; /* Disk location for the whole slide image*/
             std::string _format; /* Former wsiFormat */
-            std::unordered_map<std::string, std::string> _metadata; /* */
+            std::map<std::string, std::string> _metadata; /* */
             float _magnification_level; /* */
             std::shared_ptr<ImagePyramid> _image; /* Loaded WSI */
             // @TODO. The key is obviously unique, and should link to how results are generated so that multiple segmentation renderers using the same model can be stored

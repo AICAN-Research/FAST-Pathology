@@ -297,7 +297,7 @@ namespace fast {
 
         // TODO: Unable to read .zvi and .scn (Zeiss and Leica). I'm wondering if they are stored in some unexpected way (not image pyramids)
         auto fileNames = QFileDialog::getOpenFileNames(this, tr("Select File(s)"), nullptr,
-                                                       tr("WSI Files (*.tiff *.tif *.svs *.ndpi *.bif *vms)"), //*.zvi *.scn)"),
+                                                       tr("WSI Files (*.tiff *.tif *.svs *.ndpi *.bif *vms *.vsi);;All Files(*)"), //*.zvi *.scn)"),
                 nullptr, QFileDialog::DontUseNativeDialog);
 
         // return if the file dialog was cancelled without any files being selected

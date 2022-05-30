@@ -1,9 +1,4 @@
-//
-// Created by dbouget on 06.10.2021.
-//
-
-#ifndef FASTPATHOLOGY_MAINSIDEPANELWIDGET_H
-#define FASTPATHOLOGY_MAINSIDEPANELWIDGET_H
+#pragma once
 
 #include <QWidget>
 #include <QSignalMapper>
@@ -18,10 +13,11 @@
 #include "source/logic/ProcessManager.h"
 
 namespace fast{
+    class ComputationThread;
     class MainSidePanelWidget: public QWidget{
     Q_OBJECT
     public:
-        MainSidePanelWidget(QWidget *parent=0);
+        MainSidePanelWidget(View* view, std::shared_ptr<ComputationThread>, QWidget *parent = nullptr);
         ~MainSidePanelWidget();
         /**
          * Set the interface in its default state.
@@ -70,7 +66,7 @@ namespace fast{
     private:
         QStackedWidget *_container_stacked_widget;
         QPushButton* _app_mode_pushbutton;
+        View* m_view;
+        std::shared_ptr<ComputationThread> m_computationThread;
     };
 }
-
-#endif //FASTPATHOLOGY_MAINSIDEPANELWIDGET_H

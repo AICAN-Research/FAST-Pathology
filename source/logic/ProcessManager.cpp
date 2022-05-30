@@ -278,7 +278,7 @@ namespace fast {
             for (const auto &[k, v] : modelMetadata)
                 std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
             auto current_image_object = DataManager::GetInstance()->get_visible_image();
-            std::unordered_map<std::string, std::string> metadata = current_image_object->get_metadata();
+            auto metadata = current_image_object->get_metadata();
             auto magn_lvl = current_image_object->get_magnification_level();
 
             // only run analysis if it has not been ran previously on current WSI

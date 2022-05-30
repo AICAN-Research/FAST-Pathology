@@ -168,7 +168,6 @@ void MainWindow::setupInterface()
     mainWidget->setLayout(mainLayout);
 
     createMenubar();        // create Menubar
-    this->_side_panel_widget = new MainSidePanelWidget(mWidget); // create side panel with all user interactions
     createOpenGLWindow();   // create OpenGL window
 }
 
@@ -232,6 +231,7 @@ void MainWindow::createOpenGLWindow() {
 	mainSplitter->setHandleWidth(5);
 	mainSplitter->setStyleSheet("QSplitter::handle { background-color: rgb(100, 100, 200); }; QMenuBar::handle { background-color: rgb(20, 100, 20); }");
 //	mainSplitter->addWidget(menuWidget);
+    _side_panel_widget = new MainSidePanelWidget(view, getComputationThread(), mWidget); // create side panel with all user interactions
     mainSplitter->addWidget(_side_panel_widget);
 	mainSplitter->addWidget(view);
 	mainSplitter->setStretchFactor(1, 1);

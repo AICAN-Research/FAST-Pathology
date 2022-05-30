@@ -1,9 +1,4 @@
-//
-// Created by dbouget on 02.11.2021.
-//
-
-#ifndef FASTPATHOLOGY_PROCESSWIDGET_H
-#define FASTPATHOLOGY_PROCESSWIDGET_H
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -34,16 +29,14 @@
 
 
 namespace fast {
-    class WholeSlideImageImporter;
-    class ImagePyramid;
-    class ImagePyramidRenderer;
-    class Renderer;
-    class SegmentationRenderer;
+
+class View;
+class ComputationThread;
 
 class ProcessWidget: public QWidget {
 Q_OBJECT
 public:
-    ProcessWidget(QWidget* parent=0);
+    ProcessWidget(View* view, std::shared_ptr<ComputationThread> compThread, QWidget* parent=nullptr);
     ~ProcessWidget();
     /**
      * Set the interface in its default state.
@@ -51,6 +44,16 @@ public:
     void resetInterface();
 
     std::map<std::string, std::string> getModelMetadata(std::string modelName);
+    void done();
+    void stop();
+    void stopProcessing();
+    void selectWSI(int i);
+    void loadResults(int i);
+    void processPipeline(std::string pipelinePath);
+    void batchProcessPipeline(std::string pipelinePath);
+    void saveResults();
+    void showMessage(QString msg);
+    void runInThread(std::string pipelineFilename, std::string pipelineName, bool runForAll);
 protected:
     /**
      * Define the interface for the current global widget.
@@ -65,6 +68,7 @@ signals:
     void processTriggered(std::string);
     void addRendererToViewRequested(const std::string&);
     void runPipelineEmitted(QString);
+    void messageSignal(QString);
 
 public slots:
     bool segmentTissue();
@@ -76,19 +80,25 @@ public slots:
     void editorPipelinesReceived();
     void deletePipelineReceived(QString pipeline_uid);
     void runPipelineReceived(QString pipeline_uid);
-
+    void updateWSIs();
 private slots:
     bool processStartEventReceived(std::string process_name);
 
 private:
     QVBoxLayout* _main_layout; /* Principal layout holder for the current custom QWidget */
-    QPushButton* _tissue_seg_pushbutton; /* Specific push button for tissue segmentation */
-    std::map<std::string, QPushButton*> _specific_seg_models_pushbutton_map; /* Map with custom/specific segmentation push buttons for the available models */
     std::map<std::string, PipelineRunnerWidget*> _pipeline_runners_map;
+
+    std::vector<std::pair<std::string, std::shared_ptr<ImagePyramid>>> m_WSIs;
+    int m_currentWSI = 0;
+    bool m_procesessing = false;
+    bool m_batchProcesessing = false;
+    std::unique_ptr<Pipeline> m_runningPipeline;
+    QProgressDialog* m_progressDialog;
 
 private:
     std::string _cwd; /* Holder for the main folder containing models? */
+    View* m_view;
+    std::shared_ptr<ComputationThread> m_computationThread;
 };
 
 }
-#endif //FASTPATHOLOGY_PROCESSTWIDGET_H

@@ -5,8 +5,10 @@
 #include "MainSidePanelWidget.h"
 
 namespace fast{
-    MainSidePanelWidget::MainSidePanelWidget(QWidget *parent): QWidget(parent)
+    MainSidePanelWidget::MainSidePanelWidget(View* view, std::shared_ptr<ComputationThread> compThread, QWidget *parent): QWidget(parent)
     {
+        m_view = view;
+        m_computationThread = compThread;
         this->setUpInterface();
         this->setupConnections();
     }
@@ -18,7 +20,7 @@ namespace fast{
     void MainSidePanelWidget::setUpInterface(){
         this->_container_stacked_widget = new QStackedWidget(this);
         this->_project_widget = new ProjectWidget(this);
-        this->_process_widget = new ProcessWidget(this);
+        this->_process_widget = new ProcessWidget(m_view, m_computationThread, this);
         this->_view_widget = new ViewWidget(this);
         this->_stats_widget = new StatsWidget(this);
         this->_export_widget = new ExportWidget(this);
@@ -133,6 +135,11 @@ namespace fast{
 
         //stackedWidget->connect(&mapper, SIGNAL(mapped(int)), SLOT(setCurrentIndex(int)));
         connect(mapper, SIGNAL(mapped(int)), this->_container_stacked_widget, SLOT(setCurrentIndex(int)));
+        // TODO A hack for now:
+        connect(this->_container_stacked_widget, &QStackedWidget::currentChanged, [this](int i) {
+            if(_container_stacked_widget->currentWidget() == _project_widget)
+                _process_widget->updateWSIs();
+        });
 
         auto dockLayout = new QVBoxLayout; //or any other layout type you want
         dockLayout->setMenuBar(tb); // <-- the interesting part

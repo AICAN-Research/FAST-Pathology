@@ -153,8 +153,8 @@ namespace fast{
             magnification_lvl = std::stof(this->_metadata["openslide.objective-power"]);
             std::cout << "Magn lvl: " << magnification_lvl << std::endl;
         } else {  //"TODO: Make this more general, test different image formats to see how the magn_lvl metadata vary"
-            std::cout << "WSI format not set, uses default format: " << this->_metadata["aperio.AppMag"] << std::endl;
-            magnification_lvl = std::stof(this->_metadata["aperio.AppMag"]);
+            //std::cout << "WSI format not set, uses default format: " << this->_metadata["aperio.AppMag"] << std::endl;
+            //magnification_lvl = std::stof(this->_metadata["aperio.AppMag"]);
         }
         this->_magnification_level = magnification_lvl;
     }
