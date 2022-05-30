@@ -212,16 +212,10 @@ void MainWindow::updateAppTitleReceived(std::string title_suffix)
 void MainWindow::createOpenGLWindow() {
 	float OpenGL_background_color = 0.0f; //0.0f; //200.0f / 255.0f;
 	view = createView();
-	//view = mWidget->addView();
-	//view->setLayout(mainLayout);
 
-	//mainLayout->addLayout(menuLayout);
-	//mainLayout->insertWidget(1, view);
 	view->set2DMode();
 	view->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
 	view->setAutoUpdateCamera(true);
-	//view->setLayout(mainLayout);
-	//view->setToolTip("hallo");
 
 	// create QSplitter for adjustable windows
 	auto mainSplitter = new QSplitter(Qt::Horizontal);
@@ -230,17 +224,10 @@ void MainWindow::createOpenGLWindow() {
 	//mainSplitter->setStyleSheet("background-color: rgb(55, 100, 110);");
 	mainSplitter->setHandleWidth(5);
 	mainSplitter->setStyleSheet("QSplitter::handle { background-color: rgb(100, 100, 200); }; QMenuBar::handle { background-color: rgb(20, 100, 20); }");
-//	mainSplitter->addWidget(menuWidget);
-    _side_panel_widget = new MainSidePanelWidget(view, getComputationThread(), mWidget); // create side panel with all user interactions
+    _side_panel_widget = new MainSidePanelWidget(this, mWidget); // create side panel with all user interactions
     mainSplitter->addWidget(_side_panel_widget);
 	mainSplitter->addWidget(view);
 	mainSplitter->setStretchFactor(1, 1);
-
-	/*
-	//tb->setStyleSheet("QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };");
-    //                         "border-bottom:2px solid rgba(25,25,120,75); "
-    //                         "QMenu{background-color:palette(window);border:1px solid palette(shadow);}");
-	*/
 
     mainLayout->addWidget(mainSplitter);
 }
@@ -1147,6 +1134,10 @@ void MainWindow::runPipelineReceived(QString pipeline_uid)
 //    {
 //        getView(0)->addRenderer(rend);
 //    }
+}
+
+std::shared_ptr<ComputationThread> MainWindow::getComputationThread() {
+    return Window::getComputationThread();
 }
 
 }

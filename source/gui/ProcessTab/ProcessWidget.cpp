@@ -23,20 +23,22 @@
 #include <FAST/Exporters/HDF5TensorExporter.hpp>
 #include <FAST/Visualization/ComputationThread.hpp>
 #include "source/logic/WholeSlideImage.h"
+#include "source/gui/MainWindow.hpp"
 
 namespace fast {
-    ProcessWidget::ProcessWidget(View* view, std::shared_ptr<ComputationThread> compThread, QWidget* parent): QWidget(parent){
-        m_computationThread = compThread;
+    ProcessWidget::ProcessWidget(MainWindow* mainWindow, QWidget* parent): QWidget(parent){
+        m_mainWindow = mainWindow;
+        m_computationThread = mainWindow->getComputationThread();
         this->_cwd = join(QDir::homePath().toStdString(), "fastpathology");
-        m_view = view;
+        m_view = mainWindow->getView(0);
         this->setupInterface();
         this->setupConnections();
 
         // Notify GUI when pipeline has finished
-        QObject::connect(compThread.get(), &ComputationThread::pipelineFinished, this, &ProcessWidget::done);
+        QObject::connect(m_computationThread.get(), &ComputationThread::pipelineFinished, this, &ProcessWidget::done);
 
         // Stop whe critical error occurs in computation thread
-        QObject::connect(compThread.get(), &ComputationThread::criticalError, this, &ProcessWidget::stop);
+        QObject::connect(m_computationThread.get(), &ComputationThread::criticalError, this, &ProcessWidget::stop);
 
         // Connection to show message in GUI in main thread
         QObject::connect(this, &ProcessWidget::messageSignal, this, &ProcessWidget::showMessage, Qt::QueuedConnection);

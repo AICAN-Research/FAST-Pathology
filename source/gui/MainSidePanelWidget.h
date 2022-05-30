@@ -13,11 +13,11 @@
 #include "source/logic/ProcessManager.h"
 
 namespace fast{
-    class ComputationThread;
+    class MainWindow;
     class MainSidePanelWidget: public QWidget{
     Q_OBJECT
     public:
-        MainSidePanelWidget(View* view, std::shared_ptr<ComputationThread>, QWidget *parent = nullptr);
+        MainSidePanelWidget(MainWindow* mainWindow, QWidget *parent = nullptr);
         ~MainSidePanelWidget();
         /**
          * Set the interface in its default state.
@@ -66,7 +66,6 @@ namespace fast{
     private:
         QStackedWidget *_container_stacked_widget;
         QPushButton* _app_mode_pushbutton;
-        View* m_view;
-        std::shared_ptr<ComputationThread> m_computationThread;
+        MainWindow* m_mainWindow;
     };
 }

@@ -5,10 +5,9 @@
 #include "MainSidePanelWidget.h"
 
 namespace fast{
-    MainSidePanelWidget::MainSidePanelWidget(View* view, std::shared_ptr<ComputationThread> compThread, QWidget *parent): QWidget(parent)
+    MainSidePanelWidget::MainSidePanelWidget(MainWindow* mainWindow, QWidget *parent): QWidget(parent)
     {
-        m_view = view;
-        m_computationThread = compThread;
+        m_mainWindow = mainWindow;
         this->setUpInterface();
         this->setupConnections();
     }
@@ -20,7 +19,7 @@ namespace fast{
     void MainSidePanelWidget::setUpInterface(){
         this->_container_stacked_widget = new QStackedWidget(this);
         this->_project_widget = new ProjectWidget(this);
-        this->_process_widget = new ProcessWidget(m_view, m_computationThread, this);
+        this->_process_widget = new ProcessWidget(m_mainWindow, this);
         this->_view_widget = new ViewWidget(this);
         this->_stats_widget = new StatsWidget(this);
         this->_export_widget = new ExportWidget(this);

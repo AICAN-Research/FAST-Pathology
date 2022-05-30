@@ -277,6 +277,7 @@ class MainWindow : public Window {
          */
         std::shared_ptr<Renderer> getRenderer(std::string name);
 
+        std::shared_ptr<ComputationThread> getComputationThread();
     protected:
         /**
          * Define the interface for the current global widget.

@@ -32,11 +32,12 @@ namespace fast {
 
 class View;
 class ComputationThread;
+class MainWindow;
 
 class ProcessWidget: public QWidget {
 Q_OBJECT
 public:
-    ProcessWidget(View* view, std::shared_ptr<ComputationThread> compThread, QWidget* parent=nullptr);
+    ProcessWidget(MainWindow* mainWindow, QWidget* parent=nullptr);
     ~ProcessWidget();
     /**
      * Set the interface in its default state.
@@ -97,6 +98,7 @@ private:
 
 private:
     std::string _cwd; /* Holder for the main folder containing models? */
+    MainWindow* m_mainWindow;
     View* m_view;
     std::shared_ptr<ComputationThread> m_computationThread;
 };
