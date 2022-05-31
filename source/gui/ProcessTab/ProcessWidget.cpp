@@ -1,7 +1,3 @@
-//
-// Created by dbouget on 02.11.2021.
-//
-
 #include "ProcessWidget.h"
 #include <FAST/Importers/WholeSlideImageImporter.hpp>
 #include <FAST/Visualization/ImagePyramidRenderer/ImagePyramidRenderer.hpp>
@@ -11,8 +7,6 @@
 #include <QProgressDialog>
 #include <QThread>
 #include <FAST/Visualization/View.hpp>
-#include <FAST/Importers/WholeSlideImageImporter.hpp>
-
 #include <FAST/Visualization/ComputationThread.hpp>
 #include "source/logic/WholeSlideImage.h"
 #include "source/gui/MainWindow.hpp"
@@ -56,23 +50,6 @@ namespace fast {
     void ProcessWidget::setupConnections()
     {
 //        QObject::connect(this->_tissue_seg_pushbutton, &QPushButton::clicked, this, &ProcessWidget::segmentTissue);
-    }
-
-    std::map<std::string, std::string> ProcessWidget::getModelMetadata(std::string modelName) {
-        // parse corresponding txt file for relevant information regarding model
-        std::ifstream infile(this->_cwd + "data/models/" + modelName + ".txt");
-        std::string key, value, str;
-        std::string delimiter = ":";
-        std::map<std::string, std::string> metadata;
-        while (std::getline(infile, str))
-        {
-            std::vector<std::string> v = split(str, delimiter);
-            //key = v[0];
-            //value = v[1];
-            //metadata[key] = value;
-            metadata.emplace(std::move(v[0]), std::move(v[1]));
-        }
-        return metadata;
     }
 
     void ProcessWidget::addModels()
@@ -272,30 +249,8 @@ namespace fast {
         DataManager::GetInstance()->getCurrentProject()->saveResults(m_mainWindow->getCurrentProject()->getAllWsiUids()[m_currentWSI], m_runningPipeline, pipelineData);
     }
 
-    void ProcessWidget::loadResults(int i) {
-
-    }
-
-    void ProcessWidget::deletePipelineReceived(QString pipeline_uid)
-    {
-    }
-
-    bool ProcessWidget::segmentTissue()
-    {
-
-    }
-
-    bool ProcessWidget::processStartEventReceived(std::string process_name)
-    {
-
-    }
-
     void ProcessWidget::editorPipelinesReceived()
     {
         auto editor = new PipelineScriptEditorWidget(this);
-    }
-
-    void ProcessWidget::runPipelineReceived(QString pipeline_uid)
-    {
     }
 }
