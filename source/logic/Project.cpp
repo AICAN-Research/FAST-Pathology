@@ -192,57 +192,6 @@ namespace fast{
 
     void Project::saveResults(const std::string& wsi_uid)
     {
-        for (auto it=this->_images[wsi_uid]->get_renderer_keys().begin(); it != this->_images[wsi_uid]->get_renderer_keys().end(); it++)
-        {
-            auto current_renderer_type = this->_images[wsi_uid]->get_renderer_type(*it);
-            if (current_renderer_type != "ImagePyramidRenderer")
-            {
-                saveResult(wsi_uid, current_renderer_type);
-            }
-        }
-    }
-
-    void Project::saveResult(const std::string& wsi_uid, const std::string& current_renderer_type)
-    {
-        // auto dump_folder = this->_root_folder + "/results/" + wsi_uid + "<unique experiment name>"
-    }
-
-    void Project::loadSegmentation(const std::string& wsi_uid, const std::string& segmentation_path)
-    {
-//        if (!fileExists(segmentation_path))
-//            return;
-
-//        auto image_object = this->_images[wsi_uid]->get_image_pyramid();
-//        auto reader = ImageFileImporter::New();
-//        reader->setFilename(segmentation_path);
-//        reader->setMainDevice(Host::getInstance());
-//        auto port = reader->getOutputPort();
-//        reader->update();
-//        auto someImage = port->getNextFrame<Image>();
-
-//        auto access = m_image->getAccess(ACCESS_READ);
-//        auto input = access->getLevelAsImage(m_image->getNrOfLevels() - 1);
-//        auto currShape = someImage->getSize();
-
-//        std::cout << "Dimensions info (current): " << currShape[1] << ", " << currShape[0] << std::endl;
-//        std::cout << "Dimensions info (lowest): " << input->getHeight() << ", " << input->getWidth() << std::endl;
-//        std::cout << "Dimensions info (WSI): " << m_image->getFullHeight() << ", " << m_image->getFullWidth() << std::endl;
-
-//        // TODO: should store the corresponding model config files that contain all the information relevant for rendering
-//        //  and interaction with the software, e.g. number of classes, class names, class colors, etc...
-
-//        //someImage->setSpacing((float)m_image->getFullHeight() / (float)input->getHeight(), (float)m_image->getFullWidth() / (float)input->getWidth(), 1.0f);
-//        someImage->setSpacing((float)image_object->getFullHeight() / (float)currShape[1], (float)image_object->getFullWidth() / (float)currShape[0], 1.0f);
-
-//        auto someRenderer = SegmentationRenderer::New();
-//        someRenderer->setColor(1, Color(255.0f / 255.0f, 127.0f / 255.0f, 80.0f / 255.0f));
-//        someRenderer->setInputData(someImage);
-//        someRenderer->setOpacity(0.4f);
-//        someRenderer->update();
-
-//        std::string renderer_type = "SegmentationRenderer";
-
-//        this->_images[wsi_uid]->insert_renderer(wsi_uid, renderer_type, someRenderer);
     }
 
     std::shared_ptr<WholeSlideImage> Project::getImage(int i) {

@@ -74,9 +74,6 @@ namespace fast{
              * @param wsi_uid unique id of the WSI whose thumbnail should be saved.
              */
             void saveThumbnail(const std::string& wsi_uid);
-
-            void loadSegmentation(const std::string& wsi_uid, const std::string& segmentation_path);
-
        private:
             bool _temporary_dir_flag; /* Flag indicating if a project destination folder has been chosen by the user. */
             std::string _root_folder;  /* Location on disk where to save all data for the current project. */

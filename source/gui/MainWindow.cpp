@@ -814,18 +814,6 @@ void MainWindow::addModels() {
     }
 }
 
-void MainWindow::loadHighres(QString path, QString name) {
-
-}
-
-void MainWindow::loadHeatmap(QString tissuePath, QString name) {
-
-}
-
-void MainWindow::loadSegmentation(QString tissuePath, QString name) {
-
-}
-
 void MainWindow::runPipeline(std::string path)
 {
     auto progDialog = QProgressDialog(mWidget);
