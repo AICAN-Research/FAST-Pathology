@@ -443,10 +443,10 @@ namespace fast {
                 }
 
                 auto label = new QLabel();
-                label->setText("Colors:");
+                label->setText("Classes:");
                 layout->addWidget(label);
 
-                for(int i = 1; i < result.classNames.size(); ++i) {
+                for(int i = 1; i < result.classNames.size(); ++i) { // Assuming first class is background here
                     auto className = result.classNames[i];
                     auto button = new QPushButton();
                     button->setStyleSheet("text-align: left; padding: 10%;");
@@ -515,6 +515,46 @@ namespace fast {
                         writeRendererAttributes(result);
                     });
                     layout->addWidget(checkbox);
+                }
+
+                auto label = new QLabel();
+                label->setText("Classes:");
+                layout->addWidget(label);
+
+                for(int i = 0; i < result.classNames.size(); ++i) {
+                    auto classLayout = new QHBoxLayout();
+                    layout->addLayout(classLayout);
+
+                    auto checkbox = new QCheckBox();
+                    checkbox->setChecked(!heatmapRenderer->getChannelHidden(i));
+                    classLayout->addWidget(checkbox);
+                    QObject::connect(checkbox, &QCheckBox::stateChanged, [=]() {
+                        heatmapRenderer->setChannelHidden(i, !checkbox->isChecked());
+                        writeRendererAttributes(result);
+                    });
+
+                    auto className = result.classNames[i];
+                    auto button = new QPushButton();
+                    button->setStyleSheet("text-align: left; padding: 10%;");
+                    button->setText(QString::fromStdString(className));
+                    QPixmap pixmap(64,64);
+                    Color color = heatmapRenderer->getChannelColor(i);
+                    pixmap.fill(QColor(color.getRedValue()*255, color.getGreenValue()*255, color.getBlueValue()*255));
+                    button->setIcon(QIcon(pixmap));
+                    classLayout->addWidget(button);
+
+                    auto colorDialog = new QColorDialog();
+                    colorDialog->setOption(QColorDialog::DontUseNativeDialog, true);
+
+                    QObject::connect(button, &QPushButton::clicked, colorDialog, &QColorDialog::show);
+                    QObject::connect(colorDialog, &QColorDialog::colorSelected, [i, button, heatmapRenderer, result, this](QColor color) {
+                        QPixmap pixmap(64,64);
+                        pixmap.fill(color);
+                        button->setIcon(QIcon(pixmap));
+                        heatmapRenderer->setChannelColor(i, Color(color.red()/255.0f, color.green()/255.0f, color.blue()/255.0f));
+                        // TODO need a way to write arbitrary colors.. to attributes format.
+                        //writeRendererAttributes(result);
+                    });
                 }
             }
         }
