@@ -441,6 +441,35 @@ namespace fast {
                     });
                     layout->addWidget(slider);
                 }
+
+                auto label = new QLabel();
+                label->setText("Colors:");
+                layout->addWidget(label);
+
+                for(int i = 1; i < result.classNames.size(); ++i) {
+                    auto className = result.classNames[i];
+                    auto button = new QPushButton();
+                    button->setStyleSheet("text-align: left; padding: 10%;");
+                    button->setText(QString::fromStdString(className));
+                    QPixmap pixmap(64,64);
+                    Color color = segRenderer->getColor(i);
+                    pixmap.fill(QColor(color.getRedValue()*255, color.getGreenValue()*255, color.getBlueValue()*255));
+                    button->setIcon(QIcon(pixmap));
+                    layout->addWidget(button);
+
+                    auto colorDialog = new QColorDialog();
+                    colorDialog->setOption(QColorDialog::DontUseNativeDialog, true);
+
+                    QObject::connect(button, &QPushButton::clicked, colorDialog, &QColorDialog::show);
+                    QObject::connect(colorDialog, &QColorDialog::colorSelected, [i, button, segRenderer, result, this](QColor color) {
+                        QPixmap pixmap(64,64);
+                        pixmap.fill(color);
+                        button->setIcon(QIcon(pixmap));
+                        segRenderer->setColor(i, Color(color.red()/255.0f, color.green()/255.0f, color.blue()/255.0f));
+                        // TODO need a way to write arbitrary colors.. to attributes format.
+                        //writeRendererAttributes(result);
+                    });
+                }
             } else if(rendererType == "HeatmapRenderer") {
                 auto heatmapRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(renderer);
 

@@ -229,12 +229,26 @@ namespace fast{
             }
 
             // TODO handle multiple renderes somehow
-            std::ofstream file(join(saveFolder, "attributes.txt"), std::iostream::out);
-            for(auto renderer : pipeline->getRenderers()) {
-                if(renderer->getNameOfClass() != "ImagePyramidRenderer")
-                    file << renderer->attributesToString();
+            {
+                std::ofstream file(join(saveFolder, "renderer.attributes.txt"), std::iostream::out);
+                for(auto renderer : pipeline->getRenderers()) {
+                    if(renderer->getNameOfClass() != "ImagePyramidRenderer")
+                        file << renderer->attributesToString();
+                }
+                file.close();
             }
-            file.close();
+            {
+                std::ofstream file(join(saveFolder, "pipeline.attributes.txt"), std::iostream::out);
+                try {
+                    file << pipeline->getPipelineAttribute("classes") << "\n";
+                } catch(Exception& e) {
+
+                }
+                /*for(auto attribute : pipeline->getPipelineAttributes()) {
+                    file << "Attribute " << attribute.first << " \"" << attribute.second << "\"\n";
+                }*/
+                file.close();
+            }
         }
     }
 
@@ -272,9 +286,9 @@ namespace fast{
                     }
                     if(renderer) {
                         // Read attributes from txt file
-                        std::ifstream file(join(folder, "attributes.txt"), std::iostream::in);
+                        std::ifstream file(join(folder, "renderer.attributes.txt"), std::iostream::in);
                         if(!file.is_open())
-                            throw Exception("Error reading " + join(folder, "attributes.txt"));
+                            throw Exception("Error reading " + join(folder, "renderer.attributes.txt"));
                         do {
                             std::string line;
                             std::getline(file, line);
@@ -297,7 +311,21 @@ namespace fast{
                             std::cout << "Set attribute " << name << " to " << attributeValues  << " for object " << renderer->getNameOfClass() << std::endl;
                         } while(!file.eof());
                         renderer->loadAttributes();
+
                         Result result;
+
+                        // Read pipeline attributes
+                        {
+                            std::ifstream file(join(folder, "pipeline.attributes.txt"), std::iostream::in);
+                            if(file.is_open()) {
+                                std::string line;
+                                std::getline(file, line);
+                                trim(line);
+                                std::cout << line << std::endl;
+                                result.classNames = split(line, ";");
+                            }
+                        }
+
                         result.WSI_uid = wsi_uid;
                         result.renderer = renderer;
                         result.name = dataName;

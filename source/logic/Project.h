@@ -21,6 +21,7 @@ namespace fast{
             std::string name;
             std::string pipelineName;
             std::string WSI_uid;
+            std::vector<std::string> classNames;
             std::shared_ptr<Renderer> renderer;
     };
 
