@@ -368,7 +368,7 @@ namespace fast {
             return;
         auto project = DataManager::GetInstance()->getCurrentProject();
         const std::string saveFolder = join(project->getRootFolder(), "results", result.WSI_uid, result.pipelineName, result.name);
-        std::ofstream file(join(saveFolder, "attributes.txt"), std::iostream::out);
+        std::ofstream file(join(saveFolder, "renderer.attributes.txt"), std::iostream::out);
         file << result.renderer->attributesToString();
         file.close();
     }
@@ -466,8 +466,7 @@ namespace fast {
                         pixmap.fill(color);
                         button->setIcon(QIcon(pixmap));
                         segRenderer->setColor(i, Color(color.red()/255.0f, color.green()/255.0f, color.blue()/255.0f));
-                        // TODO need a way to write arbitrary colors.. to attributes format.
-                        //writeRendererAttributes(result);
+                        writeRendererAttributes(result);
                     });
                 }
             } else if(rendererType == "HeatmapRenderer") {
@@ -552,8 +551,7 @@ namespace fast {
                         pixmap.fill(color);
                         button->setIcon(QIcon(pixmap));
                         heatmapRenderer->setChannelColor(i, Color(color.red()/255.0f, color.green()/255.0f, color.blue()/255.0f));
-                        // TODO need a way to write arbitrary colors.. to attributes format.
-                        //writeRendererAttributes(result);
+                        writeRendererAttributes(result);
                     });
                 }
             }
