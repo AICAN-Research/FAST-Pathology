@@ -25,14 +25,8 @@
 #include "source/logic/DataManager.h"
 #include "source/utils/utilities.h"
 #include "source/utils/qutilities.h"
-#include "source/gui/ViewTab/DynamicViewTabWidget.h"
 
 namespace fast {
-    class WholeSlideImageImporter;
-    class ImagePyramid;
-    class ImagePyramidRenderer;
-    class Renderer;
-    class SegmentationRenderer;
 
 class ViewWidget: public QWidget {
 Q_OBJECT
@@ -58,17 +52,6 @@ protected:
      */
     void setupConnections();
 
-    /**
-     * @brief createDynamicViewWidget
-     * @param someName
-     * @param modelName
-     */
-    void createDynamicViewWidget(std::string someName, std::string modelName);
-
-    bool hideChannel(const std::string& name);
-    void toggleRenderer(std::string someName);
-    bool opacityRenderer(int value, const std::string& name);
-
     void writeRendererAttributes(Result result);
 
 private:
@@ -76,14 +59,6 @@ private:
     QStackedLayout* _stacked_layout; /* ? */
     QWidget* _stacked_widget; /* ? */
     QComboBox* _page_combobox; /* ? */
-    std::map<std::string, DynamicViewTabWidget*> _dynamic_widget_list; /* */
-
-public slots:
-    void processTriggerUpdate(std::string process_name);
-    void deleteViewObjectReceived(std::string uid);
-
-signals:
-    void removeRendererFromViewRequested(const std::string&);
 };
 
 }
