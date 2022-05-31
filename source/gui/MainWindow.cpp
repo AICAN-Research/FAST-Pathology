@@ -422,19 +422,22 @@ void clearLayout(QLayout *layout) {
 
 void MainWindow::changeWSIDisplayReceived(std::string uid_name, bool state)
 {
-    removeAllRenderers();
+    auto view = getView(0);
+    view->removeAllRenderers();
     if(state) {
         auto img = DataManager::GetInstance()->getCurrentProject()->getImage(uid_name);
-        img->load_renderer();
-        getView(0)->addRenderer(img->get_renderer("WSI"));
         DataManager::GetInstance()->setVisibleImageName(uid_name);
+
+        auto renderer = ImagePyramidRenderer::create()
+            ->connect(img->get_image_pyramid());
+        view->addRenderer(renderer);
+
+        DataManager::GetInstance()->getCurrentProject()->loadResults(uid_name, view);
     }
     else
     {
-        DataManager::GetInstance()->getCurrentProject()->getImage(uid_name)->unload_renderer();
         DataManager::GetInstance()->setVisibleImageName("");
     }
-    getView(0)->reinitialize(); // Must call this after removing all renderers
 
     // update application name to contain current WSI
     if (advancedMode) {

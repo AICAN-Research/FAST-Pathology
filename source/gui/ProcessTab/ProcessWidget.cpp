@@ -12,9 +12,6 @@
 #include <QThread>
 #include <FAST/Visualization/View.hpp>
 #include <FAST/Importers/WholeSlideImageImporter.hpp>
-#include <FAST/Visualization/ImagePyramidRenderer/ImagePyramidRenderer.hpp>
-#include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
-#include <FAST/Visualization/HeatmapRenderer/HeatmapRenderer.hpp>
 
 #include <FAST/Visualization/ComputationThread.hpp>
 #include "source/logic/WholeSlideImage.h"
@@ -224,7 +221,14 @@ namespace fast {
         try {
             std::cout << "parsing" << std::endl;
             if(!WSI) {
-                WSI = DataManager::GetInstance()->get_visible_image()->get_image_pyramid();
+                auto uids = m_mainWindow->getCurrentProject()->getAllWsiUids();
+                auto currentUID = DataManager::GetInstance()->getVisibleImageName();
+                for(int i = 0; i < uids.size(); ++i) {
+                    if(uids[i] == currentUID) {
+                        m_currentWSI = i;
+                    }
+                }
+                WSI = m_mainWindow->getCurrentProject()->getImage(currentUID)->get_image_pyramid();
             }
             m_runningPipeline->parse({{"WSI", WSI}});
             std::cout << "OK" << std::endl;
@@ -248,7 +252,8 @@ namespace fast {
     void ProcessWidget::batchProcessPipeline(std::string pipelineFilename) {
         m_currentWSI = 0;
         m_batchProcesessing = true;
-        processPipeline(m_runningPipeline->getFilename(), m_mainWindow->getCurrentProject()->getImage(m_currentWSI)->get_image_pyramid());
+        auto uid = m_mainWindow->getCurrentProject()->getAllWsiUids()[m_currentWSI];
+        processPipeline(m_runningPipeline->getFilename(), m_mainWindow->getCurrentProject()->getImage(uid)->get_image_pyramid());
     }
 
     void ProcessWidget::selectWSI(std::shared_ptr<ImagePyramid> WSI) {
@@ -266,59 +271,7 @@ namespace fast {
     }
 
     void ProcessWidget::loadResults(int i) {
-        /*
-        selectWSI(i);
-        auto view = m_view;
-        // Load any results for current WSI
-        const std::string saveFolder = join(_cwd, "results", m_WSIs[m_currentWSI].first);
-        for(auto pipelineName : getDirectoryList(saveFolder, false, true)) {
-            const std::string folder = join(saveFolder, pipelineName);
-            for(auto filename : getDirectoryList(folder, true, false)) {
-                const std::string path = join(folder, filename);
-                const std::string extension = filename.substr(filename.rfind('.'));
-                Renderer::pointer renderer;
-                if(extension == ".tiff") {
-                    auto importer = TIFFImagePyramidImporter::create(path);
-                    renderer = SegmentationRenderer::create()->connect(importer);
-                } else if(extension == ".mhd") {
-                    auto importer = MetaImageImporter::create(path);
-                    renderer = SegmentationRenderer::create()->connect(importer);
-                } else if(extension == ".hdf5") {
-                    auto importer = HDF5TensorImporter::create(path);
-                    renderer = HeatmapRenderer::create()->connect(importer);
-                }
-                if(renderer) {
-                    // Read attributes from txt file
-                    std::ifstream file(join(folder, "attributes.txt"), std::iostream::in);
-                    if(!file.is_open())
-                        throw Exception("Error reading " + join(folder, "attributes.txt"));
-                    do {
-                        std::string line;
-                        std::getline(file, line);
-                        trim(line);
-                        std::cout << line << std::endl;
 
-                        std::vector<std::string> tokens = split(line);
-                        if(tokens[0] != "Attribute")
-                            break;
-
-                        if(tokens.size() < 3)
-                            throw Exception("Expecting at least 3 items on attribute line when parsing object " + renderer->getNameOfClass() + " but got " + line);
-
-                        std::string name = tokens[1];
-
-                        std::shared_ptr<Attribute> attribute = renderer->getAttribute(name);
-                        std::string attributeValues = line.substr(line.find(name) + name.size());
-                        trim(attributeValues);
-                        attribute->parseInput(attributeValues);
-                        std::cout << "Set attribute " << name << " to " << attributeValues  << " for object " << renderer->getNameOfClass() << std::endl;
-                    } while(!file.eof());
-                    renderer->loadAttributes();
-                    view->addRenderer(renderer);
-                }
-            }
-        }
-         */
     }
 
     void ProcessWidget::deletePipelineReceived(QString pipeline_uid)

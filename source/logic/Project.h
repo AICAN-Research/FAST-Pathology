@@ -43,6 +43,8 @@ namespace fast{
              */
             void saveResult(const std::string& wsi_uid, const std::string& current_renderer_type);
 
+            void loadResults(const std::string& wsi_uid, View* view);
+
             /**
              * @brief includeImage Include image to the current project.
              * @param image_filepath Disk location of the WSI to include.
