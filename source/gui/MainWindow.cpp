@@ -177,11 +177,8 @@ void MainWindow::setupConnections()
     QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::newAppTitle, this, &MainWindow::updateAppTitleReceived);
     // @TODO. The drag and drop can be about anything? Images, models, pipelines, etc...?
     QObject::connect(mWidget, &WindowWidget::filesDropped, this->_side_panel_widget, &MainSidePanelWidget::filesDropped);
-    QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::addRendererToViewRequested, this, &MainWindow::addRendererToViewReceived);
-    QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::removeRendererFromViewRequested, this, &MainWindow::removeRendererFromViewReceived);
     QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::changeWSIDisplayTriggered, this, &MainWindow::changeWSIDisplayReceived);
     QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::resetDisplay, this, &MainWindow::resetDisplay);
-    QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::runPipelineEmitted, this, &MainWindow::runPipelineReceived);
 
     // Main menu actions
     QObject::connect(this->_file_menu_create_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::createProjectTriggered);
@@ -307,7 +304,6 @@ void MainWindow::createMenubar()
     projectMenu->addAction(this->_project_menu_open_project_action);
     this->_project_menu_save_project_action = new QAction("Save Project");
     projectMenu->addAction(this->_project_menu_save_project_action);
-    projectMenu->addAction("Run for project", this, &MainWindow::runForProject);
 
     // Edit tab
     auto editMenu = topFiller->addMenu(tr("&Edit"));
@@ -372,7 +368,7 @@ void MainWindow::reset()
 
         switch (ret) {
             case QMessageBox::Yes:
-                removeAllRenderers();
+                getView(0)->removeAllRenderers();
                 this->_side_panel_widget->resetInterface();
                 break;
             case QMessageBox::No:
@@ -398,7 +394,6 @@ void MainWindow::loadPipelines() {
     foreach(QString currentFpl, pipelines) {
         //runPipelineMenu->addAction(QString::fromStdString(splitCustom(currentFpl.toStdString(), ".")[0]), this, &MainWindow::lowresSegmenter);
         auto currentAction = runPipelineMenu->addAction(currentFpl); //QString::fromStdString(splitCustom(splitCustom(currentFpl.toStdString(), "/")[-1], ".")[0]));
-        QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, cwd + "data/Pipelines/" + currentFpl.toStdString()));
 
         //auto currentAction = runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]));
         //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, someFile));
@@ -454,177 +449,6 @@ void MainWindow::changeWSIDisplayReceived(std::string uid_name, bool state)
 
     // to render straight away (avoid waiting on all WSIs to be handled before rendering)
     QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-
-    // Legacy to remove
-    wsiFormat = metadata["openslide.vendor"]; // get WSI format
-}
-
-void MainWindow::updateChannelValue(int index) {
-    channel_value = (uint) index;
-}
-
-void MainWindow::runForProject() {
-
-	auto projectLayout = new QVBoxLayout;
-	auto projectDialog = new QDialog(mWidget);
-	projectDialog->setWindowTitle("Run for project");
-
-	auto applyButton = new QPushButton(projectDialog);
-	applyButton->setText("Apply");
-	applyButton->setFixedWidth(100);
-	applyButton->setFixedHeight(35);
-	applyButton->setStyleSheet("color: white; background-color: blue");
-
-	auto cancelButton = new QPushButton(projectDialog);
-	cancelButton->setText("Cancel");
-	cancelButton->setFixedWidth(100);
-	cancelButton->setStyleSheet("color: white; background-color: red");
-	cancelButton->setFixedHeight(35);
-
-	auto enableToggle = new QPushButton(projectDialog);
-	//enableToggle->setCheckable(true);
-	if (m_runForProject) {
-		enableToggle->setText("Enabled");
-		//enableToggle->setChecked(true);
-	} else {
-		enableToggle->setText("Disabled");
-		//enableToggle->setChecked(false);
-	}
-	enableToggle->setFixedWidth(100);
-	enableToggle->setStyleSheet("color: white; background-color: gray");
-	enableToggle->setFixedHeight(35);
-
-	auto topButtonsLayout = new QHBoxLayout;
-	topButtonsLayout->setAlignment(Qt::AlignLeft);
-	topButtonsLayout->addWidget(applyButton);
-	topButtonsLayout->addWidget(cancelButton);
-	topButtonsLayout->addWidget(enableToggle);
-
-	auto topButtonsWidget = new QWidget(projectDialog);
-	topButtonsWidget->setLayout(topButtonsLayout);
-
-	// start dialog asking which WSIs to use which exists in the current Project
-	projectDialog->setLayout(projectLayout);
-
-	projectLayout->addWidget(topButtonsWidget);
-
-	auto wsiDialogLayout = new QHBoxLayout;
-	auto wsiDialog = new QWidget(projectDialog);
-	projectLayout->addWidget(wsiDialog);
-	wsiDialog->setLayout(wsiDialogLayout);
-
-	auto allFilesWidget = new QListWidget(projectDialog);
-	allFilesWidget->setSelectionMode(QAbstractItemView::MultiSelection);
-//	for (const auto& item : wsiList) {
-//		allFilesWidget->addItem(QString::fromStdString(item));
-//	}
-	allFilesWidget->setMinimumWidth(allFilesWidget->sizeHintForColumn(0));
-
-	auto buttonsWidget = new QWidget(projectDialog);
-	auto buttonsLayout = new QVBoxLayout;
-	buttonsWidget->setLayout(buttonsLayout);
-	buttonsLayout->setAlignment(Qt::AlignVCenter);
-
-	auto fewRemoveButton = new QPushButton(projectDialog);
-	fewRemoveButton->setText(" < ");  // make it bold (style stuff)
-
-	auto allRemoveButton = new QPushButton(projectDialog);
-	allRemoveButton->setText(" << ");  // make it bold
-
-	auto fewSelectButton = new QPushButton(projectDialog);
-	fewSelectButton->setText(" > ");  // make it bold (style stuff)
-
-	auto allSelectButton = new QPushButton(projectDialog);
-	allSelectButton->setText(" >> ");  // make it bold
-
-	buttonsLayout->addWidget(fewSelectButton);
-	buttonsLayout->addWidget(allSelectButton);
-	buttonsLayout->addWidget(allRemoveButton);
-	buttonsLayout->addWidget(fewRemoveButton);
-
-	auto selectedFilesWidget = new QListWidget(projectDialog);
-	selectedFilesWidget->setSelectionMode(QAbstractItemView::MultiSelection);
-	for (const auto& item : m_runForProjectWsis) {
-		selectedFilesWidget->addItem(QString::fromStdString(item));
-	}
-	selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
-
-	wsiDialogLayout->addWidget(allFilesWidget);
-	wsiDialogLayout->addWidget(buttonsWidget);
-	wsiDialogLayout->addWidget(selectedFilesWidget);
-
-	// introduce events -> signals and slots, connect and stuff
-	QObject::connect(allSelectButton, &QPushButton::clicked, [=]() {
-		selectedFilesWidget->clear();
-//		for (const auto& item : wsiList) {
-//			selectedFilesWidget->addItem(QString::fromStdString(item));
-//		}
-		selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
-	});
-
-	QObject::connect(fewSelectButton, &QPushButton::clicked, [=]() {
-		std::cout << "few select button was pressed" << std::endl;
-		auto currSelectedItems = allFilesWidget->selectedItems();
-
-		std::vector<std::string> currItemsAlreadySelected;
-		for (int row = 0; row < selectedFilesWidget->count(); row++) {
-			currItemsAlreadySelected.push_back(selectedFilesWidget->item(row)->text().toStdString());
-		}
-
-		for (const auto& currItem : currSelectedItems) {
-			std::cout << "current item: " << currItem->text().toStdString() << std::endl;
-			if (std::find(currItemsAlreadySelected.begin(), currItemsAlreadySelected.end(), currItem->text().toStdString()) != currItemsAlreadySelected.end()) {
-				1;
-			} else {
-				selectedFilesWidget->addItem(currItem->text());
-			}
-		}
-		// adjust Widget
-		selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
-	});
-
-	QObject::connect(allRemoveButton, &QPushButton::clicked, [=]() {
-		selectedFilesWidget->clear();
-		selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
-	});
-
-	QObject::connect(fewRemoveButton, &QPushButton::clicked, [=]() {
-		auto currSelectedItems = selectedFilesWidget->selectedItems();
-
-		for (const auto& currItem : currSelectedItems) {
-			delete selectedFilesWidget->takeItem(selectedFilesWidget->row(currItem));
-		}
-
-		selectedFilesWidget->setMinimumWidth(selectedFilesWidget->sizeHintForColumn(0));
-	});
-
-	QObject::connect(cancelButton, &QPushButton::clicked, [=]() {
-		std::cout << "Cancel was clicked." << std::endl;
-		projectDialog->close();
-	});
-
-	QObject::connect(applyButton, &QPushButton::clicked, [=]() {
-		std::cout << "Apply was clicked." << std::endl;
-		m_runForProjectWsis.clear();
-		for (int row = 0; row < selectedFilesWidget->count(); row++) {
-			m_runForProjectWsis.push_back(selectedFilesWidget->item(row)->text().toStdString());
-		}
-		projectDialog->accept();
-	});
-
-	QObject::connect(enableToggle, &QPushButton::clicked, [=]() {
-		m_runForProject = !m_runForProject;
-		if (m_runForProject) {
-			enableToggle->setText("Enabled");
-			enableToggle->setChecked(true);
-		}
-		else {
-			enableToggle->setText("Disabled");
-			enableToggle->setChecked(false);
-		}
-		std::cout << "Run for project was " << enableToggle->text().toStdString() << std::endl;
-	});
-	projectDialog->exec();
 }
 
 void MainWindow::addPipelines() {
@@ -658,7 +482,6 @@ void MainWindow::addPipelines() {
         //runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]), this, &MainWindow::runPipeline);
         //auto currentAction = new QAction(QString::fromStdString(splitCustom(someFile, ".")[0]));
         auto currentAction = runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]));
-        QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, someFile));
 
         //auto currentAction = runPipelineMenu->addAction(currentFpl); //QString::fromStdString(splitCustom(splitCustom(currentFpl.toStdString(), "/")[-1], ".")[0]));
         //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, cwd + "data/Pipelines/" + currentFpl.toStdString()));
@@ -719,15 +542,8 @@ void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
                 }
             }
 
-            // when models are added, ProcessWidget should be updated by adding the new widget to ProcessWidget layout
-            // current model
-            modelName = fileNameNoFormat;
-
-            // get metadata of current model
-            std::map<std::string, std::string> currMetadata = getModelMetadata(modelName);
-
             auto someButton = new QPushButton(mWidget);
-            someButton->setText(QString::fromStdString(currMetadata["task"]));
+            //someButton->setText(QString::fromStdString(currMetadata["task"]));
             //predGradeButton->setFixedWidth(200);
             someButton->setFixedHeight(50);
 //            QObject::connect(someButton, &QPushButton::clicked,
@@ -800,12 +616,7 @@ void MainWindow::addModels() {
             }
         }
 
-        // when models are added, ProcessWidget should be updated by adding the new widget to ProcessWidget layout
-        // current model
-        modelName = fileNameNoFormat;
-
         // get metadata of current model
-        std::map<std::string, std::string> metadata = getModelMetadata(modelName);
 
         auto someButton = new QPushButton(mWidget);
         someButton->setText(QString::fromStdString(metadata["task"]));
@@ -821,147 +632,6 @@ void MainWindow::addModels() {
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 		counter++;
     }
-}
-
-void MainWindow::runPipeline(std::string path)
-{
-    auto progDialog = QProgressDialog(mWidget);
-    progDialog.setRange(0, 1);
-    progDialog.setVisible(true);
-    progDialog.setModal(false);
-    progDialog.setLabelText("Running pipeline across WSIs in project...");
-    progDialog.move(mWidget->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
-    progDialog.show();
-
-    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-
-    auto visible_wsi_uid = DataManager::GetInstance()->getVisibleImageName();
-    std::string dump_filepath = DataManager::GetInstance()->getCurrentProject()->getRootFolder() + "/results/" + visible_wsi_uid + "/";
-
-    // if folder does not exist, create one
-    if (!QDir(QString::fromStdString(dump_filepath)).exists())
-    {
-        QDir().mkdir(QString::fromStdString(dump_filepath));
-    }
-
-    // TODO: This now always saves result as TIFF, which is not correct. Need generic way of knowing which results that are exported and how to save these
-    dump_filepath = dump_filepath + visible_wsi_uid + ".tiff";
-
-    // TODO: Perhaps use corresponding .txt-file to feed arguments in the pipeline
-    // pipeline requires some user-defined inputs, e.g. which WSI to use (and which model?)
-    std::map<std::string, std::string> arguments;
-    arguments["filename"] = DataManager::GetInstance()->get_visible_image()->get_filename();
-    arguments["exportPath"] = dump_filepath;
-
-    // parse fpl-file, and run pipeline with corresponding input arguments
-    auto pipeline = Pipeline(path, arguments);
-    pipeline.parse();
-
-    // get and start running POs
-    for (auto&& po : pipeline.getProcessObjects()) {
-        if (po.second->getNrOfOutputPorts() == 0 && std::dynamic_pointer_cast<Renderer>(po.second) == nullptr) {
-            // Process object has no output ports, must add to window to make sure it is updated.
-            reportInfo() << "Process object " << po.first << " had no output ports defined in pipeline, therefore adding to window so it is updated." << reportEnd();
-            addProcessObject(po.second);
-        }
-    }
-
-    // load renderers, if any
-    for (const auto& renderer : pipeline.getRenderers()) {
-        auto currId = createRandomNumbers_(8);
-        std::cout<<"Insert renderer\n";
-//        insertRenderer("result_" + currId, renderer);
-//        createDynamicViewWidget("result_" + currId, "result_" + currId);
-    }
-
-    // to render straight away (avoid waiting on all WSIs to be handled before rendering)
-    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-}
-
-// Setting parameters for different methods
-std::map<std::string, std::string> MainWindow::setParameterDialog(std::map<std::string, std::string> modelMetadata, int *successFlag) {
-    QDialog paramDialog;
-    paramDialog.setStyleSheet(mWidget->styleSheet()); // transfer style sheet from parent
-    QFormLayout form(&paramDialog);
-    form.addRow(new QLabel("Please, set the parameters for this analysis: "));
-
-    std::cout << "Before update: " << std::endl;
-    for (const auto &[k, v] : modelMetadata)
-        std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
-
-    QList<QLineEdit *> fields;
-    for (auto const& [key, val] : modelMetadata) {
-        std::cout << key << ":" << val << std::endl;
-        auto lineEdit = new QLineEdit(&paramDialog);
-        lineEdit->setText(QString::fromStdString(val));
-        QString label = QString::fromStdString(key); //QString::fromStdString(val).arg(QString::fromStdString(key));
-        form.addRow(label, lineEdit);
-
-        fields << lineEdit;
-    }
-
-    // Add some standard buttons (Cancel/Ok) at the bottom of the dialog
-    QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
-            Qt::Horizontal, &paramDialog);
-    buttonBox.button(QDialogButtonBox::Ok)->setText("Run");
-    form.addRow(&buttonBox);
-    QObject::connect(&buttonBox, SIGNAL(accepted()), &paramDialog, SLOT(accept()));
-    QObject::connect(&buttonBox, SIGNAL(rejected()), &paramDialog, SLOT(reject()));
-
-    // Show the dialog as modal
-    int ret = paramDialog.exec();
-	*successFlag = ret;
-    std::cout << "Ret value: " << ret << std::endl;
-	switch (ret) {
-	case 1: //QMessageBox::Ok:
-		std::cout << "OK was pressed: " << std::endl;
-		for (auto const&[key, val] : modelMetadata) {
-			modelMetadata[key] = fields.takeFirst()->text().toStdString(); //fields.takeAt(cnt)->text().toStdString();
-		}
-	case 0: //QMessageBox::Cancel:
-		std::cout << "CANCEL was pressed: " << std::endl;
-		stopFlag = true;
-	default:
-		std::cout << "Default..." << std::endl;
-	}
-
-    std::cout << "After update: " << std::endl;
-    for (const auto &[k, v] : modelMetadata)
-        std::cout << "m[" << k << "] = (" << v << ") " << std::endl;
-
-    return modelMetadata;
-}
-
-std::map<std::string, std::string> MainWindow::getModelMetadata(std::string modelName) {
-    // parse corresponding txt file for relevant information regarding model
-    std::ifstream infile(cwd + "data/Models/" + modelName + ".txt");
-    std::string key, value, str;
-    std::string delimiter = ":";
-    std::map<std::string, std::string> metadata;
-    while (std::getline(infile, str))
-    {
-        vector<string> v = split (str, delimiter);
-        //key = v[0];
-        //value = v[1];
-        //metadata[key] = value;
-        metadata.emplace(std::move(v[0]), std::move(v[1]));
-    }
-    return metadata;
-}
-
-std::vector<std::vector<Vector2f> > MainWindow::getAnchorMetadata(std::string anchorFileName) {
-    std::ifstream infile(cwd + "data/Anchors/" + anchorFileName + ".txt");
-    std::string key, value, str;
-    std::string delimiter = ":";
-    std::vector<std::vector<Vector2f> > currMetadata;
-    while (std::getline(infile, str))
-    {
-        vector<string> v = split (str, delimiter);
-        key = v[0];
-        value = v[1];
-        //currMetadata[key] = value;
-    }
-    return currMetadata;
 }
 
 // for string delimiter
@@ -980,140 +650,9 @@ std::vector<std::string> MainWindow::splitCustom(const std::string& s, const std
     return res;
 }
 
-bool MainWindow::toggleRenderer(std::string name) {
-	std::cout << "Current name: " << name << std::endl;
-    if (!hasRenderer(name)) {
-        return false;
-    } else {
-        auto someRenderer = getRenderer(name);
-        someRenderer->setDisabled(!someRenderer->isDisabled());
-        return true;
-    }
-}
-
-bool MainWindow::hideTissueMask(bool flag) {
-    if (!hasRenderer("tissue")){
-        return false;
-    }else {
-        auto segRenderer = getRenderer("tissue");
-        segRenderer->setDisabled(flag);
-        return true;
-    }
-}
-
-bool MainWindow::hideChannel(const std::string& name) {
-    if (m_rendererTypeList[name] != "HeatmapRenderer") {
-        return false;
-    }
-    if (!hasRenderer(name)) {
-        return false;
-    }else{
-        background_flag = !background_flag;
-        auto someRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(getRenderer(name));
-        someRenderer->setChannelHidden(channel_value, background_flag);
-        return true;
-    }
-}
-
-void MainWindow::deleteViewObject(std::string name) {
-	if (m_rendererList.count(name) == 0)
-		return;
-    // need to remove from QComboBox, remove from renderer, remove potential saved results in project (need to check
-    // if project is made first), and in the end, need to update ViewWidget
-    //
-
-	std::cout << "Current renderer: " << name << " , " << m_rendererList[name] << std::endl;
-
-	//view->removeRenderer(m_rendererList[name]); //->resetRenderers();
-
-	auto someRenderer = m_rendererList[name];
-	getView(0)->removeRenderer(someRenderer);
-	for (auto const&[key, val] : m_rendererList) {
-		std::cout << "before: " << key << ": " << val << std::endl;
-	}
-	m_rendererList.erase(name);
-	pageComboBox->removeItem(pageComboBox->findData(QString::fromStdString(name))); //pageComboBox->currentIndex());
-
-	for (auto const& [key, val] : m_rendererList) {
-		std::cout << "after: " << key << ": " << val << std::endl;
-	}
-
-	// need to update QComboBox as an element has been removed, to still keep the renderers mapped by index without any holes
-	pageComboBox->clear();
-
-	// then clear dynamic view widget layout, and add them again
-	clearLayout(stackedLayout);
-	for (auto const&[key, val] : m_rendererList) {
-		modelName = "";
-		if (modelNames.count(key) != 0) {
-			modelName = modelNames[key];
-		}
-//		createDynamicViewWidget(key, modelName);
-	}
-
-	// TODO: Should store QComboBox based on name, perhaps setTooltip instead, such that I dont need to think about indices.
-	//	 But this requires that all results have unique names. Perhaps introduce this "make random unique name" for every object
-	//	 that is rendered?
-
-	// perhaps need to handle case when there is only one element left in the renderer
-	std::cout << pageComboBox->count() << std::endl;
-	if (pageComboBox->count() == 1) {
-		pageComboBox->setCurrentIndex(0);
-	}
-	pageComboBox->update();
-}
-
-void MainWindow::insertRenderer(std::string name, std::shared_ptr<Renderer> renderer) {
-    std::cout << "calling insert renderer" << std::endl;
-    if (!hasRenderer(name)) {
-        // Doesn't exist
-        getView(0)->addRenderer(renderer);
-        m_rendererList[name] = renderer;
-        std::cout << "finished insert renderer" << std::endl;
-    }
-}
-
-void MainWindow::removeAllRenderers() {
-//    m_rendererList.clear();
-    getView(0)->removeAllRenderers();
-    getView(0)->stopPipeline();
-}
-
-bool MainWindow::hasRenderer(std::string name) {
-    return m_rendererList.count(name) > 0;
-}
-
-std::shared_ptr<Renderer> MainWindow::getRenderer(std::string name) {
-    if (!hasRenderer(name))
-        throw Exception("Renderer with name " + name + " does not exist");
-    return m_rendererList[name];
-}
-
 void MainWindow::resetDisplay(){
     getView(0)->removeAllRenderers();
     getView(0)->reinitialize();
-}
-
-void MainWindow::addRendererToViewReceived(const std::string& name)
-{
-    if(DataManager::GetInstance()->get_visible_image()->has_renderer(name))
-    {
-        std::cout << "Inserting renderer with uid: " << name << std::endl;
-        getView(0)->addRenderer(DataManager::GetInstance()->get_visible_image()->get_renderer(name));
-    }
-}
-
-void MainWindow::removeRendererFromViewReceived(const std::string& name)
-{
-    if(DataManager::GetInstance()->get_visible_image()->has_renderer(name))
-    {
-        std::cout << "Removing renderer with uid: " << name << std::endl;
-        getView(0)->removeRenderer(DataManager::GetInstance()->get_visible_image()->get_renderer(name));
-    }
-}
-
-void MainWindow::runPipelineReceived(QString pipeline_uid)
-{
 }
 
 std::shared_ptr<ComputationThread> MainWindow::getComputationThread() {
