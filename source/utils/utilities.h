@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <time.h>
 
 namespace fast {
     /**
@@ -16,6 +17,7 @@ namespace fast {
      * @return
      */
     static std::string createRandomNumbers_(int n) {
+        srand(time(NULL));
         std::string out;
         for (int i = 0; i < n; i++) {
             out.append(std::to_string(rand() % 10));

@@ -253,7 +253,7 @@ namespace fast {
         m_currentWSI = 0;
         m_batchProcesessing = true;
         auto uid = m_mainWindow->getCurrentProject()->getAllWsiUids()[m_currentWSI];
-        processPipeline(m_runningPipeline->getFilename(), m_mainWindow->getCurrentProject()->getImage(uid)->get_image_pyramid());
+        processPipeline(pipelineFilename, m_mainWindow->getCurrentProject()->getImage(uid)->get_image_pyramid());
     }
 
     void ProcessWidget::selectWSI(std::shared_ptr<ImagePyramid> WSI) {
