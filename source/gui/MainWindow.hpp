@@ -49,6 +49,7 @@ namespace fast {
     class Image;
     class Tensor;
     class View;
+    class ViewWidget;
 
 class MainWindow : public Window {
     FAST_OBJECT(MainWindow);
@@ -85,7 +86,6 @@ class MainWindow : public Window {
         QWidget *processWidget;
         QWidget *exportWidget;
         QWidget *statsWidget;
-        QWidget *viewWidget;
 //        QWidget *fileWidget;
         QWidget *menuWidget;
         QWidget *dynamicViewWidget;

@@ -1,13 +1,10 @@
-//
-// Created by dbouget on 02.11.2021.
-//
-
 #include "ViewWidget.h"
-
 #include <FAST/Importers/WholeSlideImageImporter.hpp>
 #include <FAST/Visualization/ImagePyramidRenderer/ImagePyramidRenderer.hpp>
 #include <FAST/Data/ImagePyramid.hpp>
 #include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
+#include <FAST/Visualization/HeatmapRenderer/HeatmapRenderer.hpp>
+#include <QCheckBox>
 
 namespace fast {
     ViewWidget::ViewWidget(QWidget *parent): QWidget(parent){
@@ -23,16 +20,6 @@ namespace fast {
     {
         this->_main_layout = new QVBoxLayout(this);
         this->_main_layout->setAlignment(Qt::AlignTop);
-        //this->_main_layout->setFixedWidth(200);
-
-        // ComboBox in view section to set which image object to change
-//        auto curr1PageWidget = new QWidget;
-//        auto curr2PageWidget = new QWidget;
-//        auto curr3PageWidget = new QWidget;
-//        auto curr4PageWidget = new QWidget;
-//        auto curr5PageWidget = new QWidget;
-
-//        auto wsiPageWidget = new QWidget;
 
         this->_stacked_layout = new QStackedLayout;
 
@@ -40,28 +27,25 @@ namespace fast {
         this->_stacked_widget->setLayout(this->_stacked_layout);
 
         this->_page_combobox = new QComboBox(this);
-        this->_page_combobox->setFixedWidth(150);
 
-        auto imageNameTexts = new QLabel(this);
-        imageNameTexts->setText("Image: ");
-        imageNameTexts->setFixedWidth(50);
-        auto smallTextBox_imageName = new QHBoxLayout;
-        smallTextBox_imageName->addWidget(imageNameTexts);
-        smallTextBox_imageName->addWidget(this->_page_combobox);
-        auto smallTextBoxWidget_imageName = new QWidget(this);
-        smallTextBoxWidget_imageName->setFixedHeight(50);
-        smallTextBoxWidget_imageName->setLayout(smallTextBox_imageName);
-
-        this->_main_layout->insertWidget(0, smallTextBoxWidget_imageName);
-        this->_main_layout->insertWidget(1, this->_stacked_widget);
-        this->setVisible(false);
-        this->hide();
+        _main_layout->addWidget(_page_combobox);
+        _main_layout->addWidget(_stacked_widget);
+        setVisible(false);
+        hide();
     }
 
     void ViewWidget::resetInterface()
     {
-        this->_dynamic_widget_list.clear();
         this->_page_combobox->clear();
+        // Clear stacked layout
+        auto layout = _stacked_layout;
+        QLayoutItem *item;
+        while((item = layout->takeAt(0))) {
+            if (item->widget())
+                delete item->widget();
+            delete item;
+        }
+        // end clear
         this->setVisible(false);
         this->hide();
     }
@@ -377,5 +361,134 @@ namespace fast {
 //            }
             return true;
         }
+    }
+
+    void ViewWidget::writeRendererAttributes(Result result) {
+        if(result.renderer->getNameOfClass() == "ImagePyramidRenderer")
+            return;
+        auto project = DataManager::GetInstance()->getCurrentProject();
+        const std::string saveFolder = join(project->getRootFolder(), "results", result.WSI_uid, result.pipelineName, result.name);
+        std::ofstream file(join(saveFolder, "attributes.txt"), std::iostream::out);
+        file << result.renderer->attributesToString();
+        file.close();
+    }
+
+    void ViewWidget::setResults(std::vector<Result> results) {
+        resetInterface();
+        // Create layout for all results
+        for(auto result : results) {
+            auto renderer = result.renderer;
+            auto page = new QWidget();
+            auto layout = new QVBoxLayout();
+            layout->setAlignment(Qt::AlignTop);
+            page->setLayout(layout);
+            _stacked_layout->addWidget(page);
+            _page_combobox->addItem(QString::fromStdString(result.pipelineName) + ": " + QString::fromStdString(result.name));
+
+            // Toggle renderer on and off
+            auto toggleButton = new QPushButton();
+            toggleButton->setText("Toggle");
+            layout->addWidget(toggleButton);
+            QObject::connect(toggleButton, &QPushButton::clicked, [renderer, result, this]() {
+                renderer->setDisabled(!renderer->isDisabled());
+                writeRendererAttributes(result);
+            });
+
+            auto rendererType = result.renderer->getNameOfClass();
+            if(rendererType == "SegmentationRenderer") { // TODO Move to separate methods
+                auto segRenderer = std::dynamic_pointer_cast<SegmentationRenderer>(renderer);
+
+                // Opacity
+                {
+                    auto label = new QLabel();
+                    label->setText("Opacity:");
+                    layout->addWidget(label);
+                    auto slider = new QSlider(Qt::Horizontal);
+                    slider->setRange(0, 100);
+                    slider->setValue(segRenderer->getOpacity()*100.0f);
+                    QObject::connect(slider, &QSlider::valueChanged, [segRenderer, result, this](int i) {
+                        segRenderer->setOpacity((float)i/100.0f, segRenderer->getBorderOpacity());
+                        writeRendererAttributes(result);
+                    });
+                    layout->addWidget(slider);
+                }
+
+                // Border opacity
+                {
+                    auto label = new QLabel();
+                    label->setText("Border opacity:");
+                    layout->addWidget(label);
+                    auto slider = new QSlider(Qt::Horizontal);
+                    slider->setRange(0, 100);
+                    slider->setValue(segRenderer->getBorderOpacity()*100.0f);
+                    QObject::connect(slider, &QSlider::valueChanged, [segRenderer, result, this](int i) {
+                        segRenderer->setBorderOpacity((float)i/100.0f);
+                        writeRendererAttributes(result);
+                    });
+                    layout->addWidget(slider);
+                }
+                // Border radius
+                {
+                    auto label = new QLabel();
+                    label->setText("Border radius:");
+                    layout->addWidget(label);
+                    auto slider = new QSlider(Qt::Horizontal);
+                    slider->setRange(1, 32);
+                    slider->setValue(segRenderer->getBorderRadius());
+                    QObject::connect(slider, &QSlider::valueChanged, [segRenderer, result, this](int i) {
+                        segRenderer->setBorderRadius(i);
+                        writeRendererAttributes(result);
+                    });
+                    layout->addWidget(slider);
+                }
+            } else if(rendererType == "HeatmapRenderer") {
+                auto heatmapRenderer = std::dynamic_pointer_cast<HeatmapRenderer>(renderer);
+
+                // Max opacity
+                {
+                    auto label = new QLabel();
+                    label->setText("Maximum Opacity:");
+                    layout->addWidget(label);
+                    auto slider = new QSlider(Qt::Horizontal);
+                    slider->setRange(0, 100);
+                    slider->setValue(heatmapRenderer->getMaxOpacity()*100.f);
+                    QObject::connect(slider, &QSlider::valueChanged, [heatmapRenderer, result, this](int i) {
+                        heatmapRenderer->setMaxOpacity((float)i/100.0f);
+                        writeRendererAttributes(result);
+                    });
+                    layout->addWidget(slider);
+                }
+
+                // Min confidence
+                {
+                    auto label = new QLabel();
+                    label->setText("Minimum Confidence:");
+                    layout->addWidget(label);
+                    auto slider = new QSlider(Qt::Horizontal);
+                    slider->setRange(0, 100);
+                    slider->setValue(heatmapRenderer->getMinConfidence()*100.0f);
+                    QObject::connect(slider, &QSlider::valueChanged, [heatmapRenderer, result, this](int i) {
+                        heatmapRenderer->setMinConfidence((float)i/100.0f);
+                        writeRendererAttributes(result);
+                    });
+                    layout->addWidget(slider);
+                }
+
+                // Interpolation
+                {
+                    auto label = new QLabel();
+                    label->setText("Interpolation:");
+                    layout->addWidget(label);
+                    auto checkbox = new QCheckBox();
+                    checkbox->setChecked(heatmapRenderer->getInterpolation());
+                    QObject::connect(checkbox, &QCheckBox::stateChanged, [heatmapRenderer, result, this](int i) {
+                        heatmapRenderer->setInterpolation(!heatmapRenderer->getInterpolation());
+                        writeRendererAttributes(result);
+                    });
+                    layout->addWidget(checkbox);
+                }
+            }
+        }
+        _page_combobox->adjustSize();
     }
 } // End of namespace fast

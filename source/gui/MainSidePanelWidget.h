@@ -22,7 +22,7 @@ namespace fast{
          * Set the interface in its default state.
          */
         void resetInterface();
-
+        ViewWidget* getViewWidget();
     protected:
         void setUpInterface();
         /**

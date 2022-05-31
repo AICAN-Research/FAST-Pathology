@@ -246,11 +246,12 @@ namespace fast{
         return it->second;
     }
 
-    void Project::loadResults(const std::string &wsi_uid, View *view) {
+    std::vector<Result> Project::loadResults(const std::string &wsi_uid) {
+        std::vector<Result> results;
         // Load any results for current WSI
         const std::string saveFolder = join(_root_folder, "results", wsi_uid);
         if(!isDir(saveFolder))
-            return;
+            return {};
         for(auto pipelineName : getDirectoryList(saveFolder, false, true)) {
             const std::string folder = join(saveFolder, pipelineName);
             for(auto dataName : getDirectoryList(folder, false, true)) {
@@ -296,10 +297,16 @@ namespace fast{
                             std::cout << "Set attribute " << name << " to " << attributeValues  << " for object " << renderer->getNameOfClass() << std::endl;
                         } while(!file.eof());
                         renderer->loadAttributes();
-                        view->addRenderer(renderer);
+                        Result result;
+                        result.WSI_uid = wsi_uid;
+                        result.renderer = renderer;
+                        result.name = dataName;
+                        result.pipelineName = pipelineName;
+                        results.push_back(result);
                     }
                 }
             }
         }
+        return results;
     }
 } // End of namespace fast

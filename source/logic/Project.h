@@ -16,6 +16,14 @@ namespace fast{
     class DataObject;
     class Pipeline;
 
+    class Result {
+        public:
+            std::string name;
+            std::string pipelineName;
+            std::string WSI_uid;
+            std::shared_ptr<Renderer> renderer;
+    };
+
     class Project {
         public:
             Project();
@@ -43,7 +51,7 @@ namespace fast{
              */
             void saveResult(const std::string& wsi_uid, const std::string& current_renderer_type);
 
-            void loadResults(const std::string& wsi_uid, View* view);
+            std::vector<Result> loadResults(const std::string& wsi_uid);
 
             /**
              * @brief includeImage Include image to the current project.

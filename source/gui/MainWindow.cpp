@@ -432,7 +432,13 @@ void MainWindow::changeWSIDisplayReceived(std::string uid_name, bool state)
             ->connect(img->get_image_pyramid());
         view->addRenderer(renderer);
 
-        DataManager::GetInstance()->getCurrentProject()->loadResults(uid_name, view);
+        auto results = DataManager::GetInstance()->getCurrentProject()->loadResults(uid_name);
+        if(!results.empty()) {
+            for(auto result : results) {
+                view->addRenderer(result.renderer);
+            }
+            _side_panel_widget->getViewWidget()->setResults(results);
+        }
     }
     else
     {

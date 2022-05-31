@@ -1,9 +1,4 @@
-//
-// Created by dbouget on 02.11.2021.
-//
-
-#ifndef FASTPATHOLOGY_VIEWWIDGET_H
-#define FASTPATHOLOGY_VIEWWIDGET_H
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -50,6 +45,8 @@ public:
      */
     void resetInterface();
 
+    void setResults(std::vector<Result> results);
+
 protected:
     /**
      * Define the interface for the current global widget.
@@ -72,6 +69,8 @@ protected:
     void toggleRenderer(std::string someName);
     bool opacityRenderer(int value, const std::string& name);
 
+    void writeRendererAttributes(Result result);
+
 private:
     QVBoxLayout* _main_layout; /* Principal layout holder for the current custom QWidget */
     QStackedLayout* _stacked_layout; /* ? */
@@ -88,4 +87,3 @@ signals:
 };
 
 }
-#endif //FASTPATHOLOGY_VIEWWIDGET_H

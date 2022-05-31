@@ -94,7 +94,7 @@ namespace fast{
 
         auto actionGroup = new QActionGroup(tb);
 
-        auto file_action = new QAction("Import", actionGroup);
+        auto file_action = new QAction("Project", actionGroup);
         file_action->setIcon(QIcon(openPix));
         file_action->setCheckable(true);
         file_action->setChecked(true);
@@ -109,7 +109,7 @@ namespace fast{
         mapper->setMapping(process_action, 1);
         mapper->connect(process_action, SIGNAL(triggered(bool)), SLOT(map()));
 
-        auto view_action = new QAction("View", actionGroup);
+        auto view_action = new QAction("Display", actionGroup);
         view_action->setIcon(QIcon(viewPix));
         view_action->setCheckable(true);
         tb->addAction(view_action);
@@ -246,5 +246,9 @@ namespace fast{
             default:
                 break;
         }
+    }
+
+    ViewWidget *MainSidePanelWidget::getViewWidget() {
+        return _view_widget;
     }
 }

@@ -223,6 +223,8 @@ namespace fast {
             if(!WSI) {
                 auto uids = m_mainWindow->getCurrentProject()->getAllWsiUids();
                 auto currentUID = DataManager::GetInstance()->getVisibleImageName();
+                if(currentUID.empty())
+                    return;
                 for(int i = 0; i < uids.size(); ++i) {
                     if(uids[i] == currentUID) {
                         m_currentWSI = i;
