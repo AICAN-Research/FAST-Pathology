@@ -90,7 +90,7 @@ private:
     bool m_procesessing = false;
     bool m_batchProcesessing = false;
     int m_currentWSI = 0;
-    std::unique_ptr<Pipeline> m_runningPipeline;
+    std::shared_ptr<Pipeline> m_runningPipeline;
     QProgressDialog* m_progressDialog;
     std::string _cwd; /* Holder for the main folder containing models? */
     MainWindow* m_mainWindow;

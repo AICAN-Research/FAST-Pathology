@@ -15,12 +15,7 @@
 #include <FAST/Visualization/ImagePyramidRenderer/ImagePyramidRenderer.hpp>
 #include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
 #include <FAST/Visualization/HeatmapRenderer/HeatmapRenderer.hpp>
-#include <FAST/Importers/TIFFImagePyramidImporter.hpp>
-#include <FAST/Exporters/TIFFImagePyramidExporter.hpp>
-#include <FAST/Importers/MetaImageImporter.hpp>
-#include <FAST/Exporters/MetaImageExporter.hpp>
-#include <FAST/Importers/HDF5TensorImporter.hpp>
-#include <FAST/Exporters/HDF5TensorExporter.hpp>
+
 #include <FAST/Visualization/ComputationThread.hpp>
 #include "source/logic/WholeSlideImage.h"
 #include "source/gui/MainWindow.hpp"
@@ -224,7 +219,7 @@ namespace fast {
 
         // Load pipeline and give it a WSI
         std::cout << "Loading pipeline in thread: " << std::this_thread::get_id() << std::endl;
-        m_runningPipeline = std::make_unique<Pipeline>(pipelinePath);
+        m_runningPipeline = std::make_shared<Pipeline>(pipelinePath);
         std::cout << "OK" << std::endl;
         try {
             std::cout << "parsing" << std::endl;
@@ -266,40 +261,8 @@ namespace fast {
     }
 
     void ProcessWidget::saveResults() {
-        /*
         auto pipelineData = m_runningPipeline->getAllPipelineOutputData();
-        for(auto data : pipelineData) {
-            const std::string dataTypeName = data.second->getNameOfClass();
-            const std::string saveFolder = join(this->_cwd, "results", m_WSIs[m_currentWSI].first, m_runningPipeline->getName());
-            createDirectories(saveFolder);
-            std::cout << "Saving " << dataTypeName << " data to " << saveFolder << std::endl;
-            if(dataTypeName == "ImagePyramid") {
-                const std::string saveFilename = join(saveFolder, data.first + ".tiff");
-                auto exporter = TIFFImagePyramidExporter::create(saveFilename)
-                        ->connect(data.second);
-                exporter->run();
-            } else if(dataTypeName == "Image") {
-                const std::string saveFilename = join(saveFolder, data.first + ".mhd");
-                auto exporter = MetaImageExporter::create(saveFilename)
-                        ->connect(data.second);
-                exporter->run();
-            } else if(dataTypeName == "Tensor") {
-                const std::string saveFilename = join(saveFolder, data.first + ".hdf5");
-                auto exporter = HDF5TensorExporter::create(saveFilename)
-                        ->connect(data.second);
-                exporter->run();
-            } else {
-                std::cout << "Unsupported data to export " << dataTypeName << std::endl;
-            }
-
-            // TODO handle multiple renderes somehow
-            std::ofstream file(join(saveFolder, "attributes.txt"), std::iostream::out);
-            for(auto renderer : m_runningPipeline->getRenderers()) {
-                if(renderer->getNameOfClass() != "ImagePyramidRenderer")
-                    file << renderer->attributesToString();
-            }
-            file.close();
-        }*/
+        DataManager::GetInstance()->getCurrentProject()->saveResults(m_mainWindow->getCurrentProject()->getAllWsiUids()[m_currentWSI], m_runningPipeline, pipelineData);
     }
 
     void ProcessWidget::loadResults(int i) {

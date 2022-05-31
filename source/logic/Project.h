@@ -13,6 +13,8 @@
 #include "source/logic/WholeSlideImage.h"
 
 namespace fast{
+    class DataObject;
+    class Pipeline;
 
     class Project {
         public:
@@ -32,7 +34,7 @@ namespace fast{
             void emptyProject();
             void loadProject();
             void saveProject();
-            void saveResults(const std::string& wsi_uid);
+            void saveResults(const std::string& wsi_uid, std::shared_ptr<Pipeline> pipeline, std::map<std::string, std::shared_ptr<DataObject>> data);
             /**
              * @brief saveResult Purpose is to save on disk all results linked to one WSI.
              * Will evolve when pipeline outputs can be properly caught.

@@ -7,6 +7,14 @@
 #include <FAST/Utility.hpp>
 #include <FAST/Importers/ImageFileImporter.hpp>
 #include <FAST/Exporters/ImageExporter.hpp>
+#include <FAST/Pipeline.hpp>
+#include <FAST/Importers/TIFFImagePyramidImporter.hpp>
+#include <FAST/Exporters/TIFFImagePyramidExporter.hpp>
+#include <FAST/Importers/MetaImageImporter.hpp>
+#include <FAST/Exporters/MetaImageExporter.hpp>
+#include <FAST/Importers/HDF5TensorImporter.hpp>
+#include <FAST/Exporters/HDF5TensorExporter.hpp>
+#include <FAST/Visualization/Renderer.hpp>
 
 namespace fast{
     Project::Project()
@@ -190,8 +198,39 @@ namespace fast{
             std::cout<<"Requested saving thumbnail for WSI named: "<<wsi_uid<<", which is not in the project..."<<std::endl;
     }
 
-    void Project::saveResults(const std::string& wsi_uid)
-    {
+    void Project::saveResults(const std::string& wsi_uid, std::shared_ptr<Pipeline> pipeline, std::map<std::string, std::shared_ptr<DataObject>> pipelineData) {
+        for(auto data : pipelineData) {
+            const std::string dataTypeName = data.second->getNameOfClass();
+            const std::string saveFolder = join(getRootFolder(), "results", pipeline->getName());
+            createDirectories(saveFolder);
+            std::cout << "Saving " << dataTypeName << " data to " << saveFolder << std::endl;
+            if(dataTypeName == "ImagePyramid") {
+                const std::string saveFilename = join(saveFolder, data.first + ".tiff");
+                auto exporter = TIFFImagePyramidExporter::create(saveFilename)
+                        ->connect(data.second);
+                exporter->run();
+            } else if(dataTypeName == "Image") {
+                const std::string saveFilename = join(saveFolder, data.first + ".mhd");
+                auto exporter = MetaImageExporter::create(saveFilename)
+                        ->connect(data.second);
+                exporter->run();
+            } else if(dataTypeName == "Tensor") {
+                const std::string saveFilename = join(saveFolder, data.first + ".hdf5");
+                auto exporter = HDF5TensorExporter::create(saveFilename)
+                        ->connect(data.second);
+                exporter->run();
+            } else {
+                std::cout << "Unsupported data to export " << dataTypeName << std::endl;
+            }
+
+            // TODO handle multiple renderes somehow
+            std::ofstream file(join(saveFolder, "attributes.txt"), std::iostream::out);
+            for(auto renderer : pipeline->getRenderers()) {
+                if(renderer->getNameOfClass() != "ImagePyramidRenderer")
+                    file << renderer->attributesToString();
+            }
+            file.close();
+        }
     }
 
     std::shared_ptr<WholeSlideImage> Project::getImage(int i) {
