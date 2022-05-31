@@ -16,10 +16,7 @@
 
 QT_BEGIN_NAMESPACE
 class QAction;
-class QDialogButtonBox;
-class QGroupBox;
 class QLabel;
-class QLineEdit;
 class QMenuBar;
 class QMenu;
 class QPushButton;
@@ -136,7 +133,6 @@ class MainWindow : public Window {
         MainSidePanelWidget *_side_panel_widget; /* Main widget for the left-hand panel */
         std::map<std::string, QAction*> _file_menu_actions; /* Holder for all actions in the File main menu bar */
         QMenu* _pipeline_menu; /* */
-        QMenu* _deploy_menu; /* */
         QMenu* _help_menu; /* */
         QAction* _file_menu_create_project_action;
         QAction* _file_menu_import_wsi_action;

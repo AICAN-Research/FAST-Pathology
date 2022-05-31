@@ -1,25 +1,11 @@
 #include "MainWindow.hpp"
-#include <FAST/Importers/WholeSlideImageImporter.hpp>
 #include <FAST/Visualization/ImagePyramidRenderer/ImagePyramidRenderer.hpp>
 #include <QPushButton>
 #include <QFileDialog>
 #include <QFile>
-#include <QSlider>
 #include <FAST/Data/ImagePyramid.hpp>
 #include <FAST/Data/Image.hpp>
-#include <FAST/Algorithms/TissueSegmentation/TissueSegmentation.hpp>
-#include <FAST/Algorithms/ImagePatch/PatchGenerator.hpp>
-#include <FAST/Algorithms/ImagePatch/PatchStitcher.hpp>
-#include <FAST/Algorithms/NeuralNetwork/NeuralNetwork.hpp>
-#include <FAST/Algorithms/NeuralNetwork/SegmentationNetwork.hpp>
-#include <FAST/Visualization/HeatmapRenderer/HeatmapRenderer.hpp>
-#include <FAST/Algorithms/ImagePatch/ImageToBatchGenerator.hpp>
-#include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
-#include <FAST/Algorithms/NeuralNetwork/TensorToSegmentation.hpp>
-#include <FAST/Algorithms/NeuralNetwork/BoundingBoxNetwork.hpp>
 #include <FAST/Visualization/BoundingBoxRenderer/BoundingBoxRenderer.hpp>
-#include <FAST/Algorithms/Lambda/RunLambda.hpp>
-#include <FAST/Data/BoundingBox.hpp>
 #include <string>
 #include <QtWidgets>
 #include <QWidget>
@@ -28,14 +14,9 @@
 #include <QToolBar>
 #include <QPainter>
 #include <iostream>
-#include <algorithm>
-#include <utility>
 #include <vector>
 #include <stdio.h>      /* printf */
-#include <math.h>       /* pow */
 #include <istream>
-#include <fstream>
-#include <stdlib.h>
 #include <QColorDialog>
 #include <QDir>
 #include <QLayoutItem>
@@ -43,31 +24,11 @@
 #include <future> // wait for callback is finished
 #include <FAST/Utility.hpp>
 #include <QUrl>
-#include <QScreen>
 #include <QMessageBox>
-#include <FAST/Importers/ImageImporter.hpp>
-#include <FAST/Exporters/ImageExporter.hpp>
-#include <FAST/Importers/ImageFileImporter.hpp>
-#include <FAST/Exporters/ImageFileExporter.hpp>
-#include <FAST/Importers/HDF5TensorImporter.hpp>
-#include <FAST/Exporters/HDF5TensorExporter.hpp>
-#include <FAST/Importers/ImagePyramidPatchImporter.hpp>
-#include <FAST/Exporters/ImagePyramidPatchExporter.hpp>
 #include <FAST/Data/Access/ImagePyramidAccess.hpp>
-#include <QShortcut>
-#include <FAST/Algorithms/BinaryThresholding/BinaryThresholding.hpp>
-#include <FAST/Algorithms/ImageResizer/ImageResizer.hpp>
-#include <FAST/PipelineEditor.hpp>
-#include <FAST/Pipeline.hpp>
 #include <FAST/Visualization/MultiViewWindow.hpp>
-#include <FAST/Algorithms/NonMaximumSuppression/NonMaximumSuppression.hpp>
-#include <FAST/Algorithms/Morphology/Dilation.hpp>
-#include <FAST/Algorithms/Morphology/Erosion.hpp>
-#include <QMimeData>
 #include <QDragEnterEvent>
 #include <QtNetwork>
-#include <QtNetwork/QNetworkReply>
-#include <QtNetwork/QNetworkAccessManager>
 
 using namespace std;
 
@@ -184,7 +145,7 @@ void MainWindow::setupConnections()
     QObject::connect(this->_file_menu_create_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::createProjectTriggered);
     QObject::connect(this->_file_menu_import_wsi_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::selectFilesTriggered);
     QObject::connect(this->_file_menu_add_model_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::addModelsTriggered);
-    QObject::connect(this->_file_menu_add_pipeline_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::addPipelinesTriggered);
+    QObject::connect(this->_file_menu_add_pipeline_action, &QAction::triggered, this, &MainWindow::addPipelines);
 
     QObject::connect(this->_project_menu_create_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::createProjectTriggered);
     QObject::connect(this->_project_menu_open_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::openProjectTriggered);
@@ -324,30 +285,12 @@ void MainWindow::createMenubar()
     this->_pipeline_menu->addMenu(runPipelineMenu);
     loadPipelines(); // load pipelines that exists in the data/Pipelines directory
 
-    // Deploy tab
-    //auto this->_deploy_menu = new QMenu();
-    this->_deploy_menu = topFiller->addMenu(tr("&Deploy"));
-    //this->_deploy_menu->addMenu(tr("&Deploy"));
-    //this->_deploy_menu->setFixedHeight(100);
-    //this->_deploy_menu->setFixedWidth(100);
-    this->_deploy_menu->addAction("Run Pipeline");
-    this->_deploy_menu->addAction("Segment Tissue");
-    this->_deploy_menu->addAction("Predict Tumor");
-    this->_deploy_menu->addAction("Classify Grade");
-    //this->_deploy_menu->addAction("MTL nuclei seg/detect", this, &MainWindow::MTL_test);
-//    this->_deploy_menu->addAction("MIL bcgrade", this, &MainWindow::MIL_test);
-//    this->_deploy_menu->addAction("Deep KMeans MTL", this, &MainWindow::Kmeans_MTL_test);
-    this->_deploy_menu->addSeparator();
-
     this->_help_menu = topFiller->addMenu(tr("&Help"));
     this->_help_menu->addAction("Contact support", helpUrl);
     this->_help_menu->addAction("Report issue", reportIssueUrl);
     this->_help_menu->addAction("Check for updates");  // TODO: Add function that checks if the current binary in usage is the most recent one
     this->_help_menu_about_action = new QAction("About", this);
     this->_help_menu->addAction(this->_help_menu_about_action);
-
-    //topFiller->addMenu(fileMenu);
-    //topFiller->addMenu(this->_deploy_menu);
 
     superLayout->insertWidget(0, topFiller);
 }
