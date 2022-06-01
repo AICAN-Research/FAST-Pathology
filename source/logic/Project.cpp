@@ -31,12 +31,17 @@ namespace fast{
             }
         } else {
             this->createFolderDirectoryArchitecture();
-
         }
     }
 
     Project::~Project()
     {
+    }
+
+    void Project::writeTimestmap() {
+        std::ofstream timestampFile(_root_folder + "timestamp.txt");
+        timestampFile << currentDateTime();
+        timestampFile.close();
     }
 
     void Project::createFolderDirectoryArchitecture()
@@ -45,6 +50,7 @@ namespace fast{
         std::ofstream file(_root_folder + "project.txt", std::ios::out);
         file << "";
         file.close();
+        writeTimestmap();
         // check if all relevant files and folders are in selected folder directory
         // if any of the folders does not exists, create them
         if (!QDir(QString::fromStdString(this->_root_folder + "/results")).exists())
@@ -110,6 +116,7 @@ namespace fast{
         file << img_name_short << "\n";
         file << image_filepath << "\n";
         file.close();
+        writeTimestmap();
 
         return img_name_short;
     }
@@ -155,6 +162,8 @@ namespace fast{
 
         // TODO remove any results and thumbnails
         QDir().rmdir(QString::fromStdString(this->_root_folder + "/results/" + uid + "/"));
+
+        writeTimestmap();
     }
 
     void Project::loadProject()
@@ -276,6 +285,7 @@ namespace fast{
                 file.close();
             }
         }
+        writeTimestmap();
     }
 
     std::shared_ptr<WholeSlideImage> Project::getImage(int i) {
@@ -294,8 +304,12 @@ namespace fast{
             return {};
         for(auto pipelineName : getDirectoryList(saveFolder, false, true)) {
             const std::string folder = join(saveFolder, pipelineName);
+            if(!isDir(folder))
+                break;
             for(auto dataName : getDirectoryList(folder, false, true)) {
                 const std::string folder = join(saveFolder, pipelineName, dataName);
+                if(!isDir(folder))
+                    break;
                 for(auto filename : getDirectoryList(folder, true, false)) {
                     const std::string path = join(folder, filename);
                     const std::string extension = filename.substr(filename.rfind('.'));

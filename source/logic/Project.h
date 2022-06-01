@@ -85,6 +85,7 @@ namespace fast{
              * @param wsi_uid unique id of the WSI whose thumbnail should be saved.
              */
             void saveThumbnail(const std::string& wsi_uid);
+            void writeTimestmap();
        private:
             std::string m_name;
             std::string _root_folder;  /* Location on disk where to save all data for the current project. */

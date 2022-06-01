@@ -58,7 +58,7 @@ MainWindow::MainWindow() {
     advancedMode = false;
 
     // Start splash
-    auto splash = new ProjectSplashWidget(cwd);
+    auto splash = new ProjectSplashWidget(cwd + "/projects/");
     connect(splash, &ProjectSplashWidget::quitSignal, mWidget, &QWidget::close);
     connect(splash, &ProjectSplashWidget::newProjectSignal, [=](QString name) {
         std::cout << "Creating project with name " << name.toStdString() << std::endl;;

@@ -7,11 +7,15 @@
 #include <QInputDialog>
 #include <QListWidget>
 #include <FAST/Utility.hpp>
+#include <QDir>
+#include <QMessageBox>
+#include <fstream>
 #include "source/utils/utilities.h"
 
 namespace fast{
 
 ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, QWidget* parent) : QWidget(parent, Qt::FramelessWindowHint | Qt::WindowSystemMenuHint) {
+    m_rootFolder = rootFolder;
     setWindowModality(Qt::ApplicationModal); // Lock on top
     auto layout = new QVBoxLayout();
     setLayout(layout);
@@ -34,17 +38,55 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, QWidget* parent
     horizontalLayout->addLayout(rightLayout);
 
     auto recentLabel = new QLabel();
-    recentLabel->setText("<h2>Recent projects</h2>");
+    recentLabel->setText("<h2>Recent projects</h2><br>Double click to open.");
     leftLayout->addWidget(recentLabel);
 
     auto recentList = new QListWidget();
-    for(auto folder : getDirectoryList(join(rootFolder, "projects"), false, true)) {
-        auto item = new QListWidgetItem(QString::fromStdString(folder), recentList);
+    std::map<std::string, std::string> sortedFolders;
+    for(auto folder : getDirectoryList(rootFolder, false, true)) {
+        std::ifstream file(join(rootFolder, folder, "/timestamp.txt"));
+        if(file.is_open()) {
+            std::string timestamp;
+            std::getline(file, timestamp);
+            file.close();
+            sortedFolders[timestamp] = folder;
+        } else {
+            std::cout << "Project " << folder << " was missing timestmap.txt" << std::endl;
+        }
+    }
+    // Create a map reverse iterator
+    decltype(sortedFolders)::reverse_iterator it;
+
+    for (it = sortedFolders.rbegin(); it != sortedFolders.rend(); it++) {
+        auto item = new QListWidgetItem(
+                QString::fromStdString(it->second),
+                recentList);
+        //"Last modified: " + QString::fromStdString(it->first),
     }
     leftLayout->addWidget(recentList);
     connect(recentList, &QListWidget::itemDoubleClicked, [=](QListWidgetItem* item) {
         emit openProjectSignal(item->text());
         close();
+    });
+
+    auto deleteProjectButton = new QPushButton();
+    deleteProjectButton->setText("Delete selected projects");
+    leftLayout->addWidget(deleteProjectButton);
+    connect(deleteProjectButton, &QPushButton::clicked, [=]() {
+        auto reply = QMessageBox::question(this,
+                   "Delete projects",
+                   "Are you sure you whish to delete these projects?"
+                        "<br>All results will be deleted, but whole-slide images will be left untouched.",
+                      QMessageBox::Yes|QMessageBox::No);
+        if (reply == QMessageBox::Yes) {
+            for(auto item : recentList->selectedItems()) {
+                std::cout << "Deleting " << (QString::fromStdString(rootFolder) + item->text() + "/").toStdString() << std::endl;
+                auto dir = QDir(QString::fromStdString(rootFolder) + item->text() + "/");
+                dir.removeRecursively();
+                recentList->removeItemWidget(item);
+                delete item;
+            }
+        }
     });
 
     auto newProjectButton = new QPushButton();
@@ -63,12 +105,21 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, QWidget* parent
 }
 
 void ProjectSplashWidget::newProjectNameDialog() {
-    auto date = QString::fromStdString(currentDateTime());
+    QString text = QString::fromStdString(currentDateTime());
     bool ok;
-    QString text = QInputDialog::getText(this, "Start new project",
-                                         "Project name:", QLineEdit::Normal,
-                                         date, &ok);
+    text = QInputDialog::getText(this, "Start new project",
+                                 "Project name:", QLineEdit::Normal,
+                                 text, &ok);
     if (ok && !text.isEmpty()) {
+        // Check if already exists
+        if(isDir(join(m_rootFolder, text.toStdString()))) {
+            QMessageBox msgBox;
+            msgBox.setText("A project with that name already exists, please select another name or delete the other project.");
+            msgBox.setWindowTitle("Invalid project name");
+            msgBox.setIcon(QMessageBox::Warning);
+            msgBox.exec();
+            return;
+        }
         emit newProjectSignal(text);
         close();
     }

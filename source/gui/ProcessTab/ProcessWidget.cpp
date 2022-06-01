@@ -151,6 +151,7 @@ namespace fast {
         });
         int size = m_mainWindow->getCurrentProject()->getWSICountInProject();
         m_progressDialog = new QProgressDialog(("Running pipeline " + pipelineName + " ..").c_str(), "Cancel", 0, runForAll ? size : 1, this);
+        m_progressDialog->setWindowTitle("Running..");
         m_progressDialog->setAutoClose(true);
         m_progressDialog->show();
         QObject::connect(m_progressDialog, &QProgressDialog::canceled, [this, thread]() {

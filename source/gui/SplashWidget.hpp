@@ -15,5 +15,6 @@ class ProjectSplashWidget : public QWidget {
         void newProjectSignal(QString name);
         void openProjectSignal(QString name);
     private:
+        std::string m_rootFolder;
 };
 }
