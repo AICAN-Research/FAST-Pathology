@@ -136,9 +136,9 @@ class MainWindow : public Window {
         std::string _application_name; /* */
         MainSidePanelWidget *_side_panel_widget; /* Main widget for the left-hand panel */
         std::map<std::string, QAction*> _file_menu_actions; /* Holder for all actions in the File main menu bar */
-        QMenu* _pipeline_menu; /* */
         QMenu* _help_menu; /* */
         QAction* _file_menu_create_project_action;
+        QAction* _file_menu_open_project_action;
         QAction* _file_menu_import_wsi_action;
         QAction* _file_menu_add_model_action;
         QAction* _file_menu_add_pipeline_action;
@@ -158,6 +158,10 @@ class MainWindow : public Window {
         void changeWSIDisplayReceived(std::string uid_name);
 
         void updateAppTitleReceived(std::string title_suffix);
-    };
+
+        void showProjectSplash();
+    signals:
+        void updateProjectTitle();
+};
 
 }

@@ -8,42 +8,41 @@
 namespace fast {
     ProjectWidget::ProjectWidget(MainWindow* mainWindow, QWidget *parent): QWidget(parent){
         m_mainWindow = mainWindow;
-        this->setupInterface();
-        this->setupConnections();
+        setupInterface();
+        setupConnections();
     }
 
     ProjectWidget::~ProjectWidget(){
 
     }
 
+    void ProjectWidget::updateTitle() {
+        m_projectLabel->setText(QString::fromStdString(
+            "<h2>Project: " + m_mainWindow->getCurrentProject()->getName() + "</h2>"
+             "Storage path: " + m_mainWindow->getCurrentProject()->getRootFolder()
+         ));
+    }
+
     void ProjectWidget::setupInterface()
     {
-        this->_createProjectButton = new QPushButton(this);
-        this->_createProjectButton->setText("Create Project");
-        this->_createProjectButton->setFixedHeight(50);
-        this->_createProjectButton->setStyleSheet("color: white; background-color: blue");
+        m_projectLabel = new QLabel();
+        m_projectLabel->setWordWrap(true);
 
-        this->_openProjectButton = new QPushButton(this);
-        this->_openProjectButton->setText("Open Project");
-        this->_openProjectButton->setFixedHeight(50);
-        //openProjectButton->setStyleSheet("color: white; background-color: blue");
-
-        this->_selectFileButton = new QPushButton(this);
-        this->_selectFileButton->setText("Import WSIs");
+        _selectFileButton = new QPushButton(this);
+        _selectFileButton->setText("Import images");
         //selectFileButton->setFixedWidth(200);
-        this->_selectFileButton->setFixedHeight(50);
+        _selectFileButton->setFixedHeight(50);
         //selectFileButton->setStyleSheet("color: white; background-color: blue");
 
-        this->_main_layout = new QVBoxLayout(this);
-        this->_main_layout->addWidget(this->_createProjectButton);
-        this->_main_layout->addWidget(this->_openProjectButton);
-        this->_main_layout->addWidget(this->_selectFileButton);
-        this->createWSIScrollAreaWidget();
+        _main_layout = new QVBoxLayout(this);
+        _main_layout->addWidget(m_projectLabel);
+        _main_layout->addWidget(_selectFileButton);
+        createWSIScrollAreaWidget();
     }
 
     void ProjectWidget::resetInterface()
     {
-        this->_projectFolderName = QString();
+        _projectFolderName = QString();
         _wsi_scroll_listwidget->clear();
         _thumbnail_qpushbutton_map.clear();
         emit resetDisplay();
@@ -52,9 +51,7 @@ namespace fast {
     }
 
     void ProjectWidget::setupConnections() {
-        QObject::connect(this->_createProjectButton, &QPushButton::clicked, this, &ProjectWidget::createProject);
-        QObject::connect(this->_openProjectButton, &QPushButton::clicked, this, &ProjectWidget::openProject);
-        QObject::connect(this->_selectFileButton, &QPushButton::clicked, this, &ProjectWidget::selectFile);
+        QObject::connect(_selectFileButton, &QPushButton::clicked, this, &ProjectWidget::selectFile);
     }
 
     void ProjectWidget::createWSIScrollAreaWidget() {
@@ -115,23 +112,23 @@ namespace fast {
         QFileDialog dialog(this);
         dialog.setFileMode(QFileDialog::AnyFile);
 
-        this->_projectFolderName = dialog.getExistingDirectory(this, tr("Set Project Directory"),
+        _projectFolderName = dialog.getExistingDirectory(this, tr("Set Project Directory"),
                 QCoreApplication::applicationDirPath(), QFileDialog::DontUseNativeDialog);
 
-        Reporter::info()<< "Project dir: " << this->_projectFolderName.toStdString() << Reporter::end();
-        m_mainWindow->getCurrentProject()->setRootFolder(this->_projectFolderName.toStdString());
+        Reporter::info()<< "Project dir: " << _projectFolderName.toStdString() << Reporter::end();
+        m_mainWindow->getCurrentProject()->setRootFolder(_projectFolderName.toStdString());
 
         // create file for saving which WSIs exist in folder
         QString projectFileName = "/project.txt";
-        QFile file(this->_projectFolderName + projectFileName);
+        QFile file(_projectFolderName + projectFileName);
         if (file.open(QIODevice::ReadWrite)) {
             QTextStream stream(&file);
         }
 
         // now create folders for saving results and such (prompt warning if name already exists)
-        QDir().mkdir(this->_projectFolderName + QString::fromStdString("/results"));
-        QDir().mkdir(this->_projectFolderName + QString::fromStdString("/pipelines"));
-        QDir().mkdir(this->_projectFolderName + QString::fromStdString("/thumbnails"));
+        QDir().mkdir(_projectFolderName + QString::fromStdString("/results"));
+        QDir().mkdir(_projectFolderName + QString::fromStdString("/pipelines"));
+        QDir().mkdir(_projectFolderName + QString::fromStdString("/thumbnails"));
 
         // check if any WSIs have been selected previously, and ask if you want to make a project and add these,
         // or make a new fresh one -> if no, need to clear all WSIs in the QListWidget
@@ -220,7 +217,7 @@ namespace fast {
         progDialog.setModal(false);
         progDialog.setLabelText("Loading WSIs...");
         //QRect screenrect = mWidget->screen()[0].geometry();
-        progDialog.move(this->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
+        progDialog.move(width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
         progDialog.show();
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
@@ -245,51 +242,10 @@ namespace fast {
     }
 
     void ProjectWidget::selectFile() {
-        // check if view object list is empty, if not, prompt to save results or not, if not clear
-        if (!m_mainWindow->getCurrentProject()->isProjectEmpty())
-        {
-            // prompt
-            QMessageBox mBox;
-            mBox.setIcon(QMessageBox::Warning);
-            mBox.setStyleSheet(this->styleSheet());
-            mBox.setText("There are unsaved results.");
-            mBox.setInformativeText("Do you wish to save them?");
-            mBox.setDefaultButton(QMessageBox::Save);
-            mBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-            int ret = mBox.exec();
-
-            switch (ret) {
-                case QMessageBox::Save:
-                    std::cout << "Results not saved yet. Just cancelled the switch!" << std::endl;
-                    // Save was clicked
-                    return;
-                case QMessageBox::Discard:
-                    // Don't Save was clicked
-                    std::cout << "Discarded!" << std::endl;
-                    break;
-                case QMessageBox::Cancel:
-                    // Cancel was clicked
-                    std::cout << "Cancelled!"  << std::endl;
-                    return;
-                default:
-                    // should never be reached
-                    break;
-            }
-        }
-
         // TODO: Unable to read .zvi and .scn (Zeiss and Leica). I'm wondering if they are stored in some unexpected way (not image pyramids)
         auto fileNames = QFileDialog::getOpenFileNames(this, tr("Select File(s)"), nullptr,
                                                        tr("WSI Files (*.tiff *.tif *.svs *.ndpi *.bif *vms *.vsi);;All Files(*)"), //*.zvi *.scn)"),
                 nullptr, QFileDialog::DontUseNativeDialog);
-
-        // return if the file dialog was cancelled without any files being selected
-        if (fileNames.count() == 0) {
-            return;
-        }
-
-//        // for a new selection of wsi(s), should reset and update these QWidgets
-//        pageComboBox->clear();
-//        exportComboBox->clear();
 
         auto progDialog = QProgressDialog(this);
         progDialog.setRange(0, fileNames.count()-1);
@@ -298,11 +254,11 @@ namespace fast {
         progDialog.setModal(false);
         progDialog.setLabelText("Loading WSIs...");
         //QRect screenrect = mWidget->screen()[0].geometry();
-        progDialog.move(this->width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
+        progDialog.move(width() - progDialog.width() * 1.1, progDialog.height() * 0.1);
         progDialog.show();
 
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-        this->loadSelectedWSIs(fileNames);
+        loadSelectedWSIs(fileNames);
     }
 
     void ProjectWidget::loadSelectedWSIs(const QList<QString> &fileNames)
@@ -435,7 +391,7 @@ namespace fast {
         progDialog->setVisible(true);
         progDialog->setModal(false);
         progDialog->setLabelText("Downloading test data...");
-        progDialog->move(this->width() - progDialog->width() * 1.1, progDialog->height() * 0.1);
+        progDialog->move(width() - progDialog->width() * 1.1, progDialog->height() * 0.1);
         //m_pBar.show();
 
         QUrl url{"http://folk.ntnu.no/andpeder/FastPathology/test_data.zip"};
@@ -514,7 +470,7 @@ namespace fast {
 //        if (!m_mainWindow->isEmpty()) {
 //            QMessageBox mBox;
 //            mBox.setIcon(QMessageBox::Warning);
-//            mBox.setStyleSheet(this->styleSheet());
+//            mBox.setStyleSheet(styleSheet());
 //            mBox.setText("There are unsaved results.");
 //            mBox.setInformativeText("Do you wish to save them?");
 //            mBox.setDefaultButton(QMessageBox::Save);
@@ -547,19 +503,19 @@ namespace fast {
 //         */
 
 
-//        this->resetInterface();
+//        resetInterface();
 
         auto progDialog = QProgressDialog(this);
         progDialog.setRange(0, fileNames.count()-1);
         progDialog.setVisible(true);
         progDialog.setModal(false);
         progDialog.setLabelText("Loading WSIs...");
-        QRect screenrect = this->screen()[0].geometry();
-        progDialog.move(this->width() - progDialog.width() / 2, - this->width() / 2 - progDialog.width() / 2);
+        QRect screenrect = screen()[0].geometry();
+        progDialog.move(width() - progDialog.width() / 2, - width() / 2 - progDialog.width() / 2);
         progDialog.show();
 
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-        this->loadSelectedWSIs(fileNames);
+        loadSelectedWSIs(fileNames);
     }
 
 

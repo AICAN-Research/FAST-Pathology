@@ -37,8 +37,8 @@ using namespace std;
 namespace fast {
 
 MainWindow::MainWindow() {
-    this->_application_name = "FastPathology";
-    setTitle(this->_application_name);
+    _application_name = "FastPathology";
+    setTitle(_application_name);
     enableMaximized(); // <- function from Window.cpp
 
 	cwd = QDir::homePath().toStdString() + "/fastpathology/";
@@ -51,23 +51,32 @@ MainWindow::MainWindow() {
     QDir().mkpath(QString::fromStdString(cwd) + "data/Pipelines");
     QDir().mkpath(QString::fromStdString(cwd) + "projects");
 
-    this->setupInterface();
-    this->setupConnections();
+    setupInterface();
+    setupConnections();
 
     // Legacy stuff to remove.
     advancedMode = false;
+    showProjectSplash();
+}
 
+void MainWindow::showProjectSplash() {
     // Start splash
     auto splash = new ProjectSplashWidget(cwd + "/projects/");
     connect(splash, &ProjectSplashWidget::quitSignal, mWidget, &QWidget::close);
     connect(splash, &ProjectSplashWidget::newProjectSignal, [=](QString name) {
+        if(m_project)
+            reset();
         std::cout << "Creating project with name " << name.toStdString() << std::endl;;
         m_project = std::make_shared<Project>(name.toStdString());
+        emit updateProjectTitle();
     });
     connect(splash, &ProjectSplashWidget::openProjectSignal, [=](QString name) {
+        if(m_project)
+            reset();
         std::cout << "Opening project with name " << name.toStdString() << std::endl;;
         m_project = std::make_shared<Project>(name.toStdString(), true);
         emit _side_panel_widget->loadProject();
+        emit updateProjectTitle();
     });
     splash->show();
 }
@@ -75,7 +84,7 @@ MainWindow::MainWindow() {
 
 void MainWindow::closeEvent (QCloseEvent *event)
 {
-    QMessageBox::StandardButton resBtn = QMessageBox::question(mWidget, QString::fromStdString(this->_application_name),
+    QMessageBox::StandardButton resBtn = QMessageBox::question(mWidget, QString::fromStdString(_application_name),
                                                                 tr("Are you sure?\n"),
                                                                 QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
                                                                 QMessageBox::Yes);
@@ -135,34 +144,35 @@ void MainWindow::setupConnections()
     // @TODO. How to collect the closeEvent signal
     QObject::connect(mWidget, &WindowWidget::closeEvent, this, &MainWindow::closeEvent);
     // Overall
-    QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::newAppTitle, this, &MainWindow::updateAppTitleReceived);
+    QObject::connect(_side_panel_widget, &MainSidePanelWidget::newAppTitle, this, &MainWindow::updateAppTitleReceived);
     // @TODO. The drag and drop can be about anything? Images, models, pipelines, etc...?
-    QObject::connect(mWidget, &WindowWidget::filesDropped, this->_side_panel_widget, &MainSidePanelWidget::filesDropped);
-    QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::changeWSIDisplayTriggered, this, &MainWindow::changeWSIDisplayReceived);
-    QObject::connect(this->_side_panel_widget, &MainSidePanelWidget::resetDisplay, this, &MainWindow::resetDisplay);
+    QObject::connect(mWidget, &WindowWidget::filesDropped, _side_panel_widget, &MainSidePanelWidget::filesDropped);
+    QObject::connect(_side_panel_widget, &MainSidePanelWidget::changeWSIDisplayTriggered, this, &MainWindow::changeWSIDisplayReceived);
+    QObject::connect(_side_panel_widget, &MainSidePanelWidget::resetDisplay, this, &MainWindow::resetDisplay);
 
     // Main menu actions
-    QObject::connect(this->_file_menu_create_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::createProjectTriggered);
-    QObject::connect(this->_file_menu_import_wsi_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::selectFilesTriggered);
-    QObject::connect(this->_file_menu_add_model_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::addModelsTriggered);
-    QObject::connect(this->_file_menu_add_pipeline_action, &QAction::triggered, this, &MainWindow::addPipelines);
+    QObject::connect(_file_menu_create_project_action, &QAction::triggered, this, &MainWindow::showProjectSplash);
+    QObject::connect(_file_menu_open_project_action, &QAction::triggered, this, &MainWindow::showProjectSplash);
+    QObject::connect(_file_menu_import_wsi_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::selectFilesTriggered);
+    QObject::connect(_file_menu_add_model_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::addModelsTriggered);
+    QObject::connect(_file_menu_add_pipeline_action, &QAction::triggered, this, &MainWindow::addPipelines);
 
-    QObject::connect(this->_project_menu_create_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::createProjectTriggered);
-    QObject::connect(this->_project_menu_open_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::openProjectTriggered);
-    QObject::connect(this->_project_menu_save_project_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::saveProjectTriggered);
+    QObject::connect(_project_menu_create_project_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::createProjectTriggered);
+    QObject::connect(_project_menu_open_project_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::openProjectTriggered);
+    QObject::connect(_project_menu_save_project_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::saveProjectTriggered);
 
-    QObject::connect(this->_edit_menu_change_mode_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::setApplicationMode);
-    QObject::connect(this->_edit_menu_download_testdata_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::downloadTestDataTriggered);
+    QObject::connect(_edit_menu_change_mode_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::setApplicationMode);
+    QObject::connect(_edit_menu_download_testdata_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::downloadTestDataTriggered);
 
-    QObject::connect(this->_pipeline_menu_import_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::addPipelinesTriggered);
-    QObject::connect(this->_pipeline_menu_editor_action, &QAction::triggered, this->_side_panel_widget, &MainSidePanelWidget::editorPipelinesTriggered);
+    QObject::connect(_pipeline_menu_import_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::addPipelinesTriggered);
+    QObject::connect(_pipeline_menu_editor_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::editorPipelinesTriggered);
 
-    QObject::connect(this->_help_menu_about_action, &QAction::triggered, this, &MainWindow::aboutProgram);
+    QObject::connect(_help_menu_about_action, &QAction::triggered, this, &MainWindow::aboutProgram);
 }
 
 void MainWindow::updateAppTitleReceived(std::string title_suffix)
 {
-    this->setTitle(this->_application_name + title_suffix);
+    setTitle(_application_name + title_suffix);
 }
 
 void MainWindow::createOpenGLWindow() {
@@ -208,14 +218,14 @@ void MainWindow::aboutProgram() {
 	
 	auto textBox = new QTextEdit;
 	textBox->setEnabled(false);
-	textBox->setText("<html><b>FastPathology v0.1.0</b</html>");
+	textBox->setText("<html><b>FastPathology v1.0.0</b</html>");
 	textBox->append("");
 	textBox->setAlignment(Qt::AlignCenter);
 	textBox->append("Open-source platform for deep learning-based research and decision support in digital pathology.");
 	textBox->append("");
 	textBox->append("");
 	textBox->setAlignment(Qt::AlignCenter);
-	textBox->append("Author: André Pedersen");
+	textBox->append("Created by SINTEF Medical Technology and Norwegian University of Science and Technology (NTNU)");
 	textBox->setAlignment(Qt::AlignCenter);
 	textBox->setStyleSheet("QTextEdit { border: none }");
 	//textBox->setBaseSize(150, 200);
@@ -242,94 +252,43 @@ void MainWindow::createMenubar()
     topFiller->setMaximumHeight(30);
 
     // File tab
-    auto fileMenu = topFiller->addMenu(tr("&File"));
+    auto fileMenu = topFiller->addMenu(tr("&Project"));
     //fileMenu->setFixedHeight(100);
     //fileMenu->setFixedWidth(100);
     //QAction *createProjectAction;
-    this->_file_menu_create_project_action = new QAction("Create Project");
-    fileMenu->addAction(this->_file_menu_create_project_action);
-    this->_file_menu_import_wsi_action = new QAction("Import WSIs");
-    fileMenu->addAction(this->_file_menu_import_wsi_action);
-    this->_file_menu_add_model_action = new QAction("Add Models");
-    fileMenu->addAction(this->_file_menu_add_model_action);
-    this->_file_menu_add_pipeline_action = new QAction("Add Pipelines");
-    fileMenu->addAction(this->_file_menu_add_pipeline_action);
+    _file_menu_create_project_action = new QAction("Create Project");
+    fileMenu->addAction(_file_menu_create_project_action);
+    _file_menu_open_project_action = new QAction("Load Project");
+    fileMenu->addAction(_file_menu_open_project_action);
+    _file_menu_import_wsi_action = new QAction("Import images");
+    fileMenu->addAction(_file_menu_import_wsi_action);
+    _file_menu_add_model_action = new QAction("Add Models");
+    fileMenu->addAction(_file_menu_add_model_action);
+    _file_menu_add_pipeline_action = new QAction("Add Pipelines");
+    fileMenu->addAction(_file_menu_add_pipeline_action);
     fileMenu->addSeparator();
     fileMenu->addAction("Quit", QApplication::quit);
 
-    // Projects tab
-    auto projectMenu = topFiller->addMenu(tr("&Projects"));
-    this->_project_menu_create_project_action = new QAction("Create Project");
-    projectMenu->addAction(this->_project_menu_create_project_action);
-    this->_project_menu_open_project_action = new QAction("Open Project");
-    projectMenu->addAction(this->_project_menu_open_project_action);
-    this->_project_menu_save_project_action = new QAction("Save Project");
-    projectMenu->addAction(this->_project_menu_save_project_action);
-
     // Edit tab
     auto editMenu = topFiller->addMenu(tr("&Edit"));
-    editMenu->addAction("Reset", this, &MainWindow::reset);
-    this->_edit_menu_change_mode_action = new QAction("Change mode");
-    editMenu->addAction(this->_edit_menu_change_mode_action);
-    this->_edit_menu_download_testdata_action = new QAction("Download test data");
-    editMenu->addAction(this->_edit_menu_download_testdata_action);
+    _edit_menu_change_mode_action = new QAction("Change mode");
+    editMenu->addAction(_edit_menu_change_mode_action);
+    _edit_menu_download_testdata_action = new QAction("Download test data");
+    editMenu->addAction(_edit_menu_download_testdata_action);
 
-    // Pipelines tab
-    this->_pipeline_menu = topFiller->addMenu(tr("&Pipelines"));
-    this->_pipeline_menu_import_action = new QAction("Import pipelines");
-    this->_pipeline_menu->addAction(this->_pipeline_menu_import_action);
-    this->_pipeline_menu_editor_action = new QAction("Pipeline Editor");
-    this->_pipeline_menu->addAction(this->_pipeline_menu_editor_action);
-    runPipelineMenu = new QMenu("&Run Pipeline", mWidget);
-    //runPipelineMenu->addAction("Grade classification");
-    this->_pipeline_menu->addMenu(runPipelineMenu);
-    loadPipelines(); // load pipelines that exists in the data/Pipelines directory
-
-    this->_help_menu = topFiller->addMenu(tr("&Help"));
-    this->_help_menu->addAction("Contact support", helpUrl);
-    this->_help_menu->addAction("Report issue", reportIssueUrl);
-    this->_help_menu->addAction("Check for updates");  // TODO: Add function that checks if the current binary in usage is the most recent one
-    this->_help_menu_about_action = new QAction("About", this);
-    this->_help_menu->addAction(this->_help_menu_about_action);
+    _help_menu = topFiller->addMenu(tr("&Help"));
+    _help_menu->addAction("Contact support", helpUrl);
+    _help_menu->addAction("Report issue", reportIssueUrl);
+    _help_menu->addAction("Check for updates");  // TODO: Add function that checks if the current binary in usage is the most recent one
+    _help_menu_about_action = new QAction("About", this);
+    _help_menu->addAction(_help_menu_about_action);
 
     superLayout->insertWidget(0, topFiller);
 }
 
 void MainWindow::reset()
 {
-    //first prompt warning, that it will delete all unsaved results, etc...
-    if (! getCurrentProject()->isProjectEmpty())
-    {
-        // prompt
-        QMessageBox mBox;
-        mBox.setIcon(QMessageBox::Warning);
-        mBox.setText("This will delete all history.");
-        mBox.setInformativeText("Are you sure you want to reset?");
-        mBox.setDefaultButton(QMessageBox::No);
-        mBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        int ret = mBox.exec();
-
-        switch (ret) {
-            case QMessageBox::Yes:
-                getView(0)->removeAllRenderers();
-                this->_side_panel_widget->resetInterface();
-                break;
-            case QMessageBox::No:
-                1;
-                break;
-            default:
-                break;
-        }
-    }
-
-    // update application name to contain current WSI
-    /*
-    if (ProcessManager::GetInstance()->get_advanced_mode_status()) {
-        setTitle(this->_application_name + " (Research mode)");
-    } else {
-        setTitle(this->_application_name);
-    }*/
-
+    _side_panel_widget->resetInterface();
 }
 
 void MainWindow::loadPipelines() {
@@ -379,9 +338,9 @@ void MainWindow::changeWSIDisplayReceived(std::string uid_name)
 
     // update application name to contain current WSI
     if (advancedMode) {
-        setTitle(this->_application_name + " (Research mode)" + " - " + splitCustom(uid_name, "/").back());
+        setTitle(_application_name + " (Research mode)" + " - " + splitCustom(uid_name, "/").back());
     } else {
-        setTitle(this->_application_name + " - " + splitCustom(uid_name, "/").back());
+        setTitle(_application_name + " - " + splitCustom(uid_name, "/").back());
     }
 
     // to render straight away (avoid waiting on all WSIs to be handled before rendering)

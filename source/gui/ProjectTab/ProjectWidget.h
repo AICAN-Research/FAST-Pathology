@@ -88,9 +88,8 @@ public slots:
     void downloadAndAddTestData();
 
     void loadProject();
+    void updateTitle();
 signals:
-    void newImageFilename(std::string);
-    void newRenderer(std::shared_ptr<Renderer>);
     void changeWSIDisplayTriggered(std::string, bool);
     void resetDisplay();
 
@@ -113,8 +112,6 @@ protected:
     void loadSelectedWSIs(const QList<QString> &fileNames);
 
 private:
-    QPushButton* _createProjectButton;
-    QPushButton* _openProjectButton;
     QPushButton* _selectFileButton;
     QVBoxLayout* _main_layout;
     QScrollArea* _wsi_scroll_area;
@@ -123,9 +120,9 @@ private:
     QVBoxLayout* _wsi_scroll_layout;
     std::map<std::string, QListWidgetItem*> _wsi_thumbnails_listitem;
     std::map<std::string, ProjectThumbnailPushButton*> _thumbnail_qpushbutton_map;
-private:
     QString _projectFolderName;
     MainWindow* m_mainWindow;
+    QLabel* m_projectLabel;
 };
 
 }
