@@ -26,6 +26,7 @@
 #include "source/gui/ProcessTab/PipelineScriptEditorWidget.h"
 #include <FAST/Pipeline.hpp>
 
+class QStackedLayout;
 
 namespace fast {
 
@@ -75,6 +76,9 @@ public slots:
     void editorPipelinesReceived();
 private:
     QVBoxLayout* _main_layout; /* Principal layout holder for the current custom QWidget */
+    QStackedLayout* _stacked_layout;
+    QWidget* _stacked_widget;
+    QComboBox* _page_combobox;
 
     bool m_procesessing = false;
     bool m_batchProcesessing = false;

@@ -56,9 +56,9 @@ protected:
 
 private:
     QVBoxLayout* _main_layout; /* Principal layout holder for the current custom QWidget */
-    QStackedLayout* _stacked_layout; /* ? */
-    QWidget* _stacked_widget; /* ? */
-    QComboBox* _page_combobox; /* ? */
+    QStackedLayout* _stacked_layout;
+    QWidget* _stacked_widget;
+    QComboBox* _page_combobox;
 };
 
 }

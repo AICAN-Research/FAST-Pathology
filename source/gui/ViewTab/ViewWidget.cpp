@@ -21,6 +21,10 @@ namespace fast {
         _main_layout = new QVBoxLayout(this);
         _main_layout->setAlignment(Qt::AlignTop);
 
+        auto label = new QLabel();
+        label->setText("Select layer:");
+        _main_layout->addWidget(label);
+
         _stacked_layout = new QStackedLayout;
 
         _stacked_widget= new QWidget(this);

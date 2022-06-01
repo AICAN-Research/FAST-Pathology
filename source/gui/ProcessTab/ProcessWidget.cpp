@@ -39,6 +39,21 @@ namespace fast {
         this->_main_layout = new QVBoxLayout(this);
         this->_main_layout->setSpacing(6);
         this->_main_layout->setAlignment(Qt::AlignTop);
+
+        auto label = new QLabel();
+        label->setText("Select processing pipeline:");
+        _main_layout->addWidget(label);
+
+        _stacked_layout = new QStackedLayout;
+
+        _stacked_widget= new QWidget(this);
+        _stacked_widget->setLayout(_stacked_layout);
+
+        _page_combobox = new QComboBox(this);
+
+        _main_layout->addWidget(_page_combobox);
+        _main_layout->addWidget(_stacked_widget);
+
         this->addPipelines();
     }
 
@@ -49,7 +64,7 @@ namespace fast {
 
     void ProcessWidget::setupConnections()
     {
-//        QObject::connect(this->_tissue_seg_pushbutton, &QPushButton::clicked, this, &ProcessWidget::segmentTissue);
+        QObject::connect(_page_combobox, SIGNAL(activated(int)), _stacked_layout, SLOT(setCurrentIndex(int)));
     }
 
     void ProcessWidget::addModels()
@@ -79,16 +94,28 @@ namespace fast {
         for(auto& filename : getDirectoryList(pipelineFolder)) {
             auto pipeline = Pipeline(join(pipelineFolder, filename));
 
+            auto page = new QWidget();
+            auto layout = new QVBoxLayout();
+            layout->setAlignment(Qt::AlignTop);
+            page->setLayout(layout);
+            _stacked_layout->addWidget(page);
+            _page_combobox->addItem(QString::fromStdString(pipeline.getName()));
+
+            auto description = new QLabel();
+            description->setText(QString::fromStdString(pipeline.getDescription()));
+            description->setWordWrap(true);
+            layout->addWidget(description);
+
             auto button = new QPushButton;
-            button->setText(("Run: " + pipeline.getName()).c_str());
-            _main_layout->addWidget(button);
+            button->setText("Run pipeline for this image");
+            layout->addWidget(button);
             QObject::connect(button, &QPushButton::clicked, [=]() {
                 runInThread(join(pipelineFolder, filename), pipeline.getName(), false);
             });
 
             auto batchButton = new QPushButton;
-            batchButton->setText(("Run for entire project: " + pipeline.getName()).c_str());
-            _main_layout->addWidget(batchButton);
+            batchButton->setText("Run pipeline for all images in project");
+            layout->addWidget(batchButton);
             QObject::connect(batchButton, &QPushButton::clicked, [=]() {
                 runInThread(join(pipelineFolder, filename), pipeline.getName(), true);
             });
