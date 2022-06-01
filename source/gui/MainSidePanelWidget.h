@@ -46,6 +46,7 @@ namespace fast{
         void addRendererToViewRequested(const std::string&);
         void removeRendererFromViewRequested(const std::string&);
         void runPipelineEmitted(QString);
+        void loadProject();
 
     public slots:
         /**

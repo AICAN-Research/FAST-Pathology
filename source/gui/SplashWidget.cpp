@@ -5,11 +5,13 @@
 #include <QDesktopWidget>
 #include <QPushButton>
 #include <QInputDialog>
+#include <QListWidget>
+#include <FAST/Utility.hpp>
 #include "source/utils/utilities.h"
 
 namespace fast{
 
-ProjectSplashWidget::ProjectSplashWidget(QWidget* parent) : QWidget(parent, Qt::FramelessWindowHint | Qt::WindowSystemMenuHint) {
+ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, QWidget* parent) : QWidget(parent, Qt::FramelessWindowHint | Qt::WindowSystemMenuHint) {
     setWindowModality(Qt::ApplicationModal); // Lock on top
     auto layout = new QVBoxLayout();
     setLayout(layout);
@@ -34,6 +36,16 @@ ProjectSplashWidget::ProjectSplashWidget(QWidget* parent) : QWidget(parent, Qt::
     auto recentLabel = new QLabel();
     recentLabel->setText("<h2>Recent projects</h2>");
     leftLayout->addWidget(recentLabel);
+
+    auto recentList = new QListWidget();
+    for(auto folder : getDirectoryList(join(rootFolder, "projects"), false, true)) {
+        auto item = new QListWidgetItem(QString::fromStdString(folder), recentList);
+    }
+    leftLayout->addWidget(recentList);
+    connect(recentList, &QListWidget::itemDoubleClicked, [=](QListWidgetItem* item) {
+        emit openProjectSignal(item->text());
+        close();
+    });
 
     auto newProjectButton = new QPushButton();
     newProjectButton->setText("Start new project");

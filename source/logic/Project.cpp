@@ -14,12 +14,25 @@
 #include <FAST/Visualization/View.hpp>
 
 namespace fast{
-    Project::Project(std::string name)
+    Project::Project(std::string name, bool open)
     {
         m_name = name;
         // Default folder root from Qt temporary dir, automatically deleted.
         this->_root_folder = QDir::home().path().toStdString() + "/fastpathology/projects/" + name + "/";
-        this->createFolderDirectoryArchitecture();
+        if(open) {
+            std::vector<std::string> lines;
+            std::ifstream file(_root_folder + "project.txt");
+            std::string line;
+            while (std::getline(file, line)) {
+                lines.push_back(line);
+            }
+            for(int i = 0; i < lines.size(); i += 2) {
+                _images[lines[i]] = std::make_shared<WholeSlideImage>(lines[i+1]);
+            }
+        } else {
+            this->createFolderDirectoryArchitecture();
+
+        }
     }
 
     Project::~Project()

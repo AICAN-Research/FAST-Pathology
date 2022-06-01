@@ -58,11 +58,16 @@ MainWindow::MainWindow() {
     advancedMode = false;
 
     // Start splash
-    auto splash = new ProjectSplashWidget();
+    auto splash = new ProjectSplashWidget(cwd);
     connect(splash, &ProjectSplashWidget::quitSignal, mWidget, &QWidget::close);
     connect(splash, &ProjectSplashWidget::newProjectSignal, [=](QString name) {
         std::cout << "Creating project with name " << name.toStdString() << std::endl;;
         m_project = std::make_shared<Project>(name.toStdString());
+    });
+    connect(splash, &ProjectSplashWidget::openProjectSignal, [=](QString name) {
+        std::cout << "Opening project with name " << name.toStdString() << std::endl;;
+        m_project = std::make_shared<Project>(name.toStdString(), true);
+        emit _side_panel_widget->loadProject();
     });
     splash->show();
 }

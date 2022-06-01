@@ -174,6 +174,7 @@ namespace fast{
     {
         QObject::connect(_project_widget, &ProjectWidget::changeWSIDisplayTriggered, this, &MainSidePanelWidget::changeWSIDisplayTriggered);
         QObject::connect(_project_widget, &ProjectWidget::resetDisplay, this, &MainSidePanelWidget::resetDisplay);
+        QObject::connect(this, &MainSidePanelWidget::loadProject, _project_widget, &ProjectWidget::loadProject);
         QObject::connect(this->_app_mode_pushbutton, &QPushButton::clicked, this, &MainSidePanelWidget::setApplicationMode);
         QObject::connect(this, &MainSidePanelWidget::createProjectTriggered, this->_project_widget, &ProjectWidget::createProject);
         QObject::connect(this, &MainSidePanelWidget::openProjectTriggered, this->_project_widget, &ProjectWidget::openProject);

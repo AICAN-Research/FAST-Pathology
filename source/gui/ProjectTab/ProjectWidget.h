@@ -87,6 +87,7 @@ public slots:
      */
     void downloadAndAddTestData();
 
+    void loadProject();
 signals:
     void newImageFilename(std::string);
     void newRenderer(std::shared_ptr<Renderer>);

@@ -327,17 +327,6 @@ namespace fast {
             // @TODO. Shouldn't we keep a class attribute list with those buttons, so that it's easier to retrieve them
             // and delete them on the fly?
             auto button = new ProjectThumbnailPushButton(m_mainWindow, id_name, this);
-//            auto button = new QPushButton(this);
-//            auto thumbnail_image = m_mainWindow->get_image("0")->get_thumbnail();
-//            auto m_NewPixMap = QPixmap::fromImage(thumbnail_image);
-//            QIcon ButtonIcon(m_NewPixMap);
-//            button->setIcon(ButtonIcon);
-//            int width_val = 100;
-//            int height_val = 150;
-//            button->setIconSize(QSize((int) std::round(0.9 * (float) thumbnail_image.width() * (float) height_val /
-//            (float) thumbnail_image.height()), (int) std::round(0.9f * (float) height_val)));
-//            button->setToolTip(QString::fromStdString(splitCustom(currFileName, "/").back()));
-
             _thumbnail_qpushbutton_map[id_name] = button;
             int width_val = 100;
             int height_val = 150;
@@ -350,6 +339,43 @@ namespace fast {
             _wsi_thumbnails_listitem[id_name] = listItem;
 
 //            emit newImageFilename(id_name);
+            // to render straight away (avoid waiting on all WSIs to be handled before rendering)
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+        }
+    }
+
+    void ProjectWidget::loadProject()
+    {
+        auto currentPosition = 0; // curr_pos <=?
+
+        // need to handle scenario where a WSI is added, but there already exists N WSIs from before
+        auto nb_wsis_in_list = 0; //wsiList.size();
+        if (nb_wsis_in_list != 0)
+            currentPosition = nb_wsis_in_list;
+
+        int counter = 0;
+        for (auto uid : m_mainWindow->getCurrentProject()->getAllWsiUids())
+        {
+            auto fileName = m_mainWindow->getCurrentProject()->getImage(uid)->get_filename();
+            auto currFileName = fileName;
+            Reporter::info() << "Selected file: " << currFileName << Reporter::end();
+            //const std::string id_name = m_mainWindow->getCurrentProject()->includeImage(currFileName);
+
+            // @TODO. Shouldn't we keep a class attribute list with those buttons, so that it's easier to retrieve them
+            // and delete them on the fly?
+            auto button = new ProjectThumbnailPushButton(m_mainWindow, uid, this);
+            _thumbnail_qpushbutton_map[uid] = button;
+            int width_val = 100;
+            int height_val = 150;
+            auto listItem = new QListWidgetItem;
+            listItem->setSizeHint(QSize(width_val, height_val));
+            QObject::connect(button, &ProjectThumbnailPushButton::clicked, this, &ProjectWidget::changeWSIDisplayReceived);
+            QObject::connect(button, &ProjectThumbnailPushButton::rightClicked, this, &ProjectWidget::removeImage);
+            _wsi_scroll_listwidget->addItem(listItem);
+            _wsi_scroll_listwidget->setItemWidget(listItem, button);
+            _wsi_thumbnails_listitem[uid] = listItem;
+
+            //            emit newImageFilename(id_name);
             // to render straight away (avoid waiting on all WSIs to be handled before rendering)
             QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
         }

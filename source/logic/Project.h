@@ -25,7 +25,7 @@ namespace fast{
 
     class Project {
         public:
-            Project(std::string name);
+            Project(std::string name, bool open = false);
             ~Project();
 
             const std::string getRootFolder(){return this->_root_folder;}
