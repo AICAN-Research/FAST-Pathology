@@ -14,33 +14,32 @@ add_executable(fastpathology
         source/gui/MainWindow.cpp
 		misc/AppIcon.rc
 		misc/qtres.qrc  # TODO: is this needed if qtres.cpp is added?
-                misc/qtres.cpp
-                source/utils/utilities.h
-                source/utils/qutilities.h
-                source/gui/ProjectTab/ProjectThumbnailPushButton.cpp
-                source/gui/ProjectTab/ProjectThumbnailPushButton.h
-                source/gui/ProjectTab/ProjectWidget.cpp
-                source/gui/ProjectTab/ProjectWidget.h
-                source/gui/ProcessTab/ProcessWidget.cpp
-                source/gui/ProcessTab/ProcessWidget.h
-                source/gui/ProcessTab/PipelineScriptEditorWidget.cpp
-                source/gui/ProcessTab/PipelineScriptEditorWidget.h
-                source/gui/ProcessTab/AdvancedModeParametersEditorWidget.cpp
-                source/gui/ProcessTab/AdvancedModeParametersEditorWidget.h
-				source/gui/ViewTab/ViewWidget.cpp
-                source/gui/ViewTab/ViewWidget.h
-                source/gui/StatsTab/StatsWidget.cpp
-                source/gui/StatsTab/StatsWidget.h
-                source/gui/ExportTab/ExportWidget.cpp
-                source/gui/ExportTab/ExportWidget.h
-                source/gui/MainSidePanelWidget.cpp
-                source/gui/MainSidePanelWidget.h
-                source/logic/DataManager.cpp
-                source/logic/DataManager.h
-                source/logic/WholeSlideImage.cpp
-                source/logic/WholeSlideImage.h
-                source/logic/Project.cpp
-                source/logic/Project.h)
+		misc/qtres.cpp
+		source/utils/utilities.h
+		source/utils/qutilities.h
+		source/gui/ProjectTab/ProjectThumbnailPushButton.cpp
+		source/gui/ProjectTab/ProjectThumbnailPushButton.h
+		source/gui/ProjectTab/ProjectWidget.cpp
+		source/gui/ProjectTab/ProjectWidget.h
+		source/gui/ProcessTab/ProcessWidget.cpp
+		source/gui/ProcessTab/ProcessWidget.h
+		source/gui/ProcessTab/PipelineScriptEditorWidget.cpp
+		source/gui/ProcessTab/PipelineScriptEditorWidget.h
+		source/gui/ViewTab/ViewWidget.cpp
+		source/gui/ViewTab/ViewWidget.h
+		source/gui/StatsTab/StatsWidget.cpp
+		source/gui/StatsTab/StatsWidget.h
+		source/gui/ExportTab/ExportWidget.cpp
+		source/gui/ExportTab/ExportWidget.h
+		source/gui/MainSidePanelWidget.cpp
+		source/gui/MainSidePanelWidget.h
+		source/logic/DataManager.cpp
+		source/logic/DataManager.h
+		source/logic/WholeSlideImage.cpp
+		source/logic/WholeSlideImage.h
+		source/logic/Project.cpp
+		source/logic/Project.h
+)
 
 add_definitions(-D_USE_MATH_DEFINES)
 add_dependencies(fastpathology fast_copy)

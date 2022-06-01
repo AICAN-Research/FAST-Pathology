@@ -171,6 +171,7 @@ namespace fast {
                 m_batchProcesessing = false;
                 m_procesessing = false;
                 emit messageSignal("Batch processing is done!");
+                emit pipelineFinished(m_mainWindow->getCurrentProject()->getAllWsiUids()[0]);
             } else {
                 // Run next
                 m_currentWSI += 1;
@@ -181,6 +182,7 @@ namespace fast {
         } else if(m_procesessing) {
             m_progressDialog->setValue(1);
             emit messageSignal("Processing is done!");
+            emit pipelineFinished(m_mainWindow->getCurrentProject()->getAllWsiUids()[m_currentWSI]);
             m_procesessing = false;
         }
     }

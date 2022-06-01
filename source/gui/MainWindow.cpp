@@ -358,29 +358,23 @@ void clearLayout(QLayout *layout) {
     }
 }
 
-void MainWindow::changeWSIDisplayReceived(std::string uid_name, bool state)
+void MainWindow::changeWSIDisplayReceived(std::string uid_name)
 {
     auto view = getView(0);
     view->removeAllRenderers();
-    if(state) {
-        auto img = DataManager::GetInstance()->getCurrentProject()->getImage(uid_name);
-        DataManager::GetInstance()->setVisibleImageName(uid_name);
+    auto img = DataManager::GetInstance()->getCurrentProject()->getImage(uid_name);
+    DataManager::GetInstance()->setVisibleImageName(uid_name);
 
-        auto renderer = ImagePyramidRenderer::create()
-            ->connect(img->get_image_pyramid());
-        view->addRenderer(renderer);
+    auto renderer = ImagePyramidRenderer::create()
+        ->connect(img->get_image_pyramid());
+    view->addRenderer(renderer);
 
-        auto results = DataManager::GetInstance()->getCurrentProject()->loadResults(uid_name);
-        if(!results.empty()) {
-            for(auto result : results) {
-                view->addRenderer(result.renderer);
-            }
-            _side_panel_widget->getViewWidget()->setResults(results);
+    auto results = DataManager::GetInstance()->getCurrentProject()->loadResults(uid_name);
+    if(!results.empty()) {
+        for(auto result : results) {
+            view->addRenderer(result.renderer);
         }
-    }
-    else
-    {
-        DataManager::GetInstance()->setVisibleImageName("");
+        _side_panel_widget->getViewWidget()->setResults(results);
     }
 
     // update application name to contain current WSI

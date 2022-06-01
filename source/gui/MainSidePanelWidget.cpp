@@ -1,8 +1,5 @@
-//
-// Created by dbouget on 06.10.2021.
-//
-
 #include "MainSidePanelWidget.h"
+#include "MainWindow.hpp"
 
 namespace fast{
     MainSidePanelWidget::MainSidePanelWidget(MainWindow* mainWindow, QWidget *parent): QWidget(parent)
@@ -94,7 +91,7 @@ namespace fast{
 
         auto actionGroup = new QActionGroup(tb);
 
-        auto file_action = new QAction("Project", actionGroup);
+        auto file_action = new QAction("Images", actionGroup);
         file_action->setIcon(QIcon(openPix));
         file_action->setCheckable(true);
         file_action->setChecked(true);
@@ -140,17 +137,6 @@ namespace fast{
 
         auto dockContent = new QWidget(this);
         dockContent->setLayout(dockLayout);
-
-        /*
-        auto pageComboBox = new QComboBox; // <- perhaps use toolbar instead?
-        pageComboBox->setFixedWidth(100);
-        pageComboBox->addItem(tr("File"));
-        pageComboBox->addItem(tr("Process"));
-        pageComboBox->addItem(tr("View"));
-        pageComboBox->addItem(tr("Save"));
-        connect(pageComboBox, SIGNAL(activated(int)), stackedWidget, SLOT(setCurrentIndex(int)));
-        //pageComboBox->setCurrentIndex(0);
-         */
 
         dockLayout = new QVBoxLayout;
         dockLayout->insertWidget(0, dockContent); //addWidget(dockContent);
@@ -198,6 +184,7 @@ namespace fast{
         QObject::connect(this, &MainSidePanelWidget::addModelsTriggered, this->_process_widget, &ProcessWidget::addModels);
         QObject::connect(this, &MainSidePanelWidget::addPipelinesTriggered, this->_process_widget, &ProcessWidget::addPipelines);
         QObject::connect(this, &MainSidePanelWidget::editorPipelinesTriggered, this->_process_widget, &ProcessWidget::editorPipelinesReceived);
+        QObject::connect(_process_widget, &ProcessWidget::pipelineFinished, m_mainWindow, &MainWindow::changeWSIDisplayReceived);
     }
 
     void MainSidePanelWidget::setApplicationMode() {

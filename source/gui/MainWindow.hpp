@@ -151,7 +151,7 @@ class MainWindow : public Window {
         void closeEvent (QCloseEvent *event);
         void resetDisplay();
 
-        void changeWSIDisplayReceived(std::string uid_name, bool state);
+        void changeWSIDisplayReceived(std::string uid_name);
 
         void updateAppTitleReceived(std::string title_suffix);
     };

@@ -65,7 +65,7 @@ protected:
 
 signals:
     void messageSignal(QString);
-
+    void pipelineFinished(std::string uid);
 public slots:
     void addModels();
     void addPipelines();
