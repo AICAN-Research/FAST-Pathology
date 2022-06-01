@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.12) # 3.15
 project(fastpathology)
 
+set(VERSION_MAJOR 1)
+set(VERSION_MINOR 0)
+set(VERSION_PATCH 0)
+
 set(CMAKE_CXX_STANDARD 17)
 
 include_directories(.)
@@ -51,10 +55,5 @@ endif (WIN32)
 if (UNIX)
 	target_link_libraries(fastpathology ${FAST_LIBRARIES} pthread)
 endif (UNIX)
-
-set_target_properties(fastpathology PROPERTIES
-        CXX_STANDARD 17
-        CXX_EXTENSIONS OFF
-        )
 
 include(cmake/Package.cmake)

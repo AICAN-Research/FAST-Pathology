@@ -1,0 +1,53 @@
+PipelineName "Breast Tumour Segmentation"
+PipelineDescription "Segmentation of breast tumour tissue using H2G-Net https://github.com/andreped/H2G-Net"
+PipelineInputData WSI "Whole-slide image"
+PipelineOutputData segmentation refinement 0
+Attribute classes "Background;Tumour"
+
+### Processing chain
+
+ProcessObject tissueSeg TissueSegmentation
+Input 0 WSI
+
+ProcessObject patch PatchGenerator
+Attribute patch-size 256 256
+Attribute patch-magnification 10
+Input 0 WSI
+Input 1 tissueSeg 0
+
+ProcessObject network NeuralNetwork
+Attribute model "$CURRENT_PATH$/../models/pw_tumour_mobilenetv2_model.onnx"
+Attribute scale-factor 0.003921568627451
+Input 0 patch 0
+
+ProcessObject stitcher PatchStitcher
+Input 0 network 0
+
+ProcessObject finish RunUntilFinished
+Input 0 stitcher 0
+
+ProcessObject tensorToImage TensorToImage
+Attribute channels 1
+Input 0 finish 0
+
+ProcessObject lowRes ImagePyramidLevelExtractor
+Attribute level -1
+Input 0 WSI
+
+ProcessObject scale IntensityNormalization
+Input 0 lowRes 0
+
+ProcessObject refinement SegmentationNetwork
+Attribute inference-engine OpenVINO
+Attribute model "$CURRENT_PATH$/../models/unet_tumour_refinement_model_fix-opset9.onnx"
+Input 0 scale 0
+Input 1 tensorToImage 0
+
+### Renderers
+
+Renderer imgRenderer ImagePyramidRenderer
+Input 0 WSI
+
+Renderer renderer2 SegmentationRenderer
+Attribute border-opacity 1.0
+Input 0 refinement 0

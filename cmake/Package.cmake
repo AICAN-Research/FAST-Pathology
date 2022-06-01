@@ -11,20 +11,36 @@ install(
     DESTINATION licenses/fastpathology
 )
 
-# Install FAST dependency (need to include plugins.xml for OpenVINO as well)
+# Install FAST dependency
 if(WIN32)
-    install(
-        DIRECTORY ${FAST_BINARY_DIR}
-        DESTINATION bin
-        FILES_MATCHING PATTERN "*.dll" PATTERN "*plugins.xml"
-    )
+	install(DIRECTORY ${FAST_BINARY_DIR}/bin/
+			DESTINATION bin
+			FILES_MATCHING PATTERN "*.dll")
+elseif(APPLE)
+	install(DIRECTORY ${FAST_BINARY_DIR}/../lib/
+			DESTINATION lib
+			FILES_MATCHING PATTERN "*.dylib*")
+	install(DIRECTORY ${FAST_BINARY_DIR}/../lib/
+			DESTINATION lib
+			FILES_MATCHING PATTERN "*.so*")
 else()
-    install(
-        DIRECTORY ${FAST_BINARY_DIR}/../lib/
-        DESTINATION lib  # lib or bin?
-        FILES_MATCHING PATTERN "*.so*" PATTERN "*plugins.xml"
-    )
+	install(DIRECTORY ${FAST_BINARY_DIR}/../lib/
+			DESTINATION lib
+			FILES_MATCHING PATTERN "*.so*")
 endif()
+
+# Additional OpenVINO files
+if(WIN32)
+	install(FILES ${FAST_BINARY_DIR}/bin/plugins.xml ${PROJECT_BINARY_DIR}/bin/cache.json
+			DESTINATION bin
+			)
+else()
+	install(FILES ${FAST_BINARY_DIR}/lib/plugins.xml ${PROJECT_BINARY_DIR}/lib/cache.json
+			DESTINATION lib
+			OPTIONAL
+			)
+endif()
+
 install(
     DIRECTORY ${FAST_BINARY_DIR}/../kernels/
     DESTINATION kernels
@@ -34,27 +50,26 @@ install(
     DESTINATION plugins
 )
 install(
-    DIRECTORY ${FAST_BINARY_DIR}/../doc/
-    DESTINATION doc
+    FILES ${FAST_BINARY_DIR}/../doc/images/fast_icon.ico ${FAST_BINARY_DIR}/../doc/images/fast_icon.png
+    DESTINATION doc/images
 )
 install(
     DIRECTORY ${FAST_BINARY_DIR}/../licenses/
     DESTINATION licenses
-)
-install(
-		DIRECTORY ${FAST_BINARY_DIR}/../pipelines/
-		DESTINATION pipelines
-)
-install(
-    DIRECTORY
-    DESTINATION kernel_binaries
-    DIRECTORY_PERMISSIONS OWNER_READ OWNER_EXECUTE OWNER_WRITE GROUP_READ GROUP_EXECUTE GROUP_WRITE WORLD_READ WORLD_WRITE WORLD_EXECUTE
 )
 
 # add Data folder for storing saved models, icons, pipelines and other stuff, and move necessary folders
 install(
     DIRECTORY ${PROJECT_BINARY_DIR}/../data/Icons
     DESTINATION data
+)
+install(
+		DIRECTORY ${PROJECT_BINARY_DIR}/../data/pipelines
+		DESTINATION data
+)
+install(
+		DIRECTORY ${PROJECT_BINARY_DIR}/../data/models
+		DESTINATION data
 )
 
 # Setup fast_configuration.txt file
@@ -111,13 +126,13 @@ endif()
 set(CPACK_PACKAGE_NAME "fastpathology")
 set(CPACK_PACKAGE_CONTACT "Andre Pedersen andre.pedersen@sintef.no")
 set(CPACK_PACKAGE_VENDOR "SINTEF and NTNU")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "fastpathology is an open-source platform for deep learning-based digital pathology created by SINTEF Medical Technology and the Norwegian University of Science and Technology (NTNU).")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "FastPathology is an open-source platform for deep learning-based digital pathology created by SINTEF Medical Technology and the Norwegian University of Science and Technology (NTNU).")
 #set(CPACK_PACKAGE_DESCRIPTION_FILE "${PROJECT_SOURCE_DIR}/README.md")
 set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/LICENSE.md) # @TODO somehow concatenate all licences to this file..
 
-set(CPACK_PACKAGE_VERSION_MAJOR "0")
-set(CPACK_PACKAGE_VERSION_MINOR "1")
-set(CPACK_PACKAGE_VERSION_PATCH "0")
+set(CPACK_PACKAGE_VERSION_MAJOR ${VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${VERSION_PATCH})
 set(CPACK_PACKAGE_FILE_NAME "fastpathology")
 set(CPACK_COMPONENT_FAST_REQUIRED ON)
 
@@ -130,7 +145,7 @@ if(WIN32 AND NOT UNIX)
     set(CPACK_GENERATOR NSIS)
 
 	set(CPACK_PACKAGE_INSTALL_DIRECTORY "FastPathology")
-	set(CPACK_PACKAGE_FILE_NAME "fastpathology_win10_v${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+	set(CPACK_PACKAGE_FILE_NAME "fastpathology_windows_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 	set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
 	set(CPACK_NSIS_MENU_LINKS "bin\\\\fastpathology.exe" "FastPathology")
 	set(CPACK_CREATE_DESKTOP_LINKS "fastpathology")
@@ -169,8 +184,9 @@ else()
     set(CPACK_DEB_COMPONENT_INSTALL OFF)
     set(CPACK_PACKAGING_INSTALL_PREFIX "/opt/fastpathology")  #"/opt/")  $HOME/fastpathology
     set(CPACK_DEBIAN_COMPRESSION_TYPE "xz")
-	set(CPACK_DEBIAN_FILE_NAME "fastpathology_ubuntu_v${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}.deb")
-    set(CPACK_DEBIAN_fastpathology_PACKAGE_NAME "fastpathology")
+	set(CPACK_PACKAGE_FILE_NAME "fastpathology_${DISTRO_NAME}${DISTRO_VERSION}_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+	set(CPACK_DEBIAN_FAST_FILE_NAME "fastpathology_${DISTRO_NAME}${DISTRO_VERSION}_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}.deb")
+	set(CPACK_DEBIAN_fastpathology_PACKAGE_NAME "fastpathology")
 
     include(CPack)
 endif()

@@ -43,13 +43,24 @@ MainWindow::MainWindow() {
 
 	cwd = QDir::homePath().toStdString() + "/fastpathology/";
 
-    //printf("\n%d\n",__LINE__); // <- this is nice for debugging
-
-    // Create models folder platform assumes that this folder exists and contains all relevant models (and pipelines, and temporary models)
-    //createDirectories(dir_str);
-	QDir().mkpath(QString::fromStdString(cwd) + "data/Models"); // <- mkpath creates the entire path recursively (convenient if subfolder dependency is missing)
-    QDir().mkpath(QString::fromStdString(cwd) + "data/Pipelines");
+    // Create cwd if it doesn't exist
+	QDir().mkpath(QString::fromStdString(cwd) + "models"); // <- mkpath creates the entire path recursively (convenient if subfolder dependency is missing)
+    QDir().mkpath(QString::fromStdString(cwd) + "pipelines");
     QDir().mkpath(QString::fromStdString(cwd) + "projects");
+
+    // Copy pipelines if they don't exist in pipelines and models folder
+    auto dataPath = QCoreApplication::applicationDirPath().toStdString() + "/../data/";
+    std::cout << "Data path was: " << dataPath << std::endl;
+    for(std::string folder : {"models", "pipelines"}) {
+        for(auto filename : getDirectoryList(join(dataPath, folder))) {
+            if(!isFile(join(cwd, folder, filename))) {
+                std::cout << "File not found, copying to fastpathology folder: " << join(cwd, folder, filename) << std::endl;
+                QFile::copy(QString::fromStdString(join(dataPath, folder, filename)), QString::fromStdString(join(cwd, folder, filename)));
+            } else {
+                std::cout << "File already exists: " << join(cwd, folder, filename) << std::endl;
+            }
+        }
+    }
 
     setupInterface();
     setupConnections();

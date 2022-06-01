@@ -1,0 +1,39 @@
+PipelineName "Bach Classification"
+PipelineDescription "Patch-wise image classification trained on data from the 2018 BACH challenge"
+PipelineInputData WSI "Whole-slide image"
+PipelineOutputData heatmap stitcher 0
+Attribute classes "Normal;Benign;In Situ Carcinoma;Invasive Carcinoma"
+
+### Processing chain
+
+ProcessObject tissueSeg TissueSegmentation
+Attribute threshold 85
+Input 0 WSI
+
+ProcessObject patch PatchGenerator
+Attribute patch-size 512 512
+Attribute patch-magnification 20
+Attribute patch-overlap 0.0
+Attribute mask-threshold 0.05
+Input 0 WSI
+Input 1 tissueSeg 0
+
+ProcessObject network NeuralNetwork
+Attribute scale-factor 0.00392156862
+Attribute model "$CURRENT_PATH$/../models/pw_classification_bach_mobilenet_v2.onnx"
+Input 0 patch 0
+
+ProcessObject stitcher PatchStitcher
+Input 0 network 0
+
+### Renderers
+Renderer imgRenderer ImagePyramidRenderer
+Input 0 WSI
+
+Renderer heatmap HeatmapRenderer
+Attribute interpolation false
+Attribute hidden-channels 0
+Attribute channel-colors "0" "green" "1" "green" "2" "magenta" "3" "red"
+Input 0 stitcher 0
+
+

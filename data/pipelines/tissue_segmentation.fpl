@@ -1,0 +1,19 @@
+PipelineName "Tissue segmentation"
+PipelineDescription "Tissue segmentation using simple color thresholding and morphology"
+PipelineInputData WSI "Whole-slide image"
+PipelineOutputData segmentation segmentation 0
+Attribute classes "Background;Tissue"
+
+ProcessObject segmentation TissueSegmentation
+Input 0 WSI
+
+### Renderers
+
+Renderer imgRenderer ImagePyramidRenderer
+Input 0 WSI
+
+Renderer segRenderer SegmentationRenderer
+Attribute opacity 0.2
+Attribute border-opacity 0.5
+Attribute label-colors "1" "red"
+Input 0 segmentation 0
