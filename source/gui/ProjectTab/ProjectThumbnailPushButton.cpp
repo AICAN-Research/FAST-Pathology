@@ -1,12 +1,10 @@
-//
-// Created by dbouget on 08.10.2021.
-//
-
 #include "ProjectThumbnailPushButton.h"
+#include "source/gui/MainWindow.hpp"
 
 namespace fast{
-    ProjectThumbnailPushButton::ProjectThumbnailPushButton(std::string name, QWidget *parent):_name(name), QPushButton(parent)
+    ProjectThumbnailPushButton::ProjectThumbnailPushButton(MainWindow* mainWindow, std::string name, QWidget *parent):_name(name), QPushButton(parent)
     {
+        m_mainWindow = mainWindow;
         this->SetupInterface();
         _checked = false;
         /*QObject::connect(this, &QPushButton::clicked, this, &ProjectThumbnailPushButton::custom_clicked);
@@ -20,7 +18,7 @@ namespace fast{
 
     void ProjectThumbnailPushButton::SetupInterface()
     {
-        auto thumbnail_image = DataManager::GetInstance()->getCurrentProject()->getImage(_name)->get_thumbnail();
+        auto thumbnail_image = m_mainWindow->getCurrentProject()->getImage(_name)->get_thumbnail();
         auto m_NewPixMap = QPixmap::fromImage(thumbnail_image);
         QIcon ButtonIcon(m_NewPixMap);
         this->setIcon(ButtonIcon);

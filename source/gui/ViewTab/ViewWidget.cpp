@@ -5,9 +5,11 @@
 #include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
 #include <FAST/Visualization/HeatmapRenderer/HeatmapRenderer.hpp>
 #include <QCheckBox>
+#include "source/gui/MainWindow.hpp"
 
 namespace fast {
-    ViewWidget::ViewWidget(QWidget *parent): QWidget(parent){
+    ViewWidget::ViewWidget(MainWindow* mainWindow, QWidget *parent): QWidget(parent){
+        m_mainWindow = mainWindow;
         setupInterface();
         setupConnections();
     }
@@ -62,7 +64,7 @@ namespace fast {
     void ViewWidget::writeRendererAttributes(Result result) {
         if(result.renderer->getNameOfClass() == "ImagePyramidRenderer")
             return;
-        auto project = DataManager::GetInstance()->getCurrentProject();
+        auto project = m_mainWindow->getCurrentProject();
         const std::string saveFolder = join(project->getRootFolder(), "results", result.WSI_uid, result.pipelineName, result.name);
         std::ofstream file(join(saveFolder, "renderer.attributes.txt"), std::iostream::out);
         file << result.renderer->attributesToString();

@@ -12,7 +12,6 @@
 #include <QProgressDialog>
 #include "source/utils/utilities.h"
 #include "source/gui/MainSidePanelWidget.h"
-#include "source/logic/DataManager.h"
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -113,7 +112,9 @@ class MainWindow : public Window {
 
         std::shared_ptr<ComputationThread> getComputationThread();
 
-        std::shared_ptr<Project> getCurrentProject();
+        std::shared_ptr<Project> getCurrentProject() const;
+        std::string getCurrentWSIUID() const;
+        std::shared_ptr<WholeSlideImage> getCurrentWSI() const;
 
         std::string getRootFolder() const;
     protected:
@@ -128,6 +129,9 @@ class MainWindow : public Window {
 
     private:
         MainWindow();
+
+        std::shared_ptr<Project> m_project;
+        std::string m_currentVisibleWSI; /* Unique id_name of the currently rendered (hence visible) WSI. */
 
         std::string _application_name; /* */
         MainSidePanelWidget *_side_panel_widget; /* Main widget for the left-hand panel */

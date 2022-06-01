@@ -15,9 +15,9 @@ namespace fast{
 
     void MainSidePanelWidget::setUpInterface(){
         this->_container_stacked_widget = new QStackedWidget(this);
-        this->_project_widget = new ProjectWidget(this);
+        this->_project_widget = new ProjectWidget(m_mainWindow, this);
         this->_process_widget = new ProcessWidget(m_mainWindow, this);
-        this->_view_widget = new ViewWidget(this);
+        this->_view_widget = new ViewWidget(m_mainWindow, this);
         this->_stats_widget = new StatsWidget(this);
         this->_export_widget = new ExportWidget(this);
 
@@ -201,7 +201,7 @@ namespace fast{
         int ret = mBox.exec();
 
         // @TODO. Is the filename supposed to be the path of the displayed WSI, or project path, or...?
-        auto filename = DataManager::GetInstance()->getVisibleImageName();
+        auto filename = m_mainWindow->getCurrentWSIUID();
         switch (ret) {
             case QMessageBox::Yes:
                 // toggle and update text on button to show current mode

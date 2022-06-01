@@ -5,6 +5,7 @@
 #include <QDesktopWidget>
 #include <QPushButton>
 #include <QInputDialog>
+#include "source/utils/utilities.h"
 
 namespace fast{
 
@@ -50,7 +51,7 @@ ProjectSplashWidget::ProjectSplashWidget(QWidget* parent) : QWidget(parent, Qt::
 }
 
 void ProjectSplashWidget::newProjectNameDialog() {
-    QString date = "20222";
+    auto date = QString::fromStdString(currentDateTime());
     bool ok;
     QString text = QInputDialog::getText(this, "Start new project",
                                          "Project name:", QLineEdit::Normal,

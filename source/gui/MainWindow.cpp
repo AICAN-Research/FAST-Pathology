@@ -30,6 +30,7 @@
 #include <QDragEnterEvent>
 #include <QtNetwork>
 #include "source/gui/SplashWidget.hpp"
+#include "source/logic/Project.h"
 
 using namespace std;
 
@@ -61,6 +62,7 @@ MainWindow::MainWindow() {
     connect(splash, &ProjectSplashWidget::quitSignal, mWidget, &QWidget::close);
     connect(splash, &ProjectSplashWidget::newProjectSignal, [=](QString name) {
         std::cout << "Creating project with name " << name.toStdString() << std::endl;;
+        m_project = std::make_shared<Project>(name.toStdString());
     });
     splash->show();
 }
@@ -291,7 +293,7 @@ void MainWindow::createMenubar()
 void MainWindow::reset()
 {
     //first prompt warning, that it will delete all unsaved results, etc...
-    if (! DataManager::GetInstance()->getCurrentProject()->isProjectEmpty())
+    if (! getCurrentProject()->isProjectEmpty())
     {
         // prompt
         QMessageBox mBox;
@@ -355,14 +357,14 @@ void MainWindow::changeWSIDisplayReceived(std::string uid_name)
 {
     auto view = getView(0);
     view->removeAllRenderers();
-    auto img = DataManager::GetInstance()->getCurrentProject()->getImage(uid_name);
-    DataManager::GetInstance()->setVisibleImageName(uid_name);
+    auto img = getCurrentProject()->getImage(uid_name);
+    m_currentVisibleWSI = uid_name;
 
     auto renderer = ImagePyramidRenderer::create()
         ->connect(img->get_image_pyramid());
     view->addRenderer(renderer);
 
-    auto results = DataManager::GetInstance()->getCurrentProject()->loadResults(uid_name);
+    auto results = getCurrentProject()->loadResults(uid_name);
     if(!results.empty()) {
         for(auto result : results) {
             view->addRenderer(result.renderer);
@@ -593,8 +595,16 @@ std::string MainWindow::getRootFolder() const {
     return cwd;
 }
 
-std::shared_ptr<Project> MainWindow::getCurrentProject() {
-    return DataManager::GetInstance()->getCurrentProject();
+std::shared_ptr<Project> MainWindow::getCurrentProject() const {
+    return m_project;
+}
+
+std::shared_ptr<WholeSlideImage> MainWindow::getCurrentWSI() const {
+    return getCurrentProject()->getImage(getCurrentWSIUID());
+}
+
+std::string MainWindow::getCurrentWSIUID() const {
+    return m_currentVisibleWSI;
 }
 
 }

@@ -2,13 +2,11 @@
 
 #include <iostream>
 #include <string>
-
 #include <QString>
 #include <QTemporaryDir>
 #include <QFile>
 #include <QIODevice>
 #include <QTextStream>
-
 #include "source/utils/utilities.h"
 #include "source/logic/WholeSlideImage.h"
 
@@ -27,16 +25,16 @@ namespace fast{
 
     class Project {
         public:
-            Project();
+            Project(std::string name);
             ~Project();
 
-            inline bool hasUserSelectedDestinationFolder() const {return !this->_temporary_dir_flag;}
-            inline const std::string getRootFolder(){return this->_root_folder;}
-            inline bool isProjectEmpty() const{return _images.empty();}
-            inline int getWSICountInProject() const{return this->_images.size();}
+            const std::string getRootFolder(){return this->_root_folder;}
+            bool isProjectEmpty() const{return _images.empty();}
+            int getWSICountInProject() const{return this->_images.size();}
             std::vector<std::string> getAllWsiUids() const;
             std::shared_ptr<WholeSlideImage> getImage(const std::string& name);
             std::shared_ptr<WholeSlideImage> getImage(int i);
+            std::string getName() const { return m_name; };
 
             void setRootFolder(const std::string& root_folder);
 
@@ -88,7 +86,7 @@ namespace fast{
              */
             void saveThumbnail(const std::string& wsi_uid);
        private:
-            bool _temporary_dir_flag; /* Flag indicating if a project destination folder has been chosen by the user. */
+            std::string m_name;
             std::string _root_folder;  /* Location on disk where to save all data for the current project. */
             std::map<std::string, std::shared_ptr<WholeSlideImage>> _images; /* Loaded image objects. */
     };

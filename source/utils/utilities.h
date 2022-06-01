@@ -1,9 +1,4 @@
-//
-// Created by dbouget on 06.10.2021.
-//
-
-#ifndef FASTPATHOLOGY_UTILITIES_H
-#define FASTPATHOLOGY_UTILITIES_H
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -40,5 +35,16 @@ namespace fast {
         res.push_back (s.substr (pos_start));
         return res;
     }
+
+    static std::string currentDateTime(const std::string& format = "%Y-%m-%d-%H%M%S") {
+        time_t     now = time(0);
+        struct tm  tstruct;
+        char       buf[80];
+        tstruct = *localtime(&now);
+        // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
+        // for more information about date/time format
+        strftime(buf, sizeof(buf), format.c_str(), &tstruct);
+
+        return buf;
+    }
 }
-#endif //FASTPATHOLOGY_UTILITIES_H

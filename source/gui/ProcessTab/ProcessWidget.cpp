@@ -178,7 +178,7 @@ namespace fast {
             m_progressDialog->setValue(m_progressDialog->maximum()); // Close progress dialog
         m_batchProcesessing = false;
         stopProcessing();
-        selectWSI(DataManager::GetInstance()->get_visible_image()->get_image_pyramid());
+        selectWSI(m_mainWindow->getCurrentWSI()->get_image_pyramid());
     }
 
     void ProcessWidget::showMessage(QString msg) {
@@ -228,7 +228,7 @@ namespace fast {
             std::cout << "parsing" << std::endl;
             if(!WSI) {
                 auto uids = m_mainWindow->getCurrentProject()->getAllWsiUids();
-                auto currentUID = DataManager::GetInstance()->getVisibleImageName();
+                auto currentUID = m_mainWindow->getCurrentWSIUID();
                 if(currentUID.empty())
                     return;
                 for(int i = 0; i < uids.size(); ++i) {
@@ -275,7 +275,7 @@ namespace fast {
 
     void ProcessWidget::saveResults() {
         auto pipelineData = m_runningPipeline->getAllPipelineOutputData();
-        DataManager::GetInstance()->getCurrentProject()->saveResults(m_mainWindow->getCurrentProject()->getAllWsiUids()[m_currentWSI], m_runningPipeline, pipelineData);
+        m_mainWindow->getCurrentProject()->saveResults(m_mainWindow->getCurrentProject()->getAllWsiUids()[m_currentWSI], m_runningPipeline, pipelineData);
     }
 
     void ProcessWidget::editorPipelinesReceived()

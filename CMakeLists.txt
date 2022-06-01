@@ -33,8 +33,6 @@ add_executable(fastpathology
 		source/gui/ExportTab/ExportWidget.h
 		source/gui/MainSidePanelWidget.cpp
 		source/gui/MainSidePanelWidget.h
-		source/logic/DataManager.cpp
-		source/logic/DataManager.h
 		source/logic/WholeSlideImage.cpp
 		source/logic/WholeSlideImage.h
 		source/logic/Project.cpp

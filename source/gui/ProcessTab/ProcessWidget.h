@@ -20,7 +20,6 @@
 #include <QGroupBox>
 #include <QPlainTextEdit>
 #include <FAST/Visualization/Renderer.hpp>
-#include "source/logic/DataManager.h"
 #include "source/utils/utilities.h"
 #include "source/utils/qutilities.h"
 #include "source/gui/ProcessTab/PipelineScriptEditorWidget.h"

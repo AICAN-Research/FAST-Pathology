@@ -1,16 +1,13 @@
-//
-// Created by dbouget on 06.10.2021.
-//
-
 #include "ProjectWidget.h"
-
 #include <FAST/Importers/WholeSlideImageImporter.hpp>
 #include <FAST/Visualization/ImagePyramidRenderer/ImagePyramidRenderer.hpp>
 #include <FAST/Data/ImagePyramid.hpp>
 #include <FAST/Reporter.hpp>
+#include "source/gui/MainWindow.hpp"
 
 namespace fast {
-    ProjectWidget::ProjectWidget(QWidget *parent): QWidget(parent){
+    ProjectWidget::ProjectWidget(MainWindow* mainWindow, QWidget *parent): QWidget(parent){
+        m_mainWindow = mainWindow;
         this->setupInterface();
         this->setupConnections();
     }
@@ -51,7 +48,7 @@ namespace fast {
         _thumbnail_qpushbutton_map.clear();
         emit resetDisplay();
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-        DataManager::GetInstance()->doEmpty();
+        // TODO m_mainWindow->doEmpty();
     }
 
     void ProjectWidget::setupConnections() {
@@ -122,7 +119,7 @@ namespace fast {
                 QCoreApplication::applicationDirPath(), QFileDialog::DontUseNativeDialog);
 
         Reporter::info()<< "Project dir: " << this->_projectFolderName.toStdString() << Reporter::end();
-        DataManager::GetInstance()->getCurrentProject()->setRootFolder(this->_projectFolderName.toStdString());
+        m_mainWindow->getCurrentProject()->setRootFolder(this->_projectFolderName.toStdString());
 
         // create file for saving which WSIs exist in folder
         QString projectFileName = "/project.txt";
@@ -138,7 +135,7 @@ namespace fast {
 
         // check if any WSIs have been selected previously, and ask if you want to make a project and add these,
         // or make a new fresh one -> if no, need to clear all WSIs in the QListWidget
-        if (!DataManager::GetInstance()->getCurrentProject()->isProjectEmpty())
+        if (!m_mainWindow->getCurrentProject()->isProjectEmpty())
         {
             // prompt
             QMessageBox mBox;
@@ -157,7 +154,7 @@ namespace fast {
                 case QMessageBox::No:
                     std::cout << "Removing WSIs from QListWidget!" << std::endl;
                     _wsi_scroll_listwidget->clear();
-                    DataManager::GetInstance()->doEmpty();
+                    m_mainWindow->getCurrentProject()->emptyProject();
                     emit resetDisplay();
                     break;
                 default:
@@ -168,30 +165,15 @@ namespace fast {
 
     void ProjectWidget::saveProject()
     {
-        if (DataManager::GetInstance()->getCurrentProject()->isProjectEmpty())
+        if (m_mainWindow->getCurrentProject()->isProjectEmpty())
             return;
 
-        // If existing data, but still a temporary project directory, ask to select a valid folder
-        if (!DataManager::GetInstance()->getCurrentProject()->hasUserSelectedDestinationFolder())
-        {
-            QFileDialog dialog(this);
-            dialog.setFileMode(QFileDialog::DirectoryOnly);
-
-            auto selected_dir = dialog.getExistingDirectory(this, tr("Set Project Directory"),
-                    QCoreApplication::applicationDirPath(), QFileDialog::DontUseNativeDialog);
-
-            if (!QDir(selected_dir).exists())
-                return;
-            Reporter::info() << "Project dir: " << selected_dir.toStdString() << Reporter::end();
-            DataManager::GetInstance()->getCurrentProject()->setRootFolder(selected_dir.toStdString());
-        }
-
-        DataManager::GetInstance()->getCurrentProject()->saveProject();
+        m_mainWindow->getCurrentProject()->saveProject();
     }
 
     void ProjectWidget::openProject() {
         // If existing data, asks for confirmation to delete.
-        if (!DataManager::GetInstance()->getCurrentProject()->isProjectEmpty())
+        if (!m_mainWindow->getCurrentProject()->isProjectEmpty())
         {
             QMessageBox mBox;
             mBox.setIcon(QMessageBox::Warning);
@@ -207,7 +189,7 @@ namespace fast {
                     _thumbnail_qpushbutton_map.clear();
                     emit resetDisplay();
                     QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-                    DataManager::GetInstance()->doEmpty();
+                    m_mainWindow->getCurrentProject()->emptyProject();
                     break;
                 case QMessageBox::No:
                     break;
@@ -229,10 +211,10 @@ namespace fast {
         std::cout << projectPath.toStdString() << std::endl;
         _projectFolderName = splitCustom(projectPath.toStdString(), "project.txt")[0].c_str();
         std::cout << _projectFolderName.toStdString() << std::endl;
-        DataManager::GetInstance()->getCurrentProject()->setRootFolder(_projectFolderName.toStdString());
+        m_mainWindow->getCurrentProject()->setRootFolder(_projectFolderName.toStdString());
 
         auto progDialog = QProgressDialog(this);
-        progDialog.setRange(0, DataManager::GetInstance()->getCurrentProject()->getWSICountInProject()-1);
+        progDialog.setRange(0, m_mainWindow->getCurrentProject()->getWSICountInProject()-1);
         //progDialog.setContentsMargins(0, 0, 0, 0);
         progDialog.setVisible(true);
         progDialog.setModal(false);
@@ -242,12 +224,12 @@ namespace fast {
         progDialog.show();
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
-        DataManager::GetInstance()->getCurrentProject()->loadProject();
+        m_mainWindow->getCurrentProject()->loadProject();
 
-        for (std::string uid: DataManager::GetInstance()->getCurrentProject()->getAllWsiUids())
+        for (std::string uid: m_mainWindow->getCurrentProject()->getAllWsiUids())
         {
             Reporter::info() << "Selected file: " << uid << Reporter::end();
-            auto button = new ProjectThumbnailPushButton(uid, this);
+            auto button = new ProjectThumbnailPushButton(m_mainWindow, uid, this);
             int width_val = 100;
             int height_val = 150;
             auto listItem = new QListWidgetItem;
@@ -264,7 +246,7 @@ namespace fast {
 
     void ProjectWidget::selectFile() {
         // check if view object list is empty, if not, prompt to save results or not, if not clear
-        if (!DataManager::GetInstance()->getCurrentProject()->isProjectEmpty())
+        if (!m_mainWindow->getCurrentProject()->isProjectEmpty())
         {
             // prompt
             QMessageBox mBox;
@@ -340,13 +322,13 @@ namespace fast {
             //filename = fileName.toStdString();
             auto currFileName = fileName.toStdString();
             Reporter::info() << "Selected file: " << currFileName << Reporter::end();
-            const std::string id_name = DataManager::GetInstance()->getCurrentProject()->includeImage(currFileName);
+            const std::string id_name = m_mainWindow->getCurrentProject()->includeImage(currFileName);
 
             // @TODO. Shouldn't we keep a class attribute list with those buttons, so that it's easier to retrieve them
             // and delete them on the fly?
-            auto button = new ProjectThumbnailPushButton(id_name, this);
+            auto button = new ProjectThumbnailPushButton(m_mainWindow, id_name, this);
 //            auto button = new QPushButton(this);
-//            auto thumbnail_image = DataManager::GetInstance()->get_image("0")->get_thumbnail();
+//            auto thumbnail_image = m_mainWindow->get_image("0")->get_thumbnail();
 //            auto m_NewPixMap = QPixmap::fromImage(thumbnail_image);
 //            QIcon ButtonIcon(m_NewPixMap);
 //            button->setIcon(ButtonIcon);
@@ -380,7 +362,7 @@ namespace fast {
         _thumbnail_qpushbutton_map.erase(uid);
         _wsi_scroll_listwidget->update();
         emit changeWSIDisplayTriggered(uid, false);
-        DataManager::GetInstance()->getCurrentProject()->removeImage(uid);
+        m_mainWindow->getCurrentProject()->removeImage(uid);
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
     }
 
@@ -503,7 +485,7 @@ namespace fast {
     void ProjectWidget::selectFileDrag(const QList<QString> &fileNames)
     {
 //        // check if view object list is empty, if not, prompt to save results or not, if not clear
-//        if (!DataManager::GetInstance()->isEmpty()) {
+//        if (!m_mainWindow->isEmpty()) {
 //            QMessageBox mBox;
 //            mBox.setIcon(QMessageBox::Warning);
 //            mBox.setStyleSheet(this->styleSheet());

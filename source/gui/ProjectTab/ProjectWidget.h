@@ -1,9 +1,4 @@
-//
-// Created by dbouget on 06.10.2021.
-//
-
-#ifndef FASTPATHOLOGY_PROJECTWIDGET_H
-#define FASTPATHOLOGY_PROJECTWIDGET_H
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -24,7 +19,6 @@
 #include <QDirIterator>
 #include <iostream>
 #include <FAST/Visualization/Renderer.hpp>
-#include "source/logic/DataManager.h"
 #include "source/utils/utilities.h"
 #include "source/gui/ProjectTab/ProjectThumbnailPushButton.h"
 
@@ -34,11 +28,12 @@ namespace fast {
     class ImagePyramid;
     class ImagePyramidRenderer;
     class Renderer;
+    class MainWindow;
 
 class ProjectWidget: public QWidget {
 Q_OBJECT
 public:
-    ProjectWidget(QWidget* parent=0);
+    ProjectWidget(MainWindow* mainWindow, QWidget* parent=0);
     ~ProjectWidget();
 
     /**
@@ -127,11 +122,9 @@ private:
     QVBoxLayout* _wsi_scroll_layout;
     std::map<std::string, QListWidgetItem*> _wsi_thumbnails_listitem;
     std::map<std::string, ProjectThumbnailPushButton*> _thumbnail_qpushbutton_map;
-
-
 private:
     QString _projectFolderName;
+    MainWindow* m_mainWindow;
 };
 
 }
-#endif //FASTPATHOLOGY_PROJECTWIDGET_H

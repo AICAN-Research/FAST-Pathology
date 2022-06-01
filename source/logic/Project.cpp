@@ -1,12 +1,6 @@
-//
-// Created by dbouget on 09.11.2021.
-//
-
 #include "Project.h"
 #include <FAST/Reporter.hpp>
 #include <FAST/Utility.hpp>
-#include <FAST/Importers/ImageFileImporter.hpp>
-#include <FAST/Exporters/ImageExporter.hpp>
 #include <FAST/Pipeline.hpp>
 #include <FAST/Importers/TIFFImagePyramidImporter.hpp>
 #include <FAST/Exporters/TIFFImagePyramidExporter.hpp>
@@ -15,38 +9,31 @@
 #include <FAST/Importers/HDF5TensorImporter.hpp>
 #include <FAST/Exporters/HDF5TensorExporter.hpp>
 #include <FAST/Visualization/Renderer.hpp>
-#include <FAST/Visualization/ImagePyramidRenderer/ImagePyramidRenderer.hpp>
 #include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
 #include <FAST/Visualization/HeatmapRenderer/HeatmapRenderer.hpp>
 #include <FAST/Visualization/View.hpp>
 
 namespace fast{
-    Project::Project()
+    Project::Project(std::string name)
     {
+        m_name = name;
         // Default folder root from Qt temporary dir, automatically deleted.
-        auto default_dir = QTemporaryDir();
-        this->_root_folder = QDir::tempPath().toStdString() + "/project_" + createRandomNumbers_(8);
-        QDir().mkpath(QString::fromStdString(this->_root_folder));
-        Reporter::info()<<"Temporary project folder is set to: "<<this->_root_folder<<Reporter::end();
-        this->_temporary_dir_flag = true;
+        this->_root_folder = QDir::home().path().toStdString() + "/fastpathology/projects/" + name + "/";
         this->createFolderDirectoryArchitecture();
     }
 
     Project::~Project()
     {
-        std::cout<<"Deleting temporary project folder: "<<this->_root_folder<<std::endl;
-        if(this->_temporary_dir_flag)
-            QDir().rmdir(QString::fromStdString(this->_root_folder));
     }
 
     void Project::createFolderDirectoryArchitecture()
     {
+        QDir().mkdir(QString::fromStdString(this->_root_folder));
+        std::ofstream file(_root_folder + "project.txt", std::ios::out);
+        file << "";
+        file.close();
         // check if all relevant files and folders are in selected folder directory
         // if any of the folders does not exists, create them
-        if (!QDir(QString::fromStdString(this->_root_folder + "/pipelines")).exists())
-        {
-            QDir().mkdir(QString::fromStdString(this->_root_folder + "/pipelines"));
-        }
         if (!QDir(QString::fromStdString(this->_root_folder + "/results")).exists())
         {
             QDir().mkdir(QString::fromStdString(this->_root_folder + "/results"));
@@ -77,7 +64,6 @@ namespace fast{
     void Project::setRootFolder(const std::string& root_folder)
     {
         this->_root_folder = root_folder;
-        this->_temporary_dir_flag = false;
         this->createFolderDirectoryArchitecture();
     }
 
@@ -107,6 +93,11 @@ namespace fast{
         }
         this->_images[img_name_short] = image;
 
+        std::ofstream file(_root_folder + "project.txt", std::ios::app);
+        file << img_name_short << "\n";
+        file << image_filepath << "\n";
+        file.close();
+
         return img_name_short;
     }
 
@@ -129,6 +120,28 @@ namespace fast{
     void Project::removeImage(const std::string& uid)
     {
         this->_images.erase(uid);
+
+        std::vector<std::string> lines;
+        {
+            std::ifstream file(_root_folder + "project.txt");
+            std::string line;
+            while (std::getline(file, line)) {
+                lines.push_back(line);
+            }
+        }
+
+        {
+            std::ofstream file(_root_folder + "project.txt", std::ios::out);
+            for(int i = 0; i < lines.size(); i += 2) {
+                if(lines[i] != uid) {
+                    file << lines[i] << "\n";
+                    file << lines[i+1] << "\n";
+                }
+            }
+        }
+
+        // TODO remove any results and thumbnails
+        QDir().rmdir(QString::fromStdString(this->_root_folder + "/results/" + uid + "/"));
     }
 
     void Project::loadProject()

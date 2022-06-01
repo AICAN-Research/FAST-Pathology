@@ -26,7 +26,6 @@
 #include <QTextEdit>
 #include <iostream>
 #include <FAST/Visualization/Renderer.hpp>
-#include "source/logic/DataManager.h"
 #include "source/utils/utilities.h"
 #include "source/utils/qutilities.h"
 
