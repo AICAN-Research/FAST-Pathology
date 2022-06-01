@@ -39,6 +39,8 @@ add_executable(fastpathology
 		source/logic/WholeSlideImage.h
 		source/logic/Project.cpp
 		source/logic/Project.h
+		source/gui/SplashWidget.cpp
+		source/gui/SplashWidget.hpp
 )
 
 add_definitions(-D_USE_MATH_DEFINES)

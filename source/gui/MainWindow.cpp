@@ -29,6 +29,7 @@
 #include <FAST/Visualization/MultiViewWindow.hpp>
 #include <QDragEnterEvent>
 #include <QtNetwork>
+#include "source/gui/SplashWidget.hpp"
 
 using namespace std;
 
@@ -41,35 +42,27 @@ MainWindow::MainWindow() {
 
 	cwd = QDir::homePath().toStdString() + "/fastpathology/";
 
-    // create temporary tmp folder to store stuff, and create temporary file to store history
-    QTemporaryDir tmpDir;
-	tmpDirPath = tmpDir.path().toStdString();
-	std::cout << "Temporary path: " << tmpDirPath << std::endl;
-
     //printf("\n%d\n",__LINE__); // <- this is nice for debugging
 
     // Create models folder platform assumes that this folder exists and contains all relevant models (and pipelines, and temporary models)
     //createDirectories(dir_str);
 	QDir().mkpath(QString::fromStdString(cwd) + "data/Models"); // <- mkpath creates the entire path recursively (convenient if subfolder dependency is missing)
     QDir().mkpath(QString::fromStdString(cwd) + "data/Pipelines");
-
-	// create temporary project folder
-	QString projectFolderName = QString::fromStdString(tmpDirPath) + "/project_" + QString::fromStdString(createRandomNumbers_(8));
-	QDir().mkpath(projectFolderName);
-	QString projectFileName = "/project.txt";
-	QFile file(projectFolderName + projectFileName);
-	if (file.open(QIODevice::ReadWrite)) {
-		QTextStream stream(&file);
-	}
-	QDir().mkdir(projectFolderName + QString::fromStdString("/results"));
-	QDir().mkdir(projectFolderName + QString::fromStdString("/pipelines"));
-	QDir().mkdir(projectFolderName + QString::fromStdString("/thumbnails"));
+    QDir().mkpath(QString::fromStdString(cwd) + "projects");
 
     this->setupInterface();
     this->setupConnections();
 
     // Legacy stuff to remove.
     advancedMode = false;
+
+    // Start splash
+    auto splash = new ProjectSplashWidget();
+    connect(splash, &ProjectSplashWidget::quitSignal, mWidget, &QWidget::close);
+    connect(splash, &ProjectSplashWidget::newProjectSignal, [=](QString name) {
+        std::cout << "Creating project with name " << name.toStdString() << std::endl;;
+    });
+    splash->show();
 }
 
 
