@@ -231,6 +231,7 @@ namespace fast {
         }
 
         setCurrentFileScript(fileName);
+        emit pipelineSaved(QFileInfo(fileName).fileName());
         return true;
     }
 

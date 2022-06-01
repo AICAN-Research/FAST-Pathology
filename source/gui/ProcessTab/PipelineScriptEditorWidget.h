@@ -52,6 +52,8 @@ private:
      */
     void setCurrentFileScript(const QString &fileName);
 
+    signals:
+        void pipelineSaved(QString filename);
 private slots:
     /**
      * Create a new file from the script editor. Opens a blank document. If already unsaved document exist,

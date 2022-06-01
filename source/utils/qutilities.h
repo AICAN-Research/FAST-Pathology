@@ -1,9 +1,4 @@
-//
-// Created by dbouget on 02.11.2021.
-//
-
-#ifndef FASTPATHOLOGY_QUTILITIES_H
-#define FASTPATHOLOGY_QUTILITIES_H
+#pragma once
 
 #include <iostream>
 #include <vector>
@@ -31,5 +26,18 @@ namespace fast {
         mBox->show();
         QTimer::singleShot(3000, mBox, SLOT(accept()));
     }
+
+    static void clearLayout(QLayout *layout) {
+        QLayoutItem *item;
+        while((item = layout->takeAt(0))) {
+            if (item->layout()) {
+                clearLayout(item->layout());
+                delete item->layout();
+            }
+            if (item->widget()) {
+                delete item->widget();
+            }
+            delete item;
+        }
+    }
 }
-#endif //FASTPATHOLOGY_QUTILITIES_H

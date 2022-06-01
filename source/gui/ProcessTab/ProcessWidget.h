@@ -68,7 +68,7 @@ signals:
     void pipelineFinished(std::string uid);
 public slots:
     void addModels();
-    void addPipelines();
+    void addPipelines(QString filename = "");
     /**
      * Defines and creates the script editor widget.
      */

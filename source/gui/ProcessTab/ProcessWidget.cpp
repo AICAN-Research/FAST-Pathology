@@ -59,7 +59,8 @@ namespace fast {
 
     void ProcessWidget::resetInterface()
     {
-        return;
+        _page_combobox->clear();
+        clearLayout(_stacked_layout);
     }
 
     void ProcessWidget::setupConnections()
@@ -87,12 +88,17 @@ namespace fast {
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
     }
 
-    void ProcessWidget::addPipelines() {
-        auto counter = 1;
+    void ProcessWidget::addPipelines(QString selectedFilename) {
+        resetInterface();
+        int index = 0;
+        int counter = 0;
         // Load pipelines and create one button for each.
         std::string pipelineFolder = this->_cwd + "/pipelines/";
         for(auto& filename : getDirectoryList(pipelineFolder)) {
             auto pipeline = Pipeline(join(pipelineFolder, filename));
+            if(filename == selectedFilename.toStdString()) {
+                index = counter;
+            }
 
             auto page = new QWidget();
             auto layout = new QVBoxLayout();
@@ -119,7 +125,18 @@ namespace fast {
             QObject::connect(batchButton, &QPushButton::clicked, [=]() {
                 runInThread(join(pipelineFolder, filename), pipeline.getName(), true);
             });
+
+            auto editButton = new QPushButton;
+            editButton->setText("Edit pipeline");
+            layout->addWidget(editButton);
+            connect(editButton, &QPushButton::clicked, [=]() {
+                auto editor = new PipelineScriptEditorWidget(QString::fromStdString(pipeline.getFilename()), this);
+                connect(editor, &PipelineScriptEditorWidget::pipelineSaved, this, &ProcessWidget::addPipelines);
+            });
+            ++counter;
         }
+        _page_combobox->setCurrentIndex(index);
+        _stacked_layout->setCurrentIndex(index);
     }
 
     void ProcessWidget::runInThread(std::string pipelineFilename, std::string pipelineName, bool runForAll) {

@@ -183,7 +183,6 @@ namespace fast{
         QObject::connect(this, &MainSidePanelWidget::downloadTestDataTriggered, this->_project_widget, &ProjectWidget::downloadAndAddTestData);
         QObject::connect(this, &MainSidePanelWidget::filesDropped, this->_project_widget, &ProjectWidget::selectFileDrag);
         QObject::connect(this, &MainSidePanelWidget::addModelsTriggered, this->_process_widget, &ProcessWidget::addModels);
-        QObject::connect(this, &MainSidePanelWidget::addPipelinesTriggered, this->_process_widget, &ProcessWidget::addPipelines);
         QObject::connect(this, &MainSidePanelWidget::editorPipelinesTriggered, this->_process_widget, &ProcessWidget::editorPipelinesReceived);
         QObject::connect(_process_widget, &ProcessWidget::pipelineFinished, m_mainWindow, &MainWindow::changeWSIDisplayReceived);
         connect(m_mainWindow, &MainWindow::updateProjectTitle, _project_widget, &ProjectWidget::updateTitle);

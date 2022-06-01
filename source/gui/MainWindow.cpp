@@ -302,21 +302,6 @@ void MainWindow::loadPipelines() {
     }
 }
 
-// TODO: Don't remember if this actually worked, or if I ended up using it
-void clearLayout(QLayout *layout) {
-    QLayoutItem *item;
-    while((item = layout->takeAt(0))) {
-        if (item->layout()) {
-            clearLayout(item->layout());
-            delete item->layout();
-        }
-        if (item->widget()) {
-            delete item->widget();
-        }
-        delete item;
-    }
-}
-
 void MainWindow::changeWSIDisplayReceived(std::string uid_name)
 {
     auto view = getView(0);
