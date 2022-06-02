@@ -29,13 +29,12 @@ jobs:
     - name: Extract FAST
       run: |
         cd ${{github.workspace}}/downloads/
-        tar -xf fast_*.tar.xz -C ${{github.workspace}}/downloads/
+        tar -xf fast_macos10.13.tar.xz -C ${{github.workspace}}/downloads/
         mv ${{github.workspace}}/downloads/fast_*/fast ${{github.workspace}}/
 
     - name: Configure CMake
       run: |
-        cmake -B ${{github.workspace}}/build \
-            -DFAST_DIR=${{github.workspace}}/fast/cmake/
+        cmake -B ${{github.workspace}}/build -DFAST_DIR=${{github.workspace}}/fast/cmake/
 
     - name: Build FastPathology
       run: cmake --build ${{github.workspace}}/build --config Release --target fastpathology -j 4
