@@ -1,0 +1,38 @@
+PipelineName "Epithelium segmentation in colonic mucosa"
+PipelineDescription "Add some info here"
+PipelineInputData WSI "Whole-slide image"
+PipelineOutputData segmentation stitcher 0
+Attribute classes "Background;Epithelium"
+
+### Processing chain
+ProcessObject tissueSeg TissueSegmentation
+Attribute threshold 85
+Input 0 WSI
+
+ProcessObject patch PatchGenerator
+Attribute patch-size 256 256
+Attribute patch-magnification 20
+Attribute patch-overlap 0.1
+Attribute mask-threshold 0.05
+Input 0 WSI
+Input 1 tissueSeg 0
+
+ProcessObject network SegmentationNetwork
+Attribute scale-factor 1.0
+#Attribute inference-engine TensorRT
+#Attribute inference-engine OpenVINO
+Attribute model "$CURRENT_PATH$/../models/CD3_UNET_256_1P16B32FD6_w_Augm_290921.onnx"
+Input 0 patch 0
+
+ProcessObject stitcher PatchStitcher
+Input 0 network 0
+
+### Renderers
+Renderer imgRenderer ImagePyramidRenderer
+Input 0 WSI
+
+Renderer segRenderer SegmentationRenderer
+Attribute opacity 0.5
+Attribute border-opacity 1.0
+Input 0 stitcher 0
+
