@@ -94,7 +94,8 @@ void MainWindow::showProjectSplash() {
         if(m_project)
             reset();
         std::cout << "Opening project with name " << name.toStdString() << std::endl;;
-        m_project = std::make_shared<Project>(name.toStdString(), true);
+        // TODO have some sort of progress bar here.
+        m_project = std::make_shared<Project>(name.toStdString(), true); // <-- This takes time
         emit _side_panel_widget->loadProject();
         emit updateProjectTitle();
     });

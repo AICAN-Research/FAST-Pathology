@@ -75,8 +75,8 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, QWidget* parent
     }
     leftLayout->addWidget(recentList);
     connect(recentList, &QListWidget::itemDoubleClicked, [=](QListWidgetItem* item) {
-        emit openProjectSignal(item->text());
         close();
+        emit openProjectSignal(item->text());
     });
 
     auto deleteProjectButton = new QPushButton();
@@ -130,8 +130,8 @@ void ProjectSplashWidget::newProjectNameDialog() {
             msgBox.exec();
             return;
         }
-        emit newProjectSignal(text);
         close();
+        emit newProjectSignal(text);
     }
 }
 
