@@ -162,8 +162,8 @@ void MainWindow::downloadZipFile(std::string URL, std::string destination) {
 void MainWindow::closeEvent (QCloseEvent *event)
 {
     QMessageBox::StandardButton resBtn = QMessageBox::question(mWidget, QString::fromStdString(_application_name),
-                                                                tr("Are you sure?\n"),
-                                                                QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
+                                                                tr("Are you sure you wish to quit?\n"),
+                                                                QMessageBox::No | QMessageBox::Yes,
                                                                 QMessageBox::Yes);
     if (resBtn != QMessageBox::Yes) {
         event->ignore();
@@ -218,8 +218,6 @@ void MainWindow::setupInterface()
 
 void MainWindow::setupConnections()
 {
-    // @TODO. How to collect the closeEvent signal
-    QObject::connect(mWidget, &WindowWidget::closeEvent, this, &MainWindow::closeEvent);
     // Overall
     QObject::connect(_side_panel_widget, &MainSidePanelWidget::newAppTitle, this, &MainWindow::updateAppTitleReceived);
     // @TODO. The drag and drop can be about anything? Images, models, pipelines, etc...?
@@ -234,15 +232,7 @@ void MainWindow::setupConnections()
     QObject::connect(_file_menu_add_model_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::addModelsTriggered);
     QObject::connect(_file_menu_add_pipeline_action, &QAction::triggered, this, &MainWindow::addPipelines);
 
-    QObject::connect(_project_menu_create_project_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::createProjectTriggered);
-    QObject::connect(_project_menu_open_project_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::openProjectTriggered);
-    QObject::connect(_project_menu_save_project_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::saveProjectTriggered);
-
     QObject::connect(_edit_menu_change_mode_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::setApplicationMode);
-    QObject::connect(_edit_menu_download_testdata_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::downloadTestDataTriggered);
-
-    QObject::connect(_pipeline_menu_import_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::addPipelinesTriggered);
-    QObject::connect(_pipeline_menu_editor_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::editorPipelinesTriggered);
 
     QObject::connect(_help_menu_about_action, &QAction::triggered, this, &MainWindow::aboutProgram);
 }
@@ -295,7 +285,7 @@ void MainWindow::aboutProgram() {
 	
 	auto textBox = new QTextEdit;
 	textBox->setEnabled(false);
-	textBox->setText("<html><b>FastPathology v1.0.0</b</html>");
+	textBox->setText("<html><b>FastPathology " + QString(FAST_PATHOLOGY_VERSION) + "</b</html>");
 	textBox->append("");
 	textBox->setAlignment(Qt::AlignCenter);
 	textBox->append("Open-source platform for deep learning-based research and decision support in digital pathology.");
@@ -350,8 +340,6 @@ void MainWindow::createMenubar()
     auto editMenu = topFiller->addMenu(tr("&Edit"));
     _edit_menu_change_mode_action = new QAction("Change mode");
     editMenu->addAction(_edit_menu_change_mode_action);
-    _edit_menu_download_testdata_action = new QAction("Download test data");
-    editMenu->addAction(_edit_menu_download_testdata_action);
 
     _help_menu = topFiller->addMenu(tr("&Help"));
     _help_menu->addAction("Contact support", helpUrl);
@@ -366,17 +354,6 @@ void MainWindow::createMenubar()
 void MainWindow::reset()
 {
     _side_panel_widget->resetInterface();
-}
-
-void MainWindow::loadPipelines() {
-    QStringList pipelines = QDir(QString::fromStdString(cwd) + "data/Pipelines").entryList(QStringList() << "*.fpl" << "*.FPL",QDir::Files);
-    foreach(QString currentFpl, pipelines) {
-        //runPipelineMenu->addAction(QString::fromStdString(splitCustom(currentFpl.toStdString(), ".")[0]), this, &MainWindow::lowresSegmenter);
-        auto currentAction = runPipelineMenu->addAction(currentFpl); //QString::fromStdString(splitCustom(splitCustom(currentFpl.toStdString(), "/")[-1], ".")[0]));
-
-        //auto currentAction = runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]));
-        //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, someFile));
-    }
 }
 
 void MainWindow::changeWSIDisplayReceived(std::string uid_name)
@@ -413,7 +390,7 @@ void MainWindow::addPipelines() {
 
     QStringList ls = QFileDialog::getOpenFileNames(
             mWidget,
-            tr("Select Pipeline"), nullptr,
+            tr("Select pipeline to add"), nullptr,
             tr("Pipeline Files (*.fpl)"),
             nullptr, QFileDialog::DontUseNativeDialog
     );
@@ -424,121 +401,44 @@ void MainWindow::addPipelines() {
         if (fileName == "")
             continue;
 
-        std::string someFile = splitCustom(fileName.toStdString(), "/").back();
-        std::string oldLocation = splitCustom(fileName.toStdString(), someFile)[0];
-        std::string newLocation = cwd + "data/Pipelines/";
-        std::string newPath = cwd + "data/Pipelines/" + someFile;
+        std::string someFile = getFileName(fileName.toStdString());
+        std::string oldLocation = split(fileName.toStdString(), someFile)[0];
+        std::string newLocation = join(cwd, "pipelines");
+        std::string newPath = join(newLocation,  someFile);
         if (fileExists(newPath)) {
-			std::cout << fileName.toStdString() << " : " << "File with the same name already exists in folder, didn't transfer..." << std::endl;
-            continue;
+            auto reply = QMessageBox::warning(mWidget, "Error", "A pipeline with the filename " + QString::fromStdString(someFile) + " already exists.");
         } else {
             if (fileExists(fileName.toStdString())) {
                 QFile::copy(fileName, QString::fromStdString(newPath));
             }
         }
-        // should update runPipelineMenu as new pipelines are being added
-        //runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]), this, &MainWindow::runPipeline);
-        //auto currentAction = new QAction(QString::fromStdString(splitCustom(someFile, ".")[0]));
-        auto currentAction = runPipelineMenu->addAction(QString::fromStdString(splitCustom(someFile, ".")[0]));
-
-        //auto currentAction = runPipelineMenu->addAction(currentFpl); //QString::fromStdString(splitCustom(splitCustom(currentFpl.toStdString(), "/")[-1], ".")[0]));
-        //QObject::connect(currentAction, &QAction::triggered, std::bind(&MainWindow::runPipeline, this, cwd + "data/Pipelines/" + currentFpl.toStdString()));
+        // TODO Update process widget?
     }
 }
 
-void MainWindow::addModelsDrag(const QList<QString> &fileNames) {
-
-	// if Models/ folder doesnt exist, create it
-	QDir().mkpath(QDir::homePath() + "fastpathology/data/Models");
-
-	auto progDialog = QProgressDialog(mWidget);
-	progDialog.setRange(0, fileNames.count() - 1);
-	progDialog.setVisible(true);
-	progDialog.setModal(false);
-	progDialog.setLabelText("Adding models...");
-	QRect screenrect = mWidget->screen()[0].geometry();
-	progDialog.move(mWidget->width() - progDialog.width() / 2, -mWidget->width() / 2 - progDialog.width() / 2);
-	progDialog.show();
-
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-
-	int counter = 0;
-	// now iterate over all selected files and add selected files and corresponding ones to Models/
-	for (const QString& fileName : fileNames) {
-		std::cout << fileName.toStdString() << std::endl;
-
-		if (fileName == "")
-			return;
-
-		std::string someFile = splitCustom(fileName.toStdString(), "/").back(); // TODO: Need to make this only split on last "/"
-		std::string oldLocation = splitCustom(fileName.toStdString(), someFile)[0];
-		std::string newLocation = cwd + "data/Models/";
-
-		std::vector<string> names = splitCustom(someFile, ".");
-		string fileNameNoFormat = names[0];
-		string formatName = names[1];
-
-		// copy selected file to Models folder
-		// check if file already exists in new folder, if yes, print warning, and continue to next one
-		string newPath = cwd + "data/Models/" + someFile;
-		if (fileExists(newPath)) {
-			std::cout << "file with the same name already exists in folder, didn't transfer... " << std::endl;
-			progDialog.setValue(counter);
-			counter++;
-            QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-		} else {
-            //QFile::copy(fileName, QString::fromStdString(newPath));
-
-            // check which corresponding model files that exist, except from the one that is chosen
-            std::vector<std::string> allowedFileFormats{"txt", "pb", "h5", "mapping", "xml", "bin", "uff", "anchors", "onnx"};
-
-            foreach(std::string currExtension, allowedFileFormats) {
-                std::string oldPath = oldLocation + fileNameNoFormat + "." + currExtension;
-                if (fileExists(oldPath)) {
-                    QFile::copy(QString::fromStdString(oldPath), QString::fromStdString(
-                            cwd + "data/Models/" + fileNameNoFormat + "." + currExtension));
-                }
-            }
-
-            auto someButton = new QPushButton(mWidget);
-            //someButton->setText(QString::fromStdString(currMetadata["task"]));
-            //predGradeButton->setFixedWidth(200);
-            someButton->setFixedHeight(50);
-//            QObject::connect(someButton, &QPushButton::clicked,
-//                             std::bind(&MainWindow::pixelClassifier_wrapper, this, modelName));
-            someButton->show();
-
-            processLayout->insertWidget(processLayout->count(), someButton);
-
-            progDialog.setValue(counter);
-            QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-            counter++;
-        }
-	}
-}
 
 void MainWindow::addModels() {
 
     //QString fileName = QFileDialog::getOpenFileName(
     QStringList ls = QFileDialog::getOpenFileNames(
-            mWidget,
-            tr("Select Model"), nullptr,
-            tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff *.anchors *.onnx *.fpl"),
-            nullptr, QFileDialog::DontUseNativeDialog
-    ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
+        mWidget,
+        tr("Select Model"), nullptr,
+        tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff *.anchors *.onnx *.fpl"),
+        nullptr, QFileDialog::DontUseNativeDialog
+        ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
 
-	auto progDialog = QProgressDialog(mWidget);
-	progDialog.setRange(0, ls.count() - 1);
-	progDialog.setVisible(true);
-	progDialog.setModal(false);
-	progDialog.setLabelText("Adding models...");
-	QRect screenrect = mWidget->screen()[0].geometry();
-	progDialog.move(mWidget->width() - progDialog.width() / 2, -mWidget->width() / 2 - progDialog.width() / 2);
-	progDialog.show();
+    auto progDialog = QProgressDialog(mWidget);
+    progDialog.setRange(0, ls.count() - 1);
+    progDialog.setVisible(true);
+    progDialog.setModal(false);
+    progDialog.setLabelText("Adding models...");
+    QRect screenrect = mWidget->screen()[0].geometry();
+    progDialog.move(mWidget->width() - progDialog.width() / 2, -mWidget->width() / 2 - progDialog.width() / 2);
+    progDialog.show();
 
-	QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
 
-	int counter = 0;
+    int counter = 0;
     // now iterate over all selected files and add selected files and corresponding ones to Models/
     for (QString& fileName : ls) {
 
@@ -558,8 +458,8 @@ void MainWindow::addModels() {
         string newPath = cwd + "data/Models/" + someFile;
         if (fileExists(newPath)) {
             std::cout << "file with the same name already exists in folder, didn't transfer... " << std::endl;
-			progDialog.setValue(counter);
-			counter++;
+            progDialog.setValue(counter);
+            counter++;
             continue;
         }
 
@@ -574,43 +474,16 @@ void MainWindow::addModels() {
             }
         }
 
-        // get metadata of current model
-
-        auto someButton = new QPushButton(mWidget);
-        someButton->setText(QString::fromStdString(metadata["task"]));
-        //predGradeButton->setFixedWidth(200);
-        someButton->setFixedHeight(50);
-//        QObject::connect(someButton, &QPushButton::clicked,
-//                         std::bind(&MainWindow::pixelClassifier_wrapper, this, modelName));
-        someButton->show();
-
-        processLayout->insertWidget(processLayout->count(), someButton);
-
-		progDialog.setValue(counter);
+        progDialog.setValue(counter);
         QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-		counter++;
+        counter++;
     }
 }
 
-// for string delimiter
-std::vector<std::string> MainWindow::splitCustom(const std::string& s, const std::string& delimiter) {
-    size_t pos_start = 0, pos_end, delim_len = delimiter.length();
-    string token;
-    vector<string> res;
 
-    while ((pos_end = s.find (delimiter, pos_start)) != string::npos) {
-        token = s.substr (pos_start, pos_end - pos_start);
-        pos_start = pos_end + delim_len;
-        res.push_back (token);
-    }
-
-    res.push_back (s.substr (pos_start));
-    return res;
-}
 
 void MainWindow::resetDisplay(){
     getView(0)->removeAllRenderers();
-    getView(0)->reinitialize();
 }
 
 std::shared_ptr<ComputationThread> MainWindow::getComputationThread() {

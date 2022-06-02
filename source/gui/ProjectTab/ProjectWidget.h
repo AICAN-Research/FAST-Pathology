@@ -42,30 +42,12 @@ public:
     void resetInterface();
 
     /**
-     * To open a created Project from disk. Opens a file explorer to select which project.txt file open.
-     * When selected, thumbnails from all WSIs will be added to the left scroll widget.
-     * For the image, the WSI will be rendered with corresponding existing results.
-     */
-    void openProject();
-
-    /**
-     * To save the current Project. This simply updates the project.txt file to include the current
-     * WSIs that are in use in the program.
-     */
-    void saveProject();
-
-    /**
      * Imports WSIs to the program, where selections are made from a drag-and-drop event.
      * @param fileNames
      */
     void selectFileDrag(const QList<QString> &fileNames);
 
 public slots:
-    /**
-     * To create a Project. Opens a file explorer to choose which empty directory to create the project.
-     * A new directory may be created from the file explorer, before selection.
-     */
-    void createProject();
     void selectFile();
     /**
      * @brief changeWSIDisplayReceived To toggle/untoggle the main view with the WSI represented by id_name
@@ -79,14 +61,6 @@ public slots:
      * @param uid Unique name for the considered WSI.
      */
     void removeImage(std::string uid);
-
-    /**
-     * Downloads the test data (trained models, Pipelines, WSIs) currently located on the NTNU Apache server and
-     * adds them to the default functionalities in the program. When finished, the user is prompted if they want to
-     * import the WSIs and test the solutions on the data.
-     */
-    void downloadAndAddTestData();
-
     void loadProject();
     void updateTitle();
 signals:
@@ -120,7 +94,6 @@ private:
     QVBoxLayout* _wsi_scroll_layout;
     std::map<std::string, QListWidgetItem*> _wsi_thumbnails_listitem;
     std::map<std::string, ProjectThumbnailPushButton*> _thumbnail_qpushbutton_map;
-    QString _projectFolderName;
     MainWindow* m_mainWindow;
     QLabel* m_projectLabel;
 };

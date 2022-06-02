@@ -13,6 +13,7 @@
 namespace fast{
     class DataObject;
     class Pipeline;
+    class Renderer;
 
     class Result {
         public:
@@ -36,19 +37,8 @@ namespace fast{
             std::shared_ptr<WholeSlideImage> getImage(int i);
             std::string getName() const { return m_name; };
 
-            void setRootFolder(const std::string& root_folder);
-
             void emptyProject();
-            void loadProject();
-            void saveProject();
             void saveResults(const std::string& wsi_uid, std::shared_ptr<Pipeline> pipeline, std::map<std::string, std::shared_ptr<DataObject>> data);
-            /**
-             * @brief saveResult Purpose is to save on disk all results linked to one WSI.
-             * Will evolve when pipeline outputs can be properly caught.
-             * @param wsi_uid
-             * @param current_renderer_type
-             */
-            void saveResult(const std::string& wsi_uid, const std::string& current_renderer_type);
 
             std::vector<Result> loadResults(const std::string& wsi_uid);
 

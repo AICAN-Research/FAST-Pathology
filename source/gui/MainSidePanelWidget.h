@@ -35,17 +35,9 @@ namespace fast{
         void changeWSIDisplayTriggered(std::string, bool);
         void resetDisplay();
         void newAppTitle(std::string);
-        void createProjectTriggered();
-        void openProjectTriggered();
-        void saveProjectTriggered();
         void selectFilesTriggered();
-        void downloadTestDataTriggered();
         void addModelsTriggered();
-        void addPipelinesTriggered();
         void editorPipelinesTriggered();
-        void addRendererToViewRequested(const std::string&);
-        void removeRendererFromViewRequested(const std::string&);
-        void runPipelineEmitted(QString);
         void loadProject();
 
     public slots:

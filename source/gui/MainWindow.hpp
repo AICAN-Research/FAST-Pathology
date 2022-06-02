@@ -33,9 +33,6 @@ class QListWidget;
 QT_END_NAMESPACE
 
 namespace fast {
-    class ImagePyramid;
-    class View;
-    class ViewWidget;
 
 class MainWindow : public Window {
     FAST_OBJECT(MainWindow);
@@ -44,20 +41,11 @@ class MainWindow : public Window {
         bool advancedMode = false;
 
         std::string cwd;
-        std::string tmpDirPath;
-
-        std::unordered_map<std::string, std::string> metadata; // make metadata information a global variable
 
         QWidget *mainWidget;
-        QMenu *runPipelineMenu;
-        View *view;
 
         QHBoxLayout *mainLayout;
         QVBoxLayout *superLayout;
-        QVBoxLayout *processLayout;
-
-        // custom split
-        std::vector<std::string> splitCustom(const std::string& s, const std::string& delimiter);
 
         // GUI RELATED STUFF
         /**
@@ -89,20 +77,10 @@ class MainWindow : public Window {
          */
         void addModels();
         /**
-         * Imports models to the program, where selections are made from a drag-and-drop event.
-         * @param fileNames
-         */
-        void addModelsDrag(const QList<QString> &fileNames);
-        /**
          * Opens a file explorer for selecting which Pipelines from disk to import to the program.
          * All selected Pipelines will be automatically added to the default Pipelines and the Pipeline menu.
          */
         void addPipelines();
-
-        /**
-         * Load text pipeline from disk. Assumed to be stored in a .txt-like format. Both .txt and .fpl are supported.
-         */
-        void loadPipelines();
 
         /**
          * Prompts the user whether or not to "reset", if accepted it will refresh the software to the initial state,
@@ -131,25 +109,19 @@ class MainWindow : public Window {
         MainWindow();
         void downloadZipFile(std::string URL, std::string destination);
 
+        View* view;
         std::shared_ptr<Project> m_project;
         std::string m_currentVisibleWSI; /* Unique id_name of the currently rendered (hence visible) WSI. */
 
         std::string _application_name; /* */
         MainSidePanelWidget *_side_panel_widget; /* Main widget for the left-hand panel */
-        std::map<std::string, QAction*> _file_menu_actions; /* Holder for all actions in the File main menu bar */
         QMenu* _help_menu; /* */
         QAction* _file_menu_create_project_action;
         QAction* _file_menu_open_project_action;
         QAction* _file_menu_import_wsi_action;
         QAction* _file_menu_add_model_action;
         QAction* _file_menu_add_pipeline_action;
-        QAction* _project_menu_create_project_action;
-        QAction* _project_menu_open_project_action;
-        QAction* _project_menu_save_project_action;
         QAction* _edit_menu_change_mode_action;
-        QAction* _edit_menu_download_testdata_action;
-        QAction* _pipeline_menu_import_action;
-        QAction* _pipeline_menu_editor_action;
         QAction* _help_menu_about_action;
 
     public slots:

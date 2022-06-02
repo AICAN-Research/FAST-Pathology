@@ -80,12 +80,6 @@ namespace fast{
         return uids;
     }
 
-    void Project::setRootFolder(const std::string& root_folder)
-    {
-        this->_root_folder = root_folder;
-        this->createFolderDirectoryArchitecture();
-    }
-
     void Project::emptyProject()
     {
         this->_images.clear();
@@ -164,55 +158,6 @@ namespace fast{
         QDir().rmdir(QString::fromStdString(this->_root_folder + "/results/" + uid + "/"));
 
         writeTimestmap();
-    }
-
-    void Project::loadProject()
-    {
-        this->emptyProject();
-
-        // Parse project.txt-file to identify all WSIs to be added to the project
-        std::map<std::string, std::string> fileNames;
-        std::string projectFileName = "project.txt";
-        QFile file(QString::fromStdString(this->_root_folder + projectFileName));
-        if (file.open(QIODevice::ReadOnly))
-        {
-            QTextStream in(&file);
-            while (!in.atEnd())
-            {
-                QString line = in.readLine();
-                std::string uid = splitCustom(line.toStdString(), ",").front();
-                std::string filename = splitCustom(line.toStdString(), ",").back();
-
-                fileNames[uid] = filename;
-            }
-        }
-
-        // Create WSI instances for each file
-        for (const auto wsi_pair : fileNames)
-        {
-            auto thumbnail_filename = this->_root_folder + "/thumnbails/" + wsi_pair.first + ".png";
-            this->includeImageFromProject(wsi_pair.first, wsi_pair.second);
-        }
-
-        //@TODO. Should then attempt to load all results linked to each WSI
-    }
-
-    void Project::saveProject()
-    {
-        // create file for saving which WSIs exist in folder
-        std::string overall_filename = this->_root_folder + "/project.txt";
-        QFile file(QString::fromStdString(overall_filename));
-        file.resize(0);  // clear it and then write
-
-        if (file.open(QIODevice::ReadWrite))
-        {
-            foreach(const auto wsi_pair, this->_images)
-            {
-                    QTextStream stream(&file);
-                    stream << (wsi_pair.first + "," + wsi_pair.second->get_filename()).c_str() << endl;
-            }
-        }
-        this->saveThumbnails();
     }
 
     void Project::saveThumbnails()

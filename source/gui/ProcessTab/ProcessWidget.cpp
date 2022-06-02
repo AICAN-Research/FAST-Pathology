@@ -59,8 +59,8 @@ namespace fast {
 
     void ProcessWidget::resetInterface()
     {
-        _page_combobox->clear();
-        clearLayout(_stacked_layout);
+        _page_combobox->setCurrentIndex(0);
+        _stacked_layout->setCurrentIndex(0);
     }
 
     void ProcessWidget::setupConnections()
@@ -95,6 +95,7 @@ namespace fast {
         // Load pipelines and create one button for each.
         std::string pipelineFolder = this->_cwd + "/pipelines/";
         for(auto& filename : getDirectoryList(pipelineFolder)) {
+            std::cout << filename << std::endl;
             auto pipeline = Pipeline(join(pipelineFolder, filename));
             if(filename == selectedFilename.toStdString()) {
                 index = counter;

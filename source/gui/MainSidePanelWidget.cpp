@@ -176,11 +176,7 @@ namespace fast{
         QObject::connect(_project_widget, &ProjectWidget::resetDisplay, this, &MainSidePanelWidget::resetDisplay);
         QObject::connect(this, &MainSidePanelWidget::loadProject, _project_widget, &ProjectWidget::loadProject);
         QObject::connect(this->_app_mode_pushbutton, &QPushButton::clicked, this, &MainSidePanelWidget::setApplicationMode);
-        QObject::connect(this, &MainSidePanelWidget::createProjectTriggered, this->_project_widget, &ProjectWidget::createProject);
-        QObject::connect(this, &MainSidePanelWidget::openProjectTriggered, this->_project_widget, &ProjectWidget::openProject);
         QObject::connect(this, &MainSidePanelWidget::selectFilesTriggered, this->_project_widget, &ProjectWidget::selectFile);
-        QObject::connect(this, &MainSidePanelWidget::saveProjectTriggered, this->_project_widget, &ProjectWidget::saveProject);
-        QObject::connect(this, &MainSidePanelWidget::downloadTestDataTriggered, this->_project_widget, &ProjectWidget::downloadAndAddTestData);
         QObject::connect(this, &MainSidePanelWidget::filesDropped, this->_project_widget, &ProjectWidget::selectFileDrag);
         QObject::connect(this, &MainSidePanelWidget::addModelsTriggered, this->_process_widget, &ProcessWidget::addModels);
         QObject::connect(this, &MainSidePanelWidget::editorPipelinesTriggered, this->_process_widget, &ProcessWidget::editorPipelinesReceived);
