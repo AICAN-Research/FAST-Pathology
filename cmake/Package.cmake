@@ -13,7 +13,7 @@ install(
 
 # Install FAST dependency
 if(WIN32)
-	install(DIRECTORY ${FAST_BINARY_DIR}/bin/
+	install(DIRECTORY ${FAST_BINARY_DIR}/
 			DESTINATION bin
 			FILES_MATCHING PATTERN "*.dll")
 elseif(APPLE)
@@ -31,11 +31,11 @@ endif()
 
 # Additional OpenVINO files
 if(WIN32)
-	install(FILES ${FAST_BINARY_DIR}/bin/plugins.xml ${PROJECT_BINARY_DIR}/bin/cache.json
+	install(FILES ${FAST_BINARY_DIR}/plugins.xml ${PROJECT_BINARY_DIR}/cache.json
 			DESTINATION bin
 			)
 else()
-	install(FILES ${FAST_BINARY_DIR}/lib/plugins.xml ${PROJECT_BINARY_DIR}/lib/cache.json
+	install(FILES ${FAST_BINARY_DIR}/../lib/plugins.xml ${PROJECT_BINARY_DIR}/../lib/cache.json
 			DESTINATION lib
 			OPTIONAL
 			)
