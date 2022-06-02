@@ -23,13 +23,13 @@ jobs:
       with:
         repository: "AICAN-Research/FAST-Pathology-dependencies"
         latest: true
-        fileName: "fast_mac10.13.tar.xz"
+        fileName: "fast_macos10.13.tar.xz"
         out-file-path: "downloads"
 
     - name: Extract FAST
       run: |
         cd ${{github.workspace}}/downloads/
-        tar -xf fast_macos10.13.tar.xz -C ${{github.workspace}}/downloads/
+        tar -xf fast_*.tar.xz -C ${{github.workspace}}/downloads/
         mv ${{github.workspace}}/downloads/fast_*/fast ${{github.workspace}}/
 
     - name: Configure CMake
