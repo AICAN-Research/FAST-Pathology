@@ -68,12 +68,8 @@ install(
     DESTINATION data
 )
 install(
-		DIRECTORY ${PROJECT_BINARY_DIR}/../data/pipelines
-		DESTINATION data
-)
-install(
-		DIRECTORY ${PROJECT_BINARY_DIR}/../data/models
-		DESTINATION data
+	DIRECTORY ${PROJECT_BINARY_DIR}/../data/pipelines
+	DESTINATION data
 )
 
 # Setup fast_configuration.txt file
