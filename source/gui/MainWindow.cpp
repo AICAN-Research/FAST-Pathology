@@ -50,6 +50,10 @@ MainWindow::MainWindow() {
 
     // Copy pipelines if they don't exist in pipelines and models folder
     auto dataPath = QCoreApplication::applicationDirPath().toStdString() + "/../data/";
+    if(!isDir(dataPath)) {
+        // For dev on windows
+		dataPath = QCoreApplication::applicationDirPath().toStdString() + "/../../data/";
+    }
     std::cout << "Data path was: " << dataPath << std::endl;
     for(std::string folder : {"pipelines"}) {
         for(auto filename : getDirectoryList(join(dataPath, folder))) {
