@@ -51,14 +51,23 @@ MainWindow::MainWindow() {
     // Copy pipelines if they don't exist in pipelines and models folder
     auto dataPath = QCoreApplication::applicationDirPath().toStdString() + "/../data/";
     std::cout << "Data path was: " << dataPath << std::endl;
-    for(std::string folder : {"models", "pipelines"}) {
+    for(std::string folder : {"pipelines"}) {
         for(auto filename : getDirectoryList(join(dataPath, folder))) {
             if(!isFile(join(cwd, folder, filename))) {
                 std::cout << "File not found, copying to fastpathology folder: " << join(cwd, folder, filename) << std::endl;
                 QFile::copy(QString::fromStdString(join(dataPath, folder, filename)), QString::fromStdString(join(cwd, folder, filename)));
             } else {
-                std::cout << "File already exists: " << join(cwd, folder, filename) << std::endl;
+                //std::cout << "File already exists: " << join(cwd, folder, filename) << std::endl;
             }
+        }
+    }
+    auto modelFiles = getDirectoryList(join(cwd, "models"), true, true);
+    if(modelFiles.empty()) {
+        auto reply = QMessageBox::question(nullptr,  "Download AI models?",
+             "You have no AI models in your model folder. "
+             "Do you wish to download some models now? (~450 MB)");
+        if(reply == QMessageBox::Yes) {
+            downloadZipFile("http://fast.eriksmistad.no/download/fastpathology-models-v1.0.0.zip", join(cwd, "models"));
         }
     }
 
@@ -90,6 +99,63 @@ void MainWindow::showProjectSplash() {
         emit updateProjectTitle();
     });
     splash->show();
+}
+
+void MainWindow::downloadZipFile(std::string URL, std::string destination) {
+    createDirectories(destination);
+    std::cout << "Progress: " << std::endl;
+    QNetworkAccessManager manager;
+    QUrl url(QString::fromStdString(URL));
+    QNetworkRequest request(url);
+    auto timer = new QElapsedTimer;
+    timer->start();
+    auto reply = manager.get(request);
+    int step = 5;
+    int progress = step;
+    auto progressDialog = new QProgressDialog("Downloading AI models, please wait..", "Stop", 0, 101);
+    progressDialog->setWindowTitle("Dowmloading AI models");
+    progressDialog->setAutoClose(true);
+    progressDialog->show();
+    QObject::connect(reply, &QNetworkReply::downloadProgress, [&](quint64 current, quint64 max) {
+        int percent = ((float)current / max) * 100;
+        float speed = ((float)timer->elapsed() / 1000.0f)/percent;
+        uint64_t remaining = speed * (100 - percent);
+        if(percent >= progress) {
+            std::cout << percent << "% - ETA ~" << (int)std::ceil((float)remaining / 60) << " minutes. " << std::endl;;
+            progress += step;
+        }
+        progressDialog->setValue(percent);
+    });
+    auto tempLocation = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/data.zip";
+    QFile file(tempLocation);
+    if(!file.open(QIODevice::WriteOnly)) {
+        throw Exception("Could not write to " + tempLocation.toStdString());
+    }
+    QObject::connect(reply, &QNetworkReply::readyRead, [&reply, &file]() {
+        file.write(reply->read(reply->bytesAvailable()));
+    });
+    QObject::connect(&manager, &QNetworkAccessManager::finished, [&]() {
+        std::cout << "Finished downloading file. Processing.." << std::endl;
+        file.close();
+        std::cout << "Unzipping the data file to: " << destination << std::endl;
+        try {
+            extractZipFile(file.fileName().toStdString(), destination);
+        } catch(Exception & e) {
+            std::cout << "ERROR: Zip extraction failed." << std::endl;
+        }
+
+        file.remove();
+        std::cout << "Done." << std::endl;
+        progressDialog->setValue(101);
+    });
+
+    auto eventLoop = new QEventLoop(&manager);
+
+    // Make sure to quit the event loop when download is finished
+    QObject::connect(&manager, &QNetworkAccessManager::finished, eventLoop, &QEventLoop::quit);
+
+    // Wait for it to finish
+    eventLoop->exec();
 }
 
 

@@ -129,6 +129,7 @@ class MainWindow : public Window {
 
     private:
         MainWindow();
+        void downloadZipFile(std::string URL, std::string destination);
 
         std::shared_ptr<Project> m_project;
         std::string m_currentVisibleWSI; /* Unique id_name of the currently rendered (hence visible) WSI. */
