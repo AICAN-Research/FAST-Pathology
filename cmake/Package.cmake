@@ -101,8 +101,10 @@ install(
     RENAME fast_configuration.txt
 )
 
+if(WIN32)
+elseif(APPLE)
+else()
 # setup .desktop file
-if (UNIX)
 set(APP_CONFIG_CONTENT "[Desktop Entry]
 Name=FastPathology
 Comment=FastPathology
@@ -138,7 +140,7 @@ set(CPACK_COMPONENT_FAST_REQUIRED ON)
 
 SET(CPACK_PACKAGE_EXECUTABLES "fastpathology" "fastpathology")
 
-if(WIN32 AND NOT UNIX)
+if(WIN32)
 	
     ## Windows
     # Create windows installer (Requires NSIS from http://nsis.sourceforge.net)
@@ -158,12 +160,11 @@ if(WIN32 AND NOT UNIX)
 	set(CPACK_NSIS_INSTALLED_ICON_NAME bin\\\\fastpathology.exe)
 	set(CPACK_NSIS_INSTALL_DIRECTORY ${CPACK_NSIS_INSTALL_ROOT}/FastPathology) #${CPACK_PACKAGE_INSTALL_DIRECTORY})
 
-    include(CPack)
 elseif(APPLE)
 	set(CPACK_GENERATOR "TXZ")
 	set(CPACK_PACKAGE_FILE_NAME "fastpathology_macos${CMAKE_OSX_DEPLOYMENT_TARGET}_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 else()
-    ## UNIX
+    ## Linux
 
 	# Get distro name and version
 	find_program(LSB_RELEASE_EXEC lsb_release)
@@ -191,5 +192,5 @@ else()
 	set(CPACK_DEBIAN_FAST_FILE_NAME "fastpathology_${DISTRO_NAME}${DISTRO_VERSION}_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}.deb")
 	set(CPACK_DEBIAN_fastpathology_PACKAGE_NAME "fastpathology")
 
-    include(CPack)
 endif()
+include(CPack)
