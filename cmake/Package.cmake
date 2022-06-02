@@ -54,6 +54,10 @@ install(
     DESTINATION doc/images
 )
 install(
+	DIRECTORY ${FAST_BINARY_DIR}/../doc/fonts/
+	DESTINATION doc/fonts
+)
+install(
     DIRECTORY ${FAST_BINARY_DIR}/../licenses/
     DESTINATION licenses
 )

@@ -2,9 +2,9 @@ name: Build Windows
 
 on:
   push:
-    branches: [ master, gui_cleaning ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, gui_cleaning ]
+    branches: [ master ]
 
 jobs:
   build:
@@ -15,14 +15,23 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Download FAST
+      uses: robinraju/release-downloader@main
+      with:
+        repository: "AICAN-Research/FAST-Pathology-dependencies"
+        latest: true
+        fileName: "fast_windows.zip"
+        out-file-path: "downloads"
+
+    - name: Extract FAST
       run: |
-        curl.exe -OL https://github.com/smistad/FAST/releases/download/v4.2.0-rc2/fast_windows_4.2.0.zip
-        tar -xzf ./fast_windows_4.2.0.zip
-      
+        cd ${{github.workspace}}/downloads/
+        tar -xzf fast_windows.zip -C ${{github.workspace}}/downloads/
+        mv ${{github.workspace}}/downloads/fast_*/fast ${{github.workspace}}/
+
     - name: Configure CMake
       run: |
         cmake -B ${{github.workspace}}/build `
-            -DFAST_DIR=${{github.workspace}}/fast_windows_4.2.0/fast/cmake `
+            -DFAST_DIR=${{github.workspace}}/fast/cmake/ `
             -G "Visual Studio 16 2019" `
             -A x64
 

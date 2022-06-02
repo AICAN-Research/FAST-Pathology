@@ -2,9 +2,9 @@ name: Build macOS
 
 on:
   push:
-    branches: [ master, gui_cleaning ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, gui_cleaning ]
+    branches: [ master ]
 
 jobs:
   build:
@@ -18,26 +18,24 @@ jobs:
       run: |
         brew install openslide libomp
 
-    - name: Download FAST (artifact)
-      uses: dawidd6/action-download-artifact@v2
+    - name: Download FAST
+      uses: robinraju/release-downloader@main
       with:
-        github_token: ${{secrets.FP}}
-        workflow: CI-mac.yml
-        workflow_conclusion: success
-        branch: master
-        event: push
-        name: "Archive package (tar.xz)"
-        repo: smistad/FAST
+        repository: "AICAN-Research/FAST-Pathology-dependencies"
+        latest: true
+        fileName: "fast_mac10.13.tar.xz"
+        out-file-path: "downloads"
 
-    - name: Install FAST
+    - name: Extract FAST
       run: |
-        gunzip fast_macosx10.13_4.2.0.tar.xz
-        tar -xzf ./fast_macosx10.13_4.2.0.tar
-      
+        cd ${{github.workspace}}/downloads/
+        tar -xf fast_*.tar.xz -C ${{github.workspace}}/downloads/
+        mv ${{github.workspace}}/downloads/fast_*/fast ${{github.workspace}}/
+
     - name: Configure CMake
       run: |
         cmake -B ${{github.workspace}}/build \
-            -DFAST_DIR=${{github.workspace}}/fast_macosx10.13_4.2.0/fast/cmake/
+            -DFAST_DIR=${{github.workspace}}/fast/cmake/
 
     - name: Build FastPathology
       run: cmake --build ${{github.workspace}}/build --config Release --target fastpathology -j 4

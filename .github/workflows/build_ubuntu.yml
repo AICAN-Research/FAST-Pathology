@@ -2,9 +2,9 @@ name: Build Ubuntu
 
 on:
   push:
-    branches: [ master, gui_cleaning ]
+    branches: [ master ]
   pull_request:
-    branches: [ master, gui_cleaning ]
+    branches: [ master ]
 
 jobs:
   build:
@@ -17,7 +17,7 @@ jobs:
     - name: Download FAST
       uses: robinraju/release-downloader@main
       with:
-        repository: "smistad/FAST"
+        repository: "AICAN-Research/FAST-Pathology-dependencies"
         latest: true
         fileName: "fast_ubuntu18.04.tar.xz"
         out-file-path: "downloads"
@@ -26,7 +26,7 @@ jobs:
       run: |
         cd ${{github.workspace}}/downloads/
         tar -xf fast_*.tar.xz -C ${{github.workspace}}/downloads/
-        mv ${{github.workspace}}/downloads/fast_*/fast/ ${{github.workspace}}
+        mv ${{github.workspace}}/downloads/fast_*/fast ${{github.workspace}}/
 
     - name: Install dependencies
       run: |
