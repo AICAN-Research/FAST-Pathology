@@ -5,6 +5,7 @@ project(fastpathology)
 set(VERSION_MAJOR 1)
 set(VERSION_MINOR 0)
 set(VERSION_PATCH 0)
+set(FP_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -46,7 +47,7 @@ add_executable(fastpathology
 		source/gui/SplashWidget.hpp
 )
 
-add_definitions(-D_USE_MATH_DEFINES)
+add_definitions(-DFAST_PATHOLOGY_VERSION="${FP_VERSION}")
 add_dependencies(fastpathology fast_copy)
 
 if (WIN32)

@@ -20,8 +20,16 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, QWidget* parent
     auto layout = new QVBoxLayout();
     setLayout(layout);
 
+    QPixmap image(QString::fromStdString(":/data/Icons/fastpathology_logo_large.png"));
+
+    auto logo = new QLabel;
+    logo->setPixmap(image);
+    logo->setAlignment(Qt::AlignCenter);
+    layout->addWidget(logo);
+
     auto title = new QLabel();
-    title->setText("<h1>FastPathology</h1>");
+    title->setText("<h1>FastPathology </h1><h2>v" + QString(FAST_PATHOLOGY_VERSION) + "</h2><br>");
+    title->setAlignment(Qt::AlignCenter);
     layout->addWidget(title);
 
     auto horizontalLayout = new QHBoxLayout();
@@ -31,6 +39,8 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, QWidget* parent
     horizontalLayout->addLayout(leftLayout);
 
     auto line = new QFrame;
+    line->setLineWidth(3);
+    line->setStyleSheet("border: 10px solid rgb(150, 150, 150);");
     line->setFrameShape(QFrame::VLine);
     horizontalLayout->addWidget(line);
 
