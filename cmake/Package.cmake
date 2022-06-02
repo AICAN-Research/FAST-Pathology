@@ -31,11 +31,11 @@ endif()
 
 # Additional OpenVINO files
 if(WIN32)
-	install(FILES ${FAST_BINARY_DIR}/plugins.xml ${PROJECT_BINARY_DIR}/cache.json
+	install(FILES ${FAST_BINARY_DIR}/plugins.xml ${FAST_BINARY_DIR}/cache.json
 			DESTINATION bin
 			)
 else()
-	install(FILES ${FAST_BINARY_DIR}/../lib/plugins.xml ${PROJECT_BINARY_DIR}/../lib/cache.json
+	install(FILES ${FAST_BINARY_DIR}/../lib/plugins.xml ${FAST_BINARY_DIR}/../lib/cache.json
 			DESTINATION lib
 			OPTIONAL
 			)
