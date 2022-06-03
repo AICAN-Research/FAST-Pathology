@@ -38,6 +38,8 @@ sudo dpkg -i fastpathology_ubuntu*.deb
 * Go the folder /opt/fastpathology/bin and run the **fastpathology** executable, or run it from the ubuntu menu (windows button->type fastpathology).
 
 ### macOS (10.13 or newer)
+*Note that the macOS version of FastPathology is experimental.*
+
 * Install [homebrew](https://brew.sh/) if you don't already have it. Then, install the following packages using homebrew:
 ```bash
 brew install openslide libomp
