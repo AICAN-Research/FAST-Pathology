@@ -5,8 +5,8 @@ namespace fast{
     MainSidePanelWidget::MainSidePanelWidget(MainWindow* mainWindow, QWidget *parent): QWidget(parent)
     {
         m_mainWindow = mainWindow;
-        this->setUpInterface();
-        this->setupConnections();
+        setUpInterface();
+        setupConnections();
     }
 
     MainSidePanelWidget::~MainSidePanelWidget(){
@@ -14,21 +14,21 @@ namespace fast{
     }
 
     void MainSidePanelWidget::setUpInterface(){
-        this->_container_stacked_widget = new QStackedWidget(this);
-        this->_project_widget = new ProjectWidget(m_mainWindow, this);
-        this->_process_widget = new ProcessWidget(m_mainWindow, this);
-        this->_view_widget = new ViewWidget(m_mainWindow, this);
-        this->_stats_widget = new StatsWidget(this);
-        this->_export_widget = new ExportWidget(this);
+        _container_stacked_widget = new QStackedWidget(this);
+        _project_widget = new ProjectWidget(m_mainWindow, this);
+        _process_widget = new ProcessWidget(m_mainWindow, this);
+        _view_widget = new ViewWidget(m_mainWindow, this);
+        //_stats_widget = new StatsWidget(this);
+        //_export_widget = new ExportWidget(this);
 
         //stackedWidget->setStyleSheet("border:1px solid rgb(0, 255, 0); ");
         //stackedWidget->setFixedWidth(200);
         //stackedWidget->setStyleSheet("border:1px solid rgb(0, 0, 255); ");
-        this->_container_stacked_widget->insertWidget(0, this->_project_widget);
-        this->_container_stacked_widget->insertWidget(1, this->_process_widget);
-        this->_container_stacked_widget->insertWidget(2, this->_view_widget); // @TODO.: Disable viewWidget at the start, as there is no images to visualize
-        this->_container_stacked_widget->insertWidget(3, this->_stats_widget);
-        this->_container_stacked_widget->insertWidget(4, this->_export_widget);
+        _container_stacked_widget->insertWidget(0, _project_widget);
+        _container_stacked_widget->insertWidget(1, _process_widget);
+        _container_stacked_widget->insertWidget(2, _view_widget);
+        //_container_stacked_widget->insertWidget(3, _stats_widget);
+        //_container_stacked_widget->insertWidget(4, _export_widget);
         //stackedLayout->setSizeConstraint(QLayout::SetFixedSize);
         //stackedWidget->setLayout(mainLayout);
 
@@ -55,30 +55,15 @@ namespace fast{
         tb->setFont(QFont("Times", 8)); //QFont::Bold));
         tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);  // adds text under icons
 
-        //QResource::registerResource("qtres.qrc");
-
-        /*
-        std::cout << "Anything in Qt Resources: " << std::endl;
-        QDirIterator it(":", QDir::NoFilter);
-        while (it.hasNext()) {
-            auto tmp = it.next();
-            QDirIterator it2(tmp, QDir::NoFilter);
-            std::cout << "elem: " << tmp.toStdString() << std::endl;
-            while (it2.hasNext()) {
-                std::cout << "elem: " << it2.next().toStdString() << std::endl;
-            }
-            //qDebug() << it.next();
-        }
-         */
-
         //auto toolBar = new QToolBar;
+        QPixmap menuIcon(QString::fromStdString(":/data/Icons/menu_icon.png"));
         QPixmap openPix(QString::fromStdString(":/data/Icons/import_icon_new_cropped_resized.png"));
         QPixmap processPix(QString::fromStdString(":/data/Icons/process_icon_new_cropped_resized.png"));
         QPixmap viewPix(QString::fromStdString(":/data/Icons/visualize_icon_new_cropped_resized.png"));
-        QPixmap resultPix(QString::fromStdString(":/data/Icons/statistics_icon_new_cropped_resized.png"));
-        QPixmap savePix(QString::fromStdString(":/data/Icons/export_icon_new_cropped_resized.png"));
+        //QPixmap resultPix(QString::fromStdString(":/data/Icons/statistics_icon_new_cropped_resized.png"));
+        //QPixmap savePix(QString::fromStdString(":/data/Icons/export_icon_new_cropped_resized.png"));
 
-        QPainter painter(&savePix);
+        QPainter painter(&menuIcon);
         QFont font = painter.font();
         font.setPixelSize(4);
         //font.setBold(true);
@@ -90,6 +75,13 @@ namespace fast{
         tb->addWidget(spacerWidgetLeft);
 
         auto actionGroup = new QActionGroup(tb);
+
+        auto menu_action = new QAction("Menu", actionGroup);
+        menu_action->setIcon(QIcon(menuIcon));
+        menu_action->setCheckable(false);
+        menu_action->setChecked(false);
+        tb->addAction(menu_action);
+        connect(menu_action, &QAction::triggered, this, &MainSidePanelWidget::showMenu);
 
         auto file_action = new QAction("Images", actionGroup);
         file_action->setIcon(QIcon(openPix));
@@ -113,6 +105,7 @@ namespace fast{
         mapper->setMapping(view_action, 2);
         mapper->connect(view_action, SIGNAL(triggered(bool)), SLOT(map()));
 
+        /*
         auto stats_action = new QAction("Stats", actionGroup);
         stats_action->setIcon(QIcon(resultPix));
         stats_action->setCheckable(true);
@@ -126,11 +119,12 @@ namespace fast{
         tb->addAction(save_action);
         mapper->setMapping(save_action, 4);
         mapper->connect(save_action, SIGNAL(triggered(bool)), SLOT(map()));
+         */
 
         tb->addWidget(spacerWidgetRight);
 
         //stackedWidget->connect(&mapper, SIGNAL(mapped(int)), SLOT(setCurrentIndex(int)));
-        connect(mapper, SIGNAL(mapped(int)), this->_container_stacked_widget, SLOT(setCurrentIndex(int)));
+        connect(mapper, SIGNAL(mapped(int)), _container_stacked_widget, SLOT(setCurrentIndex(int)));
 
         auto dockLayout = new QVBoxLayout; //or any other layout type you want
         dockLayout->setMenuBar(tb); // <-- the interesting part
@@ -141,7 +135,7 @@ namespace fast{
         dockLayout = new QVBoxLayout;
         dockLayout->insertWidget(0, dockContent); //addWidget(dockContent);
         //tmpLayout->addWidget(pageComboBox);
-        dockLayout->insertWidget(1, this->_container_stacked_widget);
+        dockLayout->insertWidget(1, _container_stacked_widget);
 
         auto menuWidget = new QWidget(this);
         //menuWidget->setFixedWidth(300); //300);  // TODO: This was a good width for my screen, but need it to be adjustable (!)
@@ -152,22 +146,22 @@ namespace fast{
         menuWidget->setLayout(dockLayout);
 
         // add button on the bottom of widget for toggling clinical/advanced mode
-        this->_app_mode_pushbutton = new QPushButton(this);
-        this->_app_mode_pushbutton->setText("Clinical mode");
-        this->_app_mode_pushbutton->setFixedHeight(50);
-        this->_app_mode_pushbutton->setStyleSheet("color: white; background-color: gray");
+        _app_mode_pushbutton = new QPushButton(this);
+        _app_mode_pushbutton->setText("Clinical mode");
+        _app_mode_pushbutton->setFixedHeight(50);
+        _app_mode_pushbutton->setStyleSheet("color: white; background-color: gray");
 
-        dockLayout->addWidget(this->_app_mode_pushbutton);
-        this->setLayout(dockLayout);
+        dockLayout->addWidget(_app_mode_pushbutton);
+        setLayout(dockLayout);
     }
 
     void MainSidePanelWidget::resetInterface()
     {
-        this->_project_widget->resetInterface();
-        this->_process_widget->resetInterface();
-        this->_view_widget->resetInterface();
-        this->_stats_widget->resetInterface();
-        this->_export_widget->resetInterface();
+        _project_widget->resetInterface();
+        _process_widget->resetInterface();
+        _view_widget->resetInterface();
+        //_stats_widget->resetInterface();
+        //_export_widget->resetInterface();
     }
 
     void MainSidePanelWidget::setupConnections()
@@ -175,11 +169,11 @@ namespace fast{
         QObject::connect(_project_widget, &ProjectWidget::changeWSIDisplayTriggered, this, &MainSidePanelWidget::changeWSIDisplayTriggered);
         QObject::connect(_project_widget, &ProjectWidget::resetDisplay, this, &MainSidePanelWidget::resetDisplay);
         QObject::connect(this, &MainSidePanelWidget::loadProject, _project_widget, &ProjectWidget::loadProject);
-        QObject::connect(this->_app_mode_pushbutton, &QPushButton::clicked, this, &MainSidePanelWidget::setApplicationMode);
-        QObject::connect(this, &MainSidePanelWidget::selectFilesTriggered, this->_project_widget, &ProjectWidget::selectFile);
-        QObject::connect(this, &MainSidePanelWidget::filesDropped, this->_project_widget, &ProjectWidget::selectFileDrag);
-        QObject::connect(this, &MainSidePanelWidget::addModelsTriggered, this->_process_widget, &ProcessWidget::addModels);
-        QObject::connect(this, &MainSidePanelWidget::editorPipelinesTriggered, this->_process_widget, &ProcessWidget::editorPipelinesReceived);
+        QObject::connect(_app_mode_pushbutton, &QPushButton::clicked, this, &MainSidePanelWidget::setApplicationMode);
+        QObject::connect(this, &MainSidePanelWidget::selectFilesTriggered, _project_widget, &ProjectWidget::selectFile);
+        QObject::connect(this, &MainSidePanelWidget::filesDropped, _project_widget, &ProjectWidget::selectFileDrag);
+        QObject::connect(this, &MainSidePanelWidget::addModelsTriggered, _process_widget, &ProcessWidget::addModels);
+        QObject::connect(this, &MainSidePanelWidget::editorPipelinesTriggered, _process_widget, &ProcessWidget::editorPipelinesReceived);
         QObject::connect(_process_widget, &ProcessWidget::pipelineFinished, m_mainWindow, &MainWindow::changeWSIDisplayReceived);
         connect(m_mainWindow, &MainWindow::updateProjectTitle, _project_widget, &ProjectWidget::updateTitle);
     }
@@ -187,7 +181,7 @@ namespace fast{
     void MainSidePanelWidget::setApplicationMode() {
         QMessageBox mBox;
         mBox.setIcon(QMessageBox::Warning);
-        if (this->_app_mode_pushbutton->text() == "Clinical mode") {
+        if (_app_mode_pushbutton->text() == "Clinical mode") {
             mBox.setText("This will set the application from clinical mode to advanced mode.");
         } else {
             mBox.setText("This will set the application from advanced mode to clinical mode.");
@@ -203,10 +197,10 @@ namespace fast{
             case QMessageBox::Yes:
                 // toggle and update text on button to show current mode
                 //ProcessManager::GetInstance()->set_advanced_mode_status(!ProcessManager::GetInstance()->get_advanced_mode_status()); // toggle
-                if (this->_app_mode_pushbutton->text() == "Clinical mode") {
-                    this->_app_mode_pushbutton->setText("Research mode");
+                if (_app_mode_pushbutton->text() == "Clinical mode") {
+                    _app_mode_pushbutton->setText("Research mode");
                 } else {
-                    this->_app_mode_pushbutton->setText("Clinical mode");
+                    _app_mode_pushbutton->setText("Clinical mode");
                 }
                 // also update title
                 /*

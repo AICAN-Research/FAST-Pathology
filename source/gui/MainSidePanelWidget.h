@@ -39,6 +39,7 @@ namespace fast{
         void addModelsTriggered();
         void editorPipelinesTriggered();
         void loadProject();
+        void showMenu();
 
     public slots:
         /**
@@ -52,8 +53,8 @@ namespace fast{
         ProjectWidget *_project_widget;
         ProcessWidget *_process_widget;
         ViewWidget *_view_widget;
-        StatsWidget *_stats_widget;
-        ExportWidget *_export_widget;
+        //StatsWidget *_stats_widget;
+        //ExportWidget *_export_widget;
 
     private:
         QStackedWidget *_container_stacked_widget;

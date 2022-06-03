@@ -229,6 +229,7 @@ void MainWindow::setupConnections()
     QObject::connect(mWidget, &WindowWidget::filesDropped, _side_panel_widget, &MainSidePanelWidget::filesDropped);
     QObject::connect(_side_panel_widget, &MainSidePanelWidget::changeWSIDisplayTriggered, this, &MainWindow::changeWSIDisplayReceived);
     QObject::connect(_side_panel_widget, &MainSidePanelWidget::resetDisplay, this, &MainWindow::resetDisplay);
+    QObject::connect(_side_panel_widget, &MainSidePanelWidget::showMenu, this, &MainWindow::showProjectSplash);
 
     // Main menu actions
     QObject::connect(_file_menu_create_project_action, &QAction::triggered, this, &MainWindow::showProjectSplash);
