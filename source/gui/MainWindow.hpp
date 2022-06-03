@@ -132,7 +132,8 @@ class MainWindow : public Window {
 
         void updateAppTitleReceived(std::string title_suffix);
 
-        void showProjectSplash();
+        void showSplashMenu(bool allowClose);
+        void showSplashMenuWithClose();
     signals:
         void updateProjectTitle();
 };

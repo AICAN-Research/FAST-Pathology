@@ -7,7 +7,7 @@ namespace fast{
 class ProjectSplashWidget : public QWidget {
     Q_OBJECT
     public:
-        ProjectSplashWidget(std::string rootFolder, QWidget* parent = nullptr);
+        ProjectSplashWidget(std::string rootFolder, bool allowClose, QWidget* parent = nullptr);
     private slots:
         void newProjectNameDialog();
     signals:

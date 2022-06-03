@@ -80,12 +80,12 @@ MainWindow::MainWindow() {
 
     // Legacy stuff to remove.
     advancedMode = false;
-    showProjectSplash();
+    showSplashMenu(false);
 }
 
-void MainWindow::showProjectSplash() {
+void MainWindow::showSplashMenu(bool allowClose) {
     // Start splash
-    auto splash = new ProjectSplashWidget(cwd + "/projects/");
+    auto splash = new ProjectSplashWidget(cwd + "/projects/", allowClose);
     connect(splash, &ProjectSplashWidget::quitSignal, mWidget, &QWidget::close);
     connect(splash, &ProjectSplashWidget::newProjectSignal, [=](QString name) {
         if(m_project)
@@ -104,6 +104,9 @@ void MainWindow::showProjectSplash() {
         emit updateProjectTitle();
     });
     splash->show();
+}
+void MainWindow::showSplashMenuWithClose() {
+    showSplashMenu(true);
 }
 
 void MainWindow::downloadZipFile(std::string URL, std::string destination) {
@@ -229,11 +232,11 @@ void MainWindow::setupConnections()
     QObject::connect(mWidget, &WindowWidget::filesDropped, _side_panel_widget, &MainSidePanelWidget::filesDropped);
     QObject::connect(_side_panel_widget, &MainSidePanelWidget::changeWSIDisplayTriggered, this, &MainWindow::changeWSIDisplayReceived);
     QObject::connect(_side_panel_widget, &MainSidePanelWidget::resetDisplay, this, &MainWindow::resetDisplay);
-    QObject::connect(_side_panel_widget, &MainSidePanelWidget::showMenu, this, &MainWindow::showProjectSplash);
+    QObject::connect(_side_panel_widget, &MainSidePanelWidget::showMenu, this, &MainWindow::showSplashMenuWithClose);
 
     // Main menu actions
-    QObject::connect(_file_menu_create_project_action, &QAction::triggered, this, &MainWindow::showProjectSplash);
-    QObject::connect(_file_menu_open_project_action, &QAction::triggered, this, &MainWindow::showProjectSplash);
+    QObject::connect(_file_menu_create_project_action, &QAction::triggered, this, &MainWindow::showSplashMenuWithClose);
+    QObject::connect(_file_menu_open_project_action, &QAction::triggered, this, &MainWindow::showSplashMenuWithClose);
     QObject::connect(_file_menu_import_wsi_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::selectFilesTriggered);
     QObject::connect(_file_menu_add_model_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::addModelsTriggered);
     QObject::connect(_file_menu_add_pipeline_action, &QAction::triggered, this, &MainWindow::addPipelines);

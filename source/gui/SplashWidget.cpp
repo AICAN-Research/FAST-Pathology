@@ -14,7 +14,7 @@
 
 namespace fast{
 
-ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, QWidget* parent) : QWidget(parent, Qt::FramelessWindowHint | Qt::WindowSystemMenuHint) {
+ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, bool allowClose, QWidget* parent) : QWidget(parent, Qt::FramelessWindowHint | Qt::WindowSystemMenuHint) {
     m_rootFolder = rootFolder;
     setWindowModality(Qt::ApplicationModal); // Lock on top
     auto layout = new QVBoxLayout();
@@ -103,6 +103,13 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, QWidget* parent
     newProjectButton->setText("Start new project");
     rightLayout->addWidget(newProjectButton);
     connect(newProjectButton, &QPushButton::clicked, this, &ProjectSplashWidget::newProjectNameDialog);
+
+    if(allowClose) {
+        auto closeButton = new QPushButton();
+        closeButton->setText("Close menu");
+        rightLayout->addWidget(closeButton);
+        connect(closeButton, &QPushButton::clicked, this, &ProjectSplashWidget::close);
+    }
 
     auto quitButton = new QPushButton();
     quitButton->setText("Quit");
