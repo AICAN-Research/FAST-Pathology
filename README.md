@@ -38,6 +38,10 @@ sudo dpkg -i fastpathology_ubuntu*.deb
 * Go the folder /opt/fastpathology/bin and run the **fastpathology** executable, or run it from the ubuntu menu (windows button->type fastpathology).
 
 ### macOS (10.13 or newer)
+* Install [homebrew](https://brew.sh/) if you don't already have it. Then, install the following packages using homebrew:
+```bash
+brew install openslide libomp
+```
 * Download the tar.xz package from the [release page](https://github.com/AICAN-Research/FAST-Pathology/releases/).
 * Extract the archive to somewhere on your drive
 * Disable the gatekeeper from your terminal:
