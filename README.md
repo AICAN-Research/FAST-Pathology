@@ -2,7 +2,7 @@ FastPathology
 ===================================
 [![GitHub Downloads](https://img.shields.io/github/downloads/SINTEFMedtek/FAST-Pathology/total?label=GitHub%20downloads&logo=github)](https://github.com/SINTEFMedtek/FAST-Pathology/releases)
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
-[![Paper](https://zenodo.org/badge/DOI/10.1038/s41598-017-17204-5.svg)](https://doi.org/10.1109/ACCESS.2021.3072231)
+<!--[![Paper](https://zenodo.org/badge/DOI/10.1038/s41598-017-17204-5.svg)](https://doi.org/10.1109/ACCESS.2021.3072231)-->
 
 ![CI](https://github.com/AICAN-Research/FAST-Pathology/workflows/Build%20Windows/badge.svg?branch=master&event=push)
 ![CI](https://github.com/AICAN-Research/FAST-Pathology/workflows/Build%20Ubuntu/badge.svg?branch=master&event=push)
@@ -16,17 +16,43 @@ FastPathology is an open-source platform for deep learning-based research and de
 
 Install
 -----------------------------------
-**Download an appropriate installer from the [release page](https://github.com/SINTEFMedtek/FAST-Pathology/releases/), or the most recent one from [here](https://andreped.github.io/fastpathology.github.io/)**.
 
-Installers for Win10, Ubuntu Linux (18 and 20), and macOSX are available. The software is continuously in development. It has not reached a stable state _yet_, but we are pushing towards a major release soon. Beta-testers are much obliged.
+Follow the instructions for your operating system:
 
-In addition, FastPathology requires Microsoft Visual C++ Redistributable 2015-2019 (64bit/x64) to compile the software at runtime. Click [here](https://aka.ms/vs/16/release/vc_redist.x64.exe) to download the installer for the C++ Redistributable.
+### Windows (10 or newer)
+* Download and install the [Microsoft Visual C++ Redistributable 2015-2019 (64bit/x64)](https://aka.ms/vs/16/release/vc_redist.x64.exe).
+* Download and run the Windows installer from the [release page](https://github.com/AICAN-Research/FAST-Pathology/releases/).
+* Run fastpathology from your start menu.
 
-FastPathology also depends on OpenCL. Most Windows machines have OpenCL by default, whereas Ubuntu does not. Thus, for Ubuntu, OpenCL can be installed by installing either [NVIDIA CUDA Toolkit](https://developer.nvidia.com/cuda-11.1.0-download-archive) or [Intel OpenCL Driver](https://github.com/intel/compute-runtime). CUDA is required if you wish to perform inference using a dedicated GPU. CUDA 11.0 if you are using any of the releases.
+### Ubuntu Linux (18.04 or newer)
+- Install OpenCL for Linux by downloading an implementation depending on the CPU/GPU you have:
+   - **NVIDIA** - Install [CUDA](https://developer.nvidia.com/cuda-downloads)
+   - **Intel** - Install the [OpenCL NEO driver](https://github.com/intel/compute-runtime/releases)
+   - **AMD** - Install the [ROCm stack](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
+   - If none of the above fits, you can try the [Portable Computing Lanauge (PCOL)](http://portablecl.org), although reduced performance is likely.
+* Download the debian package from the [release page](https://github.com/AICAN-Research/FAST-Pathology/releases/).
+* Install the debian package from the terminal or by double-clicking it:
+```bash
+sudo dpkg -i fastpathology_ubuntu*.deb
+```
+* Go the folder /opt/fastpathology/bin and run the **fastpathology** executable, or run it from the ubuntu menu (windows button->type fastpathology).
 
-Test data
------------------------------------
-Data for testing the application can be downloaded from [here](http://folk.ntnu.no/andpeder/). It includes some pretrained models, two WSIs, and some example text pipelines. If [curl](https://curl.se/) and [tar](https://wiki.haskell.org/How_to_unpack_a_tar_file_in_Windows) is installed on the machine, it is possible to download the data directly from the GUI (go to the menu bar -> Edit -> Download test data -> click "Yes" -> when finished, click "Yes" again to visualize the WSIs straight away).
+### macOS (10.13 or newer)
+* Download the tar.xz package from the [release page](https://github.com/AICAN-Research/FAST-Pathology/releases/).
+* Extract the archive to somewhere on your drive
+* Disable the gatekeeper from your terminal:
+```bash
+sudo spctl --master-disable
+```
+* Go to extracted folder and find the bin folder and run the executable **fastpathology**
+
+### Optional: NVIDIA GPU Inference
+If you have an NVIDIA GPU on your machine you can enable high-speed inference by downloading and installing the following:
+* [CUDA 11](https://developer.nvidia.com/cuda-toolkit-archive)
+* [cuDNN 8.2](https://developer.nvidia.com/rdp/cudnn-archive)
+* [TensorRT 8.2](https://developer.nvidia.com/nvidia-tensorrt-download)
+
+**Note: Make sure to download the correct versions. NVIDIA GPU inference is not supported on Mac.**
 
 Features
 -----------------------------------
