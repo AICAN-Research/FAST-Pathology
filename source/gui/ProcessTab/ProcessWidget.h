@@ -67,12 +67,21 @@ signals:
     void messageSignal(QString);
     void pipelineFinished(std::string uid);
 public slots:
-    void addModels();
-    void addPipelines(QString filename = "");
+    void refreshPipelines(QString currentFilename = "");
     /**
      * Defines and creates the script editor widget.
      */
     void editorPipelinesReceived();
+    /**
+     * Opens a file explorer for selecting which deep learning modules from disk to import to the program.
+     * All selected models will be automatically added to the Progress widget.
+     */
+    void addModelsFromDisk();
+    /**
+     * Opens a file explorer for selecting which Pipelines from disk to import to the program.
+     * All selected Pipelines will be automatically added to the default Pipelines and the Pipeline menu.
+     */
+    void addPipelinesFromDisk();
 private:
     QVBoxLayout* _main_layout; /* Principal layout holder for the current custom QWidget */
     QStackedLayout* _stacked_layout;

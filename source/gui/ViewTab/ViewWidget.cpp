@@ -69,6 +69,7 @@ namespace fast {
         std::ofstream file(join(saveFolder, "renderer.attributes.txt"), std::iostream::out);
         file << result.renderer->attributesToString();
         file.close();
+        project->writeTimestmap();
     }
 
     void ViewWidget::setResults(std::vector<Result> results) {
@@ -106,6 +107,8 @@ namespace fast {
                     slider->setValue(segRenderer->getOpacity()*100.0f);
                     QObject::connect(slider, &QSlider::valueChanged, [segRenderer, result, this](int i) {
                         segRenderer->setOpacity((float)i/100.0f, segRenderer->getBorderOpacity());
+                    });
+                    QObject::connect(slider, &QSlider::sliderReleased, [=]() {
                         writeRendererAttributes(result);
                     });
                     layout->addWidget(slider);
@@ -121,6 +124,8 @@ namespace fast {
                     slider->setValue(segRenderer->getBorderOpacity()*100.0f);
                     QObject::connect(slider, &QSlider::valueChanged, [segRenderer, result, this](int i) {
                         segRenderer->setBorderOpacity((float)i/100.0f);
+                    });
+                    QObject::connect(slider, &QSlider::sliderReleased, [=]() {
                         writeRendererAttributes(result);
                     });
                     layout->addWidget(slider);
@@ -135,6 +140,8 @@ namespace fast {
                     slider->setValue(segRenderer->getBorderRadius());
                     QObject::connect(slider, &QSlider::valueChanged, [segRenderer, result, this](int i) {
                         segRenderer->setBorderRadius(i);
+                    });
+                    QObject::connect(slider, &QSlider::sliderReleased, [=]() {
                         writeRendererAttributes(result);
                     });
                     layout->addWidget(slider);
@@ -180,6 +187,8 @@ namespace fast {
                     slider->setValue(heatmapRenderer->getMaxOpacity()*100.f);
                     QObject::connect(slider, &QSlider::valueChanged, [heatmapRenderer, result, this](int i) {
                         heatmapRenderer->setMaxOpacity((float)i/100.0f);
+                    });
+                    QObject::connect(slider, &QSlider::sliderReleased, [=]() {
                         writeRendererAttributes(result);
                     });
                     layout->addWidget(slider);
@@ -195,6 +204,8 @@ namespace fast {
                     slider->setValue(heatmapRenderer->getMinConfidence()*100.0f);
                     QObject::connect(slider, &QSlider::valueChanged, [heatmapRenderer, result, this](int i) {
                         heatmapRenderer->setMinConfidence((float)i/100.0f);
+                    });
+                    QObject::connect(slider, &QSlider::sliderReleased, [=]() {
                         writeRendererAttributes(result);
                     });
                     layout->addWidget(slider);

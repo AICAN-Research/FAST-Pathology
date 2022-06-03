@@ -54,7 +54,19 @@ namespace fast {
         _main_layout->addWidget(_page_combobox);
         _main_layout->addWidget(_stacked_widget);
 
-        this->addPipelines();
+        _main_layout->addStretch();
+
+        auto addPipelinesButton = new QPushButton();
+        addPipelinesButton->setText("Add pipelines from disk");
+        _main_layout->addWidget(addPipelinesButton);
+        connect(addPipelinesButton, &QPushButton::clicked, this, &ProcessWidget::addPipelinesFromDisk);
+
+        auto addModelsButton = new QPushButton();
+        addModelsButton->setText("Add models from disk");
+        _main_layout->addWidget(addModelsButton);
+        connect(addModelsButton, &QPushButton::clicked, this, &ProcessWidget::addModelsFromDisk);
+
+        this->refreshPipelines();
     }
 
     void ProcessWidget::resetInterface()
@@ -68,36 +80,17 @@ namespace fast {
         QObject::connect(_page_combobox, SIGNAL(activated(int)), _stacked_layout, SLOT(setCurrentIndex(int)));
     }
 
-    void ProcessWidget::addModels()
-    {
-        //QString fileName = QFileDialog::getOpenFileName(
-        QStringList ls = QFileDialog::getOpenFileNames(this, tr("Select Model"), nullptr,
-                tr("Model Files (*.pb *.txt *.h5 *.xml *.mapping *.bin *.uff *.anchors *.onnx *.fpl"),
-                nullptr, QFileDialog::DontUseNativeDialog
-        ); // TODO: DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
-
-        auto progDialog = QProgressDialog(this);
-        progDialog.setRange(0, ls.count() - 1);
-        progDialog.setVisible(true);
-        progDialog.setModal(false);
-        progDialog.setLabelText("Adding models...");
-        QRect screenrect = this->screen()[0].geometry();
-        progDialog.move(this->width() - progDialog.width() / 2, -this->width() / 2 - progDialog.width() / 2);
-        progDialog.show();
-
-        QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
-    }
-
-    void ProcessWidget::addPipelines(QString selectedFilename) {
+    void ProcessWidget::refreshPipelines(QString currentFilename) {
+        _page_combobox->clear();
+        clearLayout(_stacked_layout);
         resetInterface();
         int index = 0;
         int counter = 0;
         // Load pipelines and create one button for each.
         std::string pipelineFolder = this->_cwd + "/pipelines/";
         for(auto& filename : getDirectoryList(pipelineFolder)) {
-            std::cout << filename << std::endl;
             auto pipeline = Pipeline(join(pipelineFolder, filename));
-            if(filename == selectedFilename.toStdString()) {
+            if(filename == currentFilename.toStdString()) {
                 index = counter;
             }
 
@@ -115,24 +108,27 @@ namespace fast {
 
             auto button = new QPushButton;
             button->setText("Run pipeline for this image");
+            button->setStyleSheet("background-color: #ADD8E6;");
             layout->addWidget(button);
             QObject::connect(button, &QPushButton::clicked, [=]() {
                 runInThread(join(pipelineFolder, filename), pipeline.getName(), false);
             });
 
             auto batchButton = new QPushButton;
-            batchButton->setText("Run pipeline for all images in project");
+            batchButton->setText("Run pipeline for all images");
             layout->addWidget(batchButton);
             QObject::connect(batchButton, &QPushButton::clicked, [=]() {
                 runInThread(join(pipelineFolder, filename), pipeline.getName(), true);
             });
+
+            layout->addSpacing(20);
 
             auto editButton = new QPushButton;
             editButton->setText("Edit pipeline");
             layout->addWidget(editButton);
             connect(editButton, &QPushButton::clicked, [=]() {
                 auto editor = new PipelineScriptEditorWidget(QString::fromStdString(pipeline.getFilename()), this);
-                connect(editor, &PipelineScriptEditorWidget::pipelineSaved, this, &ProcessWidget::addPipelines);
+                connect(editor, &PipelineScriptEditorWidget::pipelineSaved, this, &ProcessWidget::refreshPipelines);
             });
             ++counter;
         }
@@ -301,5 +297,65 @@ namespace fast {
     void ProcessWidget::editorPipelinesReceived()
     {
         auto editor = new PipelineScriptEditorWidget(this);
+    }
+
+
+    void ProcessWidget::addModelsFromDisk() {
+        // TODO enable selection of folders (TensorFlow SavedModel format)
+        QStringList ls = QFileDialog::getOpenFileNames(
+                nullptr,
+                tr("Select Model"), nullptr,
+                tr("Model Files (*.pb *.xml *.bin *.uff *.onnx"),
+                nullptr, QFileDialog::DontUseNativeDialog
+        ); // DontUseNativeDialog - this was necessary because I got wrong paths -> /run/user/1000/.../filename instead of actual path
+
+        auto progDialog = new QProgressDialog(nullptr);
+        progDialog->setRange(0, ls.count() - 1);
+        progDialog->setAutoClose(true);
+        progDialog->setLabelText("Adding models...");
+
+        int counter = 0;
+        // now iterate over all selected files and add selected files and corresponding ones to Models/
+        for (QString& filename : ls) {
+            std::string filepath = filename.toStdString();
+            QString newPath = QString::fromStdString(join(m_mainWindow->getRootFolder(), "models", getFileName(filepath)));
+            if(QDir().exists(newPath)) {
+                QMessageBox::warning(nullptr, "File exists", "File " + newPath + " exists and will not be copied.");
+            } else {
+                std::cout << "copying " << filepath << " to " << newPath.toStdString() << std::endl;
+                QFile::copy(filename, newPath);
+            }
+            counter++;
+            progDialog->setValue(counter);
+        }
+        progDialog->close();
+    }
+
+    void ProcessWidget::addPipelinesFromDisk() {
+
+        QStringList ls = QFileDialog::getOpenFileNames(
+                nullptr,
+                tr("Select pipeline to add"), nullptr,
+                tr("Pipeline Files (*.fpl)"),
+                nullptr, QFileDialog::DontUseNativeDialog
+        );
+
+        // now iterate over all selected files and add selected files and corresponding ones to Pipelines/
+        for (QString& fileName : ls) {
+
+            if (fileName == "")
+                continue;
+
+            std::string someFile = getFileName(fileName.toStdString());
+            std::string oldLocation = split(fileName.toStdString(), someFile)[0];
+            std::string newLocation = join(m_mainWindow->getRootFolder(), "pipelines");
+            std::string newPath = join(newLocation,  someFile);
+            if (fileExists(newPath)) {
+                QMessageBox::warning(nullptr, "Error", "A pipeline with the filename " + QString::fromStdString(someFile) + " already exists.");
+            } else {
+                QFile::copy(fileName, QString::fromStdString(newPath));
+            }
+        }
+        refreshPipelines();
     }
 }

@@ -54,16 +54,7 @@ class MainWindow : public Window {
         void createOpenGLWindow();
 
         // IMPORT RELATED STUFF
-        /**
-         * Opens a file explorer for selecting which deep learning modules from disk to import to the program.
-         * All selected models will be automatically added to the Progress widget.
-         */
-        void addModels();
-        /**
-         * Opens a file explorer for selecting which Pipelines from disk to import to the program.
-         * All selected Pipelines will be automatically added to the default Pipelines and the Pipeline menu.
-         */
-        void addPipelines();
+
 
         /**
          * Prompts the user whether or not to "reset", if accepted it will refresh the software to the initial state,

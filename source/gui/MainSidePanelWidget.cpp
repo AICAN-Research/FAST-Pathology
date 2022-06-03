@@ -163,10 +163,7 @@ namespace fast{
         QObject::connect(_project_widget, &ProjectWidget::resetDisplay, this, &MainSidePanelWidget::resetDisplay);
         QObject::connect(this, &MainSidePanelWidget::loadProject, _project_widget, &ProjectWidget::loadProject);
         QObject::connect(_app_mode_pushbutton, &QPushButton::clicked, this, &MainSidePanelWidget::setApplicationMode);
-        QObject::connect(this, &MainSidePanelWidget::selectFilesTriggered, _project_widget, &ProjectWidget::selectFile);
         QObject::connect(this, &MainSidePanelWidget::filesDropped, _project_widget, &ProjectWidget::selectFileDrag);
-        QObject::connect(this, &MainSidePanelWidget::addModelsTriggered, _process_widget, &ProcessWidget::addModels);
-        QObject::connect(this, &MainSidePanelWidget::editorPipelinesTriggered, _process_widget, &ProcessWidget::editorPipelinesReceived);
         QObject::connect(_process_widget, &ProcessWidget::pipelineFinished, m_mainWindow, &MainWindow::changeWSIDisplayReceived);
         connect(m_mainWindow, &MainWindow::updateProjectTitle, _project_widget, &ProjectWidget::updateTitle);
     }

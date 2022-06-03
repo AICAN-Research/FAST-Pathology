@@ -42,6 +42,7 @@ namespace fast{
         std::ofstream timestampFile(_root_folder + "timestamp.txt");
         timestampFile << currentDateTime();
         timestampFile.close();
+        std::cout << "Writing timestamping.." << currentDateTime() << std::endl;
     }
 
     void Project::createFolderDirectoryArchitecture()
