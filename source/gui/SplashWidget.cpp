@@ -117,6 +117,12 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, bool allowClose
         rightLayout->addWidget(closeButton);
         connect(closeButton, &QPushButton::clicked, this, &ProjectSplashWidget::close);
     }
+    if(!fileExists(rootFolder + "/../images/A05.svs")) {
+        auto downloadButton = new QPushButton();
+        downloadButton->setText("Download and open test data");
+        rightLayout->addWidget(downloadButton);
+        connect(downloadButton, &QPushButton::clicked, this, &ProjectSplashWidget::downloadTestData);
+    }
 
     auto quitButton = new QPushButton();
     quitButton->setText("Quit");
@@ -209,4 +215,13 @@ void ProjectSplashWidget::aboutProgram() {
 
     dialog->show();
 }
+
+void ProjectSplashWidget::downloadTestData() {
+    downloadZipFile("http://fast.eriksmistad.no/download/fastpathology-test-images-v1.0.0.zip", join(m_rootFolder, "..", "images"), "test dataset");
+    // Create new project
+    emit newProjectSignal("Test project");
+    emit loadTestDataIntoProject();
+    close();
+}
+
 }

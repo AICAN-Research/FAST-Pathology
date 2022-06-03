@@ -7,7 +7,6 @@
 #include <QObject>
 #include <QWidget>
 #include <QCloseEvent>
-#include <QNetworkReply>
 #include <QMessageBox>
 #include <QProgressDialog>
 #include "source/utils/utilities.h"
@@ -81,7 +80,6 @@ class MainWindow : public Window {
 
     private:
         MainWindow();
-        void downloadZipFile(std::string URL, std::string destination);
 
         View* view;
         std::shared_ptr<Project> m_project;
@@ -100,6 +98,7 @@ class MainWindow : public Window {
 
         void showSplashMenu(bool allowClose);
         void showSplashMenuWithClose();
+
     signals:
         void updateProjectTitle();
 };

@@ -23,10 +23,13 @@ class ProjectSplashWidget : public QWidget {
          * Opens a simple dialog which contains information about the software.
          */
         void aboutProgram();
+
+        void downloadTestData();
     signals:
         void quitSignal();
         void newProjectSignal(QString name);
         void openProjectSignal(QString name);
+        void loadTestDataIntoProject();
     private:
         std::string m_rootFolder;
 };
