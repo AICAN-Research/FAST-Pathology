@@ -117,7 +117,7 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, bool allowClose
         rightLayout->addWidget(closeButton);
         connect(closeButton, &QPushButton::clicked, this, &ProjectSplashWidget::close);
     }
-    if(!fileExists(rootFolder + "/../images/A05.svs")) {
+    if(!fileExists(rootFolder + "/../images/LICENSE.md")) {
         auto downloadButton = new QPushButton();
         downloadButton->setText("Download and open test data");
         rightLayout->addWidget(downloadButton);
@@ -129,6 +129,7 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, bool allowClose
     rightLayout->addWidget(quitButton);
     connect(quitButton, &QPushButton::clicked, this, &ProjectSplashWidget::quitSignal);
 
+    rightLayout->addSpacing(20);
     rightLayout->addStretch(20);
 
     auto helpButton = new QPushButton();
