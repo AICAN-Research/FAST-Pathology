@@ -10,6 +10,8 @@
 #include <QDir>
 #include <QMessageBox>
 #include <fstream>
+#include <QDesktopServices>
+#include <QTextEdit>
 #include "source/utils/utilities.h"
 
 namespace fast{
@@ -38,11 +40,15 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, bool allowClose
     auto leftLayout = new QVBoxLayout();
     horizontalLayout->addLayout(leftLayout);
 
+    horizontalLayout->addSpacing(20);
+
     auto line = new QFrame;
     line->setLineWidth(3);
     line->setStyleSheet("border: 10px solid rgb(150, 150, 150);");
     line->setFrameShape(QFrame::VLine);
     horizontalLayout->addWidget(line);
+
+    horizontalLayout->addSpacing(20);
 
     auto rightLayout = new QVBoxLayout();
     horizontalLayout->addLayout(rightLayout);
@@ -101,6 +107,7 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, bool allowClose
 
     auto newProjectButton = new QPushButton();
     newProjectButton->setText("Start new project");
+    newProjectButton->setStyleSheet("background-color: #ADD8E6;");
     rightLayout->addWidget(newProjectButton);
     connect(newProjectButton, &QPushButton::clicked, this, &ProjectSplashWidget::newProjectNameDialog);
 
@@ -115,6 +122,24 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, bool allowClose
     quitButton->setText("Quit");
     rightLayout->addWidget(quitButton);
     connect(quitButton, &QPushButton::clicked, this, &ProjectSplashWidget::quitSignal);
+
+    rightLayout->addStretch(20);
+
+    auto helpButton = new QPushButton();
+    helpButton->setText("Help");
+    rightLayout->addWidget(helpButton);
+    connect(helpButton, &QPushButton::clicked, this, &ProjectSplashWidget::helpUrl);
+
+    auto reportButton = new QPushButton();
+    reportButton->setText("Report an issue");
+    rightLayout->addWidget(reportButton);
+    connect(reportButton, &QPushButton::clicked, this, &ProjectSplashWidget::reportIssueUrl);
+
+    auto aboutButton = new QPushButton();
+    aboutButton->setText("About");
+    rightLayout->addWidget(aboutButton);
+    connect(aboutButton, &QPushButton::clicked, this, &ProjectSplashWidget::aboutProgram);
+
 
     // Move to the center
     adjustSize();
@@ -142,4 +167,46 @@ void ProjectSplashWidget::newProjectNameDialog() {
     }
 }
 
+void ProjectSplashWidget::reportIssueUrl() {
+    QDesktopServices::openUrl(QUrl("https://github.com/AICAN-Research/FAST-Pathology/issues", QUrl::TolerantMode));
+}
+
+void ProjectSplashWidget::helpUrl() {
+    QDesktopServices::openUrl(QUrl("https://github.com/AICAN-Research/FAST-Pathology", QUrl::TolerantMode));
+}
+
+void ProjectSplashWidget::aboutProgram() {
+    auto currLayout = new QVBoxLayout;
+
+    QPixmap image(QString::fromStdString(":/data/Icons/fastpathology_logo_large.png"));
+
+    auto label = new QLabel;
+    label->setPixmap(image);
+    label->setAlignment(Qt::AlignCenter);
+
+    auto textBox = new QTextEdit;
+    textBox->setEnabled(false);
+    textBox->setText("<html><b>FastPathology " + QString(FAST_PATHOLOGY_VERSION) + "</b</html>");
+    textBox->append("");
+    textBox->setAlignment(Qt::AlignCenter);
+    textBox->append("Open-source platform for deep learning-based research and decision support in digital pathology.");
+    textBox->append("");
+    textBox->append("");
+    textBox->setAlignment(Qt::AlignCenter);
+    textBox->append("Created by SINTEF Medical Technology and Norwegian University of Science and Technology (NTNU)");
+    textBox->setAlignment(Qt::AlignCenter);
+    textBox->setStyleSheet("QTextEdit { border: none }");
+    textBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    //textBox->setBaseSize(150, 200);
+
+    currLayout->addWidget(label);
+    currLayout->addWidget(textBox);
+
+    auto dialog = new QDialog(this);
+    dialog->setWindowTitle("About");
+    dialog->setLayout(currLayout);
+    dialog->setFixedSize(QSize(800, 800));
+
+    dialog->show();
+}
 }

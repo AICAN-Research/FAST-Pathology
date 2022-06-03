@@ -49,26 +49,9 @@ class MainWindow : public Window {
 
         // GUI RELATED STUFF
         /**
-         * Creates the main menu bar of the platform.
-         */
-        void createMenubar();
-        /**
          * Creates the OpenGL window for rendering WSI-related stuff.
          */
         void createOpenGLWindow();
-        /**
-         * Opens the default browser and directs the user to the FastPathology GitHub page to seek for assistance.
-         */
-        static void helpUrl();
-        /**
-         * Opens the default browser and directs the user to the FastPathology GitHub "Issues" section, to easily
-         * report an issue/bug or request a feature.
-         */
-        static void reportIssueUrl();
-        /**
-         * Opens a simple dialog which contains information about the software.
-         */
-        void aboutProgram();
 
         // IMPORT RELATED STUFF
         /**
@@ -115,14 +98,6 @@ class MainWindow : public Window {
 
         std::string _application_name; /* */
         MainSidePanelWidget *_side_panel_widget; /* Main widget for the left-hand panel */
-        QMenu* _help_menu; /* */
-        QAction* _file_menu_create_project_action;
-        QAction* _file_menu_open_project_action;
-        QAction* _file_menu_import_wsi_action;
-        QAction* _file_menu_add_model_action;
-        QAction* _file_menu_add_pipeline_action;
-        QAction* _edit_menu_change_mode_action;
-        QAction* _help_menu_about_action;
 
     public slots:
         void closeEvent (QCloseEvent *event);

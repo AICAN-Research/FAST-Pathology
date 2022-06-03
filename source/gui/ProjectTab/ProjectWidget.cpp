@@ -26,10 +26,12 @@ namespace fast {
     void ProjectWidget::setupInterface()
     {
         m_projectLabel = new QLabel();
+        m_projectLabel->setStyleSheet("font-size: 18px;");
         m_projectLabel->setWordWrap(true);
 
         _selectFileButton = new QPushButton(this);
         _selectFileButton->setText("Import images");
+        _selectFileButton->setStyleSheet("background-color: #ADD8E6;");
         //selectFileButton->setFixedWidth(200);
         _selectFileButton->setFixedHeight(50);
         //selectFileButton->setStyleSheet("color: white; background-color: blue");

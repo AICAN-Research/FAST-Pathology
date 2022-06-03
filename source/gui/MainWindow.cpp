@@ -202,7 +202,7 @@ void MainWindow::setupInterface()
             "color: black"
             ;
      */
-    const auto qss = "font-size: 16px;"
+    const auto qss = "font-size: 18px;"
                      "QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };"
                      "QMenu{background-color:palette(window);border:1px solid palette(shadow);};"
                      ;
@@ -220,7 +220,6 @@ void MainWindow::setupInterface()
     mainLayout = new QHBoxLayout;
     mainWidget->setLayout(mainLayout);
 
-    createMenubar();        // create Menubar
     createOpenGLWindow();   // create OpenGL window
 }
 
@@ -233,17 +232,6 @@ void MainWindow::setupConnections()
     QObject::connect(_side_panel_widget, &MainSidePanelWidget::changeWSIDisplayTriggered, this, &MainWindow::changeWSIDisplayReceived);
     QObject::connect(_side_panel_widget, &MainSidePanelWidget::resetDisplay, this, &MainWindow::resetDisplay);
     QObject::connect(_side_panel_widget, &MainSidePanelWidget::showMenu, this, &MainWindow::showSplashMenuWithClose);
-
-    // Main menu actions
-    QObject::connect(_file_menu_create_project_action, &QAction::triggered, this, &MainWindow::showSplashMenuWithClose);
-    QObject::connect(_file_menu_open_project_action, &QAction::triggered, this, &MainWindow::showSplashMenuWithClose);
-    QObject::connect(_file_menu_import_wsi_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::selectFilesTriggered);
-    QObject::connect(_file_menu_add_model_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::addModelsTriggered);
-    QObject::connect(_file_menu_add_pipeline_action, &QAction::triggered, this, &MainWindow::addPipelines);
-
-    QObject::connect(_edit_menu_change_mode_action, &QAction::triggered, _side_panel_widget, &MainSidePanelWidget::setApplicationMode);
-
-    QObject::connect(_help_menu_about_action, &QAction::triggered, this, &MainWindow::aboutProgram);
 }
 
 void MainWindow::updateAppTitleReceived(std::string title_suffix)
@@ -272,92 +260,6 @@ void MainWindow::createOpenGLWindow() {
 	mainSplitter->setStretchFactor(1, 1);
 
     mainLayout->addWidget(mainSplitter);
-}
-
-void MainWindow::reportIssueUrl() {
-    QDesktopServices::openUrl(QUrl("https://github.com/SINTEFMedtek/FAST-Pathology/issues", QUrl::TolerantMode));
-}
-
-void MainWindow::helpUrl() {
-    QDesktopServices::openUrl(QUrl("https://github.com/SINTEFMedtek/FAST-Pathology", QUrl::TolerantMode));
-}
-
-void MainWindow::aboutProgram() {
-
-	auto currLayout = new QVBoxLayout;
-
-	QPixmap image(QString::fromStdString(":/data/Icons/fastpathology_logo_large.png"));
-
-	auto label = new QLabel;
-	label->setPixmap(image);
-	label->setAlignment(Qt::AlignCenter);
-	
-	auto textBox = new QTextEdit;
-	textBox->setEnabled(false);
-	textBox->setText("<html><b>FastPathology " + QString(FAST_PATHOLOGY_VERSION) + "</b</html>");
-	textBox->append("");
-	textBox->setAlignment(Qt::AlignCenter);
-	textBox->append("Open-source platform for deep learning-based research and decision support in digital pathology.");
-	textBox->append("");
-	textBox->append("");
-	textBox->setAlignment(Qt::AlignCenter);
-	textBox->append("Created by SINTEF Medical Technology and Norwegian University of Science and Technology (NTNU)");
-	textBox->setAlignment(Qt::AlignCenter);
-	textBox->setStyleSheet("QTextEdit { border: none }");
-	//textBox->setBaseSize(150, 200);
-
-	currLayout->addWidget(label);
-	currLayout->addWidget(textBox);
-
-	auto dialog = new QDialog(mWidget);
-	dialog->setWindowTitle("About");
-	dialog->setLayout(currLayout);
-	//dialog->setBaseSize(QSize(800, 800));
-
-	dialog->show();
-}
-
-void MainWindow::createMenubar()
-{
-    // need to create a new QHBoxLayout for the menubar
-    auto topFiller = new QMenuBar(mWidget);
-    //topFiller->setStyleSheet("QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };"
-    //                         "border-bottom:2px solid rgba(25,25,120,75); "
-    //                         "QMenu{background-color:palette(window);border:1px solid palette(shadow);}");
-    //topFiller->setStyleSheet(qss);
-    topFiller->setMaximumHeight(30);
-
-    // File tab
-    auto fileMenu = topFiller->addMenu(tr("&Project"));
-    //fileMenu->setFixedHeight(100);
-    //fileMenu->setFixedWidth(100);
-    //QAction *createProjectAction;
-    _file_menu_create_project_action = new QAction("Create Project");
-    fileMenu->addAction(_file_menu_create_project_action);
-    _file_menu_open_project_action = new QAction("Load Project");
-    fileMenu->addAction(_file_menu_open_project_action);
-    _file_menu_import_wsi_action = new QAction("Import images");
-    fileMenu->addAction(_file_menu_import_wsi_action);
-    _file_menu_add_model_action = new QAction("Add Models");
-    fileMenu->addAction(_file_menu_add_model_action);
-    _file_menu_add_pipeline_action = new QAction("Add Pipelines");
-    fileMenu->addAction(_file_menu_add_pipeline_action);
-    fileMenu->addSeparator();
-    fileMenu->addAction("Quit", QApplication::quit);
-
-    // Edit tab
-    auto editMenu = topFiller->addMenu(tr("&Edit"));
-    _edit_menu_change_mode_action = new QAction("Change mode");
-    editMenu->addAction(_edit_menu_change_mode_action);
-
-    _help_menu = topFiller->addMenu(tr("&Help"));
-    _help_menu->addAction("Contact support", helpUrl);
-    _help_menu->addAction("Report issue", reportIssueUrl);
-    _help_menu->addAction("Check for updates");  // TODO: Add function that checks if the current binary in usage is the most recent one
-    _help_menu_about_action = new QAction("About", this);
-    _help_menu->addAction(_help_menu_about_action);
-
-    superLayout->insertWidget(0, topFiller);
 }
 
 void MainWindow::reset()

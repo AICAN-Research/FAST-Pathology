@@ -10,6 +10,19 @@ class ProjectSplashWidget : public QWidget {
         ProjectSplashWidget(std::string rootFolder, bool allowClose, QWidget* parent = nullptr);
     private slots:
         void newProjectNameDialog();
+        /**
+         * Opens the default browser and directs the user to the FastPathology GitHub "Issues" section, to easily
+         * report an issue/bug or request a feature.
+         */
+        void reportIssueUrl();
+        /**
+         * Opens the default browser and directs the user to the FastPathology GitHub page to seek for assistance.
+         */
+        void helpUrl();
+        /**
+         * Opens a simple dialog which contains information about the software.
+         */
+        void aboutProgram();
     signals:
         void quitSignal();
         void newProjectSignal(QString name);

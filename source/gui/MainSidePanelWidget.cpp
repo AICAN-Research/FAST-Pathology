@@ -52,7 +52,8 @@ namespace fast{
         //tb->setMovable(true);
         //tb->setMinimumSize(QSize(im_size, im_size));
         //tb->setBaseSize(QSize(im_size, im_size));
-        tb->setFont(QFont("Times", 8)); //QFont::Bold));
+        tb->setFont(QFont("Ubuntu", 8)); //QFont::Bold));
+        tb->setStyleSheet("font-size: 20px");
         tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);  // adds text under icons
 
         //auto toolBar = new QToolBar;
@@ -136,14 +137,6 @@ namespace fast{
         dockLayout->insertWidget(0, dockContent); //addWidget(dockContent);
         //tmpLayout->addWidget(pageComboBox);
         dockLayout->insertWidget(1, _container_stacked_widget);
-
-        auto menuWidget = new QWidget(this);
-        //menuWidget->setFixedWidth(300); //300);  // TODO: This was a good width for my screen, but need it to be adjustable (!)
-        //menuWidget->set
-        menuWidget->setMaximumWidth(700);
-        menuWidget->setMinimumWidth(360);
-        //tmpWidget->setStyleSheet("border:1px solid rgb(0, 255, 0); ");
-        menuWidget->setLayout(dockLayout);
 
         // add button on the bottom of widget for toggling clinical/advanced mode
         _app_mode_pushbutton = new QPushButton(this);
