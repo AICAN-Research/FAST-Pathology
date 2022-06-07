@@ -19,6 +19,8 @@ namespace fast{
 ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, bool allowClose, QWidget* parent) : QWidget(parent, Qt::FramelessWindowHint | Qt::WindowSystemMenuHint) {
     m_rootFolder = rootFolder;
     setWindowModality(Qt::ApplicationModal); // Lock on top
+    if(allowClose)
+        setWindowFlags(Qt::Popup);
     auto layout = new QVBoxLayout();
     setLayout(layout);
 
