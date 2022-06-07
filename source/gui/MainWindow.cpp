@@ -79,8 +79,6 @@ MainWindow::MainWindow() {
     setupInterface();
     setupConnections();
 
-    // Legacy stuff to remove.
-    advancedMode = false;
     showSplashMenu(false);
 }
 
@@ -243,11 +241,7 @@ void MainWindow::changeWSIDisplayReceived(std::string uid_name)
     }
 
     // update application name to contain current WSI
-    if (advancedMode) {
-        setTitle(_application_name + " (Research mode)" + " - " + splitCustom(uid_name, "/").back());
-    } else {
-        setTitle(_application_name + " - " + splitCustom(uid_name, "/").back());
-    }
+    setTitle(_application_name + " - " + splitCustom(uid_name, "/").back());
 
     // to render straight away (avoid waiting on all WSIs to be handled before rendering)
     QCoreApplication::processEvents(QEventLoop::AllEvents, 0);

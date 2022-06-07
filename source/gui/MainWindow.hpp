@@ -37,8 +37,6 @@ class MainWindow : public Window {
     FAST_OBJECT(MainWindow);
     Q_OBJECT
     public:
-        bool advancedMode = false;
-
         std::string cwd;
 
         QWidget *mainWidget;

@@ -138,13 +138,6 @@ namespace fast{
         //tmpLayout->addWidget(pageComboBox);
         dockLayout->insertWidget(1, _container_stacked_widget);
 
-        // add button on the bottom of widget for toggling clinical/advanced mode
-        _app_mode_pushbutton = new QPushButton(this);
-        _app_mode_pushbutton->setText("Clinical mode");
-        _app_mode_pushbutton->setFixedHeight(50);
-        _app_mode_pushbutton->setStyleSheet("color: white; background-color: gray");
-
-        dockLayout->addWidget(_app_mode_pushbutton);
         setLayout(dockLayout);
     }
 
@@ -162,53 +155,9 @@ namespace fast{
         QObject::connect(_project_widget, &ProjectWidget::changeWSIDisplayTriggered, this, &MainSidePanelWidget::changeWSIDisplayTriggered);
         QObject::connect(_project_widget, &ProjectWidget::resetDisplay, this, &MainSidePanelWidget::resetDisplay);
         QObject::connect(this, &MainSidePanelWidget::loadProject, _project_widget, &ProjectWidget::loadProject);
-        QObject::connect(_app_mode_pushbutton, &QPushButton::clicked, this, &MainSidePanelWidget::setApplicationMode);
         QObject::connect(this, &MainSidePanelWidget::filesDropped, _project_widget, &ProjectWidget::selectFileDrag);
         QObject::connect(_process_widget, &ProcessWidget::pipelineFinished, m_mainWindow, &MainWindow::changeWSIDisplayReceived);
         connect(m_mainWindow, &MainWindow::updateProjectTitle, _project_widget, &ProjectWidget::updateTitle);
-    }
-
-    void MainSidePanelWidget::setApplicationMode() {
-        QMessageBox mBox;
-        mBox.setIcon(QMessageBox::Warning);
-        if (_app_mode_pushbutton->text() == "Clinical mode") {
-            mBox.setText("This will set the application from clinical mode to advanced mode.");
-        } else {
-            mBox.setText("This will set the application from advanced mode to clinical mode.");
-        }
-        mBox.setInformativeText("Are you sure you want to change mode?");
-        mBox.setDefaultButton(QMessageBox::No);
-        mBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        int ret = mBox.exec();
-
-        // @TODO. Is the filename supposed to be the path of the displayed WSI, or project path, or...?
-        auto filename = m_mainWindow->getCurrentWSIUID();
-        switch (ret) {
-            case QMessageBox::Yes:
-                // toggle and update text on button to show current mode
-                //ProcessManager::GetInstance()->set_advanced_mode_status(!ProcessManager::GetInstance()->get_advanced_mode_status()); // toggle
-                if (_app_mode_pushbutton->text() == "Clinical mode") {
-                    _app_mode_pushbutton->setText("Research mode");
-                } else {
-                    _app_mode_pushbutton->setText("Clinical mode");
-                }
-                // also update title
-                /*
-                if (ProcessManager::GetInstance()->get_advanced_mode_status()) {
-                    auto app_title_extension = std::string(" (Research mode)") + std::string(" - ") + splitCustom(filename, "/").back();
-                    emit newAppTitle(app_title_extension);
-                }
-                else {
-                    auto app_title_extension = " - " + splitCustom(filename, "/").back();
-                    emit newAppTitle(app_title_extension);
-                }*/
-                break;
-            case QMessageBox::No:
-                1; // if "No", do nothing
-                break;
-            default:
-                break;
-        }
     }
 
     ViewWidget *MainSidePanelWidget::getViewWidget() {

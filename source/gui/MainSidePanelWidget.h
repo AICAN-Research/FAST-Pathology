@@ -40,15 +40,6 @@ namespace fast{
         void editorPipelinesTriggered();
         void loadProject();
         void showMenu();
-
-    public slots:
-        /**
-         * To change GUI mode. By default it is in diagnostics mode. In advanced mode, additional options are included,
-         * such as possibility to set parameters to methods and such. Toggling will update the title of the program
-         * and the Qt "mode" button on the down-left of the program.
-         */
-        void setApplicationMode();
-
     public:
         ProjectWidget *_project_widget;
         ProcessWidget *_process_widget;
@@ -58,7 +49,6 @@ namespace fast{
 
     private:
         QStackedWidget *_container_stacked_widget;
-        QPushButton* _app_mode_pushbutton;
         MainWindow* m_mainWindow;
     };
 }
