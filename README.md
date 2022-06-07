@@ -1,6 +1,5 @@
 FastPathology
 ===================================
-![alt-text](data/Videos/fp_demo_v1.gif)  
 
 [![GitHub Downloads](https://img.shields.io/github/downloads/SINTEFMedtek/FAST-Pathology/total?label=GitHub%20downloads&logo=github)](https://github.com/SINTEFMedtek/FAST-Pathology/releases)
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
@@ -12,7 +11,7 @@ FastPathology is an open-source platform for deep learning-based research and de
 
 **A paper presenting the software and some benchmarks has been published in [IEEE Access](https://ieeexplore.ieee.org/document/9399433).**
 
-
+![alt-text](data/Videos/fp_demo_v1.gif)  
 
 Installing FastPathology
 -----------------------------------
