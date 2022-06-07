@@ -1,6 +1,6 @@
 FastPathology
 ===================================
-![alt-text](data/Videos/pw_predictions.gif)  
+![alt-text](data/Videos/fp_demo_v1.gif)  
 
 [![GitHub Downloads](https://img.shields.io/github/downloads/SINTEFMedtek/FAST-Pathology/total?label=GitHub%20downloads&logo=github)](https://github.com/SINTEFMedtek/FAST-Pathology/releases)
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
