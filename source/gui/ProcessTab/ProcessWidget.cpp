@@ -89,48 +89,54 @@ namespace fast {
         // Load pipelines and create one button for each.
         std::string pipelineFolder = this->_cwd + "/pipelines/";
         for(auto& filename : getDirectoryList(pipelineFolder)) {
-            auto pipeline = Pipeline(join(pipelineFolder, filename));
-            if(filename == currentFilename.toStdString()) {
-                index = counter;
+            try {
+                auto pipeline = Pipeline(join(pipelineFolder, filename));
+
+                if(filename == currentFilename.toStdString()) {
+                    index = counter;
+                }
+
+                auto page = new QWidget();
+                auto layout = new QVBoxLayout();
+                layout->setAlignment(Qt::AlignTop);
+                page->setLayout(layout);
+                _stacked_layout->addWidget(page);
+                _page_combobox->addItem(QString::fromStdString(pipeline.getName()));
+
+                auto description = new QLabel();
+                description->setText(QString::fromStdString(pipeline.getDescription()));
+                description->setWordWrap(true);
+                layout->addWidget(description);
+
+                auto button = new QPushButton;
+                button->setText("Run pipeline for this image");
+                button->setStyleSheet("background-color: #ADD8E6;");
+                layout->addWidget(button);
+                QObject::connect(button, &QPushButton::clicked, [=]() {
+                    runInThread(join(pipelineFolder, filename), pipeline.getName(), false);
+                });
+
+                auto batchButton = new QPushButton;
+                batchButton->setText("Run pipeline for all images");
+                layout->addWidget(batchButton);
+                QObject::connect(batchButton, &QPushButton::clicked, [=]() {
+                    runInThread(join(pipelineFolder, filename), pipeline.getName(), true);
+                });
+
+                layout->addSpacing(20);
+
+                auto editButton = new QPushButton;
+                editButton->setText("Edit pipeline");
+                layout->addWidget(editButton);
+                connect(editButton, &QPushButton::clicked, [=]() {
+                    auto editor = new PipelineScriptEditorWidget(QString::fromStdString(pipeline.getFilename()), this);
+                    connect(editor, &PipelineScriptEditorWidget::pipelineSaved, this, &ProcessWidget::refreshPipelines);
+                });
+                ++counter;
+            } catch(std::exception &e) {
+                Reporter::warning() << "Unable to read pipeline file " << filename << ", ignoring.." << Reporter::end();
+                continue;
             }
-
-            auto page = new QWidget();
-            auto layout = new QVBoxLayout();
-            layout->setAlignment(Qt::AlignTop);
-            page->setLayout(layout);
-            _stacked_layout->addWidget(page);
-            _page_combobox->addItem(QString::fromStdString(pipeline.getName()));
-
-            auto description = new QLabel();
-            description->setText(QString::fromStdString(pipeline.getDescription()));
-            description->setWordWrap(true);
-            layout->addWidget(description);
-
-            auto button = new QPushButton;
-            button->setText("Run pipeline for this image");
-            button->setStyleSheet("background-color: #ADD8E6;");
-            layout->addWidget(button);
-            QObject::connect(button, &QPushButton::clicked, [=]() {
-                runInThread(join(pipelineFolder, filename), pipeline.getName(), false);
-            });
-
-            auto batchButton = new QPushButton;
-            batchButton->setText("Run pipeline for all images");
-            layout->addWidget(batchButton);
-            QObject::connect(batchButton, &QPushButton::clicked, [=]() {
-                runInThread(join(pipelineFolder, filename), pipeline.getName(), true);
-            });
-
-            layout->addSpacing(20);
-
-            auto editButton = new QPushButton;
-            editButton->setText("Edit pipeline");
-            layout->addWidget(editButton);
-            connect(editButton, &QPushButton::clicked, [=]() {
-                auto editor = new PipelineScriptEditorWidget(QString::fromStdString(pipeline.getFilename()), this);
-                connect(editor, &PipelineScriptEditorWidget::pipelineSaved, this, &ProcessWidget::refreshPipelines);
-            });
-            ++counter;
         }
         _page_combobox->setCurrentIndex(index);
         _stacked_layout->setCurrentIndex(index);
