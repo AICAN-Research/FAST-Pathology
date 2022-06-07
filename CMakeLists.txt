@@ -13,7 +13,13 @@ include_directories(.)
 find_package(FAST REQUIRED)
 include(${FAST_USE_FILE})
 include_directories(${FAST_BINARY_DIR}/../include/QtNetwork)
-set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
+# Set up RPATH with relative path so that binaries will find libraries in the lib folder
+if(APPLE)
+	set(CMAKE_MACOSX_RPATH ON)
+	set(CMAKE_INSTALL_RPATH "@loader_path/../lib")
+else()
+	set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
+endif()
 
 add_executable(fastpathology
         source/main.cpp
@@ -49,13 +55,6 @@ add_executable(fastpathology
 
 add_definitions(-DFAST_PATHOLOGY_VERSION="${FP_VERSION}")
 add_dependencies(fastpathology fast_copy)
-
-if (WIN32)
-	target_link_libraries(fastpathology ${FAST_LIBRARIES})
-endif (WIN32)
-
-if (UNIX)
-	target_link_libraries(fastpathology ${FAST_LIBRARIES} pthread)
-endif (UNIX)
+target_link_libraries(fastpathology ${FAST_LIBRARIES})
 
 include(cmake/Package.cmake)
