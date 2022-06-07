@@ -1,5 +1,5 @@
 PipelineName "Nuclei segmentation"
-PipelineDescription "Patch-wise segmentation of cell nuclei at 20X magnification using U-Net"
+PipelineDescription "Patch-wise segmentation of cell nuclei at 20x magnification using U-Net"
 PipelineInputData WSI "Whole-slide image"
 PipelineOutputData Segmentation stitcher 0
 Attribute classes "Background;Cell nuclei"
