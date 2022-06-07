@@ -14,15 +14,19 @@ FastPathology is an open-source platform for deep learning-based research and de
 
 ![alt-text](data/Videos/pw_predictions.gif)
 
-Install
+Installing FastPathology
 -----------------------------------
 
-Follow the instructions for your operating system:
+To install FastPathology, follow the instructions for your operating system:
 
 ### Windows (10 or newer)
 * Download and install the [Microsoft Visual C++ Redistributable 2015-2019 (64bit/x64)](https://aka.ms/vs/16/release/vc_redist.x64.exe).
-* Download and run the Windows installer from the [release page](https://github.com/AICAN-Research/FAST-Pathology/releases/).
-* Run fastpathology from your start menu.
+* Download and run the Windows installer from the [release page](https://github.com/AICAN-Research/FAST-Pathology/releases/). 
+  *Note: Windows might prompt you with a security warning, to proceed you must press "More info" followed by "Run anyway".*
+* Run **fastpathology** from your start menu.
+* To **uninstall** the application, go to start menu -> remove programs -> find fastpathology and select uninstall.
+  Optionally you can also delete your C:/Users/"your username"/fastpathology/ which includes stored project results, pipelines and models.
+  And the folder C:/ProgramData/FAST/ which contains a cache.
 
 ### Ubuntu Linux (18.04 or newer)
 - Install OpenCL for Linux by downloading an implementation depending on the CPU/GPU you have:
@@ -36,6 +40,15 @@ Follow the instructions for your operating system:
 sudo dpkg -i fastpathology_ubuntu*.deb
 ```
 * Go the folder /opt/fastpathology/bin and run the **fastpathology** executable, or run it from the ubuntu menu (windows button->type fastpathology).
+* To **uninstall** the application, run the following in your terminal:
+```bash
+sudo apt remove fastpathology
+# Optionally, you can also delete your fastpathology folder 
+# which includes stored project results, pipelines and models.
+# and the FAST folder which stores cache files.
+rm -Rf $HOME/fastpathology
+rm -Rf $HOME/FAST
+```
 
 ### macOS (10.13 or newer)
 *Note that the macOS version of FastPathology is experimental.*
@@ -50,7 +63,10 @@ brew install openslide libomp
 ```bash
 sudo spctl --master-disable
 ```
-* Go to extracted folder and find the bin folder and run the executable **fastpathology**
+* Go to extracted folder and find the bin folder and run the executable **fastpathology**.
+* To **uninstall** the application, delete the extracted folder.
+  Optionally, you can also delete the  /Users/"your username"/fastpathology folder, which includes stored project results, pipelines and models.
+  And the folder /Users/"your username"/FAST which contains a cache.
 
 ### Optional: NVIDIA GPU Inference
 If you have an NVIDIA GPU on your machine you can enable high-speed inference by downloading and installing the following:
