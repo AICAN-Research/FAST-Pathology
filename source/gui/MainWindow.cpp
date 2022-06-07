@@ -147,21 +147,6 @@ void MainWindow::setupInterface()
     // changing color to the Qt background)
     //mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;"); // Current favourite
     mWidget->setStyle(QStyleFactory::create("Fusion")); // TODO: This has to be before setStyleSheet?
-    /*
-    const auto qss =
-            "QToolButton:!hover{background-color: #00ff00;}"
-            "QToolButton:hover{background-color: #ff0000;}"
-            "font-size: 16px"
-            "background: rgb(221, 209, 199)"
-            "color: black"
-            ;
-     */
-    const auto qss = "font-size: 18px;"
-                     "QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };"
-                     "QMenu{background-color:palette(window);border:1px solid palette(shadow);};"
-                     ;
-    //mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;");
-    mWidget->setStyleSheet(qss);
 
     superLayout = new QVBoxLayout;
     mWidget->setLayout(superLayout);

@@ -53,7 +53,7 @@ namespace fast{
         //tb->setMinimumSize(QSize(im_size, im_size));
         //tb->setBaseSize(QSize(im_size, im_size));
         tb->setFont(QFont("Ubuntu", 8)); //QFont::Bold));
-        tb->setStyleSheet("font-size: 20px");
+        //tb->setStyleSheet("font-size: 20px");
         tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);  // adds text under icons
 
         //auto toolBar = new QToolBar;
@@ -65,10 +65,7 @@ namespace fast{
         //QPixmap savePix(QString::fromStdString(":/data/Icons/export_icon_new_cropped_resized.png"));
 
         QPainter painter(&menuIcon);
-        QFont font = painter.font();
-        font.setPixelSize(4);
-        //font.setBold(true);
-        font.setFamily("Arial");
+        QFont font("Ubuntu", 4);
         painter.setFont(font);
         painter.setPen(*(new QColor(Qt::black)));
         //painter.drawText(QPoint(0, 500), "Read WSI");

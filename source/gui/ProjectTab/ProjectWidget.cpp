@@ -26,7 +26,6 @@ namespace fast {
     void ProjectWidget::setupInterface()
     {
         m_projectLabel = new QLabel();
-        m_projectLabel->setStyleSheet("font-size: 18px;");
         m_projectLabel->setWordWrap(true);
 
         _selectFileButton = new QPushButton(this);
