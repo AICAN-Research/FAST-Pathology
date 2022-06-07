@@ -142,7 +142,7 @@ void MainWindow::setupInterface()
     //mWidget->setFocusPolicy(Qt::ClickFocus);  //Qt::ClickFocus);
 
     // set window icon
-    mWidget->setWindowIcon(QIcon(":/data/Icons/fastpathology_logo_large.png"));
+    QApplication::setWindowIcon(QIcon(":/data/Icons/fastpathology_logo_large.png"));
 
     // changing color to the Qt background)
     QApplication::setStyle(QStyleFactory::create("Fusion")); // TODO: This has to be before setStyleSheet?
