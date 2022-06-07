@@ -145,8 +145,11 @@ void MainWindow::setupInterface()
     mWidget->setWindowIcon(QIcon(":/data/Icons/fastpathology_logo_large.png"));
 
     // changing color to the Qt background)
-    //mWidget->setStyleSheet("font-size: 16px; background: rgb(221, 209, 199); color: black;"); // Current favourite
-    mWidget->setStyle(QStyleFactory::create("Fusion")); // TODO: This has to be before setStyleSheet?
+    QApplication::setStyle(QStyleFactory::create("Fusion")); // TODO: This has to be before setStyleSheet?
+    const auto qss = "QMenuBar::item:selected { background: white; }; QMenuBar::item:pressed {  background: white; };" 
+        "QMenu{background-color:palette(window);border:1px solid palette(shadow);};"  // This is needed for some strange reason..
+        ;
+    mWidget->setStyleSheet(qss);
 
     superLayout = new QVBoxLayout;
     mWidget->setLayout(superLayout);
