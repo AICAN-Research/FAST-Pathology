@@ -1,4 +1,4 @@
-PipelineName "Bach Classification"
+PipelineName "BACH Classification"
 PipelineDescription "Patch-wise image classification trained on data from the 2018 BACH challenge"
 PipelineInputData WSI "Whole-slide image"
 PipelineOutputData heatmap stitcher 0
