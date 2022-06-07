@@ -1,5 +1,5 @@
 PipelineName "Epithelium segmentation in colonic mucosa"
-PipelineDescription "Add some info here"
+PipelineDescription "Segmentation of epithelial cells in biopsies of colonic mucosa of active and inactivate inflammatory bowel disease (For more info: https://github.com/andreped/NoCodeSeg)"
 PipelineInputData WSI "Whole-slide image"
 PipelineOutputData segmentation stitcher 0
 Attribute classes "Background;Epithelium"
