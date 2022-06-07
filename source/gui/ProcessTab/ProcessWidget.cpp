@@ -158,6 +158,7 @@ namespace fast {
             throw Exception("The custom Qt GL context is not sharing!");
 
         auto thread = new QThread();
+        context->doneCurrent();
         context->moveToThread(thread);
         QObject::connect(thread, &QThread::started, [=](){
             context->makeCurrent();
