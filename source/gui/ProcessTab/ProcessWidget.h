@@ -82,6 +82,10 @@ public slots:
      * All selected Pipelines will be automatically added to the default Pipelines and the Pipeline menu.
      */
     void addPipelinesFromDisk();
+    /**
+     * @brief Update progress dialog
+     */
+    void updateProgress();
 private:
     QVBoxLayout* _main_layout; /* Principal layout holder for the current custom QWidget */
     QStackedLayout* _stacked_layout;

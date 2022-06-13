@@ -8,6 +8,7 @@
 #include <QThread>
 #include <FAST/Visualization/View.hpp>
 #include <FAST/Visualization/ComputationThread.hpp>
+#include <FAST/Algorithms/ImagePatch/PatchGenerator.hpp>
 #include "source/logic/WholeSlideImage.h"
 #include "source/gui/MainWindow.hpp"
 
@@ -173,10 +174,16 @@ namespace fast {
         });
         int size = m_mainWindow->getCurrentProject()->getWSICountInProject();
         // TODO lock tabs etc while running.
-        m_progressDialog = new QProgressDialog(("Running pipeline " + pipelineName + " ..").c_str(), "Cancel", 0, runForAll ? size : 1, this);
+        m_progressDialog = new QProgressDialog(("Running pipeline " + pipelineName + " ..").c_str(), "Cancel", 0, runForAll ? size*100 : 100, this);
         m_progressDialog->setWindowTitle("Running..");
         m_progressDialog->setAutoClose(true);
         m_progressDialog->show();
+        auto timer = new QTimer();
+        timer->setInterval(200);
+        timer->setSingleShot(false);
+        QObject::connect(timer, &QTimer::timeout, this, &ProcessWidget::updateProgress);
+        QObject::connect(m_progressDialog, &QProgressDialog::finished, timer, &QTimer::stop);
+        QObject::connect(m_progressDialog, &QProgressDialog::canceled, timer, &QTimer::stop);
         QObject::connect(m_progressDialog, &QProgressDialog::canceled, [this, thread]() {
             std::cout << "canceled.." << std::endl;
             thread->wait();
@@ -184,6 +191,7 @@ namespace fast {
             stop();
         });
         thread->start();
+        timer->start();
         // TODO should delete QThread safely somehow..
     }
 
@@ -212,13 +220,38 @@ namespace fast {
         msgBox.exec();
     }
 
+    void ProcessWidget::updateProgress() {
+        if(m_procesessing && m_runningPipeline && m_runningPipeline->isParsed()) {
+            std::vector<std::shared_ptr<PatchGenerator>> currentPatchGenerators;
+            for(auto PO : m_runningPipeline->getProcessObjects()) {
+                if(auto generator = std::dynamic_pointer_cast<PatchGenerator>(PO.second)) {
+                    currentPatchGenerators.push_back(generator);
+                }
+            }
+            if(currentPatchGenerators.empty())
+                return;
+            float totalProgress = 0;
+            for(auto generator : currentPatchGenerators) {
+                totalProgress += std::floor(generator->getProgress()*100);
+            }
+            if(m_progressDialog != nullptr) {
+                if(m_batchProcesessing) {
+                    m_progressDialog->setValue(std::floor(m_currentWSI*100 + totalProgress/currentPatchGenerators.size()));
+                } else {
+                    m_progressDialog->setValue(std::floor(totalProgress/currentPatchGenerators.size()));
+                }
+            }
+        }
+    }
+
     void ProcessWidget::done() {
         if(m_procesessing)
             saveResults();
         if(m_batchProcesessing) {
             if(m_currentWSI == m_mainWindow->getCurrentProject()->getWSICountInProject()-1) {
                 // All processed. Stop.
-                m_progressDialog->setValue(m_mainWindow->getCurrentProject()->getWSICountInProject());
+                m_progressDialog->setValue(m_progressDialog->maximum());
+                m_progressDialog->close();
                 m_batchProcesessing = false;
                 m_procesessing = false;
                 emit messageSignal("Batch processing is done!");
@@ -226,12 +259,13 @@ namespace fast {
             } else {
                 // Run next
                 m_currentWSI += 1;
-                m_progressDialog->setValue(m_currentWSI);
+                m_progressDialog->setValue(m_currentWSI*100);
                 std::cout << "Processing WSI " << m_currentWSI << std::endl;
                 processPipeline(m_runningPipeline->getFilename(), m_mainWindow->getCurrentProject()->getImage(m_currentWSI)->get_image_pyramid());
             }
         } else if(m_procesessing) {
-            m_progressDialog->setValue(1);
+            m_progressDialog->setValue(m_progressDialog->maximum());
+            m_progressDialog->close();
             emit messageSignal("Processing is done!");
             emit pipelineFinished(m_mainWindow->getCurrentProject()->getAllWsiUids()[m_currentWSI]);
             m_procesessing = false;
