@@ -1,19 +1,19 @@
 PipelineName "Epithelium segmentation in colonic mucosa"
-PipelineDescription "Segmentation of epithelial cells in biopsies of colonic mucosa of active and inactivate inflammatory bowel disease (For more info: https://github.com/andreped/NoCodeSeg)"
+PipelineDescription "Segmentation of epithelial cells in HE-stained biopsies of colonic mucosa of active and inactivate inflammatory bowel disease (For more info: https://github.com/andreped/NoCodeSeg)"
 PipelineInputData WSI "Whole-slide image"
 PipelineOutputData segmentation stitcher 0
 Attribute classes "Background;Epithelium"
 
 ### Processing chain
 ProcessObject tissueSeg TissueSegmentation
-Attribute threshold 85
+Attribute threshold 70
 Input 0 WSI
 
 ProcessObject patch PatchGenerator
-Attribute patch-size 256 256
-Attribute patch-magnification 20
-Attribute patch-overlap 0.1
-Attribute mask-threshold 0.05
+Attribute patch-size 512 512
+Attribute patch-magnification 10
+Attribute patch-overlap 0.05
+Attribute mask-threshold 0.02
 Input 0 WSI
 Input 1 tissueSeg 0
 
@@ -21,7 +21,7 @@ ProcessObject network SegmentationNetwork
 Attribute scale-factor 1.0
 #Attribute inference-engine TensorRT
 #Attribute inference-engine OpenVINO
-Attribute model "$CURRENT_PATH$/../models/CD3_UNET_256_1P16B32FD6_w_Augm_290921.onnx"
+Attribute model "$CURRENT_PATH$/../models/HE_IBDColEpi_512_2class_140222.onnx"
 Input 0 patch 0
 
 ProcessObject stitcher PatchStitcher
