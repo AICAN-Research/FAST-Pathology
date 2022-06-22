@@ -60,7 +60,7 @@ namespace fast {
         auto progressDialog = new QProgressDialog("Downloading " + QString::fromStdString(title) +", please wait..", "Stop", 0, 101);
         progressDialog->setModal(Qt::ApplicationModal);
         QObject::connect(progressDialog, &QProgressDialog::canceled, reply, &QNetworkReply::abort);
-        progressDialog->setWindowTitle("Dowmloading " + QString::fromStdString(title));
+        progressDialog->setWindowTitle("Downloading " + QString::fromStdString(title));
         progressDialog->setAutoClose(true);
         progressDialog->show();
         QObject::connect(reply, &QNetworkReply::downloadProgress, [&](quint64 current, quint64 max) {
