@@ -69,8 +69,8 @@ MainWindow::MainWindow() {
     auto modelFiles = getDirectoryList(join(cwd, "models"), true, true);
     if(modelFiles.empty()) {
         auto reply = QMessageBox::question(nullptr,  "Download AI models?",
-             "You have no AI models in your model folder. "
-             "Do you wish to download some models now? (~90 MB)");
+             "You have no AI models in your model folder: " + QString::fromStdString(join(cwd, "models")) +
+             "Do you wish to download some models now? (~151 MB)");
         if(reply == QMessageBox::Yes) {
             downloadZipFile("http://fast.eriksmistad.no/download/fastpathology-models-v1.0.0.zip", join(cwd, "models"), "AI models");
         }
