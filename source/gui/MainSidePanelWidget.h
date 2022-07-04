@@ -40,6 +40,7 @@ namespace fast{
         void editorPipelinesTriggered();
         void loadProject();
         void showMenu();
+        void refreshPipelines();
     public:
         ProjectWidget *_project_widget;
         ProcessWidget *_process_widget;

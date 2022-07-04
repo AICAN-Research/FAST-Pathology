@@ -87,13 +87,24 @@ namespace fast {
         resetInterface();
         int index = 0;
         int counter = 0;
-        // Load pipelines and create one button for each.
+        // Get all pipelines, both local and downloaded data hub pipelines
+        std::vector<std::string> pipelinePaths;
         std::string pipelineFolder = this->_cwd + "/pipelines/";
         for(auto& filename : getDirectoryList(pipelineFolder)) {
+            pipelinePaths.push_back(join(pipelineFolder, filename));
+        }
+        pipelineFolder = this->_cwd + "/datahub/";
+        for(auto& dir : getDirectoryList(pipelineFolder, false, true)) {
+            if(fileExists(join(pipelineFolder, dir, "pipeline.fpl"))) {
+                pipelinePaths.push_back(join(pipelineFolder, dir, "pipeline.fpl"));
+            }
+        }
+        // Load pipelines and create buttons for each.
+        for(auto& filename : pipelinePaths) {
             try {
-                auto pipeline = Pipeline(join(pipelineFolder, filename));
+                auto pipeline = Pipeline(filename);
 
-                if(filename == currentFilename.toStdString()) {
+                if(getFileName(filename) == currentFilename.toStdString()) {
                     index = counter;
                 }
 
@@ -114,14 +125,14 @@ namespace fast {
                 button->setStyleSheet("background-color: #ADD8E6;");
                 layout->addWidget(button);
                 QObject::connect(button, &QPushButton::clicked, [=]() {
-                    runInThread(join(pipelineFolder, filename), pipeline.getName(), false);
+                    runInThread(pipeline.getFilename(), pipeline.getName(), false);
                 });
 
                 auto batchButton = new QPushButton;
                 batchButton->setText("Run pipeline for all images");
                 layout->addWidget(batchButton);
                 QObject::connect(batchButton, &QPushButton::clicked, [=]() {
-                    runInThread(join(pipelineFolder, filename), pipeline.getName(), true);
+                    runInThread(pipeline.getFilename(), pipeline.getName(), true);
                 });
 
                 layout->addSpacing(20);

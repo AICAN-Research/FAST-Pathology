@@ -13,6 +13,7 @@
 #include <QDesktopServices>
 #include <QTextEdit>
 #include "source/utils/utilities.h"
+#include <FAST/DataHub.hpp>
 
 namespace fast{
 
@@ -119,9 +120,15 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, bool allowClose
         rightLayout->addWidget(closeButton);
         connect(closeButton, &QPushButton::clicked, this, &ProjectSplashWidget::close);
     }
+
+    auto dataHubButton = new QPushButton();
+    dataHubButton->setText("Download models && pipelines");
+    rightLayout->addWidget(dataHubButton);
+    connect(dataHubButton, &QPushButton::clicked, this, &ProjectSplashWidget::dataHub);
+
     if(!fileExists(rootFolder + "/../images/LICENSE.md")) {
         auto downloadButton = new QPushButton();
-        downloadButton->setText("Download and open test data");
+        downloadButton->setText("Download and open test images");
         rightLayout->addWidget(downloadButton);
         connect(downloadButton, &QPushButton::clicked, this, &ProjectSplashWidget::downloadTestData);
     }
@@ -225,6 +232,16 @@ void ProjectSplashWidget::downloadTestData() {
     emit newProjectSignal("Test project");
     emit loadTestDataIntoProject();
     close();
+}
+
+void ProjectSplashWidget::dataHub() {
+    auto hub = DataHub("https://data.eriksmistad.no/", join(m_rootFolder, "..", "datahub"));
+
+    auto browser = new DataHubBrowser(std::move(hub), "fast-pathology");
+    browser->setWindowModality(Qt::ApplicationModal);
+    browser->show();
+    browser->move(QApplication::desktop()->screen()->rect().center() - rect().center());
+    connect(&hub, &DataHub::finished, this, &ProjectSplashWidget::refreshPipelines);
 }
 
 }

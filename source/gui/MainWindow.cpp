@@ -86,6 +86,7 @@ void MainWindow::showSplashMenu(bool allowClose) {
     // Start splash
     auto splash = new ProjectSplashWidget(cwd + "/projects/", allowClose);
     connect(splash, &ProjectSplashWidget::quitSignal, mWidget, &QWidget::close);
+    connect(splash, &ProjectSplashWidget::refreshPipelines, _side_panel_widget, &MainSidePanelWidget::refreshPipelines);
     connect(splash, &ProjectSplashWidget::newProjectSignal, [=](QString name) {
         if(m_project)
             reset();

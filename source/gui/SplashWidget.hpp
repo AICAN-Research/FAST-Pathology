@@ -25,11 +25,17 @@ class ProjectSplashWidget : public QWidget {
         void aboutProgram();
 
         void downloadTestData();
+
+        /**
+         * Opens a data hub browser to download models and pipelines
+         */
+        void dataHub();
     signals:
         void quitSignal();
         void newProjectSignal(QString name);
         void openProjectSignal(QString name);
         void loadTestDataIntoProject();
+        void refreshPipelines();
     private:
         std::string m_rootFolder;
 };

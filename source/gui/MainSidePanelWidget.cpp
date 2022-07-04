@@ -153,6 +153,9 @@ namespace fast{
         QObject::connect(_project_widget, &ProjectWidget::resetDisplay, this, &MainSidePanelWidget::resetDisplay);
         QObject::connect(this, &MainSidePanelWidget::loadProject, _project_widget, &ProjectWidget::loadProject);
         QObject::connect(this, &MainSidePanelWidget::filesDropped, _project_widget, &ProjectWidget::selectFileDrag);
+        QObject::connect(this, &MainSidePanelWidget::refreshPipelines, [=]() {
+            _process_widget->refreshPipelines();
+        });
         QObject::connect(_process_widget, &ProcessWidget::pipelineFinished, m_mainWindow, &MainWindow::changeWSIDisplayReceived);
         connect(m_mainWindow, &MainWindow::updateProjectTitle, _project_widget, &ProjectWidget::updateTitle);
     }
