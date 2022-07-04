@@ -1,12 +1,8 @@
-//
-// Created by dbouget on 03.11.2021.
-//
-
 #include "StatsWidget.h"
-
 #include <FAST/Importers/WholeSlideImageImporter.hpp>
 #include <FAST/Visualization/ImagePyramidRenderer/ImagePyramidRenderer.hpp>
 #include <FAST/Data/ImagePyramid.hpp>
+#include <QPainterPath>
 
 namespace fast {
     StatsWidget::StatsWidget(QWidget *parent): QWidget(parent){
