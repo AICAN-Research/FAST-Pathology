@@ -12,6 +12,7 @@
 #include <fstream>
 #include <QDesktopServices>
 #include <QTextEdit>
+#include <QScreen>
 #include "source/utils/utilities.h"
 #include <FAST/DataHub.hpp>
 
@@ -235,13 +236,11 @@ void ProjectSplashWidget::downloadTestData() {
 }
 
 void ProjectSplashWidget::dataHub() {
-    auto hub = DataHub("https://data.eriksmistad.no/", join(m_rootFolder, "..", "datahub"));
-
-    auto browser = new DataHubBrowser(std::move(hub), "fast-pathology");
+    auto browser = new DataHubBrowser("fast-pathology", "https://datahub.eriksmistad.no/", join(m_rootFolder, "..", "datahub"));
+    connect(&browser->getDataHub(), &DataHub::finished, this, &ProjectSplashWidget::refreshPipelines);
     browser->setWindowModality(Qt::ApplicationModal);
     browser->show();
-    browser->move(QApplication::desktop()->screen()->rect().center() - rect().center());
-    connect(&hub, &DataHub::finished, this, &ProjectSplashWidget::refreshPipelines);
+    browser->move(QGuiApplication::primaryScreen()->geometry().center() - rect().center());
 }
 
 }
