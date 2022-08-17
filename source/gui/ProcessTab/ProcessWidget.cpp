@@ -185,7 +185,7 @@ namespace fast {
         });
         int size = m_mainWindow->getCurrentProject()->getWSICountInProject();
         // TODO lock tabs etc while running.
-        m_progressDialog = new QProgressDialog(("Running pipeline " + pipelineName + " ..").c_str(), "Cancel", 0, runForAll ? size*100 : 100, this);
+        m_progressDialog = new QProgressDialog(("Running pipeline " + pipelineName + ".<br><font size=1>Note that first time running a new model can take a long time to start due to model auto-tuning.</font>").c_str(), "Cancel", 0, runForAll ? size*100 : 100, this);
         m_progressDialog->setWindowTitle("Running..");
         m_progressDialog->setAutoClose(true);
         m_progressDialog->show();
