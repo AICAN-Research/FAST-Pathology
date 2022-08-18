@@ -1,17 +1,18 @@
-FastPathology
-===================================
+<div align="center">
+<img src="data/Icons/fastpathology_logo.png" width="128">
+<h1 align="center">FastPathology</h1>
+<h3 align="center">Open platform for deep learning-based research and decision support in digital pathology</h3>
 
 [![GitHub Downloads](https://img.shields.io/github/downloads/SINTEFMedtek/FAST-Pathology/total?label=GitHub%20downloads&logo=github)](https://github.com/SINTEFMedtek/FAST-Pathology/releases)
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
 ![CI](https://github.com/AICAN-Research/FAST-Pathology/workflows/Build%20Windows/badge.svg?branch=master&event=push)
 ![CI](https://github.com/AICAN-Research/FAST-Pathology/workflows/Build%20Ubuntu/badge.svg?branch=master&event=push)
 ![CI](https://github.com/AICAN-Research/FAST-Pathology/workflows/Build%20macOS/badge.svg?branch=master&event=push)
-
-FastPathology is an open-source platform for deep learning-based research and decision support in digital pathology, created by SINTEF Medical Technology and the Norwegian University of Science and Technology (NTNU).
-
-**A paper presenting the software and some benchmarks has been published in [IEEE Access](https://ieeexplore.ieee.org/document/9399433).**
-
-![alt-text](data/Videos/fp_demo_v1.gif)  
+ 
+**FastPathology** was created by SINTEF Medical Technology and the Norwegian University of Science and Technology (NTNU). A paper presenting the software and some benchmarks has been published in [IEEE Access](https://ieeexplore.ieee.org/document/9399433).
+ 
+ <img src="data/Videos/fp_demo_v1.gif" style="background-color:black">
+</div>
 
 Installing FastPathology
 -----------------------------------
