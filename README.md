@@ -1,7 +1,7 @@
 <div align="center">
 <img src="data/Icons/fastpathology_logo.png" width="128">
 <h1 align="center">FastPathology</h1>
-<h3 align="center">Open platform for deep learning-based research and decision support in digital pathology</h3>
+<h3 align="center">Open-source software for deep learning-based digital pathology</h3>
 
 [![GitHub Downloads](https://img.shields.io/github/downloads/SINTEFMedtek/FAST-Pathology/total?label=GitHub%20downloads&logo=github)](https://github.com/SINTEFMedtek/FAST-Pathology/releases)
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
