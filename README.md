@@ -14,12 +14,13 @@
  <img src="data/Videos/fp_demo_v1.gif" style="background-color:black">
 </div>
 
-Installing FastPathology
------------------------------------
-
+## 💻 Getting started
 To install FastPathology, follow the instructions for your operating system:
 
-### Windows (10 or newer)
+<details open>
+<summary>
+
+### Windows (10 or newer) </summary>
 * Download and install the [Microsoft Visual C++ Redistributable 2015-2019 (64bit/x64)](https://aka.ms/vs/16/release/vc_redist.x64.exe).
 * Download and run the Windows installer from the [release page](https://github.com/AICAN-Research/FAST-Pathology/releases/). 
   *Note: Windows might prompt you with a security warning, to proceed you must press "More info" followed by "Run anyway".*
@@ -27,8 +28,14 @@ To install FastPathology, follow the instructions for your operating system:
 * To **uninstall** the application, go to start menu -> remove programs -> find fastpathology and select uninstall.
   Optionally you can also delete your C:/Users/"your username"/fastpathology/ which includes stored project results, pipelines and models.
   And the folder C:/ProgramData/FAST/ which contains a cache.
+  
+</details>
 
-### Ubuntu Linux (18.04 or newer)
+<details>
+<summary>
+
+### Ubuntu Linux (18.04 or newer)</summary>
+
 - Install OpenCL for Linux by downloading an implementation depending on the CPU/GPU you have:
    - **NVIDIA** - Install [CUDA](https://developer.nvidia.com/cuda-downloads)
    - **Intel** - Install the [OpenCL NEO driver](https://github.com/intel/compute-runtime/releases)
@@ -50,7 +57,13 @@ rm -Rf $HOME/fastpathology
 rm -Rf $HOME/FAST
 ```
 
-### macOS (10.13 or newer)
+</details>
+
+<details>
+<summary>
+
+### macOS (10.13 or newer)</summary>
+
 *Note that the macOS version of FastPathology is experimental.*
 
 * Install [homebrew](https://brew.sh/) if you don't already have it. Then, install the following packages using homebrew:
@@ -68,7 +81,12 @@ sudo spctl --master-disable
   Optionally, you can also delete the  /Users/"your username"/fastpathology folder, which includes stored project results, pipelines and models.
   And the folder /Users/"your username"/FAST which contains a cache.
 
-### Optional: NVIDIA GPU Inference
+</details>
+
+<details>
+<summary>
+
+### Optional: NVIDIA GPU Inference</summary>
 If you have an NVIDIA GPU on your machine you can enable high-speed inference by downloading and installing the following:
 * [CUDA 11](https://developer.nvidia.com/cuda-toolkit-archive)
 * [cuDNN 8.2](https://developer.nvidia.com/rdp/cudnn-archive)
@@ -76,8 +94,14 @@ If you have an NVIDIA GPU on your machine you can enable high-speed inference by
 
 **Note: Make sure to download the correct versions. NVIDIA GPU inference is not supported on Mac.**
 
-Features
------------------------------------
+</details>
+
+## 📹 Demos and tutorials
+Very simple demonstrations of the platforms can be found on [Youtube](https://www.youtube.com/channel/UC4GM2KW54-vEZ0M1kH5-oig). More in-depth demonstrations will be added in the future. Wikis and tutorials can be found in the [wiki](https://github.com/SINTEFMedtek/FAST-Pathology/wiki). More information can be found from the **pages** section on the right in the wiki home.
+
+[![Watch the video](figures/youtube-thumbnail.jpg)](https://youtu.be/1s7jU6T7S3U?t=435).
+
+## 🎊 Features
 The software is implemented in C++ based on [FAST](https://github.com/smistad/FAST). A wide range of features have been added to the platform and FAST to make working with Whole Slide Images (WSIs) a piece of cake!
 * **Graphical User Interface -** User-friendly GUI for working with WSIs without any code interaction
 * **Deep learning -** Deployment and support for multi-input/output Convolutional Neural Networks (CNNs)
@@ -87,17 +111,16 @@ The software is implemented in C++ based on [FAST](https://github.com/smistad/FA
 * **Text pipelines -** Possibility to create your own pipelines using the built-in script editor
 * **Formats -** Through OpenSlide FastPathology supports various WSI formats, as well as additional support for the CellSens VSI format through FAST
 
-Demos
------------------------------------
-Very simple demonstrations of the platforms can be found on [Youtube](https://www.youtube.com/channel/UC4GM2KW54-vEZ0M1kH5-oig). More in-depth demonstrations will be added in the future. Wikis and tutorials can be found in the [wiki](https://github.com/SINTEFMedtek/FAST-Pathology/wiki). More information can be found from the **pages** section on the right in the wiki home.
 
-Applications of FastPathology
------------------------------------
+## 🔬 Applications of FastPathology
 * Pettersen et al., Code-free development and deployment of deep segmentation models for digital pathology (2022), Frontiers in Medicine, https://www.frontiersin.org/articles/10.3389/fmed.2021.816281/full
 * Pedersen et al., Hybrid guiding: A multi-resolution refinement approach for semantic segmentation of gigapixel histopathological images (2021), preprint arXiv: https://arxiv.org/abs/2112.03455
 
-Development setup
------------------------------------
+<details>
+<summary>
+
+## 🔨 Development setup </summary>
+
 1. Either
    - [Download and install a release of FAST](https://fast.eriksmistad.no/install.html).
    - [Compile and install FAST on your system](https://fast.eriksmistad.no/building-fast.html).
@@ -136,8 +159,9 @@ Development setup
 
 **NOTE:** Visual Studio 19 have been tested with both FAST and FastPathology and works well.
 
-How to cite
------------------------------------
+</details>
+
+## ✨ How to cite
 Please, consider citing our paper, if you find the work useful:
 <pre>
   @ARTICLE{9399433,
