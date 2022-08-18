@@ -163,7 +163,7 @@ The software is implemented in C++ based on [FAST](https://github.com/smistad/FA
 ## ✨ How to cite
 Please, consider citing our paper, if you find the work useful:
 <pre>
-  @ARTICLE{9399433,
+  @article{9399433,
   author={Pedersen, André and Valla, Marit and Bofin, Anna M. and De Frutos, Javier Pérez and Reinertsen, Ingerid and Smistad, Erik},
   journal={IEEE Access}, 
   title={FastPathology: An Open-Source Platform for Deep Learning-Based Research and Decision Support in Digital Pathology}, 
