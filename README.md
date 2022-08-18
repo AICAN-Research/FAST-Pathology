@@ -99,7 +99,7 @@ If you have an NVIDIA GPU on your machine you can enable high-speed inference by
 ## 📹 Demos and tutorials
 Very simple demonstrations of the platforms can be found on [Youtube](https://www.youtube.com/channel/UC4GM2KW54-vEZ0M1kH5-oig). More in-depth demonstrations will be added in the future. Wikis and tutorials can be found in the [wiki](https://github.com/SINTEFMedtek/FAST-Pathology/wiki). More information can be found from the **pages** section on the right in the wiki home.
 
-[![Watch the video](figures/youtube-thumbnail.jpg)](https://youtu.be/1s7jU6T7S3U?t=435).
+[![Watch the video](doc/images/snapshot-youtube.png)](https://youtu.be/1s7jU6T7S3U?t=435)
 
 ## 🎊 Features
 The software is implemented in C++ based on [FAST](https://github.com/smistad/FAST). A wide range of features have been added to the platform and FAST to make working with Whole Slide Images (WSIs) a piece of cake!
@@ -110,7 +110,6 @@ The software is implemented in C++ based on [FAST](https://github.com/smistad/FA
 * **Inference Engines -** FAST includes a variety of different inference engines, i.e. TensorFlow CPU/CUDA (support both TF v1 and v2 models), TensorRT (UFF and ONNX), and OpenVINO (CPU/GPU/VPU)
 * **Text pipelines -** Possibility to create your own pipelines using the built-in script editor
 * **Formats -** Through OpenSlide FastPathology supports various WSI formats, as well as additional support for the CellSens VSI format through FAST
-
 
 ## 🔬 Applications of FastPathology
 * Pettersen et al., Code-free development and deployment of deep segmentation models for digital pathology (2022), Frontiers in Medicine, https://www.frontiersin.org/articles/10.3389/fmed.2021.816281/full
