@@ -15,6 +15,7 @@
 </div>
 
 ## 💻 Getting started
+
 To install FastPathology, follow the instructions for your operating system:
 
 <details open>
@@ -37,16 +38,16 @@ To install FastPathology, follow the instructions for your operating system:
 ### Ubuntu Linux (18.04 or newer)</summary>
 
 - Install OpenCL for Linux by downloading an implementation depending on the CPU/GPU you have:
-   - **NVIDIA** - Install [CUDA](https://developer.nvidia.com/cuda-downloads)
-   - **Intel** - Install the [OpenCL NEO driver](https://github.com/intel/compute-runtime/releases)
-   - **AMD** - Install the [ROCm stack](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
+   - **NVIDIA** - Install [CUDA](https://developer.nvidia.com/cuda-downloads).
+   - **Intel** - Install the [OpenCL NEO driver](https://github.com/intel/compute-runtime/releases).
+   - **AMD** - Install the [ROCm stack](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html).
    - If none of the above fits, you can try the [Portable Computing Lanauge (PCOL)](http://portablecl.org), although reduced performance is likely.
 * Download the debian package from the [release page](https://github.com/AICAN-Research/FAST-Pathology/releases/).
 * Install the debian package from the terminal or by double-clicking it:
 ```bash
 sudo dpkg -i fastpathology_ubuntu*.deb
 ```
-* Go the folder /opt/fastpathology/bin and run the **fastpathology** executable, or run it from the ubuntu menu (windows button->type fastpathology).
+* Go to the folder /opt/fastpathology/bin and run the **fastpathology** executable, or run it from the ubuntu menu (windows button->type fastpathology).
 * To **uninstall** the application, run the following in your terminal:
 ```bash
 sudo apt remove fastpathology
@@ -87,6 +88,7 @@ sudo spctl --master-disable
 <summary>
 
 ### Optional: NVIDIA GPU Inference</summary>
+
 If you have an NVIDIA GPU on your machine you can enable high-speed inference by downloading and installing the following:
 * [CUDA 11](https://developer.nvidia.com/cuda-toolkit-archive)
 * [cuDNN 8.2](https://developer.nvidia.com/rdp/cudnn-archive)
@@ -97,21 +99,24 @@ If you have an NVIDIA GPU on your machine you can enable high-speed inference by
 </details>
 
 ## 📹 Demos and tutorials
-Very simple demonstrations of the platforms can be found on [Youtube](https://www.youtube.com/channel/UC4GM2KW54-vEZ0M1kH5-oig). More in-depth demonstrations will be added in the future. Wikis and tutorials can be found in the [wiki](https://github.com/SINTEFMedtek/FAST-Pathology/wiki). More information can be found from the **pages** section on the right in the wiki home.
+
+Very simple demonstrations of the platform can be found on [Youtube](https://www.youtube.com/channel/UC4GM2KW54-vEZ0M1kH5-oig). More in-depth demonstrations will be added in the future. Wikis and tutorials can be found in the [wiki](https://github.com/SINTEFMedtek/FAST-Pathology/wiki). More information can be found from the **pages** section on the right in the wiki home.
 
 [![Watch the video](doc/images/snapshot-youtube.png)](https://youtu.be/1s7jU6T7S3U?t=435)
 
 ## 🎊 Features
-The software is implemented in C++ based on [FAST](https://github.com/smistad/FAST). A wide range of features have been added to the platform and FAST to make working with Whole Slide Images (WSIs) a piece of cake!
-* **Graphical User Interface -** User-friendly GUI for working with WSIs without any code interaction
-* **Deep learning -** Deployment and support for multi-input/output Convolutional Neural Networks (CNNs)
-* **Visualization -** Real-time streaming of predictions on top of the WSI with low memory cost
-* **Use cases -** Patch-wise classification, low and high-resolution segmentation, and object detection are supported
-* **Inference Engines -** FAST includes a variety of different inference engines, i.e. TensorFlow CPU/CUDA (support both TF v1 and v2 models), TensorRT (UFF and ONNX), and OpenVINO (CPU/GPU/VPU)
-* **Text pipelines -** Possibility to create your own pipelines using the built-in script editor
-* **Formats -** Through OpenSlide FastPathology supports various WSI formats, as well as additional support for CellSens VSI format through FAST
+
+The software is implemented in C++ based on [FAST](https://github.com/smistad/FAST). A wide range of features have been added to the platform and FAST to make working with whole slide images (WSIs) a piece of cake!
+* **Graphical User Interface -** User-friendly GUI for working with WSIs without any code interaction.
+* **Deep learning -** Deployment and support for multi-input/output convolutional neural networks (CNNs).
+* **Visualization -** Real-time streaming of predictions on top of the WSI with low memory cost.
+* **Use cases -** Patch-wise classification, low and high-resolution segmentation, and object detection are supported.
+* **Inference Engines -** FAST includes a variety of different inference engines, i.e. TensorFlow CPU/CUDA (support both TF v1 and v2 models), TensorRT (UFF and ONNX), and OpenVINO (CPU/GPU/VPU).
+* **Text pipelines -** Possibility to create your own pipelines using the built-in script editor.
+* **Formats -** Through OpenSlide FastPathology supports various WSI formats, as well as additional support for Olympus' CellSens VSI format through FAST.
 
 ## 🔬 Applications of FastPathology
+
 * Pettersen et al., Code-free development and deployment of deep segmentation models for digital pathology (2022), Frontiers in Medicine, https://www.frontiersin.org/articles/10.3389/fmed.2021.816281/full
 * Pedersen et al., H2G-Net: A multi-resolution refinement approach for segmentation of breast cancer region in gigapixel histopathological images (2022), Frontiers in Medicine, https://www.frontiersin.org/articles/10.3389/fmed.2022.971873/full
 
