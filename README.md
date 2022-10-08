@@ -109,11 +109,11 @@ The software is implemented in C++ based on [FAST](https://github.com/smistad/FA
 * **Use cases -** Patch-wise classification, low and high-resolution segmentation, and object detection are supported
 * **Inference Engines -** FAST includes a variety of different inference engines, i.e. TensorFlow CPU/CUDA (support both TF v1 and v2 models), TensorRT (UFF and ONNX), and OpenVINO (CPU/GPU/VPU)
 * **Text pipelines -** Possibility to create your own pipelines using the built-in script editor
-* **Formats -** Through OpenSlide FastPathology supports various WSI formats, as well as additional support for the CellSens VSI format through FAST
+* **Formats -** Through OpenSlide FastPathology supports various WSI formats, as well as additional support for CellSens VSI format through FAST
 
 ## 🔬 Applications of FastPathology
 * Pettersen et al., Code-free development and deployment of deep segmentation models for digital pathology (2022), Frontiers in Medicine, https://www.frontiersin.org/articles/10.3389/fmed.2021.816281/full
-* Pedersen et al., H2G-Net: A multi-resolution refinement approach for segmentation of breast cancer region in gigapixel histopathological images} (2022), Frontiers in Medicine, https://www.frontiersin.org/articles/10.3389/fmed.2022.971873/full
+* Pedersen et al., H2G-Net: A multi-resolution refinement approach for segmentation of breast cancer region in gigapixel histopathological images (2022), Frontiers in Medicine, https://www.frontiersin.org/articles/10.3389/fmed.2022.971873/full
 
 <details>
 <summary>
