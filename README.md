@@ -113,7 +113,7 @@ The software is implemented in C++ based on [FAST](https://github.com/smistad/FA
 
 ## 🔬 Applications of FastPathology
 * Pettersen et al., Code-free development and deployment of deep segmentation models for digital pathology (2022), Frontiers in Medicine, https://www.frontiersin.org/articles/10.3389/fmed.2021.816281/full
-* Pedersen et al., Hybrid guiding: A multi-resolution refinement approach for semantic segmentation of gigapixel histopathological images (2021), preprint arXiv: https://arxiv.org/abs/2112.03455
+* Pedersen et al., H2G-Net: A multi-resolution refinement approach for segmentation of breast cancer region in gigapixel histopathological images} (2022), Frontiers in Medicine, https://www.frontiersin.org/articles/10.3389/fmed.2022.971873/full
 
 <details>
 <summary>
