@@ -1,8 +1,3 @@
-//
-// Created by andrep on 14.09.2020.
-// - Adapted from Erik Smistad's:
-// https://github.com/smistad/FAST/blob/master/source/FAST/Algorithms/NeuralNetwork/measureNeuralNetworkPerformance.cpp
-//
 #include <FAST/Testing.hpp>
 #include <FAST/Algorithms/NeuralNetwork/SegmentationNetwork.hpp>
 #include <FAST/Importers/ImageFileImporter.hpp>
