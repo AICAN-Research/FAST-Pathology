@@ -17,7 +17,6 @@ namespace fast{
     Project::Project(std::string name, bool open)
     {
         m_name = name;
-        // Default folder root from Qt temporary dir, automatically deleted.
         this->_root_folder = QDir::home().path().toStdString() + "/fastpathology/projects/" + name + "/";
         if(open) {
             std::vector<std::string> lines;
@@ -190,14 +189,9 @@ namespace fast{
             const std::string saveFolder = join(getRootFolder(), "results", wsi_uid, pipeline->getName(), dataName);
             createDirectories(saveFolder);
             std::cout << "Saving " << dataTypeName << " data to " << saveFolder << std::endl;
-            if(dataTypeName == "ImagePyramid") {
+            if(dataTypeName == "ImagePyramid" || dataTypeName == "Image") {
                 const std::string saveFilename = join(saveFolder, data.first + ".tiff");
                 auto exporter = TIFFImagePyramidExporter::create(saveFilename)
-                        ->connect(data.second);
-                exporter->run();
-            } else if(dataTypeName == "Image") {
-                const std::string saveFilename = join(saveFolder, data.first + ".mhd");
-                auto exporter = MetaImageExporter::create(saveFilename)
                         ->connect(data.second);
                 exporter->run();
             } else if(dataTypeName == "Tensor") {
@@ -264,8 +258,8 @@ namespace fast{
                         auto importer = TIFFImagePyramidImporter::create(path);
                         renderer = SegmentationRenderer::create()->connect(importer);
                     } else if(extension == ".mhd") {
-                        auto importer = MetaImageImporter::create(path);
-                        renderer = SegmentationRenderer::create()->connect(importer);
+                        Reporter::error() << ".mhd/.raw format is no longer used in fastpathology (" << filename << "). You will have to recreate your results. The segmentation will now always be stored as a TIFF pyramid." << Reporter::end();
+                        continue;
                     } else if(extension == ".hdf5") {
                         auto importer = HDF5TensorImporter::create(path);
                         renderer = HeatmapRenderer::create()->connect(importer);
