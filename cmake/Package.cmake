@@ -22,7 +22,7 @@ endif()
 if(APPLE)
 	install(
 		FILES LICENSE.md
-		DESTINATION ../licenses/fastpathology
+		DESTINATION licenses/fastpathology
 	)
 else()
 	install(
@@ -38,10 +38,10 @@ if(WIN32)
 			FILES_MATCHING PATTERN "*.dll")
 elseif(APPLE)
 	install(DIRECTORY ${FAST_BINARY_DIR}/../lib/
-			DESTINATION ../lib
+			DESTINATION lib
 			FILES_MATCHING PATTERN "*.dylib*")
 	install(DIRECTORY ${FAST_BINARY_DIR}/../lib/
-			DESTINATION ../lib
+			DESTINATION lib
 			FILES_MATCHING PATTERN "*.so*")
 else()
 	install(DIRECTORY ${FAST_BINARY_DIR}/../lib/
@@ -66,69 +66,36 @@ else()
 			)
 endif()
 
-if(APPLE)
-	install(
-		DIRECTORY ${FAST_BINARY_DIR}/../kernels/
-		DESTINATION kernels
-	)
-	install(
-		DIRECTORY ${FAST_BINARY_DIR}/../plugins/
-		DESTINATION plugins
-	)
-	install(
-		FILES ${FAST_BINARY_DIR}/../doc/images/fast_icon.ico ${FAST_BINARY_DIR}/../doc/images/fast_icon.png
-		DESTINATION doc/images
-	)
-	install(
-		DIRECTORY ${FAST_BINARY_DIR}/../doc/fonts/
-		DESTINATION doc/fonts
-	)
-	install(
-		DIRECTORY ${FAST_BINARY_DIR}/../licenses/
-		DESTINATION licenses
-	)
+install(
+	DIRECTORY ${FAST_BINARY_DIR}/../kernels/
+	DESTINATION kernels
+)
+install(
+	DIRECTORY ${FAST_BINARY_DIR}/../plugins/
+	DESTINATION plugins
+)
+install(
+	FILES ${FAST_BINARY_DIR}/../doc/images/fast_icon.ico ${FAST_BINARY_DIR}/../doc/images/fast_icon.png
+	DESTINATION doc/images
+)
+install(
+	DIRECTORY ${FAST_BINARY_DIR}/../doc/fonts/
+	DESTINATION doc/fonts
+)
+install(
+	DIRECTORY ${FAST_BINARY_DIR}/../licenses/
+	DESTINATION licenses
+)
 
-	# add Data folder for storing saved models, icons, pipelines and other stuff, and move necessary folders
-	install(
-		DIRECTORY ${PROJECT_BINARY_DIR}/../data/Icons
-		DESTINATION data
-	)
-	install(
-		DIRECTORY ${PROJECT_BINARY_DIR}/../data/pipelines
-		DESTINATION data
-	)
-else()
-	install(
-		DIRECTORY ${FAST_BINARY_DIR}/../kernels/
-		DESTINATION kernels
-	)
-	install(
-		DIRECTORY ${FAST_BINARY_DIR}/../plugins/
-		DESTINATION plugins
-	)
-	install(
-		FILES ${FAST_BINARY_DIR}/../doc/images/fast_icon.ico ${FAST_BINARY_DIR}/../doc/images/fast_icon.png
-		DESTINATION doc/images
-	)
-	install(
-		DIRECTORY ${FAST_BINARY_DIR}/../doc/fonts/
-		DESTINATION doc/fonts
-	)
-	install(
-		DIRECTORY ${FAST_BINARY_DIR}/../licenses/
-		DESTINATION licenses
-	)
-
-	# add Data folder for storing saved models, icons, pipelines and other stuff, and move necessary folders
-	install(
-		DIRECTORY ${PROJECT_BINARY_DIR}/../data/Icons
-		DESTINATION data
-	)
-	install(
-		DIRECTORY ${PROJECT_BINARY_DIR}/../data/pipelines
-		DESTINATION data
-	)
-endif()
+# add Data folder for storing saved models, icons, pipelines and other stuff, and move necessary folders
+install(
+	DIRECTORY ${PROJECT_BINARY_DIR}/../data/Icons
+	DESTINATION data
+)
+install(
+	DIRECTORY ${PROJECT_BINARY_DIR}/../data/pipelines
+	DESTINATION data
+)
 
 # Setup fast_configuration.txt file
 if(WIN32)
