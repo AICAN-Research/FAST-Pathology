@@ -141,7 +141,6 @@ set(CPACK_COMPONENT_FAST_REQUIRED ON)
 SET(CPACK_PACKAGE_EXECUTABLES "fastpathology" "fastpathology")
 
 if(WIN32)
-	
     ## Windows
     # Create windows installer (Requires NSIS from http://nsis.sourceforge.net)
     set(CPACK_GENERATOR NSIS)
@@ -160,11 +159,15 @@ if(WIN32)
 	set(CPACK_NSIS_INSTALL_DIRECTORY ${CPACK_NSIS_INSTALL_ROOT}/FastPathology) #${CPACK_PACKAGE_INSTALL_DIRECTORY})
 
 elseif(APPLE)
-	set(CPACK_GENERATOR "TXZ")
-	set(CPACK_PACKAGE_FILE_NAME "fastpathology_macos${CMAKE_OSX_DEPLOYMENT_TARGET}_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+	## macOS
+	# Create APP Bundle
+	set(CPACK_GENERATOR "Bundle")
+	set(CPACK_BUNDLE_NAME "fastpathology_macos${CMAKE_OSX_DEPLOYMENT_TARGET}_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+	set(CPACK_BUNDLE_ICON "${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon_large.ico")
+	set(CPACK_BUNDLE_PLIST "${PROJECT_SOURCE_DIR}/misc/Info.plist")
+
 else()
     ## Linux
-
 	# Get distro name and version
 	find_program(LSB_RELEASE_EXEC lsb_release)
 	execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
