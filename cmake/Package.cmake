@@ -1,22 +1,28 @@
-
 # Install pathology application
 if(APPLE)
 	install(
 		TARGETS fastpathology
-		DESTINATION bin
+		DESTINATION ../MacOS
 	)
 else()
 	install(
 		TARGETS fastpathology
-		DESTINATION MacOS
+		DESTINATION bin
 	)
 endif()
 
 # License file
-install(
-    FILES LICENSE.md
-    DESTINATION licenses/fastpathology
-)
+if(APPLE)
+	install(
+		FILES LICENSE.md
+		DESTINATION ../licenses/fastpathology
+	)
+else()
+	install(
+		FILES LICENSE.md
+		DESTINATION licenses/fastpathology
+	)
+endif()
 
 # Install FAST dependency
 if(WIN32)
@@ -143,7 +149,7 @@ file(WRITE ${PROJECT_BINARY_DIR}/fast_configuration_install.txt ${FILE_CONTENT})
 if(APPLE)
 	install(
 		FILES ${PROJECT_BINARY_DIR}/fast_configuration_install.txt
-		DESTINATION MacOS
+		DESTINATION ../MacOS
 		RENAME fast_configuration.txt
 	)
 else()
