@@ -11,18 +11,6 @@ else()
 	)
 endif()
 
-# Create dummy bin/ folder relevant for MacOS
-if(APPLE)
-	install(
-		DIRECTORY
-		DESTINATION bin
-	)
-	install(
-		DIRECTORY
-		DESTINATION ../MacOS/bin
-	)
-endif()
-
 # License file
 if(APPLE)
 	install(
@@ -71,6 +59,7 @@ else()
 			)
 endif()
 
+# Additional dependencies
 if(APPLE)
 	install(
 		DIRECTORY ${FAST_BINARY_DIR}/../kernels/
@@ -145,14 +134,6 @@ if(WIN32)
 
 	# move data folder to specific location
 	#file(MAKE_DIRECTORY $ENV{HOME}/fastpathology/data/Icons)
-
-elseif(APPLE)
-	# macOS
-	set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
-	DocumentationPath = @ROOT@/doc/
-	LibraryPath = @ROOT@/lib/
-	QtPluginsPath = @ROOT@/plugins/")
-
 else()
 	# UNIX
 	set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
