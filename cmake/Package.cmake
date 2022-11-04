@@ -2,7 +2,7 @@
 if(APPLE)
 	install(
 		TARGETS fastpathology
-		DESTINATION ../MacOS
+		DESTINATION ../MacOS/bin
 	)
 else()
 	install(
