@@ -47,7 +47,7 @@ jobs:
     - name: Upload Bundle package
       uses: actions/upload-artifact@v2
       with:
-        name: Archive package (tar.xz)
+        name: macOS package
         path: ${{github.workspace}}/build/fastpathology.dmg
         if-no-files-found: error
         
