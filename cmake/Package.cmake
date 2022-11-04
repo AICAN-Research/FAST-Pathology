@@ -163,7 +163,7 @@ elseif(APPLE)
 	# Create APP Bundle
 	set(CPACK_GENERATOR "Bundle")
 	set(CPACK_BUNDLE_NAME "fastpathology_macos${CMAKE_OSX_DEPLOYMENT_TARGET}_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
-	set(CPACK_BUNDLE_ICON "${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_icon_large.ico")
+	set(CPACK_BUNDLE_ICON "${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_logo_large.icns")
 	set(CPACK_BUNDLE_PLIST "${PROJECT_SOURCE_DIR}/misc/Info.plist")
 
 else()
