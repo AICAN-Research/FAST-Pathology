@@ -15,14 +15,19 @@ endif()
 if(APPLE)
 	install(
 		DIRECTORY
-		DESTINATION ../bin)
+		DESTINATION bin
+	)
+	install(
+		DIRECTORY
+		DESTINATION ../MacOS/bin
+	)
 endif()
 
 # License file
 if(APPLE)
 	install(
 		FILES LICENSE.md
-		DESTINATION ../licenses/fastpathology
+		DESTINATION licenses/fastpathology
 	)
 else()
 	install(
@@ -38,10 +43,10 @@ if(WIN32)
 			FILES_MATCHING PATTERN "*.dll")
 elseif(APPLE)
 	install(DIRECTORY ${FAST_BINARY_DIR}/../lib/
-			DESTINATION ../lib
+			DESTINATION ../MacOS/lib
 			FILES_MATCHING PATTERN "*.dylib*")
 	install(DIRECTORY ${FAST_BINARY_DIR}/../lib/
-			DESTINATION ../lib
+			DESTINATION ../MacOS/lib
 			FILES_MATCHING PATTERN "*.so*")
 else()
 	install(DIRECTORY ${FAST_BINARY_DIR}/../lib/
@@ -56,7 +61,7 @@ if(WIN32)
 			)
 elseif(APPLE)
 	install(FILES ${FAST_BINARY_DIR}/../lib/plugins.xml ${FAST_BINARY_DIR}/../lib/cache.json
-			DESTINATION lib
+			DESTINATION ../MacOS/lib
 			OPTIONAL
 			)
 else()
@@ -69,33 +74,33 @@ endif()
 if(APPLE)
 	install(
 		DIRECTORY ${FAST_BINARY_DIR}/../kernels/
-		DESTINATION ../kernels
+		DESTINATION ../MacOS/kernels
 	)
 	install(
 		DIRECTORY ${FAST_BINARY_DIR}/../plugins/
-		DESTINATION ../plugins
+		DESTINATION ../MacOS/plugins
 	)
 	install(
 		FILES ${FAST_BINARY_DIR}/../doc/images/fast_icon.ico ${FAST_BINARY_DIR}/../doc/images/fast_icon.png
-		DESTINATION ../doc/images
+		DESTINATION ../MacOS/doc/images
 	)
 	install(
 		DIRECTORY ${FAST_BINARY_DIR}/../doc/fonts/
-		DESTINATION ../doc/fonts
+		DESTINATION ../MacOS/doc/fonts
 	)
 	install(
 		DIRECTORY ${FAST_BINARY_DIR}/../licenses/
-		DESTINATION ../licenses
+		DESTINATION ../MacOS/licenses
 	)
 
 	# add Data folder for storing saved models, icons, pipelines and other stuff, and move necessary folders
 	install(
 		DIRECTORY ${PROJECT_BINARY_DIR}/../data/Icons
-		DESTINATION ../data
+		DESTINATION ../MacOS/data
 	)
 	install(
 		DIRECTORY ${PROJECT_BINARY_DIR}/../data/pipelines
-		DESTINATION ../data
+		DESTINATION ../MacOS/data
 	)
 else()
 	install(
@@ -143,13 +148,13 @@ if(WIN32)
 
 elseif(APPLE)
 	# macOS
-	set(FILE_CONTENT "KernelSourcePath = @ROOT@/../kernels/
-	DocumentationPath = @ROOT@/../doc/
-	LibraryPath = @ROOT@/../lib/
-	QtPluginsPath = @ROOT@/../plugins/")
+	set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
+	DocumentationPath = @ROOT@/doc/
+	LibraryPath = @ROOT@/lib/
+	QtPluginsPath = @ROOT@/plugins/")
 
 else()
-	# LINUX
+	# UNIX
 	set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
 	DocumentationPath = @ROOT@/doc/
 	LibraryPath = @ROOT@/lib/
@@ -163,7 +168,7 @@ file(WRITE ${PROJECT_BINARY_DIR}/fast_configuration_install.txt ${FILE_CONTENT})
 if(APPLE)
 	install(
 		FILES ${PROJECT_BINARY_DIR}/fast_configuration_install.txt
-		DESTINATION ../MacOS
+		DESTINATION ../MacOS/bin
 		RENAME fast_configuration.txt
 	)
 else()
