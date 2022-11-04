@@ -11,6 +11,13 @@ else()
 	)
 endif()
 
+# Create dummy bin/ folder relevant for MacOS
+if(APPLE)
+	install(
+		DIRECTORY
+		DESTINATION bin)
+endif()
+
 # License file
 if(APPLE)
 	install(
@@ -49,7 +56,7 @@ if(WIN32)
 			)
 elseif(APPLE)
 	install(FILES ${FAST_BINARY_DIR}/../lib/plugins.xml ${FAST_BINARY_DIR}/../lib/cache.json
-			DESTINATION ../lib
+			DESTINATION lib
 			OPTIONAL
 			)
 else()
@@ -62,33 +69,33 @@ endif()
 if(APPLE)
 	install(
 		DIRECTORY ${FAST_BINARY_DIR}/../kernels/
-		DESTINATION ../kernels
+		DESTINATION kernels
 	)
 	install(
 		DIRECTORY ${FAST_BINARY_DIR}/../plugins/
-		DESTINATION ../plugins
+		DESTINATION plugins
 	)
 	install(
 		FILES ${FAST_BINARY_DIR}/../doc/images/fast_icon.ico ${FAST_BINARY_DIR}/../doc/images/fast_icon.png
-		DESTINATION ../doc/images
+		DESTINATION doc/images
 	)
 	install(
 		DIRECTORY ${FAST_BINARY_DIR}/../doc/fonts/
-		DESTINATION ../doc/fonts
+		DESTINATION doc/fonts
 	)
 	install(
 		DIRECTORY ${FAST_BINARY_DIR}/../licenses/
-		DESTINATION ../licenses
+		DESTINATION licenses
 	)
 
 	# add Data folder for storing saved models, icons, pipelines and other stuff, and move necessary folders
 	install(
 		DIRECTORY ${PROJECT_BINARY_DIR}/../data/Icons
-		DESTINATION ../data
+		DESTINATION data
 	)
 	install(
 		DIRECTORY ${PROJECT_BINARY_DIR}/../data/pipelines
-		DESTINATION ../data
+		DESTINATION data
 	)
 else()
 	install(
@@ -133,6 +140,13 @@ if(WIN32)
 
 	# move data folder to specific location
 	#file(MAKE_DIRECTORY $ENV{HOME}/fastpathology/data/Icons)
+
+elseif(APPLE)
+	# macOS
+	set(FILE_CONTENT "KernelSourcePath = @ROOT@/../kernels/
+	DocumentationPath = @ROOT@/../doc/
+	LibraryPath = @ROOT@/../lib/
+	QtPluginsPath = @ROOT@/../plugins/")
 
 else()
 	# UNIX
