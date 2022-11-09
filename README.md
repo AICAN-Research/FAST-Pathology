@@ -123,7 +123,7 @@ The software is implemented in C++ based on [FAST](https://github.com/smistad/FA
 <details>
 <summary>
 
-## 🔨 Development setup </summary>
+## 🔨 Development setup</summary>
 
 1. Either
    - [Download and install a release of FAST](https://fast.eriksmistad.no/install.html).
