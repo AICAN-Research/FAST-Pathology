@@ -21,7 +21,7 @@ To install FastPathology, follow the instructions for your operating system:
 <details open>
 <summary>
 
-### Windows (10 or newer) </summary>
+### Windows (10 or newer)</summary>
 * Download and install the [Microsoft Visual C++ Redistributable 2015-2019 (64bit/x64)](https://aka.ms/vs/16/release/vc_redist.x64.exe).
 * Download and run the Windows installer from the [release page](https://github.com/AICAN-Research/FAST-Pathology/releases/). 
   *Note: Windows might prompt you with a security warning, to proceed you must press "More info" followed by "Run anyway".*
