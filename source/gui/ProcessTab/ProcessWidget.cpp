@@ -118,6 +118,7 @@ namespace fast {
                 auto description = new QLabel();
                 description->setText(QString::fromStdString(pipeline.getDescription()));
                 description->setWordWrap(true);
+                description->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
                 layout->addWidget(description);
 
                 auto button = new QPushButton;

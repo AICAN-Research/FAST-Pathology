@@ -236,11 +236,20 @@ void ProjectSplashWidget::downloadTestData() {
 }
 
 void ProjectSplashWidget::dataHub() {
-    auto browser = new DataHubBrowser("fast-pathology", "https://datahub.eriksmistad.no/", join(m_rootFolder, "..", "datahub"));
-    connect(&browser->getDataHub(), &DataHub::finished, this, &ProjectSplashWidget::refreshPipelines);
-    browser->setWindowModality(Qt::ApplicationModal);
-    browser->show();
-    browser->move(QGuiApplication::primaryScreen()->geometry().center() - rect().center());
+    try {
+        auto browser = new DataHubBrowser("fast-pathology", "https://datahub.eriksmistad.no/", join(m_rootFolder, "..", "datahub"));
+        connect(&browser->getDataHub(), &DataHub::finished, this, &ProjectSplashWidget::refreshPipelines);
+        browser->setWindowModality(Qt::ApplicationModal);
+        browser->show();
+        browser->move(QGuiApplication::primaryScreen()->geometry().center() - rect().center());
+    } catch(Exception &e) {
+        QMessageBox msgBox;
+        msgBox.setText("An error occured while trying to connect to the DataHub. Make sure you are connected to the internet and try again later.");
+        msgBox.setWindowTitle("Error connecting");
+        msgBox.setIcon(QMessageBox::Warning);
+        msgBox.exec();
+        return;
+    }
 }
 
 }

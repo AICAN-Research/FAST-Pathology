@@ -201,6 +201,7 @@ void MainWindow::createOpenGLWindow() {
     mainSplitter->addWidget(_side_panel_widget);
 	mainSplitter->addWidget(view);
 	mainSplitter->setStretchFactor(1, 1);
+	mainSplitter->setSizes({(int)((float)mWidget->width()/4), (int)((float)mWidget->width()*3/4)});
 
     mainLayout->addWidget(mainSplitter);
 }
