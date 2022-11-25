@@ -240,6 +240,7 @@ namespace fast {
                     currentPatchGenerators.push_back(generator);
                 }
             }
+
             if(currentPatchGenerators.empty())
                 return;
             float totalProgress = 0;
