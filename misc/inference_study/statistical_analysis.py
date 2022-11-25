@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from tabulate import tabulate
 import os
-#from scipy import stats 
 from statsmodels import stats
 import pingouin
 import scikit_posthocs as sp
@@ -16,12 +15,8 @@ np.set_printoptions(threshold=np.inf)
 path = "./results_windows2/"  # results_windows, results_windows2, results
 filename = "neural-network-runtimes-case-"
 
-#cases = list(range(1, 5)) + ["1_batch", "1_inceptionv3"]
-
 paths = ["./results/", "./results_windows/", "./results_windows2/"]
 all_cases = [["1", "2", "3", "4", "1_inceptionv3"], ["1", "1_inceptionv3"], ["1", "1_inceptionv3"]]
-
-#cases = ["1", "1_inceptionv3"]
 
 machines = ["ubuntu", "win1", "win2"]
 total_runtimes = []
@@ -75,14 +70,7 @@ for path, cases, machine in zip(paths, all_cases, machines):
                     # print("total CI (mean and standard error): ", np.mean(total), "+-", np.std(total)/np.sqrt(len(total)))
                     # print("total CI: ", [np.mean(total) - dev, np.mean(total) + dev])
 
-# @TODO: Perform pairwise hypothesis tests (with correction)
-#  to assess whether there is a statistically significant
-#  difference between the IEs in terms of total runtime
 total_runtimes = np.squeeze(np.array(total_runtimes, dtype=np.float32), axis=-1)
-#total_runtimes = np.transpose(total_runtimes)
-#print(curr_engine_and_device)
-#print(total_runtimes.shape)
-#print(total_runtimes)
 
 # test if data is normal
 res_normal = np.zeros((len(total_runtimes)), dtype=np.float32)
@@ -105,66 +93,7 @@ print(total_runtimes.flatten().dtype)
 tmp = np.repeat(range(len(curr_engine_and_device)), 10)
 print(tmp.dtype)
 
-#tukey = pairwise_tukeyhsd(total_runtimes.flatten(), groups=tmp, alpha=0.05)
-
-
-
-#print(df)
-#print(res)
-#print(tukey)
-
-'''
-machine_var = []
-engine_var = []
-gpu_var = []
-
-gpus = ["CPU", "RTX2070", "P5000", "Max-Q", "0-CPU", "O-GPU"]
-
-for curr in curr_engine_and_device:
-    curr_machine = curr.split_custom(" / ")[1]
-    machine_var.append(curr_machine)
-    engine_var.append(curr.split_custom(" / ")[0].split_custom("_")[1])
-    tmp = curr.split_custom(" / ")[0].split_custom("_")
-
-    if len(tmp) == 4:
-        tmp = ["_".join(tmp[:2])] + tmp[2:]
-
-
-    if curr_machine == "ubuntu":
-        if curr_machine in ["TensorFlowCUDA", "TensorRT"]:
-            if tmp[0] not in ["1", "1_inceptionv3"]:
-                gpu_var.append("P5000")
-            else:
-                if tmp[-1] == "ANY0":
-                    gpu_var.append("RTX2070")
-                else:
-                    gpu_var.append("P5000")
-        else:
-            gpu_var.append("_".join(tmp[1:]))
-    elif curr_machine == "win2":
-        if curr_machine == "TensorRT":
-            gpu_var.append("Max-Q")
-        else:
-            gpu_var.append()
-
-
-print(curr_engine_and_device)   
-
-print(gpu_var)
-exit()
-'''
-
-#machine_var = [x.split_custom(" / ")[1] for x in curr_engine_and_device]
-#engine_var = ["_".join(x.split_custom(" / ")[0].split_custom("_")[1:]) for x in curr_engine_and_device]
-
-#tmp = []
 print(df)
-
-# run anova
-#formula = 'runtime ~ C(keyword) + C(engine) + C(month_abbr) + C(keyword):C(engine) + C(keyword):C(month_abbr) + C(engine):C(month_abbr)'
-#lm = ols(formula, df).fit()
-#table = sm.stats.anova_lm(lm, typ=2)
-#print(table)
 
 # perform multiple pairwise comparison (Tukey HSD)
 m_comp = pairwise_tukeyhsd(endog=total_runtimes.flatten(), groups=np.repeat(range(len(curr_engine_and_device)), 10), alpha=0.05)
@@ -217,8 +146,6 @@ for i, n in enumerate(names):
         if tmp[2] == "ANY0":
             names[i] = n.replace("-" + tmp[2], "-" + "MaxQ")
 
-#names = [n.replace("_", "\_") for n in names]
-
 col_names = names.copy()
 col_names = ["\textbf{\rot{\multicolumn{1}{r}{" + n + "}}}" for n in col_names]
 
@@ -254,10 +181,3 @@ with open("./test_latex_table.txt", "w") as pfile:
 
 
 print(sum(multipletests(res_normal, method="fdr_bh")[1] < 0.05))
-
-
-
-
-
-
-
