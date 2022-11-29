@@ -48,6 +48,7 @@ MainWindow::MainWindow() {
     QDir().mkpath(QString::fromStdString(cwd) + "pipelines");
     QDir().mkpath(QString::fromStdString(cwd) + "projects");
     QDir().mkpath(QString::fromStdString(cwd) + "images");
+    QDir().mkpath(QString::fromStdString(cwd) + "datahub");
 
     // Copy pipelines if they don't exist in pipelines and models folder
     auto dataPath = QCoreApplication::applicationDirPath().toStdString() + "/../data/";
