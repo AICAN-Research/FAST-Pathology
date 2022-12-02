@@ -67,23 +67,26 @@ MainWindow::MainWindow() {
             }
         }
     }
-    auto modelFiles = getDirectoryList(join(cwd, "models"), true, true);
-    if(modelFiles.empty()) {
-        auto reply = QMessageBox::question(nullptr,  "Download AI models?",
-             "You have no AI models in your model folder: " + QString::fromStdString(join(cwd, "models")) +
-             "Do you wish to download some models now? (~151 MB)");
-        if(reply == QMessageBox::Yes) {
-            downloadZipFile("http://fast.eriksmistad.no/download/fastpathology-models-v1.0.0.zip", join(cwd, "models"), "AI models");
-        }
-    }
 
     setupInterface();
     setupConnections();
 
-    showSplashMenu(false);
+    auto modelFiles = getDirectoryList(join(cwd, "models"), true, true);
+    auto datahubFiles = getDirectoryList(join(cwd, "datahub"), true, true);
+    if(modelFiles.empty() && datahubFiles.empty()) {
+        auto reply = QMessageBox::question(nullptr,  "Download AI models?",
+                                           "You have no AI models in your fastpathology folder. Our data hub contains publicly available AI models which can be downloaded. Do you wish to browse these now?");
+        if(reply == QMessageBox::Yes) {
+            showSplashMenu(false, true);
+        } else {
+            showSplashMenu(false, false);
+        }
+    } else {
+        showSplashMenu(false, false);
+    }
 }
 
-void MainWindow::showSplashMenu(bool allowClose) {
+void MainWindow::showSplashMenu(bool allowClose, bool showDataHub) {
     // Start splash
     auto splash = new ProjectSplashWidget(cwd + "/projects/", allowClose);
     connect(splash, &ProjectSplashWidget::quitSignal, mWidget, &QWidget::close);
@@ -117,7 +120,10 @@ void MainWindow::showSplashMenu(bool allowClose) {
         emit _side_panel_widget->loadProject();
         emit updateProjectTitle();
     });
+
     splash->show();
+    if(showDataHub)
+        splash->dataHub();
 }
 void MainWindow::showSplashMenuWithClose() {
     showSplashMenu(true);

@@ -26,6 +26,7 @@ class ProjectSplashWidget : public QWidget {
 
         void downloadTestData();
 
+    public slots:
         /**
          * Opens a data hub browser to download models and pipelines
          */

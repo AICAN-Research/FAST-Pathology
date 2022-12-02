@@ -161,6 +161,7 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, bool allowClose
     // Move to the center
     adjustSize();
     move(QApplication::desktop()->screen()->rect().center() - rect().center());
+
 }
 
 void ProjectSplashWidget::newProjectNameDialog() {

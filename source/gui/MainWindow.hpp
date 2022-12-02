@@ -94,7 +94,7 @@ class MainWindow : public Window {
 
         void updateAppTitleReceived(std::string title_suffix);
 
-        void showSplashMenu(bool allowClose);
+        void showSplashMenu(bool allowClose, bool openDataHub = false);
         void showSplashMenuWithClose();
 
     signals:
