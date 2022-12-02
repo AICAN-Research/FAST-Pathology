@@ -6,6 +6,8 @@
 #include <FAST/Visualization/HeatmapRenderer/HeatmapRenderer.hpp>
 #include <QCheckBox>
 #include "source/gui/MainWindow.hpp"
+#include <QApplication>
+#include <QDesktopWidget>
 
 namespace fast {
     ViewWidget::ViewWidget(MainWindow* mainWindow, QWidget *parent): QWidget(parent){
@@ -33,6 +35,7 @@ namespace fast {
         _stacked_widget->setLayout(_stacked_layout);
 
         _page_combobox = new QComboBox(this);
+        _page_combobox->setMaximumWidth(QApplication::desktop()->screen()->width()/4);
 
         _main_layout->addWidget(_page_combobox);
         _main_layout->addWidget(_stacked_widget);

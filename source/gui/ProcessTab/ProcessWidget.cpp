@@ -11,6 +11,8 @@
 #include <FAST/Algorithms/ImagePatch/PatchGenerator.hpp>
 #include "source/logic/WholeSlideImage.h"
 #include "source/gui/MainWindow.hpp"
+#include <QApplication>
+#include <QDesktopWidget>
 
 namespace fast {
     ProcessWidget::ProcessWidget(MainWindow* mainWindow, QWidget* parent): QWidget(parent){
@@ -51,6 +53,7 @@ namespace fast {
         _stacked_widget->setLayout(_stacked_layout);
 
         _page_combobox = new QComboBox(this);
+        _page_combobox->setMaximumWidth(QApplication::desktop()->screen()->width()/4);
 
         _main_layout->addWidget(_page_combobox);
         _main_layout->addWidget(_stacked_widget);
@@ -109,6 +112,7 @@ namespace fast {
                 }
 
                 auto page = new QWidget();
+                page->setMaximumWidth(QApplication::desktop()->screen()->width()/4);
                 auto layout = new QVBoxLayout();
                 layout->setAlignment(Qt::AlignTop);
                 page->setLayout(layout);
@@ -116,6 +120,7 @@ namespace fast {
                 _page_combobox->addItem(QString::fromStdString(pipeline.getName()));
 
                 auto description = new QLabel();
+                description->setMaximumWidth(QApplication::desktop()->screen()->width()/4);
                 description->setText(QString::fromStdString(pipeline.getDescription()));
                 description->setWordWrap(true);
                 description->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
