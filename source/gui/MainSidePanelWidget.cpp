@@ -120,6 +120,7 @@ namespace fast{
          */
 
         tb->addWidget(spacerWidgetRight);
+        setMinimumWidth(512);
 
         //stackedWidget->connect(&mapper, SIGNAL(mapped(int)), SLOT(setCurrentIndex(int)));
         connect(mapper, SIGNAL(mapped(int)), _container_stacked_widget, SLOT(setCurrentIndex(int)));
