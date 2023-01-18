@@ -203,12 +203,30 @@ namespace fast{
                 std::cout << "Unsupported data to export " << dataTypeName << std::endl;
             }
 
-            // TODO handle multiple renderes somehow
             {
                 std::ofstream file(join(saveFolder, "renderer.attributes.txt"), std::iostream::out);
+                bool found = false;
                 for(auto renderer : pipeline->getRenderers()) {
-                    if(renderer->getNameOfClass() != "ImagePyramidRenderer")
+                    // Check that this renderer is connected to the output
+                    if(renderer->getInputPort(0)->getFrame() == data.second) {
                         file << renderer->attributesToString();
+                        found = true;
+                    }
+                }
+                if(!found) { // If no renderer was found for this output data, we create a renderer with default settings
+                    // Write default renderer parameters
+                    if(dataTypeName == "ImagePyramid" || dataTypeName == "Image") {
+                        auto renderer = SegmentationRenderer::create();
+                        renderer->setDisabled(true);
+                        file << renderer->attributesToString();
+                    } else if(dataTypeName == "Tensor") {
+                        auto renderer = HeatmapRenderer::create();
+                        renderer->setInterpolation(false);
+                        renderer->setDisabled(true);
+                        file << renderer->attributesToString();
+                    } else {
+                        // Ignore
+                    }
                 }
                 file.close();
             }
