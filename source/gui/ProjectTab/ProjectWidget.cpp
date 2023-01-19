@@ -141,7 +141,12 @@ namespace fast {
             if (fileName == "")
                 return;
             //filename = fileName.toStdString();
-            auto currFileName = fileName.toStdString();
+            //qDebug() << "QString filename: " << fileName;
+#ifdef WIN32
+            std::string currFileName = fileName.toLatin1(); // Convert path to ascii so that files with רזו characters work.
+#else
+            std::string currFileName = fileName.toStdString();
+#endif
             Reporter::info() << "Selected file: " << currFileName << Reporter::end();
             const std::string id_name = m_mainWindow->getCurrentProject()->includeImage(currFileName);
 
