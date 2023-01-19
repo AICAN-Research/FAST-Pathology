@@ -221,10 +221,14 @@ elseif(APPLE)
 	## macOS
 	# Create APP Bundle
 	set(CPACK_GENERATOR "Bundle")
-	#"fastpathology_macos${CMAKE_OSX_DEPLOYMENT_TARGET}_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}"
 	set(CPACK_BUNDLE_NAME "FastPathology")
+	set(CPACK_PACKAGE_FILE_NAME "fastpathology_macos${CMAKE_OSX_DEPLOYMENT_TARGET}_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
 	set(CPACK_BUNDLE_ICON "${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_logo_large.icns")
-	set(CPACK_BUNDLE_PLIST "${PROJECT_SOURCE_DIR}/misc/Info.plist")
+	configure_file(
+			"${PROJECT_SOURCE_DIR}/misc/Info.plist.in"
+			"${PROJECT_BINARY_DIR}/Info.plist"
+	)
+	set(CPACK_BUNDLE_PLIST "${PROJECT_BINARY_DIR}/Info.plist")
 
 else()
     ## Linux
