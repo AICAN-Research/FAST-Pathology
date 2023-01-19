@@ -47,8 +47,8 @@ jobs:
     - name: Upload Bundle package
       uses: actions/upload-artifact@v2
       with:
-        name: Archive package (tar.xz)
-        path: ${{github.workspace}}/build/fastpathology_*.tar.xz
+        name: macOS package
+        path: ${{github.workspace}}/build/fastpathology_*.dmg
         if-no-files-found: error
         
     - name: Upload archive package to release
@@ -56,7 +56,7 @@ jobs:
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ${{github.workspace}}/build/fastpathology_*.tar.xz
+        file: ${{github.workspace}}/build/fastpathology_*.dmg
         file_glob: true
         tag: ${{ github.ref }}
         overwrite: true

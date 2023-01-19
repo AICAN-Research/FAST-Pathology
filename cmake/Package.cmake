@@ -1,15 +1,28 @@
-
 # Install pathology application
-install(
-    TARGETS fastpathology
-    DESTINATION bin
-)
+if(APPLE)
+	install(
+		TARGETS fastpathology
+		DESTINATION ../MacOS/bin
+	)
+else()
+	install(
+		TARGETS fastpathology
+		DESTINATION bin
+	)
+endif()
 
 # License file
-install(
-    FILES LICENSE.md
-    DESTINATION licenses/fastpathology
-)
+if(APPLE)
+	install(
+		FILES LICENSE.md
+		DESTINATION licenses/fastpathology
+	)
+else()
+	install(
+		FILES LICENSE.md
+		DESTINATION licenses/fastpathology
+	)
+endif()
 
 # Install FAST dependency
 if(WIN32)
@@ -18,10 +31,10 @@ if(WIN32)
 			FILES_MATCHING PATTERN "*.dll")
 elseif(APPLE)
 	install(DIRECTORY ${FAST_BINARY_DIR}/../lib/
-			DESTINATION lib
+			DESTINATION ../MacOS/lib
 			FILES_MATCHING PATTERN "*.dylib*")
 	install(DIRECTORY ${FAST_BINARY_DIR}/../lib/
-			DESTINATION lib
+			DESTINATION ../MacOS/lib
 			FILES_MATCHING PATTERN "*.so*")
 else()
 	install(DIRECTORY ${FAST_BINARY_DIR}/../lib/
@@ -34,6 +47,11 @@ if(WIN32)
 	install(FILES ${FAST_BINARY_DIR}/plugins.xml ${FAST_BINARY_DIR}/cache.json
 			DESTINATION bin
 			)
+elseif(APPLE)
+	install(FILES ${FAST_BINARY_DIR}/../lib/plugins.xml ${FAST_BINARY_DIR}/../lib/cache.json
+			DESTINATION ../MacOS/lib
+			OPTIONAL
+			)
 else()
 	install(FILES ${FAST_BINARY_DIR}/../lib/plugins.xml ${FAST_BINARY_DIR}/../lib/cache.json
 			DESTINATION lib
@@ -41,88 +59,129 @@ else()
 			)
 endif()
 
-install(
-    DIRECTORY ${FAST_BINARY_DIR}/../kernels/
-    DESTINATION kernels
-)
-install(
-    DIRECTORY ${FAST_BINARY_DIR}/../plugins/
-    DESTINATION plugins
-)
-install(
-    FILES ${FAST_BINARY_DIR}/../doc/images/fast_icon.ico ${FAST_BINARY_DIR}/../doc/images/fast_icon.png
-    DESTINATION doc/images
-)
-install(
-	DIRECTORY ${FAST_BINARY_DIR}/../doc/fonts/
-	DESTINATION doc/fonts
-)
-install(
-    DIRECTORY ${FAST_BINARY_DIR}/../licenses/
-    DESTINATION licenses
-)
+# Additional dependencies
+if(APPLE)
+	install(
+		DIRECTORY ${FAST_BINARY_DIR}/../kernels/
+		DESTINATION ../MacOS/kernels
+	)
+	install(
+		DIRECTORY ${FAST_BINARY_DIR}/../plugins/
+		DESTINATION ../MacOS/plugins
+	)
+	install(
+		FILES ${FAST_BINARY_DIR}/../doc/images/fast_icon.ico ${FAST_BINARY_DIR}/../doc/images/fast_icon.png
+		DESTINATION ../MacOS/doc/images
+	)
+	install(
+		DIRECTORY ${FAST_BINARY_DIR}/../doc/fonts/
+		DESTINATION ../MacOS/doc/fonts
+	)
+	install(
+		DIRECTORY ${FAST_BINARY_DIR}/../licenses/
+		DESTINATION ../MacOS/licenses
+	)
 
-# add Data folder for storing saved models, icons, pipelines and other stuff, and move necessary folders
-install(
-    DIRECTORY ${PROJECT_BINARY_DIR}/../data/Icons
-    DESTINATION data
-)
-install(
-	DIRECTORY ${PROJECT_BINARY_DIR}/../data/pipelines
-	DESTINATION data
-)
+	# add Data folder for storing saved models, icons, pipelines and other stuff, and move necessary folders
+	install(
+		DIRECTORY ${PROJECT_BINARY_DIR}/../data/Icons
+		DESTINATION ../MacOS/data
+	)
+	install(
+		DIRECTORY ${PROJECT_BINARY_DIR}/../data/pipelines
+		DESTINATION ../MacOS/data
+	)
+else()
+	install(
+		DIRECTORY ${FAST_BINARY_DIR}/../kernels/
+		DESTINATION kernels
+	)
+	install(
+		DIRECTORY ${FAST_BINARY_DIR}/../plugins/
+		DESTINATION plugins
+	)
+	install(
+		FILES ${FAST_BINARY_DIR}/../doc/images/fast_icon.ico ${FAST_BINARY_DIR}/../doc/images/fast_icon.png
+		DESTINATION doc/images
+	)
+	install(
+		DIRECTORY ${FAST_BINARY_DIR}/../doc/fonts/
+		DESTINATION doc/fonts
+	)
+	install(
+		DIRECTORY ${FAST_BINARY_DIR}/../licenses/
+		DESTINATION licenses
+	)
+
+	# add Data folder for storing saved models, icons, pipelines and other stuff, and move necessary folders
+	install(
+		DIRECTORY ${PROJECT_BINARY_DIR}/../data/Icons
+		DESTINATION data
+	)
+	install(
+		DIRECTORY ${PROJECT_BINARY_DIR}/../data/pipelines
+		DESTINATION data
+	)
+endif()
 
 # Setup fast_configuration.txt file
 if(WIN32)
-# windows
-set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
-DocumentationPath = @ROOT@/doc/
-LibraryPath = @ROOT@/bin/
-QtPluginsPath = @ROOT@/plugins/")
+	# windows
+	set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
+	DocumentationPath = @ROOT@/doc/
+	LibraryPath = @ROOT@/bin/
+	QtPluginsPath = @ROOT@/plugins/")
 
-# move data folder to specific location
-#file(MAKE_DIRECTORY $ENV{HOME}/fastpathology/data/Icons)
-
+	# move data folder to specific location
+	#file(MAKE_DIRECTORY $ENV{HOME}/fastpathology/data/Icons)
 else()
-# UNIX
-set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
-DocumentationPath = @ROOT@/doc/
-LibraryPath = @ROOT@/lib/
-QtPluginsPath = @ROOT@/plugins/")
+	# UNIX
+	set(FILE_CONTENT "KernelSourcePath = @ROOT@/kernels/
+	DocumentationPath = @ROOT@/doc/
+	LibraryPath = @ROOT@/lib/
+	QtPluginsPath = @ROOT@/plugins/")
 endif()
 
 # Write file
 file(WRITE ${PROJECT_BINARY_DIR}/fast_configuration_install.txt ${FILE_CONTENT})
 
 # Install file
-install(
-    FILES ${PROJECT_BINARY_DIR}/fast_configuration_install.txt
-    DESTINATION bin
-    RENAME fast_configuration.txt
-)
+if(APPLE)
+	install(
+		FILES ${PROJECT_BINARY_DIR}/fast_configuration_install.txt
+		DESTINATION ../MacOS/bin
+		RENAME fast_configuration.txt
+	)
+else()
+	install(
+		FILES ${PROJECT_BINARY_DIR}/fast_configuration_install.txt
+		DESTINATION bin
+		RENAME fast_configuration.txt
+	)
+endif()
 
 if(WIN32)
 elseif(APPLE)
 else()
-# setup .desktop file
-set(APP_CONFIG_CONTENT "[Desktop Entry]
-Name=FastPathology
-Comment=FastPathology
-Exec=/opt/fastpathology/bin/fastpathology
-Terminal=false
-Type=Application
-Icon=/opt/fastpathology/data/Icons/fastpathology_logo_large.png
-Categories=public.app-categorical.medical")
+	# setup .desktop file
+	set(APP_CONFIG_CONTENT "[Desktop Entry]
+	Name=FastPathology
+	Comment=FastPathology
+	Exec=/opt/fastpathology/bin/fastpathology
+	Terminal=false
+	Type=Application
+	Icon=/opt/fastpathology/data/Icons/fastpathology_logo_large.png
+	Categories=public.app-categorical.medical")
 
-# write
-file(WRITE ${PROJECT_BINARY_DIR}/fastpathology.desktop ${APP_CONFIG_CONTENT})
+	# write
+	file(WRITE ${PROJECT_BINARY_DIR}/fastpathology.desktop ${APP_CONFIG_CONTENT})
 
-# install
-install(
-    FILES ${PROJECT_BINARY_DIR}/fastpathology.desktop
-    DESTINATION /usr/share/applications/
-    PERMISSIONS OWNER_READ OWNER_EXECUTE OWNER_WRITE GROUP_READ GROUP_EXECUTE GROUP_WRITE WORLD_READ WORLD_WRITE WORLD_EXECUTE
-)
+	# install
+	install(
+		FILES ${PROJECT_BINARY_DIR}/fastpathology.desktop
+		DESTINATION /usr/share/applications/
+		PERMISSIONS OWNER_READ OWNER_EXECUTE OWNER_WRITE GROUP_READ GROUP_EXECUTE GROUP_WRITE WORLD_READ WORLD_WRITE WORLD_EXECUTE
+	)
 endif()
 
 set(CPACK_PACKAGE_NAME "fastpathology")
@@ -141,7 +200,6 @@ set(CPACK_COMPONENT_FAST_REQUIRED ON)
 SET(CPACK_PACKAGE_EXECUTABLES "fastpathology" "fastpathology")
 
 if(WIN32)
-	
     ## Windows
     # Create windows installer (Requires NSIS from http://nsis.sourceforge.net)
     set(CPACK_GENERATOR NSIS)
@@ -160,11 +218,20 @@ if(WIN32)
 	set(CPACK_NSIS_INSTALL_DIRECTORY ${CPACK_NSIS_INSTALL_ROOT}/FastPathology) #${CPACK_PACKAGE_INSTALL_DIRECTORY})
 
 elseif(APPLE)
-	set(CPACK_GENERATOR "TXZ")
+	## macOS
+	# Create APP Bundle
+	set(CPACK_GENERATOR "Bundle")
+	set(CPACK_BUNDLE_NAME "FastPathology")
 	set(CPACK_PACKAGE_FILE_NAME "fastpathology_macos${CMAKE_OSX_DEPLOYMENT_TARGET}_${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}")
+	set(CPACK_BUNDLE_ICON "${PROJECT_SOURCE_DIR}/data/Icons/fastpathology_logo_large.icns")
+	configure_file(
+			"${PROJECT_SOURCE_DIR}/misc/Info.plist.in"
+			"${PROJECT_BINARY_DIR}/Info.plist"
+	)
+	set(CPACK_BUNDLE_PLIST "${PROJECT_BINARY_DIR}/Info.plist")
+
 else()
     ## Linux
-
 	# Get distro name and version
 	find_program(LSB_RELEASE_EXEC lsb_release)
 	execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
