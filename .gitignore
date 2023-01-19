@@ -35,3 +35,4 @@ inference_study/Release/
 CMakeSettings.json
 *.user
 *.autosave
+*.DS_Store
