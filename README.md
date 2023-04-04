@@ -162,7 +162,7 @@ The software is implemented in C++ based on [FAST](https://github.com/smistad/FA
    fastpathology.exe
    ```
 
-**NOTE:** Visual Studio 19 have been tested with both FAST and FastPathology and works well.
+**NOTE:** Visual Studio 19 has been tested with both FAST and FastPathology and works well.
 
 </details>
 
