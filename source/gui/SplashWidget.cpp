@@ -84,7 +84,7 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, bool allowClose
         //"Last modified: " + QString::fromStdString(it->first),
     }
     leftLayout->addWidget(recentList);
-    connect(recentList, &QListWidget::itemDoubleClicked, [=](QListWidgetItem* item) {
+    QObject::connect(recentList, &QListWidget::itemDoubleClicked, [=](QListWidgetItem* item) {
         close();
         emit openProjectSignal(item->text());
     });
@@ -92,7 +92,7 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, bool allowClose
     auto deleteProjectButton = new QPushButton();
     deleteProjectButton->setText("Delete selected projects");
     leftLayout->addWidget(deleteProjectButton);
-    connect(deleteProjectButton, &QPushButton::clicked, [=]() {
+    QObject::connect(deleteProjectButton, &QPushButton::clicked, [=]() {
         auto reply = QMessageBox::question(this,
                    "Delete projects",
                    "Are you sure you whish to delete these projects?"
@@ -113,31 +113,31 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, bool allowClose
     newProjectButton->setText("Start new project");
     newProjectButton->setStyleSheet("background-color: #ADD8E6;");
     rightLayout->addWidget(newProjectButton);
-    connect(newProjectButton, &QPushButton::clicked, this, &ProjectSplashWidget::newProjectNameDialog);
+    QObject::connect(newProjectButton, &QPushButton::clicked, this, &ProjectSplashWidget::newProjectNameDialog);
 
     if(allowClose) {
         auto closeButton = new QPushButton();
         closeButton->setText("Close menu");
         rightLayout->addWidget(closeButton);
-        connect(closeButton, &QPushButton::clicked, this, &ProjectSplashWidget::close);
+        QObject::connect(closeButton, &QPushButton::clicked, this, &ProjectSplashWidget::close);
     }
 
     auto dataHubButton = new QPushButton();
     dataHubButton->setText("Download models && pipelines");
     rightLayout->addWidget(dataHubButton);
-    connect(dataHubButton, &QPushButton::clicked, this, &ProjectSplashWidget::dataHub);
+    QObject::connect(dataHubButton, &QPushButton::clicked, this, &ProjectSplashWidget::dataHub);
 
     if(!fileExists(rootFolder + "/../images/LICENSE.md")) {
         auto downloadButton = new QPushButton();
         downloadButton->setText("Download and open test images");
         rightLayout->addWidget(downloadButton);
-        connect(downloadButton, &QPushButton::clicked, this, &ProjectSplashWidget::downloadTestData);
+        QObject::connect(downloadButton, &QPushButton::clicked, this, &ProjectSplashWidget::downloadTestData);
     }
 
     auto quitButton = new QPushButton();
     quitButton->setText("Quit");
     rightLayout->addWidget(quitButton);
-    connect(quitButton, &QPushButton::clicked, this, &ProjectSplashWidget::quitSignal);
+    QObject::connect(quitButton, &QPushButton::clicked, this, &ProjectSplashWidget::quitSignal);
 
     rightLayout->addSpacing(20);
     rightLayout->addStretch(20);
@@ -145,17 +145,17 @@ ProjectSplashWidget::ProjectSplashWidget(std::string rootFolder, bool allowClose
     auto helpButton = new QPushButton();
     helpButton->setText("Help");
     rightLayout->addWidget(helpButton);
-    connect(helpButton, &QPushButton::clicked, this, &ProjectSplashWidget::helpUrl);
+    QObject::connect(helpButton, &QPushButton::clicked, this, &ProjectSplashWidget::helpUrl);
 
     auto reportButton = new QPushButton();
     reportButton->setText("Report an issue");
     rightLayout->addWidget(reportButton);
-    connect(reportButton, &QPushButton::clicked, this, &ProjectSplashWidget::reportIssueUrl);
+    QObject::connect(reportButton, &QPushButton::clicked, this, &ProjectSplashWidget::reportIssueUrl);
 
     auto aboutButton = new QPushButton();
     aboutButton->setText("About");
     rightLayout->addWidget(aboutButton);
-    connect(aboutButton, &QPushButton::clicked, this, &ProjectSplashWidget::aboutProgram);
+    QObject::connect(aboutButton, &QPushButton::clicked, this, &ProjectSplashWidget::aboutProgram);
 
 
     // Move to the center
@@ -239,7 +239,7 @@ void ProjectSplashWidget::downloadTestData() {
 void ProjectSplashWidget::dataHub() {
     try {
         auto browser = new DataHubBrowser("fast-pathology", "https://datahub.eriksmistad.no/", join(m_rootFolder, "..", "datahub"));
-        connect(&browser->getDataHub(), &DataHub::finished, this, &ProjectSplashWidget::refreshPipelines);
+        QObject::connect(&browser->getDataHub(), &DataHub::finished, this, &ProjectSplashWidget::refreshPipelines);
         browser->setWindowModality(Qt::ApplicationModal);
         browser->show();
         browser->move(QGuiApplication::primaryScreen()->geometry().center() - rect().center());
