@@ -32,8 +32,10 @@ jobs:
         fileName: "fast_ubuntu18.04.tar.xz"
         out-file-path: "./downloads/"
     
-    - name: Install xz-utils
-      run: sudo apt-get install xz-utils 
+    - name: Setup apt and deps
+      run: |
+        apt update && apt install -y sudo
+        sudo apt-get install xz-utils 
 
     - name: Extract FAST
       run: |
@@ -44,7 +46,6 @@ jobs:
 
     - name: Install dependencies
       run: |
-        apt update && apt install -y sudo
         # Get a newer version of cmake
         sudo apt install -y gpg wget software-properties-common lsb-release
         wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null
