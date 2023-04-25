@@ -39,8 +39,6 @@ jobs:
 
     - name: Extract FAST
       run: |
-        ls -haltr
-        ls -haltr ./downloads
         tar -xf ./downloads/fast_*.tar.xz -C ./downloads/
         mv ./downloads/fast_*/fast ./
 
