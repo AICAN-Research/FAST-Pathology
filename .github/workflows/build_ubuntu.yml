@@ -18,6 +18,10 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v3
+      
+    - name: Create path
+      run: |
+        mkdir -p ${{github.workspace}}/downloads/
 
     - name: Download FAST
       uses: robinraju/release-downloader@main
@@ -25,11 +29,10 @@ jobs:
         repository: "AICAN-Research/FAST-Pathology-dependencies"
         latest: true
         fileName: "fast_ubuntu18.04.tar.xz"
-        out-file-path: "downloads"
+        out-file-path: "${{github.workspace}}/downloads/"
 
     - name: Extract FAST
       run: |
-        mkdir -p ${{github.workspace}}/downloads/
         cd ${{github.workspace}}/downloads/
         tar -xf fast_*.tar.xz -C ${{github.workspace}}/downloads/
         mv ${{github.workspace}}/downloads/fast_*/fast ${{github.workspace}}/
