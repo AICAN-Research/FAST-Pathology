@@ -2,7 +2,8 @@ name: Build Ubuntu
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - "*"
   pull_request:
     branches: [ master ]
   release:
