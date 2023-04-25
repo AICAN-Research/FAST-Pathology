@@ -89,16 +89,16 @@ MainWindow::MainWindow() {
 void MainWindow::showSplashMenu(bool allowClose, bool showDataHub) {
     // Start splash
     auto splash = new ProjectSplashWidget(cwd + "/projects/", allowClose);
-    connect(splash, &ProjectSplashWidget::quitSignal, mWidget, &QWidget::close);
-    connect(splash, &ProjectSplashWidget::refreshPipelines, _side_panel_widget, &MainSidePanelWidget::refreshPipelines);
-    connect(splash, &ProjectSplashWidget::newProjectSignal, [=](QString name) {
+    QObject::connect(splash, &ProjectSplashWidget::quitSignal, mWidget, &QWidget::close);
+    QObject::connect(splash, &ProjectSplashWidget::refreshPipelines, _side_panel_widget, &MainSidePanelWidget::refreshPipelines);
+    QObject::connect(splash, &ProjectSplashWidget::newProjectSignal, [=](QString name) {
         if(m_project)
             reset();
         std::cout << "Creating project with name " << name.toStdString() << std::endl;;
         m_project = std::make_shared<Project>(name.toStdString());
         emit updateProjectTitle();
     });
-    connect(splash, &ProjectSplashWidget::openProjectSignal, [=](QString name) {
+    QObject::connect(splash, &ProjectSplashWidget::openProjectSignal, [=](QString name) {
         if(m_project)
             reset();
         std::cout << "Opening project with name " << name.toStdString() << std::endl;;
@@ -107,7 +107,7 @@ void MainWindow::showSplashMenu(bool allowClose, bool showDataHub) {
         emit _side_panel_widget->loadProject();
         emit updateProjectTitle();
     });
-    connect(splash, &ProjectSplashWidget::loadTestDataIntoProject, [=]() {
+    QObject::connect(splash, &ProjectSplashWidget::loadTestDataIntoProject, [=]() {
         if(m_project) {
             auto folder = join(cwd, "images");
             for(auto filename : getDirectoryList(folder)) {

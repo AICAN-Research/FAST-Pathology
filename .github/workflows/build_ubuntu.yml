@@ -2,7 +2,8 @@ name: Build Ubuntu
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - "*"
   pull_request:
     branches: [ master ]
   release:
@@ -21,7 +22,7 @@ jobs:
       
     - name: Create path
       run: |
-        mkdir -p ${{github.workspace}}/downloads/
+        mkdir -p ./downloads/
 
     - name: Download FAST
       uses: robinraju/release-downloader@main
@@ -29,17 +30,20 @@ jobs:
         repository: "AICAN-Research/FAST-Pathology-dependencies"
         latest: true
         fileName: "fast_ubuntu18.04.tar.xz"
-        out-file-path: "${{github.workspace}}/downloads/"
+        out-file-path: "./downloads/"
+    
+    - name: Setup apt and deps
+      run: |
+        apt update && apt install -y sudo
+        sudo apt-get install xz-utils 
 
     - name: Extract FAST
       run: |
-        cd ${{github.workspace}}/downloads/
-        tar -xf fast_*.tar.xz -C ${{github.workspace}}/downloads/
-        mv ${{github.workspace}}/downloads/fast_*/fast ${{github.workspace}}/
+        tar -xf ./downloads/fast_*.tar.xz -C ./downloads/
+        mv ./downloads/fast_*/fast ./
 
     - name: Install dependencies
       run: |
-        apt update && apt install -y sudo
         # Get a newer version of cmake
         sudo apt install -y gpg wget software-properties-common lsb-release
         wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null
@@ -53,7 +57,7 @@ jobs:
         sudo apt install -y libopenslide-dev libjpeg-turbo8-dev # Needed for WSI module
 
     - name: Configure CMake
-      run: cmake -B build -DFAST_DIR=${{github.workspace}}/fast/cmake/
+      run: cmake -B build -DFAST_DIR=./fast/cmake/
 
     - name: Build FastPathology
       run: cmake --build build --config Release -j 4
@@ -65,7 +69,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: Debian package
-        path: ${{github.workspace}}/build/fastpathology_*.deb
+        path: ./build/fastpathology_*.deb
         if-no-files-found: error
         
     - name: Upload Debian package to release
@@ -73,7 +77,7 @@ jobs:
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: ${{github.workspace}}/build/fastpathology_*.deb
+        file: ./build/fastpathology_*.deb
         file_glob: true
         tag: ${{ github.ref }}
         overwrite: true
