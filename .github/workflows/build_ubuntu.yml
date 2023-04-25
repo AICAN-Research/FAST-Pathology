@@ -31,6 +31,9 @@ jobs:
         latest: true
         fileName: "fast_ubuntu18.04.tar.xz"
         out-file-path: "./downloads/"
+    
+    - name: Install xz-utils
+      run: sudo apt-get install xz-utils 
 
     - name: Extract FAST
       run: |
