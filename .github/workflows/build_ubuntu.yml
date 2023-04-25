@@ -29,6 +29,7 @@ jobs:
 
     - name: Extract FAST
       run: |
+        mkdir -p ${{github.workspace}}/downloads/
         cd ${{github.workspace}}/downloads/
         tar -xf fast_*.tar.xz -C ${{github.workspace}}/downloads/
         mv ${{github.workspace}}/downloads/fast_*/fast ${{github.workspace}}/
