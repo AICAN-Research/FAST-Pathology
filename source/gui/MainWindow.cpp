@@ -160,6 +160,8 @@ void MainWindow::setupInterface()
     mWidget->setStyleSheet(qss);
 
     superLayout = new QVBoxLayout;
+    auto oldLayout = mWidget->layout();
+    delete oldLayout;
     mWidget->setLayout(superLayout);
 
     // make overall Widget
