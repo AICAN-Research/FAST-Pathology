@@ -109,7 +109,7 @@ namespace fast {
     void ProjectWidget::selectFile() {
         // TODO: Unable to read .zvi and .scn (Zeiss and Leica). I'm wondering if they are stored in some unexpected way (not image pyramids)
         auto fileNames = QFileDialog::getOpenFileNames(this, tr("Select File(s)"), nullptr,
-                                                       tr("WSI Files (*.tiff *.tif *.svs *.ndpi *.bif *vms *.vsi);;All Files(*)"), //*.zvi *.scn)"),
+                                                       tr("WSI Files (*.tiff *.tif *.svs *.ndpi *.bif *.vms *.vsi *.mrxs);;All Files(*)"), //*.zvi *.scn)"),
                 nullptr, QFileDialog::DontUseNativeDialog);
 
         auto progDialog = QProgressDialog(this);
@@ -143,7 +143,7 @@ namespace fast {
             //filename = fileName.toStdString();
             //qDebug() << "QString filename: " << fileName;
 #ifdef WIN32
-            std::string currFileName = fileName.toLatin1(); // Convert path to ascii so that files with øæå characters work.
+            std::string currFileName = fileName.toLatin1(); // Convert path to ascii so that files with Ã¦Ã¸Ã¥ characters work.
 #else
             std::string currFileName = fileName.toStdString();
 #endif
