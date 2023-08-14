@@ -27,8 +27,8 @@ To install FastPathology, follow the instructions for your operating system:
   *Note: Windows might prompt you with a security warning, to proceed you must press "More info" followed by "Run anyway".*
 * Run **fastpathology** from your start menu.
 * To **uninstall** the application, go to start menu -> remove programs -> find fastpathology and select uninstall.
-  Optionally you can also delete your C:/Users/"your username"/fastpathology/ which includes stored project results, pipelines and models.
-  And the folder C:/ProgramData/FAST/ which contains a cache.
+  Optionally you can also delete your `C:/Users/"your username"/fastpathology/` which includes stored project results, pipelines, and models.
+  And the folder `C:/ProgramData/FAST/` which contains a cache.
   
 </details>
 
@@ -47,7 +47,7 @@ To install FastPathology, follow the instructions for your operating system:
 ```bash
 sudo dpkg -i fastpathology_ubuntu*.deb
 ```
-* Go to the folder /opt/fastpathology/bin and run the **fastpathology** executable, or run it from the ubuntu menu (windows button->type fastpathology).
+* Go to the folder `/opt/fastpathology/bin/` and run the **fastpathology** executable, or run it from the ubuntu menu (`windows button->type fastpathology`).
 * To **uninstall** the application, run the following in your terminal:
 ```bash
 sudo apt remove fastpathology
@@ -74,12 +74,12 @@ brew install openslide libomp
 * Download and run the macOS installer (.dmg) from the [release page](https://github.com/AICAN-Research/FAST-Pathology/releases/).
 * In the installer, drag-and-drop the `FastPathology` bundle to the `Applications` directory.
 * When the copy is finished, double-click the `Applications` icon in the installer and right-click + open `FastPathology` from the Applications menu.
-* A warning should be prompted `macOS cannot verify the developer of FastPathology (...)`, click `open` and the program should launch.
+* A warning should be prompted `"macOS cannot verify the developer of FastPathology (...)"`, click `open` and the program should launch.
 
  *Note: This is only required to be done once. For all future usage, launch FastPathology as a regular App bundle.*
 * To **uninstall** the application, delete the extracted folder.
-  Optionally, you can also delete the  /Users/"your username"/fastpathology folder, which includes stored project results, pipelines and models.
-  And the folder /Users/"your username"/FAST which contains a cache.
+  Optionally, you can also delete the `/Users/"your username"/fastpathology/` folder, which includes stored project results, pipelines, and models.
+  And the folder `/Users/"your username"/FAST/` which contains a cache.
 
 </details>
 
