@@ -71,13 +71,12 @@ rm -Rf $HOME/FAST
 ```bash
 brew install openslide libomp
 ```
-* Download the tar.xz package from the [release page](https://github.com/AICAN-Research/FAST-Pathology/releases/).
-* Extract the archive to somewhere on your drive
-* Disable the gatekeeper from your terminal:
-```bash
-sudo spctl --master-disable
-```
-* Go to extracted folder and find the bin folder and run the executable **fastpathology**.
+* Download and run the macOS installer (.dmg) from the [release page](https://github.com/AICAN-Research/FAST-Pathology/releases/).
+* In the installer, drag-and-drop the `FastPathology` bundle to the `Applications` directory.
+* When the copy is finished, double-click the `Applications` icon in the installer and right-click + open `FastPathology` from the Applications menu.
+* A warning should be prompted `macOS cannot verify the developer of FastPathology (...)`, click `open` and the program should launch.
+
+ *Note: This is only required to be done once. For all future usage, launch FastPathology as a regular App bundle.*
 * To **uninstall** the application, delete the extracted folder.
   Optionally, you can also delete the  /Users/"your username"/fastpathology folder, which includes stored project results, pipelines and models.
   And the folder /Users/"your username"/FAST which contains a cache.
