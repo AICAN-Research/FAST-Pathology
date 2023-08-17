@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.12) # 3.15
-set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version")
+if(APPLE)
+	message(STATUS "APPLE DETECTED. Set CMAKE_OSX_ARCHITECTURES to arm64 to build for Apple Silicon")
+	set(CMAKE_OSX_DEPLOYMENT_TARGET "10.13" CACHE STRING "Minimum OS X deployment version")
+endif()
 project(fastpathology)
 
 set(VERSION_MAJOR 1)
