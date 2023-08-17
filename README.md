@@ -70,7 +70,7 @@ rm -Rf $HOME/FAST
 ```bash
 brew install openslide libomp
 ```
-* Download and run the macOS installer (.dmg) from the [release page](https://github.com/AICAN-Research/FAST-Pathology/releases/).
+* Download and run the macOS installer (.dmg) from the [release page](https://github.com/AICAN-Research/FAST-Pathology/releases/). Download the x86_64 file if you have an Intel CPU, or download the arm64 file if you have an Apple Silicon (M1/M2) CPU.
 * In the installer, drag-and-drop the `FastPathology` bundle to the `Applications` directory.
 * When the copy is finished, double-click the `Applications` icon in the installer and right-click + open `FastPathology` from the Applications menu.
 * A warning should be prompted `"macOS cannot verify the developer of FastPathology (...)"`, click `open` and the program should launch.
