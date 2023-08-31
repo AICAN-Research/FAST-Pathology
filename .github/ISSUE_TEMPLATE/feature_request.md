@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: 'Suggest a new feature for FAST. Please do not use issues for questions. Use discussions Q&A https://github.com/AICAN-Research/FAST-Pathology/discussions/new?category=q-a instead.'
+about: 'Suggest a new feature for FastPathology. Please do not use issues for questions. Use discussions Q&A https://github.com/AICAN-Research/FAST-Pathology/discussions/new?category=q-a instead.'
 title: ''
 labels: new feature
 assignees: ''
