@@ -192,11 +192,10 @@ void MainWindow::updateAppTitleReceived(std::string title_suffix)
 }
 
 void MainWindow::createOpenGLWindow() {
-	float OpenGL_background_color = 0.0f; //0.0f; //200.0f / 255.0f;
 	view = createView();
 
 	view->set2DMode();
-	view->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
+	view->setBackgroundColor(Color(0.9, 0.9, 0.9)); // setting color to the background, around the WSI
 	view->setAutoUpdateCamera(true);
 	view->setScalebar(true);
 
