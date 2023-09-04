@@ -198,6 +198,7 @@ void MainWindow::createOpenGLWindow() {
 	view->set2DMode();
 	view->setBackgroundColor(Color(OpenGL_background_color, OpenGL_background_color, OpenGL_background_color)); // setting color to the background, around the WSI
 	view->setAutoUpdateCamera(true);
+	view->setScalebar(true);
 
 	// create QSplitter for adjustable windows
 	auto mainSplitter = new QSplitter(Qt::Horizontal);
