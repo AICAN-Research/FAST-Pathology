@@ -25,7 +25,7 @@ jobs:
         mkdir -p ./downloads/
 
     - name: Download FAST
-      uses: robinraju/release-downloader@main
+      uses: robinraju/release-downloader@v1.8
       with:
         repository: "AICAN-Research/FAST-Pathology-dependencies"
         latest: true
