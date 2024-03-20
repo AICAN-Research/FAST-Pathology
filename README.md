@@ -3,13 +3,12 @@
 <h1 align="center">FastPathology</h1>
 <h3 align="center">Open-source software for deep learning-based digital pathology</h3>
 
-[![GitHub Downloads](https://img.shields.io/github/downloads/SINTEFMedtek/FAST-Pathology/total?label=GitHub%20downloads&logo=github)](https://github.com/SINTEFMedtek/FAST-Pathology/releases)
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
 ![CI](https://github.com/AICAN-Research/FAST-Pathology/workflows/Build%20Windows/badge.svg?branch=master&event=push)
 ![CI](https://github.com/AICAN-Research/FAST-Pathology/workflows/Build%20Ubuntu/badge.svg?branch=master&event=push)
 ![CI](https://github.com/AICAN-Research/FAST-Pathology/workflows/Build%20macOS/badge.svg?branch=master&event=push)
  
-**FastPathology** was created by SINTEF Medical Technology and the Norwegian University of Science and Technology (NTNU). A paper presenting the software and some benchmarks has been published in [IEEE Access](https://ieeexplore.ieee.org/document/9399433).
+**FastPathology** was created by researchers at SINTEF and the Norwegian University of Science and Technology (NTNU). A paper presenting the software and some benchmarks has been published in [IEEE Access](https://ieeexplore.ieee.org/document/9399433).
  
  <img src="data/Videos/fp_demo_v1.gif" style="background-color:black">
 </div>
@@ -96,6 +95,10 @@ If you have an NVIDIA GPU on your machine you can enable high-speed inference by
 
 </details>
 
+## License
+
+The source code of FastPathology is licensed under the BSD 2-clause license, however the FastPathology program use and are linked with many great third-party libraries which have several different open source licenses, see the licenses folder in the installation folder for more details.
+
 ## 📹 Demos and tutorials
 
 Very simple demonstrations of the platform can be found on [Youtube](https://www.youtube.com/channel/UC4GM2KW54-vEZ0M1kH5-oig). More in-depth demonstrations will be added in the future. Wikis and tutorials can be found in the [wiki](https://github.com/SINTEFMedtek/FAST-Pathology/wiki). More information can be found from the **pages** section on the right in the wiki home.
@@ -111,7 +114,7 @@ The software is implemented in C++ based using [FAST](https://github.com/smistad
 * **Use cases -** Patch-wise classification, low and high-resolution segmentation, and object detection are supported.
 * **Inference Engines -** FAST includes a variety of different inference engines, i.e. TensorFlow CPU/CUDA (support both TF v1 and v2 models), TensorRT (UFF and ONNX), OpenVINO (CPU/GPU/VPU), and ONNX Runtime (CPU/GPU).
 * **Text pipelines -** Possibility to create your own pipelines using the built-in script editor.
-* **Formats -** Through OpenSlide FastPathology supports various WSI formats
+* **Formats -** Through [OpenSlide](https://openslide.org/) FastPathology supports various WSI formats.
 
 ## 🔬 Applications of FastPathology
 
@@ -129,7 +132,7 @@ The software is implemented in C++ based using [FAST](https://github.com/smistad
    - [Compile and install FAST on your system](https://fast.eriksmistad.no/building-fast.html).
 2. Clone this repository
    ```bash
-   git clone https://github.com/SINTEFMedtek/FAST-Pathology.git
+   git clone https://github.com/AICAN-Research/FAST-Pathology.git
    ```
 3. Setup build environment using CMake  
    *Linux (Ubuntu)*
