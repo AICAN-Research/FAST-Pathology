@@ -12,6 +12,7 @@
 #include <FAST/Visualization/SegmentationRenderer/SegmentationRenderer.hpp>
 #include <FAST/Visualization/HeatmapRenderer/HeatmapRenderer.hpp>
 #include <FAST/Visualization/View.hpp>
+#include <fstream>
 
 namespace fast{
     Project::Project(std::string name, bool open)
