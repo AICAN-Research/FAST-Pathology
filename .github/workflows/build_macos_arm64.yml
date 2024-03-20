@@ -1,0 +1,68 @@
+name: Build macOS arm64
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+  MACOSX_DEPLOYMENT_TARGET: 11.0
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3.3.0
+
+    - name: Install dependencies
+      run: |
+        brew reinstall zlib
+        brew install openslide libomp
+
+    - name: Download FAST
+      uses: robinraju/release-downloader@main
+      with:
+        repository: "AICAN-Research/FAST-Pathology-dependencies"
+        latest: true
+        fileName: "fast_macos10.13_arm64.tar.xz"
+        out-file-path: "downloads"
+
+    - name: Extract FAST
+      run: |
+        cd ${{github.workspace}}/downloads/
+        tar -xf fast_*.tar.xz -C ${{github.workspace}}/downloads/
+        mv ${{github.workspace}}/downloads/fast_*/fast ${{github.workspace}}/
+
+    - name: Configure CMake
+      run: |
+        cmake -B ${{github.workspace}}/build -DFAST_DIR=${{github.workspace}}/fast/cmake/ -DCMAKE_OSX_ARCHITECTURES=arm64
+
+    - name: Build FastPathology
+      run: cmake --build ${{github.workspace}}/build --config Release --target fastpathology -j 4
+
+    - name: Build Package
+      run: cmake --build ${{github.workspace}}/build --config Release --target package -j 4
+
+    - name: Upload Bundle package
+      uses: actions/upload-artifact@v2
+      with:
+        name: macOS package
+        path: ${{github.workspace}}/build/fastpathology_*.dmg
+        if-no-files-found: error
+        
+    - name: Upload archive package to release
+      if: ${{ github.event_name == 'release' }}
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: ${{github.workspace}}/build/fastpathology_*.dmg
+        file_glob: true
+        tag: ${{ github.ref }}
+        overwrite: true
