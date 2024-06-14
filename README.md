@@ -121,6 +121,7 @@ The software is implemented in C++ based using [FAST](https://github.com/smistad
 * Pettersen et al., Code-free development and deployment of deep segmentation models for digital pathology (2022), Frontiers in Medicine, https://doi.org/10.3389/fmed.2021.816281
 * Pedersen et al., H2G-Net: A multi-resolution refinement approach for segmentation of breast cancer region in gigapixel histopathological images (2022), Frontiers in Medicine, https://doi.org/10.3389/fmed.2022.971873
 * Røyset et al., Deep learning-based image analysis reveals significant differences in the number and distribution of mucosal CD3 and γδ T cells between Crohn's disease and ulcerative colitis (2022), The Journal of Pathology, https://doi.org/10.1002/cjp2.301
+* Chiou et al., An immunohistochemical atlas of necroptotic pathway expression (2024), EMBO Molecular Medicine, https://doi.org/10.1038/s44321-024-00074-6
 
 <details>
 <summary>
